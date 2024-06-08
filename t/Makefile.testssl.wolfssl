@@ -11,14 +11,14 @@
 #?      include Makefile.testssl.wolfssl
 #?
 #? VERSION
-#?      @(#) Makefile.testssl.wolfssl 1.4 24/06/07 12:10:30
+#?      @(#) >07•©U 1.5 24/06/08 14:08:14
 #?
 #? AUTHOR
 #?      04-jun-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl.wolfssl   := 1.4
+_SID.testssl.wolfssl   := 1.5
 #_MYSELF                := $(firstword $(MAKEFILE_LIST))
 
 #_____________________________________________________________________________
@@ -38,7 +38,7 @@ TESTSSL.src.sig.wolfssl-5.7.0   = 5d3dfb873d6d1b96373014f37ce6f3ec4a8b3a0f
 TESTSSL.src.configure.wolfssl   = --enable-all
 
 # define setting per vendor (type) of SSL-/TLS-server (use vendor's default)
-wolfssl-%:            TESTSSL.vm.version    = 1.4
+wolfssl-%:            TESTSSL.vm.version    = 1.5
 wolfssl-%:            TESTSSL.vm.type       = wolfssl
 wolfssl-%:            TESTSSL.vm.port       = 11111
 wolfssl-%:            TESTSSL.src.packages  = $(TESTSSL.default.apk)
@@ -71,17 +71,20 @@ TESTSSL.vm.build.compile.wolfssl = \
 	./configure $(TESTSSL.src.configure) && \\ $(_NL)\
 	make
 
+TESTSSL.src.install.wolfssl      = \
+	examples/echoclient/.libs/echoclient \
+	examples/echoserver/.libs/echoserver \
+	examples/client/.libs/client         \
+	examples/server/.libs/server         \
+	examples/sctp/.libs/sctp-client-dtls \
+	examples/sctp/.libs/sctp-server-dtls \
+	examples/sctp/sctp-client            \
+	examples/pem/.libs/pem               \
+	src/.libs/libwolfssl.so*             \
+	certs/
+
 TESTSSL.vm.build.install.wolfssl = \
-	mv examples/echoclient/.libs/echoclient $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
-	mv examples/echoserver/.libs/echoserver $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
-	mv examples/client/.libs/client         $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
-	mv examples/server/.libs/server         $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
-	mv examples/sctp/.libs/sctp-client-dtls $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
-	mv examples/sctp/.libs/sctp-server-dtls $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
-	mv examples/sctp/sctp-client            $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
-	mv examples/pem/.libs/pem               $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
-	mv src/.libs/libwolfssl.so*             $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
-	mv certs/ $(TESTSSL.vm.home)/bin/ ; \\ $(_NL)\
+	mv $(TESTSSL.src.install.wolfssl) $(TESTSSL.vm.home)/bin/ && \\ $(_NL)\
 	ln -s     $(TESTSSL.vm.home)/bin/certs /certs
 # TODO: wolfssl-5.5.4 (and probably older one) miss:
 #    examples/sctp/.libs/sctp-client-dtls examples/sctp/.libs/sctp-server-dtls
