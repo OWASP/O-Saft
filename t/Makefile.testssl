@@ -20,13 +20,15 @@
 #?      Scheme for target name is as follows:
 #?          VENDOR-VERSION-CMD
 #?      which means:
-#?          VENDOR  - the type or vendor of the tool
+#?          VENDOR  - the type or vendor of the tool (or whatever you like)
 #?          VERSION - the version of the tool installed in the docker image
 #?          CMD     - the command to be performed
 #?      For example:
 #?          mbedtls-3.0.0p1-run
 #?          wolfssl-5.6.6-build
 #?          wolfssl-4.3.0-rmi
+#?
+#?      Keep in mind: neither VENDOR nor VERSION must not contain - (dash).
 #?
 #?      All targets print the  finally used docker command-line,  so C&P can be
 #?      used easily for further private adaptions.
@@ -68,39 +70,86 @@
 #?          Makefile.testssl.ANY-NAME
 #?      They should reside in the same directory as this file.
 #?
-#?      Any variable defined on the command-line will  overwrite the default or
-#?      computed value.
+#?      Some variables must be configured for each image, some are optional.
+#?      Some settings if not configured, are computed using mandatory settings.
+#?      For details about settings, see section  Makefile.testssl.*  below.
 #?
-#?      Following variables must be configured for each image:
+#?      I.g. this Makefile can be used as is. No other file need to be included
+#?      if the configuration is done on  command-line.  Any variable defined on
+#?      command-line will overwrite the default or computed value. Anyway, it's
+#?      recommended to use a separate Makefile for each server.
+#?
+#?   Makefile.testssl.*
+#?      Mandatory variables:
 #?          TESTSSL.src.packages    
 #?          TESTSSL.vm.type         TESTSSL.vm.port
 #?          TESTSSL.vm.client       TESTSSL.vm.client.help
 #?          TESTSSL.vm.server.dtls  TESTSSL.vm.server.tls
 #?          TESTSSL.vm.server.args  TESTSSL.vm.server.help
 #?
-#?      Following variables should be configured (used in %-build-n only):
+#?      Optional variables (used in %-build-n only):
 #?          TESTSSL.src.configure   TESTSSL.src.install
 #?
-#?      Most others are computed based on these settings.
-# TODO: describe the dependencies, in particular dependency on TESTSSL.vm.type
-# TODO: see "settings done automatically" below
+#?      The existing Makefile.testssl.* contain following sections:
 #?
-#?      To see the configured and computed values, use following target:
-#?          make dummy-build-v
+#?      * global variables for image and build
+#?        Most of the settings there must be unique in each Makefile.testssl.*.
+#?        Think of an instance for the vendor (type) of SSL-/TLS-server.  These
+#?        settings are  used in the build (make) of the server itself,  and for
+#?        the build of the docker image.
+#?        These are global variables and should be set conditionaly by matching
+#?        targets only.
+#   weil docker kein leeres Argument bei --env erlaub muss verwendet werden:
+#       TESTSSL.vm.run.env  = --env key=value
 #?
-#?      I.g. this Makefile can be used as is. No other files to be included are
-#?      necessary if the configuration is done on command-line. We recommend to
-#?      use a separate Makefile for each server.
+#?      * variables for sources and build
+#?        They define the sources for the server to be build (make) in the imag
+#?        They define the sources (file, URL) for the server to be build (make)
+#?        in the the image. Each variable name must end with the "NAME-VERSION"
+#?        string of the server to be build. Example:
+#?            TESTSSL.vm.type               = mytool
+#?            #           version of mytool is 6.6.6
+#?            TESTSSL.src.tar.mytool-6.6.6  = v6.6.6.tgz
+#?        the target for building this image then would be:
+#?            mytool-6.6.6-build
+#?        See limitation for the target name in section  DESCRIPTION  above.
+#?   TODO Currently (5/2024) only TESTSSL.vm.server = TESTSSL.vm.server.tls is
+#?        supported, TESTSSL.vm.server.dtls needs to be implemented.
 #?
-#?      Following customized Makefiles are available:
+#?      * variables with commands for targets
+#?        These variables contain the commands to be executed in the configure,
+#?        compile, install and cleanup steps of building the server.
+#?        Additional local variables can (are) set, and used in this file only,
+#?        which should be given back to the parent, like (used by %-build-n):
+#?            TESTSSL.src.configure += TESTSSL.src.configure.mytool
+#?            TESTSSL.src.install   += TESTSSL.src.install.mytool
+#?            TESTSSL.src.cleanup   += TESTSSL.src.cleanup.mytool
+#?        Following variables are set to usefull defaults in the parent:
+#?            TESTSSL.src.configure  TESTSSL.src.install  TESTSSL.src.cleanup
+#?
+#?      * private targets
+#?        Any other (private) target can be defined also. Just ensure that they
+#?        do not overwrite, or extend the global target unattended. 
+#?
+#?      The sequence of these sections and definitions is not important.
+#?
+#?      Following customized Makefiles are available (can be used as example):
 #?          Makefile.testssl.botan
 #?          Makefile.testssl.mbedtls
 #?          Makefile.testssl.libressl
 #?          Makefile.testssl.openssl
 #?          Makefile.testssl.wolfssl
 #?
+#?   Automatically computed settings
+#?      Following variables need not to be set in the Makefile.testssl.*,  they
+#?      are computed based on  TESTSSL.vm.type :
+#?          TESTSSL.src.dockerfile  TESTSSL.vm.hostname
+#?          TESTSSL.vm.user         TESTSSL.vm.home
+#?
 #?      The port number of the listening port on the host and the exported port
-#?      are identical by default. All %-build targets check the specified port.
+#?      are identical by default:  TESTSSL.host.port = TESTSSL.vm.port
+#?      All %-build targets check the specified or computed TESTSSL.host.port ,
+#?      the build then aborts, if the port is in use.
 #?      To ignore aborting if the check finds a listening port,  the target can
 #?      called with the argument  testssl.port= , for example:
 #?          make some-build -- testssl.port=ignore
@@ -109,17 +158,8 @@
 #?          TESTSSL.host.port      - listening port on the host
 #?          TESTSSL.vm.port        - exported port of the server in the VM
 #?
-#?   TODO currently (5/2024) only TESTSSL.vm.server = TESTSSL.vm.server.tls is
-#?        supported, TESTSSL.vm.server.dtls needs to be implemented.
-# ?
-# ? TODO Documentation for Makefile.testssl.*
-# ? for example:
-#   TESTSSL.vm.build.compile.VENDOR 
-#   TESTSSL.vm.build.install.VENDOR
-#   TESTSSL.vm.build.testing.VENDOR
-#
-#   weil docker kein leeres Argument bei --env erlaub muss verwendet werden:
-#    TESTSSL.vm.run.env  = --env key=value
+#?      To see the configured and computed values, use following target:
+#?          make dummy-build-v
 # ?
 # ? TODO Dockerfile
 # ?      Instead of a tarball a Dockerfile can be used as context for docker build.
@@ -155,11 +195,11 @@
 #?      Keep in mind that docker's "start" and "stop" have different behaviour.
 #?
 #? LIMITATIONS
-#?   Filenames, image names
+#?   Image names
 #?      Due to limitations of  Docker which only accepts lowercase image names,
-#?      the filename of the tarball and the value of  TESTSSL.vm.type  must all
-#?      be lowercase.  Reason is that  TESTSSL.vm.type  is used to compute some
-#?      more configuration values for docker.
+#?      the value of  TESTSSL.vm.type  must contain lowercase letters only. The
+#?      value of  TESTSSL.vm.type  is used to compute some  more configurations
+#?      docker (see section  Automatically computed settings  above).
 #?
 #?   %-run
 #?      There is no indication (status code, error message) when the configured
@@ -226,7 +266,10 @@
 #       List of feature, likes, etc. to be done in future:
 #
 #       6/2024
+#       * bug: the image name and tag is computed from the target
+#         this requires, that the target contain one - only
 #       * bug: remove CLI args TESTSSL.vm.run.env and TESTSSL.vm.run.args from
+#       * bug: "set -x" not working properly in TESTSSL.vm.build.package
 #         general TESTSSL.args
 #       * correct and improve values for USAGE_*
 #       * provide variable TESTSSL.src.install as list of files to be installed
@@ -452,14 +495,14 @@
 #           du -h /|awk -F/ '(2==NF){print}'
 #?
 #? VERSION
-#?      @(#) øy–b 1.22 24/06/08 18:33:28
+#?      @(#) ¢Vxa 1.23 24/06/09 00:22:28
 #?
 #? AUTHOR
 #?      24-mai-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl       := 1.22
+_SID.testssl       := 1.23
 _MYSELF            := $(firstword $(MAKEFILE_LIST))
 
 # NOTE: include must be done after our variable and target definitions
@@ -657,15 +700,8 @@ _TAB   ?= \\009
 #_____________________________________________________________________________
 #___________________________________________________ defines, code snippets __|
 
-# Variables for (shell-)commands run inside docker's build.
-# The definitions contain $(_NL) at end of each line, which is a contribution
-# to GNU Make.
-# No possibility found to avoid docker's warning (5/2024: not criticial):
-#       [WARNING]: Empty continuation line found in
-# Note that variables in following defines are make variables, not those of the
-# docker context, hence they're enclosed in round () and not curly {} brackets.
-
-# do not use quotes, as they are printed; probably because $1 contains them
+# don't use quotes, as they're printed; probably because used $1 contains them
+# usage of most defines is: $(call _TESTSSL. ...)
 define _TESTSSL.echo
 echo \#[TESTSSL]\#===== $1
 endef
@@ -686,6 +722,15 @@ define _TESTSSL.hint
 echo "#[TESTSSL]# consider calling:"
 echo "#[TESTSSL]#    'docker container prune' and/or 'docker system prune'"
 endef
+#_____________________________________________________________________________
+#______________________________________ variables with commands for targets __|
+
+# Variables for (shell-)commands run inside docker's build.
+# The definitions contain $(_NL) at end of each line, contribution to GNU Make.
+# No possibility found to avoid docker's warning (5/2024: not criticial):
+#       [WARNING]: Empty continuation line found in
+# Note that variables in following defines are make variables, not those of the
+# docker context, hence they're enclosed in round () and not curly {} brackets.
 
 TESTSSL.vm.build.adduser = $(_NL)\
 	$(call _TESTSSL.echo,"Configure user in docker") ; \\ $(_NL)\
@@ -777,7 +822,7 @@ COPY	$(TESTSSL.host.copy)/$(TESTSSL.src.tar) $(TESTSSL.vm.tmp)/ $(_NL)\
 COPY	$(TESTSSL.host.copy)/testssl-cert.pem   $(TESTSSL.vm.tmp)/ $(_NL)\
 COPY	$(TESTSSL.host.copy)/testssl-key.pem    $(TESTSSL.vm.tmp)/ $(_NL)\
         $(_NL)\
-LABEL	VERSION='1.22'                           $(_NL)\
+LABEL	VERSION='1.23'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(TESTSSL.vm.from) for testing'$(_NL)\
         $(_NL)\
 RUN	\\  $(TESTSSL.vm.build.adduser)         $(_NL)\
@@ -794,7 +839,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.server) $(_NL)\
 FROM	testos AS $(*)             $(_NL)\
         $(_NL)\
 LABEL	$(TESTSSL.default.label)='$(TESTSSL.vm.type) $(TESTSSL.vm.version)' $(_NL)\
-LABEL	VERSION='1.22'                           $(_NL)\
+LABEL	VERSION='1.23'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(*) for testing'$(_NL)\
 LABEL	USAGE_TCP='docker run --rm $(TESTSSL.vm.run.env) $(TESTSSL.vm.run.args) -p $(TESTSSL.host.port):$(TESTSSL.vm.port) $(_tag)' $(_NL)\
 ENV	TERM            xterm                   $(_NL)\
@@ -863,7 +908,6 @@ HELP-%-build-v= same as %-build but use shell's \"set -x\" for verbose output
 %-build-v: TESTSSL.trace=1
 %-build-v: %-build
 	@echo
-#dbx# @echo "# TESTSSL.trace=$(TESTSSL.trace) $(_TESTSSL.trace)"
 %-build: testssl.port
 	@$(EXE.trace_target)
 	@$(call _TESTSSL.echo,"Build docker image")
