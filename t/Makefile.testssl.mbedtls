@@ -12,20 +12,20 @@
 #?      include Makefile.testssl.mbedtls
 #?
 #? VERSION
-#?      @(#) Â“’!V 1.6 24/06/09 00:24:58
+#?      @(#) Ø:s¾U 1.7 24/06/09 01:20:13
 #?
 #? AUTHOR
 #?      04-jun-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl.mbedtls   := 1.6
+_SID.testssl.mbedtls   := 1.7
 #_MYSELF                := $(firstword $(MAKEFILE_LIST))
 
 #_____________________________________________________________________________
 #_____________________________________ global variables for image and build __|
 
-mbedtls-%:      TESTSSL.vm.version      = 1.6
+mbedtls-%:      TESTSSL.vm.version      = 1.7
 mbedtls-%:      TESTSSL.vm.type         = mbedtls
 mbedtls-%:      TESTSSL.vm.port         = 4433
 mbedtls-%:      TESTSSL.vm.client       = ssl_client
@@ -47,17 +47,17 @@ mbedtls%-help.server:  TESTSSL.vm.help  = $(TESTSSL.vm.server)2
 #__________________________________________ variables for sources and build __|
 
 TESTSSL.src.tar.mbedtls-3.6.0   = v3.6.0.tar.gz
-TESTSSL.src.sig.mbedtls-3.6.0   = 1175837831ac32c5f26c4113ea1a946db4822557
+TESTSSL.src.sha.mbedtls-3.6.0   = 1175837831ac32c5f26c4113ea1a946db4822557
 TESTSSL.src.git.mbedtls-3.6.0   = 
 TESTSSL.src.url.mbedtls-3.6.0   = https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/v3.6.0.tar.gz
 
 TESTSSL.src.tar.mbedtls-2.28.8  = v2.28.8.tar.gz
-TESTSSL.src.sig.mbedtls-2.28.8  = 269c05f41ad53cc153c00b6506d16ac11727ebab
+TESTSSL.src.sha.mbedtls-2.28.8  = 269c05f41ad53cc153c00b6506d16ac11727ebab
 TESTSSL.src.git.mbedtls-2.28.8  = 
 TESTSSL.src.url.mbedtls-2.28.8  = https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/v2.28.8.tar.gz
 
 TESTSSL.src.tar.mbedtls-2.7.8   = mbedtls-2.7.8.tar.gz
-TESTSSL.src.sig.mbedtls-2.7.8   = 0e8963cc159cb19c75ad51c4dfb9514b64daba97
+TESTSSL.src.sha.mbedtls-2.7.8   = 0e8963cc159cb19c75ad51c4dfb9514b64daba97
 TESTSSL.src.git.mbedtls-2.7.8   = 
 TESTSSL.src.url.mbedtls-2.7.8   = https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/mbedtls-2.7.8.tar.gz
 
