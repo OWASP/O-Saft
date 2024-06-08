@@ -12,7 +12,7 @@
 #?      include Makefile.testssl.wolfssl
 #?
 #? VERSION
-#?      @(#) °¬VÛV 1.7 24/06/09 00:54:54
+#?      @(#) Â°Â¬VÃ›V 1.7 24/06/09 00:54:54
 #?
 #? AUTHOR
 #?      04-jun-24 Achim Hoffmann
@@ -53,32 +53,32 @@ wolfssl-%:      TESTSSL.src.install    += $(TESTSSL.src.install.wolfssl)
 #__________________________________________ variables for sources and build __|
 
 TESTSSL.src.tar.wolfssl-5.7.0   = wolfssl-5.7.0-stable.tar.gz
-TESTSSL.src.sig.wolfssl-5.7.0   = 5d3dfb873d6d1b96373014f37ce6f3ec4a8b3a0f
+TESTSSL.src.sha.wolfssl-5.7.0   = 5d3dfb873d6d1b96373014f37ce6f3ec4a8b3a0f
 TESTSSL.src.git.wolfssl-5.7.0   = 
 TESTSSL.src.url.wolfssl-5.7.0   = https://github.com/wolfSSL/wolfssl/archive/v5.7.0-stable.tar.gz
 
 TESTSSL.src.tar.wolfssl-5.6.6   = wolfssl-5.6.6-stable.tar.gz
-TESTSSL.src.sig.wolfssl-5.6.6   = cb7f6edc0fe05add3b1e17e299a26998150e3345
+TESTSSL.src.sha.wolfssl-5.6.6   = cb7f6edc0fe05add3b1e17e299a26998150e3345
 TESTSSL.src.url.wolfssl-5.6.6   = https://github.com/wolfSSL/wolfssl/archive/v5.6.6-stable.tar.gz
 
 TESTSSL.src.tar.wolfssl-5.5.4   = wolfssl-5.5.4-stable.tar.gz
-TESTSSL.src.sig.wolfssl-5.5.4   = 4bcc579575c83669e6628a64aa7ff953ce7271e9
+TESTSSL.src.sha.wolfssl-5.5.4   = 4bcc579575c83669e6628a64aa7ff953ce7271e9
 TESTSSL.src.url.wolfssl-5.5.4   = https://github.com/wolfSSL/wolfssl/archive/v5.5.4-stable.tar.gz
 
 TESTSSL.src.tar.wolfssl-5.1.0   = wolfssl-5.1.0-stable.tar.gz
-TESTSSL.src.sig.wolfssl-5.1.0   = 28ee16cd404795e1ce77456d762e46278f68f533
+TESTSSL.src.sha.wolfssl-5.1.0   = 28ee16cd404795e1ce77456d762e46278f68f533
 TESTSSL.src.url.wolfssl-5.1.0   = https://github.com/wolfSSL/wolfssl/archive/v5.1.0-stable.tar.gz
 
 TESTSSL.src.tar.wolfssl-4.7.0   = wolfssl-4.7.0-stable.tar.gz
-TESTSSL.src.sig.wolfssl-4.7.0   = d9f99ac451b2f063ddb80d9661afbe0063bfc169
+TESTSSL.src.sha.wolfssl-4.7.0   = d9f99ac451b2f063ddb80d9661afbe0063bfc169
 TESTSSL.src.url.wolfssl-4.7.0   = https://github.com/wolfSSL/wolfssl/archive/v4.7.0-stable.tar.gz
 
 TESTSSL.src.tar.wolfssl-4.3.0   = wolfssl-4.3.0-stable.tar.gz
-TESTSSL.src.sig.wolfssl-4.3.0   = 4174af818c9900ece2ad725bf0882f008a1aceb9
+TESTSSL.src.sha.wolfssl-4.3.0   = 4174af818c9900ece2ad725bf0882f008a1aceb9
 TESTSSL.src.url.wolfssl-4.3.0   = https://github.com/wolfSSL/wolfssl/archive/v4.3.0-stable.tar.gz
 
 TESTSSL.src.tar.wolfssl-3.15.3  = wolfssl-3.15.3-stable.tar.gz
-TESTSSL.src.sig.wolfssl-3.15.3  = db52169fd00825c55d6f8a66a01fe9f793e2a290
+TESTSSL.src.sha.wolfssl-3.15.3  = db52169fd00825c55d6f8a66a01fe9f793e2a290
 TESTSSL.src.url.wolfssl-3.15.3  = https://github.com/wolfSSL/wolfssl/archive/v3.15.3-stable.tar.gz
 
 # URL returns redirect with file as specified in TESTSSL.src.url.wolfssl-*
