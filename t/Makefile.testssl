@@ -72,14 +72,17 @@
 #?      computed value.
 #?
 #?      Following variables must be configured for each image:
-#?          TESTSSL.src.packages    TESTSSL.src.configure
+#?          TESTSSL.src.packages    
 #?          TESTSSL.vm.type         TESTSSL.vm.port
 #?          TESTSSL.vm.client       TESTSSL.vm.client.help
 #?          TESTSSL.vm.server.dtls  TESTSSL.vm.server.tls
 #?          TESTSSL.vm.server.args  TESTSSL.vm.server.help
 #?
+#?      Following variables should be configured (used in %-build-n only):
+#?          TESTSSL.src.configure   TESTSSL.src.install
+#?
 #?      Most others are computed based on these settings.
-# TODO: describe the dependencies, at dependency on TESTSSL.vm.type
+# TODO: describe the dependencies, in particular dependency on TESTSSL.vm.type
 # TODO: see "settings done automatically" below
 #?
 #?      To see the configured and computed values, use following target:
@@ -89,7 +92,8 @@
 #?      necessary if the configuration is done on command-line. We recommend to
 #?      use a separate Makefile for each server.
 #?
-#?      Following customized Makefiles are avaialbel:
+#?      Following customized Makefiles are available:
+#?          Makefile.testssl.botan
 #?          Makefile.testssl.mbedtls
 #?          Makefile.testssl.libressl
 #?          Makefile.testssl.openssl
@@ -448,14 +452,14 @@
 #           du -h /|awk -F/ '(2==NF){print}'
 #?
 #? VERSION
-#?      @(#) Ör_ 1.21 24/06/08 15:24:02
+#?      @(#) øy–b 1.22 24/06/08 18:33:28
 #?
 #? AUTHOR
 #?      24-mai-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl       := 1.21
+_SID.testssl       := 1.22
 _MYSELF            := $(firstword $(MAKEFILE_LIST))
 
 # NOTE: include must be done after our variable and target definitions
@@ -518,6 +522,8 @@ HELP-%-dbx = debug: show information about includes,$(_NL)\t\t  show passed argu
 
 # describe our variables
 TESTSSL.vars.ALL  =\
+   \#_variables_name        - description                               $(_NL)\
+   \#---------------------- +-------------------------------------------$(_NL)\
     TESTSSL.default.label   - fixed value TESTSSL (should not be changed)$(_NL)\
     TESTSSL.default.apk     - default required packages for apk (alpine)$(_NL)\
     TESTSSL.default.apt     - default required packages for apt (debian)$(_NL)\
@@ -540,16 +546,26 @@ TESTSSL.vars.ALL  =\
     TESTSSL.vm.server.tls   - server program to be started for TLS      $(_NL)\
     TESTSSL.vm.server.args  - additional arguments to start server      $(_NL)\
     TESTSSL.vm.server.help  - server program's argument to show its help$(_NL)\
-    TESTSSL.src.suffix      - filename suffix of the tarball            $(_NL)\
-    TESTSSL.src.tar         - complete filename of the tarball          $(_NL)\
-    TESTSSL.src.sig         - SHA1 signature of the tarball             $(_NL)\
+    TESTSSL.src.suffix      - filename suffix of tarball                $(_NL)\
+    TESTSSL.src.tar         - filename of tarball (without path)        $(_NL)\
+    TESTSSL.src.sig         - SHA1 signature of tarball                 $(_NL)\
+    TESTSSL.src.pgp         - PGP signature of tarball (NOT YET IMPLEMENTED)$(_NL)\
+    TESTSSL.src.url         - URL of tarball (NOT YET IMPLEMENTED)      $(_NL)\
+    TESTSSL.src.git         - git-URL of tarball (NOT YET IMPLEMENTED)  $(_NL)\
     TESTSSL.src.packages    - packages required for building the server $(_NL)\
-    TESTSSL.src.configure   - arguments for "configure" command 
+    $(_NL)\
+   \#_custom_variables      - used in Makefile.testssl.* only           $(_NL)\
+   \#---------------------- +-------------------------------------------$(_NL)\
+    TESTSSL.src.configure   - arguments for "configure" command         $(_NL)\
+    TESTSSL.src.install     - list of files to be installed
 # TESTSSL.vm.context  not part of TESTSSL.vars.ALL  because:
 #   always computed internal and  printed individually
+#
+# lines above starting with \# are for pretty printed help only;
+# _TESTSSL.ALL2vars will extract them also, but doesn't harm because it's used
+# for %-build-n only
 
 TESTSSL.vars.ALL-not-yet-implemented =\
-    TESTSSL.src.url         - URL of the tarball                        $(_NL)\
     TESTSSL.src.dockerfile  - Dockerfile to be used for build           $(_NL)\
     #
 
@@ -603,6 +619,7 @@ TESTSSL.src.sig        ?=  undef
 #       (due to GNU Make's limitations with $*)
 TESTSSL.src.packages    = $(TESTSSL.default.apt)
 TESTSSL.src.configure   = --prefix=$(TESTSSL.vm.home)
+TESTSSL.src.install     =
 
 # now get name and checksum of tarball, needed for %-build target only
 %-build-n:            TESTSSL.src.tar       = $(*)$(TESTSSL.src.suffix)
@@ -760,7 +777,7 @@ COPY	$(TESTSSL.host.copy)/$(TESTSSL.src.tar) $(TESTSSL.vm.tmp)/ $(_NL)\
 COPY	$(TESTSSL.host.copy)/testssl-cert.pem   $(TESTSSL.vm.tmp)/ $(_NL)\
 COPY	$(TESTSSL.host.copy)/testssl-key.pem    $(TESTSSL.vm.tmp)/ $(_NL)\
         $(_NL)\
-LABEL	VERSION='1.21'                           $(_NL)\
+LABEL	VERSION='1.22'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(TESTSSL.vm.from) for testing'$(_NL)\
         $(_NL)\
 RUN	\\  $(TESTSSL.vm.build.adduser)         $(_NL)\
@@ -777,7 +794,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.server) $(_NL)\
 FROM	testos AS $(*)             $(_NL)\
         $(_NL)\
 LABEL	$(TESTSSL.default.label)='$(TESTSSL.vm.type) $(TESTSSL.vm.version)' $(_NL)\
-LABEL	VERSION='1.21'                           $(_NL)\
+LABEL	VERSION='1.22'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(*) for testing'$(_NL)\
 LABEL	USAGE_TCP='docker run --rm $(TESTSSL.vm.run.env) $(TESTSSL.vm.run.args) -p $(TESTSSL.host.port):$(TESTSSL.vm.port) $(_tag)' $(_NL)\
 ENV	TERM            xterm                   $(_NL)\
