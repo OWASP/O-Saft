@@ -444,14 +444,14 @@
 #           du -h /|awk -F/ '(2==NF){print}'
 #?
 #? VERSION
-#?      @(#) Ë®Ëd 1.18 24/06/08 13:39:05
+#?      @(#) #³W 1.19 24/06/08 13:40:34
 #?
 #? AUTHOR
 #?      24-mai-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl       := 1.18
+_SID.testssl       := 1.19
 _MYSELF            := $(firstword $(MAKEFILE_LIST))
 
 # NOTE: include must be done after our variable and target definitions
@@ -739,7 +739,8 @@ TESTSSL.vm.build.testing = \
 TESTSSL.vm.build.cleanup = \
 	$(call _TESTSSL.echo,"Cleanup")            ; \\ $(_NL)\
 	apk  del --purge $(TESTSSL.src.packages)   ; \\ $(_NL)\
-	rm   -rf $(TESTSSL.vm.tmp) && echo "\# $(TESTSSL.vm.tmp) removed." ; \\ $(_NL)\
+	rm   -rf $(TESTSSL.vm.tmp)                 ; \\ $(_NL)\
+	echo '\# $(TESTSSL.vm.tmp) removed.'       ; \\ $(_NL)\
 	$(TESTSSL.vm.build.cleanup.$(TESTSSL.vm.type)) ; \\ $(_NL)\
 	true
 
@@ -754,7 +755,7 @@ COPY	$(TESTSSL.host.copy)/$(TESTSSL.src.tar) $(TESTSSL.vm.tmp)/ $(_NL)\
 COPY	$(TESTSSL.host.copy)/testssl-cert.pem   $(TESTSSL.vm.tmp)/ $(_NL)\
 COPY	$(TESTSSL.host.copy)/testssl-key.pem    $(TESTSSL.vm.tmp)/ $(_NL)\
         $(_NL)\
-LABEL	VERSION='1.18'                           $(_NL)\
+LABEL	VERSION='1.19'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(TESTSSL.vm.from) for testing'$(_NL)\
         $(_NL)\
 RUN	\\  $(TESTSSL.vm.build.adduser)         $(_NL)\
@@ -771,7 +772,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.server) $(_NL)\
 FROM	testos AS $(*)             $(_NL)\
         $(_NL)\
 LABEL	$(TESTSSL.default.label)='$(TESTSSL.vm.type) $(TESTSSL.vm.version)' $(_NL)\
-LABEL	VERSION='1.18'                           $(_NL)\
+LABEL	VERSION='1.19'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(*) for testing'$(_NL)\
 LABEL	USAGE_TCP='docker run --rm $(TESTSSL.vm.run.env) $(TESTSSL.vm.run.args) -p $(TESTSSL.host.port):$(TESTSSL.vm.port) $(_tag)' $(_NL)\
 ENV	TERM            xterm                   $(_NL)\
