@@ -12,20 +12,20 @@
 #?      include Makefile.testssl.libressl
 #?
 #? VERSION
-#?      @(#) ùÆ.’V 1.6 24/06/09 01:19:30
+#?      @(#) Makefile.testssl.libressl 1.7 24/06/09 01:39:16
 #?
 #? AUTHOR
 #?      04-jun-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl.libressl  := 1.6
+_SID.testssl.libressl  := 1.7
 #_MYSELF                := $(firstword $(MAKEFILE_LIST))
 
 #_____________________________________________________________________________
 #_____________________________________ global variables for image and build __|
 
-libressl-%:     TESTSSL.vm.version      = 1.6
+libressl-%:     TESTSSL.vm.version      = Makefile.testssl.libressl 1.7
 libressl-%:     TESTSSL.vm.type         = libressl
 libressl-%:     TESTSSL.vm.port         = 5443
 libressl-%:     TESTSSL.vm.client       = openssl
