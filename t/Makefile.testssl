@@ -96,8 +96,12 @@
 #?          Makefile.testssl.wolfssl
 #?
 #?      The port number of the listening port on the host and the exported port
-#?      are identical by default. No check is (can be) done. All ports can be
-#?      set with make environment variable:
+#?      are identical by default. All %-build targets check the specified port.
+#?      To ignore aborting if the check finds a listening port,  the target can
+#?      called with the argument  testssl.port= , for example:
+#?          make some-build -- testssl.port=ignore
+#?          make some-build -- no-testssl.port=
+#?      All ports can be set with make environment variable:
 #?          TESTSSL.host.port      - listening port on the host
 #?          TESTSSL.vm.port        - exported port of the server in the VM
 #?
@@ -444,14 +448,14 @@
 #           du -h /|awk -F/ '(2==NF){print}'
 #?
 #? VERSION
-#?      @(#) úºýb 1.20 24/06/08 13:47:19
+#?      @(#) Ör_ 1.21 24/06/08 15:24:02
 #?
 #? AUTHOR
 #?      24-mai-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl       := 1.20
+_SID.testssl       := 1.21
 _MYSELF            := $(firstword $(MAKEFILE_LIST))
 
 # NOTE: include must be done after our variable and target definitions
@@ -756,7 +760,7 @@ COPY	$(TESTSSL.host.copy)/$(TESTSSL.src.tar) $(TESTSSL.vm.tmp)/ $(_NL)\
 COPY	$(TESTSSL.host.copy)/testssl-cert.pem   $(TESTSSL.vm.tmp)/ $(_NL)\
 COPY	$(TESTSSL.host.copy)/testssl-key.pem    $(TESTSSL.vm.tmp)/ $(_NL)\
         $(_NL)\
-LABEL	VERSION='1.20'                           $(_NL)\
+LABEL	VERSION='1.21'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(TESTSSL.vm.from) for testing'$(_NL)\
         $(_NL)\
 RUN	\\  $(TESTSSL.vm.build.adduser)         $(_NL)\
@@ -773,7 +777,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.server) $(_NL)\
 FROM	testos AS $(*)             $(_NL)\
         $(_NL)\
 LABEL	$(TESTSSL.default.label)='$(TESTSSL.vm.type) $(TESTSSL.vm.version)' $(_NL)\
-LABEL	VERSION='1.20'                           $(_NL)\
+LABEL	VERSION='1.21'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(*) for testing'$(_NL)\
 LABEL	USAGE_TCP='docker run --rm $(TESTSSL.vm.run.env) $(TESTSSL.vm.run.args) -p $(TESTSSL.host.port):$(TESTSSL.vm.port) $(_tag)' $(_NL)\
 ENV	TERM            xterm                   $(_NL)\
@@ -813,8 +817,25 @@ USER	$(TESTSSL.vm.user)              $(_NL)\
 #_____________________________________________________________________________
 #__________________________________________________________________ targets __|
 
+HELP-testssl.port = check if port TESTSSL.host.port is used (mainly for internal use)
+# complain if grep finds the port, hence the && exit || exit logic
+# use LANG=C to ensure well know string to be found
+# fail of check can be disabled if make arguments contain testssl.port= , like:
+#    make some-build -- no-testssl.port=
+#    make some-build -- testssl.port=no
+testssl.port:
+	$(if $(findstring $(@),$(MAKEFLAGS)),\
+		$(eval _err=0)  $(eval _txt="check ignored") \
+	     ,\
+		$(eval _err=2)  $(eval _txt="'$(MAKECMDGOALS)' aborted") \
+	)
+	@env LANG=C ss -tan | egrep -i '^LISTEN.*:$(TESTSSL.host.port) ' && \
+	  echo "# port TESTSSL.host.port=$(TESTSSL.host.port) already in use; $(_txt)" \
+	  && exit $(_err) || exit 0
+	@echo
+
 HELP-%-build-n= debug: show context for building docker image$(_NL)\t\t   (like 'make %-build -n' but pretty printed)
-%-build-n:
+%-build-n: testssl.port
 	@$(_TESTSSL.vm.get._tag)
 	@echo $(_TESTSSL.print-config)
 	@echo "# context used with '$(EXE.docker) build --rm --force-rm . --tag $(_tag)'"
@@ -826,7 +847,7 @@ HELP-%-build-v= same as %-build but use shell's \"set -x\" for verbose output
 %-build-v: %-build
 	@echo
 #dbx# @echo "# TESTSSL.trace=$(TESTSSL.trace) $(_TESTSSL.trace)"
-%-build:
+%-build: testssl.port
 	@$(EXE.trace_target)
 	@$(call _TESTSSL.echo,"Build docker image")
 	@$(call _TESTSSL.trace)
