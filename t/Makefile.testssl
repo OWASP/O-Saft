@@ -444,14 +444,14 @@
 #           du -h /|awk -F/ '(2==NF){print}'
 #?
 #? VERSION
-#?      @(#) #³W 1.19 24/06/08 13:40:34
+#?      @(#) úºýb 1.20 24/06/08 13:47:19
 #?
 #? AUTHOR
 #?      24-mai-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl       := 1.19
+_SID.testssl       := 1.20
 _MYSELF            := $(firstword $(MAKEFILE_LIST))
 
 # NOTE: include must be done after our variable and target definitions
@@ -702,10 +702,10 @@ TESTSSL.vm.build.package = \
 #       -rw-r--r-- 1000/1000   42 2012-12-20 23:23 vendor-1.1.1/some-file.txt
 TESTSSL.vm.build.getpack = \
 	$(call _TESTSSL.echo,"Extract tool source"); \\ $(_NL)\
-	cd $(TESTSSL.vm.tmp)              && \\ $(_NL)\
+	cd $(TESTSSL.vm.tmp)           && \\ $(_NL)\
 	_dir=\`tar tvf $(TESTSSL.src.tar) | awk '(1==NR){split(\$$NF,a,\"/\");print a[1]}'\` && \\ $(_NL)\
 	echo \"$(TESTSSL.src.sig)  $(TESTSSL.src.tar)\" \
-		| sha1sum -c -            && \\ $(_NL)\
+		| sha1sum -c -         && \\ $(_NL)\
 	tar xf $(TESTSSL.src.tar)      && \\ $(_NL)\
 	cd   \"\$$_dir\" && pwd && ls -l
 
@@ -726,6 +726,7 @@ TESTSSL.vm.build.install = \
 	$(call _TESTSSL.echo,"Install executables"); \\ $(_NL)\
 	pwd          && \\ $(_NL)\
 	mkdir $(TESTSSL.vm.home)/bin/             && \\ $(_NL)\
+	mkdir $(TESTSSL.vm.home)/etc/             && \\ $(_NL)\
 	$(TESTSSL.vm.build.install.$(TESTSSL.vm.type))
 
 TESTSSL.vm.build.testing = \
@@ -755,7 +756,7 @@ COPY	$(TESTSSL.host.copy)/$(TESTSSL.src.tar) $(TESTSSL.vm.tmp)/ $(_NL)\
 COPY	$(TESTSSL.host.copy)/testssl-cert.pem   $(TESTSSL.vm.tmp)/ $(_NL)\
 COPY	$(TESTSSL.host.copy)/testssl-key.pem    $(TESTSSL.vm.tmp)/ $(_NL)\
         $(_NL)\
-LABEL	VERSION='1.19'                           $(_NL)\
+LABEL	VERSION='1.20'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(TESTSSL.vm.from) for testing'$(_NL)\
         $(_NL)\
 RUN	\\  $(TESTSSL.vm.build.adduser)         $(_NL)\
@@ -772,7 +773,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.server) $(_NL)\
 FROM	testos AS $(*)             $(_NL)\
         $(_NL)\
 LABEL	$(TESTSSL.default.label)='$(TESTSSL.vm.type) $(TESTSSL.vm.version)' $(_NL)\
-LABEL	VERSION='1.19'                           $(_NL)\
+LABEL	VERSION='1.20'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(*) for testing'$(_NL)\
 LABEL	USAGE_TCP='docker run --rm $(TESTSSL.vm.run.env) $(TESTSSL.vm.run.args) -p $(TESTSSL.host.port):$(TESTSSL.vm.port) $(_tag)' $(_NL)\
 ENV	TERM            xterm                   $(_NL)\
