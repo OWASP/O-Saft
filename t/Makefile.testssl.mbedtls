@@ -12,20 +12,20 @@
 #?      include Makefile.testssl.mbedtls
 #?
 #? VERSION
-#?      @(#) Ø:s¾U 1.7 24/06/09 01:20:13
+#?      @(#) Makefile.testssl.mbedtls 1.8 24/06/09 01:37:13
 #?
 #? AUTHOR
 #?      04-jun-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl.mbedtls   := 1.7
+_SID.testssl.mbedtls   := 1.8
 #_MYSELF                := $(firstword $(MAKEFILE_LIST))
 
 #_____________________________________________________________________________
 #_____________________________________ global variables for image and build __|
 
-mbedtls-%:      TESTSSL.vm.version      = 1.7
+mbedtls-%:      TESTSSL.vm.version      = Makefile.testssl.mbedtls 1.8
 mbedtls-%:      TESTSSL.vm.type         = mbedtls
 mbedtls-%:      TESTSSL.vm.port         = 4433
 mbedtls-%:      TESTSSL.vm.client       = ssl_client
