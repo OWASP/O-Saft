@@ -147,6 +147,12 @@
 #?      Keep in mind that docker's "start" and "stop" have different behaviour.
 #?
 #? LIMITATIONS
+#?   Filenames, image names
+#?      Due to limitations of  Docker which only accepts lowercase image names,
+#?      the filename of the tarball and the value of  TESTSSL.vm.type  must all
+#?      be lowercase.  Reason is that  TESTSSL.vm.type  is used to compute some
+#?      more configuration values for docker.
+#?
 #?   %-run
 #?      There is no indication (status code, error message) when the configured
 #?      server fails to start. The only possibility is to check with:
@@ -164,6 +170,11 @@
 #?   Ports
 #?      All port numbers used for SSL-servers must be >1024  because the docker
 #?      image runs as a dedicated user and not as user root.
+#?
+#?   TESTSSL.vm.run.env, TESTSSL.vm.run.args
+#?      These variables cannot be set on command-line because they are added to
+#?      TESTSSL.args automatically (which may break some docker commands).
+#?      Workaround: set variable in any Makefile.testssl* .
 #?
 #?   Version numbers
 #?      Many targetnames use a version number of the server to be build.  These 
@@ -207,6 +218,8 @@
 #       List of feature, likes, etc. to be done in future:
 #
 #       6/2024
+#       * bug: remove CLI args TESTSSL.vm.run.env and TESTSSL.vm.run.args from
+#         general TESTSSL.args
 #       * correct and improve values for USAGE_*
 #       * provide variable TESTSSL.src.install as list of files to be installed
 #         (simplifies macro TESTSSL.vm.build.install.VENDOR )
@@ -305,7 +318,7 @@
 #           Bourne shell
 #
 #       As usual in such cases, most meta characters (including spaces) have to
-#       be handled special. Most important chachters to take care are: \ $ # "
+#       be handled special. Most important characters to take care are: \ $ # "
 #
 #       Ugly example in some variables, we use at end of line:
 #           \\ $(_NL)\
@@ -315,6 +328,11 @@
 #       needed before the \\012 (which is $(_NL)). Without the unexpected space
 #       it would evaluate to (without the quotes):
 #           "\012"
+#
+#       Most variables used in defines, targets and variables are those of this 
+#       Makefile itself. Known exceptions are:
+#           $PATH   - environment variable in the image
+#           $1 $NF  - variables in awk scripts
 #
 #    Naming scheme in this file
 #       _TESTSSL.*      - our (GNU Make) defines (code or text snippets)
@@ -426,14 +444,14 @@
 #           du -h /|awk -F/ '(2==NF){print}'
 #?
 #? VERSION
-#?      @(#) üSJ\ 1.17 24/06/07 16:47:00
+#?      @(#) Ë®Ëd 1.18 24/06/08 13:39:05
 #?
 #? AUTHOR
 #?      24-mai-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl       := 1.17
+_SID.testssl       := 1.18
 _MYSELF            := $(firstword $(MAKEFILE_LIST))
 
 # NOTE: include must be done after our variable and target definitions
@@ -722,18 +740,21 @@ TESTSSL.vm.build.cleanup = \
 	$(call _TESTSSL.echo,"Cleanup")            ; \\ $(_NL)\
 	apk  del --purge $(TESTSSL.src.packages)   ; \\ $(_NL)\
 	rm   -rf $(TESTSSL.vm.tmp) && echo "\# $(TESTSSL.vm.tmp) removed." ; \\ $(_NL)\
-	$(TESTSSL.vm.build.cleanup.$(TESTSSL.vm.type))
+	$(TESTSSL.vm.build.cleanup.$(TESTSSL.vm.type)) ; \\ $(_NL)\
+	true
 
 # generated context does not use "buildargs", anything is hardcoded
-# COPY only copies the tarball; take care: $PATH is that from the image!
+# COPY only copies tarball and certs; take care: $PATH is that from the image!
 TESTSSL.vm.build.context = $(_NL)\
 $(_TESTSSL.vm.get._tag) $(_NL)\
 $(call _TESTSSL.gen-by,TESTSSL.vm.build.context)$(_NL)\
 \# syntax=docker/dockerfile:1 $(_NL)\
 FROM	$(TESTSSL.vm.from) AS testos            $(_NL)\
 COPY	$(TESTSSL.host.copy)/$(TESTSSL.src.tar) $(TESTSSL.vm.tmp)/ $(_NL)\
+COPY	$(TESTSSL.host.copy)/testssl-cert.pem   $(TESTSSL.vm.tmp)/ $(_NL)\
+COPY	$(TESTSSL.host.copy)/testssl-key.pem    $(TESTSSL.vm.tmp)/ $(_NL)\
         $(_NL)\
-LABEL	VERSION='1.17'                           $(_NL)\
+LABEL	VERSION='1.18'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(TESTSSL.vm.from) for testing'$(_NL)\
         $(_NL)\
 RUN	\\  $(TESTSSL.vm.build.adduser)         $(_NL)\
@@ -750,7 +771,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.server) $(_NL)\
 FROM	testos AS $(*)             $(_NL)\
         $(_NL)\
 LABEL	$(TESTSSL.default.label)='$(TESTSSL.vm.type) $(TESTSSL.vm.version)' $(_NL)\
-LABEL	VERSION='1.17'                           $(_NL)\
+LABEL	VERSION='1.18'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(*) for testing'$(_NL)\
 LABEL	USAGE_TCP='docker run --rm $(TESTSSL.vm.run.env) $(TESTSSL.vm.run.args) -p $(TESTSSL.host.port):$(TESTSSL.vm.port) $(_tag)' $(_NL)\
 ENV	TERM            xterm                   $(_NL)\
@@ -813,7 +834,8 @@ HELP-%-build-v= same as %-build but use shell's \"set -x\" for verbose output
 	@$(_TESTSSL.hint)
 	@$(call _TESTSSL.echo,"done.")
 
-HELP-%-runtls = start docker image '%' listening for  TLS
+HELP-%-run    = start docker image '%' listening for  TLS
+# TODO HELP-%-runtls = start docker image '%' listening for  TLS
 # TODO HELP-%-rundtls= start docker image '%' listening for DTLS
 %-run:
 	$(_TESTSSL.vm.get._tag)
