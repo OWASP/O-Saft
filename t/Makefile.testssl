@@ -495,14 +495,14 @@
 #           du -h /|awk -F/ '(2==NF){print}'
 #?
 #? VERSION
-#?      @(#) ¢Vxa 1.23 24/06/09 00:22:28
+#?      @(#) ÃÎY 1.24 24/06/09 00:55:34
 #?
 #? AUTHOR
 #?      24-mai-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl       := 1.23
+_SID.testssl       := 1.24
 _MYSELF            := $(firstword $(MAKEFILE_LIST))
 
 # NOTE: include must be done after our variable and target definitions
@@ -589,7 +589,6 @@ TESTSSL.vars.ALL  =\
     TESTSSL.vm.server.tls   - server program to be started for TLS      $(_NL)\
     TESTSSL.vm.server.args  - additional arguments to start server      $(_NL)\
     TESTSSL.vm.server.help  - server program's argument to show its help$(_NL)\
-    TESTSSL.src.suffix      - filename suffix of tarball                $(_NL)\
     TESTSSL.src.tar         - filename of tarball (without path)        $(_NL)\
     TESTSSL.src.sig         - SHA1 signature of tarball                 $(_NL)\
     TESTSSL.src.pgp         - PGP signature of tarball (NOT YET IMPLEMENTED)$(_NL)\
@@ -654,23 +653,22 @@ TESTSSL.vm.server.dtls  =
 TESTSSL.vm.server.tls   =
 TESTSSL.vm.server.args  =
 TESTSSL.vm.server.help  =
-TESTSSL.src.suffix      = .tar.gz
 TESTSSL.src.tar        ?=  testssl.tgz
-TESTSSL.src.url        ?=  http://demo/testssl.tgz
 TESTSSL.src.sig        ?=  undef
-#       this filename checksum will be computed for %-build targets only
-#       (due to GNU Make's limitations with $*)
+TESTSSL.src.pgp        ?=  undef
+TESTSSL.src.url        ?=  http://demo/testssl.tgz
+TESTSSL.src.git        ?=  http://demo/testssl.git
 TESTSSL.src.packages    = $(TESTSSL.default.apt)
 TESTSSL.src.configure   = --prefix=$(TESTSSL.vm.home)
 TESTSSL.src.install     =
 
 # now get name and checksum of tarball, needed for %-build target only
-%-build-n:            TESTSSL.src.tar       = $(*)$(TESTSSL.src.suffix)
-%-build:              TESTSSL.src.tar       = $(*)$(TESTSSL.src.suffix)
-%-build-n:            TESTSSL.src.url       = TODO
-%-build:              TESTSSL.src.url       = TODO
-%-build-n:            TESTSSL.src.sig       = $(TESTSSL.src.sig.$(*))
-%-build:              TESTSSL.src.sig       = $(TESTSSL.src.sig.$(*))
+%-build-n:      TESTSSL.src.tar = $(TESTSSL.src.tar.$(*))
+%-build:        TESTSSL.src.tar = $(TESTSSL.src.tar.$(*))
+%-build-n:      TESTSSL.src.url = $(TESTSSL.src.url.$(*))
+%-build:        TESTSSL.src.url = $(TESTSSL.src.url.$(*))
+%-build-n:      TESTSSL.src.sig = $(TESTSSL.src.sig.$(*))
+%-build:        TESTSSL.src.sig = $(TESTSSL.src.sig.$(*))
 
 # settings done automatically (but can be from with make environment also)
 TESTSSL.src.dockerfile  = $(TESTSSL.vm.tmp)/Dockerfile.$(TESTSSL.vm.type)
@@ -685,10 +683,10 @@ TESTSSL.vm.server       = $(TESTSSL.vm.server.tls)
 # distingush client and server
 # note that suffix is .client instead of -client because latter would tricker %-client
 # this may change in future
-%-help.client:        TESTSSL.vm.help   = $(TESTSSL.vm.client)
-%-help.client:        TESTSSL.args      = $(TESTSSL.vm.client.help)
-%-help.server:        TESTSSL.vm.help   = $(TESTSSL.vm.server)
-%-help.server:        TESTSSL.args      = $(TESTSSL.vm.server.help)
+%-help.client:  TESTSSL.vm.help = $(TESTSSL.vm.client)
+%-help.client:  TESTSSL.args    = $(TESTSSL.vm.client.help)
+%-help.server:  TESTSSL.vm.help = $(TESTSSL.vm.server)
+%-help.server:  TESTSSL.args    = $(TESTSSL.vm.server.help)
 
 EXE.docker         := docker
 EXE.podman         := podman
@@ -822,7 +820,7 @@ COPY	$(TESTSSL.host.copy)/$(TESTSSL.src.tar) $(TESTSSL.vm.tmp)/ $(_NL)\
 COPY	$(TESTSSL.host.copy)/testssl-cert.pem   $(TESTSSL.vm.tmp)/ $(_NL)\
 COPY	$(TESTSSL.host.copy)/testssl-key.pem    $(TESTSSL.vm.tmp)/ $(_NL)\
         $(_NL)\
-LABEL	VERSION='1.23'                           $(_NL)\
+LABEL	VERSION='1.24'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(TESTSSL.vm.from) for testing'$(_NL)\
         $(_NL)\
 RUN	\\  $(TESTSSL.vm.build.adduser)         $(_NL)\
@@ -839,7 +837,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.server) $(_NL)\
 FROM	testos AS $(*)             $(_NL)\
         $(_NL)\
 LABEL	$(TESTSSL.default.label)='$(TESTSSL.vm.type) $(TESTSSL.vm.version)' $(_NL)\
-LABEL	VERSION='1.23'                           $(_NL)\
+LABEL	VERSION='1.24'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(*) for testing'$(_NL)\
 LABEL	USAGE_TCP='docker run --rm $(TESTSSL.vm.run.env) $(TESTSSL.vm.run.args) -p $(TESTSSL.host.port):$(TESTSSL.vm.port) $(_tag)' $(_NL)\
 ENV	TERM            xterm                   $(_NL)\
@@ -1002,16 +1000,14 @@ define _TESTSSL.get-sigs
     # SHA1 checksum                             tarball$(_NL)\
     #------------------------------------------+---------------------$(_NL)\
     $(foreach _t,$(filter $1%,$(sort $(.VARIABLES))),\
-        $(subst $1,,$($(_t))  $(_t))$(TESTSSL.src.suffix)$(_NL)\
+        $(subst $1,,$($(_t))  $(_t))$(_NL)\
     )\
     #-----------------------------------------+---------------------$(_NL)\
-    # name of tarball may be incorrect.
+    # name of tarball incorrect.
 endef
+# TODO $(eval _var=TESTSSL.src.tar.$(_t))   # <== funktioniert nicht
 examples:
 	@echo "$(call _TESTSSL.get-sigs,TESTSSL.src.sig.)"
-# TODO: $TESTSSL.src.suffix is the default, may be different for some tarballs
-# TODO: prepend tarball by $TESTSSL.host.copy/ ; then output checked like:
-#       make examples | sha1sum -c -
 
 #_____________________________________________________________________________
 #____________________________________________________________ alias targets __|
