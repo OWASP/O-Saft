@@ -268,12 +268,10 @@
 #       6/2024
 #       * bug: the image name and tag is computed from the target
 #         this requires, that the target contain one - only
-#       * bug: remove CLI args TESTSSL.vm.run.env and TESTSSL.vm.run.args from
 #       * bug: "set -x" not working properly in TESTSSL.vm.build.package
+#       * bug: remove CLI args TESTSSL.vm.run.env and TESTSSL.vm.run.args from
 #         general TESTSSL.args
 #       * correct and improve values for USAGE_*
-#       * provide variable TESTSSL.src.install as list of files to be installed
-#         (simplifies macro TESTSSL.vm.build.install.VENDOR )
 #       * build proper server.pem and install it (openssl)
 #       * provide variable TESTSSL.vm.server.cert (for building sef-signed cert)
 #       * implement general mechanism to use custom Makefile.testssl.VENDOR
@@ -300,6 +298,9 @@
 #
 #       # issue fixed   _SID    description
 #       #------+-------+-------+-----------------------------------------------
+#        6/2024 6/2024  1.23    provide variable TESTSSL.src.install as list of
+#                               files to be installed (simplifies macro
+#                               TESTSSL.vm.build.install.* )
 #        6/2024 6/2024  1.11    remove description of variables in section CONFIGURATION
 #                               use TESTSSL.vars.ALL in help target
 #        6/2024 6/2024  1.10    provide variable TESTSSL.vm.server.env (for run, exec)
@@ -426,12 +427,19 @@
 #         no avoid history persistence, for example with:
 #           echo "HISTFILESIZE=1" >> /etc/profile
 #
+#    Certificates
+#       Some servers requiere a valid  certificate and a valid key file.  These
+#       should be generated with the tool itself (if it operates in  client and
+#       server mode). Both files are installed in  TESTSSL.vm.home .
+#       For various reasons generation of the files fail. Therfore defaults are
+#       provided which then will be installed instead. 
+#
 #    Checksum
 #       The general method for testing checksums is:
 #           echo "sha-sum-here name-of-file-to-be-checked" | sha1sum -c -
 #       Depending on the platform and/or version of sha1sum,  there must be one
 #       or two blanks  between the checksum left, and the filename right.  Some
-#       sha1sum  allow one or more blanks. Hence we use exactly two blanks.
+#       sha1sum allow one or more blanks. Hence we use exactly two blanks.
 #
 #    Comments, Documentation
 #       All documentation for the user is shown with the target help.  In fact,
@@ -495,14 +503,14 @@
 #           du -h /|awk -F/ '(2==NF){print}'
 #?
 #? VERSION
-#?      @(#) ÃÎY 1.24 24/06/09 00:55:34
+#?      @(#) ı!O^ 1.25 24/06/09 01:18:25
 #?
 #? AUTHOR
 #?      24-mai-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl       := 1.24
+_SID.testssl       := 1.25
 _MYSELF            := $(firstword $(MAKEFILE_LIST))
 
 # NOTE: include must be done after our variable and target definitions
@@ -590,7 +598,8 @@ TESTSSL.vars.ALL  =\
     TESTSSL.vm.server.args  - additional arguments to start server      $(_NL)\
     TESTSSL.vm.server.help  - server program's argument to show its help$(_NL)\
     TESTSSL.src.tar         - filename of tarball (without path)        $(_NL)\
-    TESTSSL.src.sig         - SHA1 signature of tarball                 $(_NL)\
+    TESTSSL.src.sig         - (reserve for future use)                  $(_NL)\
+    TESTSSL.src.sha         - SHA1 signature of tarball                 $(_NL)\
     TESTSSL.src.pgp         - PGP signature of tarball (NOT YET IMPLEMENTED)$(_NL)\
     TESTSSL.src.url         - URL of tarball (NOT YET IMPLEMENTED)      $(_NL)\
     TESTSSL.src.git         - git-URL of tarball (NOT YET IMPLEMENTED)  $(_NL)\
@@ -655,6 +664,7 @@ TESTSSL.vm.server.args  =
 TESTSSL.vm.server.help  =
 TESTSSL.src.tar        ?=  testssl.tgz
 TESTSSL.src.sig        ?=  undef
+TESTSSL.src.sha        ?=  undef
 TESTSSL.src.pgp        ?=  undef
 TESTSSL.src.url        ?=  http://demo/testssl.tgz
 TESTSSL.src.git        ?=  http://demo/testssl.git
@@ -669,6 +679,8 @@ TESTSSL.src.install     =
 %-build:        TESTSSL.src.url = $(TESTSSL.src.url.$(*))
 %-build-n:      TESTSSL.src.sig = $(TESTSSL.src.sig.$(*))
 %-build:        TESTSSL.src.sig = $(TESTSSL.src.sig.$(*))
+%-build-n:      TESTSSL.src.sha = $(TESTSSL.src.sha.$(*))
+%-build:        TESTSSL.src.sha = $(TESTSSL.src.sha.$(*))
 
 # settings done automatically (but can be from with make environment also)
 TESTSSL.src.dockerfile  = $(TESTSSL.vm.tmp)/Dockerfile.$(TESTSSL.vm.type)
@@ -768,7 +780,7 @@ TESTSSL.vm.build.getpack = \
 	$(call _TESTSSL.echo,"Extract tool source"); \\ $(_NL)\
 	cd $(TESTSSL.vm.tmp)           && \\ $(_NL)\
 	_dir=\`tar tvf $(TESTSSL.src.tar) | awk '(1==NR){split(\$$NF,a,\"/\");print a[1]}'\` && \\ $(_NL)\
-	echo \"$(TESTSSL.src.sig)  $(TESTSSL.src.tar)\" \
+	echo \"$(TESTSSL.src.sha)  $(TESTSSL.src.tar)\" \
 		| sha1sum -c -         && \\ $(_NL)\
 	tar xf $(TESTSSL.src.tar)      && \\ $(_NL)\
 	cd   \"\$$_dir\" && pwd && ls -l
@@ -820,7 +832,7 @@ COPY	$(TESTSSL.host.copy)/$(TESTSSL.src.tar) $(TESTSSL.vm.tmp)/ $(_NL)\
 COPY	$(TESTSSL.host.copy)/testssl-cert.pem   $(TESTSSL.vm.tmp)/ $(_NL)\
 COPY	$(TESTSSL.host.copy)/testssl-key.pem    $(TESTSSL.vm.tmp)/ $(_NL)\
         $(_NL)\
-LABEL	VERSION='1.24'                           $(_NL)\
+LABEL	VERSION='1.25'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(TESTSSL.vm.from) for testing'$(_NL)\
         $(_NL)\
 RUN	\\  $(TESTSSL.vm.build.adduser)         $(_NL)\
@@ -837,7 +849,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.server) $(_NL)\
 FROM	testos AS $(*)             $(_NL)\
         $(_NL)\
 LABEL	$(TESTSSL.default.label)='$(TESTSSL.vm.type) $(TESTSSL.vm.version)' $(_NL)\
-LABEL	VERSION='1.24'                           $(_NL)\
+LABEL	VERSION='1.25'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(*) for testing'$(_NL)\
 LABEL	USAGE_TCP='docker run --rm $(TESTSSL.vm.run.env) $(TESTSSL.vm.run.args) -p $(TESTSSL.host.port):$(TESTSSL.vm.port) $(_tag)' $(_NL)\
 ENV	TERM            xterm                   $(_NL)\
