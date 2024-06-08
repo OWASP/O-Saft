@@ -5,57 +5,60 @@
 #?
 #? DESCRIPTION
 #?      This Makefile contains addition settings for Makefile.testssl.
-#?      For a detailled description, please see there.
+#?      For a detailed description, please see there or use:
+#?          make -f Makefile.testssl help
 #?
 #? SYNOPSIS
 #?      include Makefile.testssl.botan
 #?
 #? VERSION
-#?      @(#) ÂÓW 1.2 24/06/08 13:50:55
+#?      @(#)  2¨U 1.3 24/06/09 00:23:28
 #?
 #? AUTHOR
 #?      04-jun-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl.botan  := 1.2
-#_MYSELF            := $(firstword $(MAKEFILE_LIST))
+_SID.testssl.botan     := 1.3
+#_MYSELF                := $(firstword $(MAKEFILE_LIST))
 
 #_____________________________________________________________________________
-#________________________________________________________________ variables __|
+#_____________________________________ global variables for image and build __|
 
-# for description of available variables please see: make vars
+botan-%:        TESTSSL.vm.version      = 1.3
+botan-%:        TESTSSL.vm.type         = botan
+botan-%:        TESTSSL.vm.port         = 3443
+botan-%:        TESTSSL.vm.client       = botan tls_client
+botan-%:        TESTSSL.vm.client.help  = help
+botan-%:        TESTSSL.vm.server.help  = tls_server --help
+botan-%:        TESTSSL.vm.server.dtls  = $(TESTSSL.vm.server.tls) $(TESTSSL.vm.server.args)
+botan-%:        TESTSSL.vm.server.tls   = botan
+botan-%:        TESTSSL.vm.server.args  = tls_server $(TESTSSL.vm.home)/etc/cert.pem $(TESTSSL.vm.home)/etc/key.pem --port=$(TESTSSL.vm.port)
+#botan-%:        TESTSSL.vm.run.args     = --network=host
+botan-%:        TESTSSL.src.packages    = $(TESTSSL.default.apk) python3 g++
+botan-%:        TESTSSL.src.configure  += $(TESTSSL.src.configure.botan)
+botan-%:        TESTSSL.src.install    += $(TESTSSL.src.install.botan)
+botan-%:        TESTSSL.src.suffix      = .tar.xz
 
-# SHA1 checksums for some tarballs (unique variable names here):
+#_____________________________________________________________________________
+#__________________________________________ variables for sources and build __|
+
+TESTSSL.src.tar.botan-3.4.0     = botan-3.4.0.tar.xz
 TESTSSL.src.sig.botan-3.4.0     = a3e039f019391b0363a38c07044bd92f9ca360cb
-TESTSSL.src.tarball.botan       = botan-3.4.0.tar.xz
+TESTSSL.src.git.botan-3.4.0     = 
+TESTSSL.src.url.botan-3.4.0     = https://botan.randombit.net/releases/Botan-3.4.0.tar.xz
 
-# TESTSSL.src.configure = --prefix=$(TESTSSL.home)   # default setting
+# define settings for "make build install"; they are used herein only
 TESTSSL.src.configure.botan     =
+TESTSSL.src.install.botan       = botan botan-test libbotan-*
 
-# define setting per vendor (type) of SSL-/TLS-server (use vendor's default)
-# variables can be set absolute with = or added to default setting with +=
-# should depend on a unique target, otherwise they become global defaults
-botan-%:       TESTSSL.src.packages  = $(TESTSSL.default.apk) python3 g++
-botan-%:       TESTSSL.src.configure += $(TESTSSL.src.configure.botan)
-botan-%:       TESTSSL.src.suffix    = .tar.xz
-botan-%:       TESTSSL.vm.version    = 1.2
-botan-%:       TESTSSL.vm.type       = botan
-botan-%:       TESTSSL.vm.port       = 3443
-botan-%:       TESTSSL.vm.client     = botan tls_client
-botan-%:       TESTSSL.vm.client.help= help
-botan-%:       TESTSSL.vm.server.help= tls_server --help
-botan-%:       TESTSSL.vm.server.dtls= $(TESTSSL.vm.server.tls) $(TESTSSL.vm.server.args)
-botan-%:       TESTSSL.vm.server.tls = botan
-botan-%:       TESTSSL.vm.server.args= tls_server $(TESTSSL.vm.home)/etc/cert.pem $(TESTSSL.vm.home)/etc/key.pem --port=$(TESTSSL.vm.port)
-#botan-%:       TESTSSL.vm.run.args   = --network=host
+#_____________________________________________________________________________
+#______________________________________ variables with commands for targets __|
 
 TESTSSL.vm.build.compile.botan  = \
 	test -x ./autogen.sh && ./autogen.sh || true && \\ $(_NL)\
 	./configure.py $(TESTSSL.src.configure)      && \\ $(_NL)\
 	make
-
-TESTSSL.src.install.botan       = botan botan-test libbotan-*
 
 # TODO generate cert by botan (see below) does not work, hence defaults are used
 TESTSSL.vm.build.install.botan  = \
@@ -75,7 +78,8 @@ TESTSSL.vm.build.testing.botan  = \
 
 # botan depends on libstdc++.so.6 libgcc_s.so.1 which must be preserved
 # but was removed with g++, hence need to add again
-TESTSSL.vm.build.cleanup.botan  = apk  add --no-cache libstdc++
+TESTSSL.vm.build.cleanup.botan  = \
+	apk  add --no-cache libstdc++
 
 #_____________________________________________________________________________
 #________________________________________ private targets, not fully tested __|
