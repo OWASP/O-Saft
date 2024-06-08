@@ -12,20 +12,20 @@
 #?      include Makefile.testssl.wolfssl
 #?
 #? VERSION
-#?      @(#) î˜ùóÂU 1.6 24/06/09 00:25:12
+#?      @(#) ∞¨V€V 1.7 24/06/09 00:54:54
 #?
 #? AUTHOR
 #?      04-jun-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl.wolfssl   := 1.6
+_SID.testssl.wolfssl   := 1.7
 #_MYSELF                := $(firstword $(MAKEFILE_LIST))
 
 #_____________________________________________________________________________
 #_____________________________________ global variables for image and build __|
 
-wolfssl-%:      TESTSSL.vm.version      = 1.6
+wolfssl-%:      TESTSSL.vm.version      = 1.7
 wolfssl-%:      TESTSSL.vm.type         = wolfssl
 wolfssl-%:      TESTSSL.vm.port         = 11111
 wolfssl-%:      TESTSSL.vm.client       = client
@@ -48,11 +48,6 @@ wolfssl-%:      TESTSSL.vm.run.args     = --network=host
 wolfssl-%:      TESTSSL.src.packages    = $(TESTSSL.default.apk)
 wolfssl-%:      TESTSSL.src.configure  += $(TESTSSL.src.configure.wolfssl)
 wolfssl-%:      TESTSSL.src.install    += $(TESTSSL.src.install.wolfssl)
-
-# wolfssl's tarball name have differnent suffix
-wolfssl-%-build-n:  TESTSSL.src.suffix  = -stable.tar.gz
-wolfssl-%-build-v:  TESTSSL.src.suffix  = -stable.tar.gz
-wolfssl-%-build:    TESTSSL.src.suffix  = -stable.tar.gz
 
 #_____________________________________________________________________________
 #__________________________________________ variables for sources and build __|
