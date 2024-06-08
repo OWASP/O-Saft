@@ -12,20 +12,20 @@
 #?      include Makefile.testssl.botan
 #?
 #? VERSION
-#?      @(#) x≈¿b 1.4 24/06/09 00:53:51
+#?      @(#) 9ª\ 1.5 24/06/09 01:20:53
 #?
 #? AUTHOR
 #?      04-jun-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl.botan     := 1.4
+_SID.testssl.botan     := 1.5
 #_MYSELF                := $(firstword $(MAKEFILE_LIST))
 
 #_____________________________________________________________________________
 #_____________________________________ global variables for image and build __|
 
-botan-%:        TESTSSL.vm.version      = 1.4
+botan-%:        TESTSSL.vm.version      = 1.5
 botan-%:        TESTSSL.vm.type         = botan
 botan-%:        TESTSSL.vm.port         = 3443
 botan-%:        TESTSSL.vm.client       = botan tls_client
@@ -43,7 +43,7 @@ botan-%:        TESTSSL.src.install    += $(TESTSSL.src.install.botan)
 #__________________________________________ variables for sources and build __|
 
 TESTSSL.src.tar.botan-3.4.0     = botan-3.4.0.tar.xz
-TESTSSL.src.sig.botan-3.4.0     = a3e039f019391b0363a38c07044bd92f9ca360cb
+TESTSSL.src.sha.botan-3.4.0     = a3e039f019391b0363a38c07044bd92f9ca360cb
 TESTSSL.src.git.botan-3.4.0     = 
 TESTSSL.src.url.botan-3.4.0     = https://botan.randombit.net/releases/Botan-3.4.0.tar.xz
 
