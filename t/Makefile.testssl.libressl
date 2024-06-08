@@ -5,57 +5,68 @@
 #?
 #? DESCRIPTION
 #?      This Makefile contains addition settings for Makefile.testssl.
-#?      For a detailled description, please see there.
+#?      For a detailed description, please see there or use:
+#?          make -f Makefile.testssl help
 #?
 #? SYNOPSIS
 #?      include Makefile.testssl.libressl
 #?
 #? VERSION
-#?      @(#) ÄRã_ 1.4 24/06/08 14:03:33
+#?      @(#) f&¶ä'V 1.5 24/06/09 00:24:24
 #?
 #? AUTHOR
 #?      04-jun-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl.libressl  := 1.4
+_SID.testssl.libressl  := 1.5
 #_MYSELF                := $(firstword $(MAKEFILE_LIST))
 
 #_____________________________________________________________________________
-#________________________________________________________________ variables __|
+#_____________________________________ global variables for image and build __|
 
-# for description of available variables please see: make vars
+libressl-%:     TESTSSL.vm.version      = 1.5
+libressl-%:     TESTSSL.vm.type         = libressl
+libressl-%:     TESTSSL.vm.port         = 5443
+libressl-%:     TESTSSL.vm.client       = openssl
+libressl-%:     TESTSSL.vm.client.help  = s_client help
+libressl-%:     TESTSSL.vm.server.help  = s_server help
+libressl-%:     TESTSSL.vm.server.dtls  = openssl s_server -dtls -key $(TESTSSL.vm.home)/etc/key.pem -cert $(TESTSSL.vm.home)/etc/cert.pem
+libressl-%:     TESTSSL.vm.server.tls   = openssl
+libressl-%:     TESTSSL.vm.server.args  = s_server -accept $(TESTSSL.vm.port) -WWW -www -key $(TESTSSL.vm.home)/etc/key.pem -cert $(TESTSSL.vm.home)/etc/cert.pem
+# TODO: s_server -servername $(TESTSSL.vm.hostname)
+# TODO: s_server -tls1_2 -tls1_3  # are both together possible?
+libressl-%:     TESTSSL.src.packages    = $(TESTSSL.default.apk)
+libressl-%:     TESTSSL.src.configure  += $(TESTSSL.src.configure.libressl)
+libressl-%:     TESTSSL.src.install    += $(TESTSSL.src.install.libressl)
 
-# SHA1 checksums for some tarballs:
-TESTSSL.src.sig.libressl-3.8.3  = 9d39cd629255863689a5b9caab7b96f898119edf
-TESTSSL.src.sig.libressl-3.8.4  = 87fa0a43cf651e2ad58a56745fe9a486bbcddad2
+#_____________________________________________________________________________
+#__________________________________________ variables for sources and build __|
+
+TESTSSL.src.tar.libressl-3.9.2  = libressl-3.9.2.tar.gz
 TESTSSL.src.sig.libressl-3.9.2  = e2397fd72dd3d213985a6309cd75de5c945bd035
+TESTSSL.src.pgp.libressl-3.9.2  =
+TESTSSL.src.git.libressl-3.9.2  = 
+TESTSSL.src.url.libressl-3.9.2  = https://github.com/libressl/portable/releases/download/v3.9.2/libressl-3.9.2.tar.gz
 
+TESTSSL.src.tar.libressl-3.8.4  = libressl-3.8.4.tar.gz
+TESTSSL.src.sig.libressl-3.8.4  = 87fa0a43cf651e2ad58a56745fe9a486bbcddad2
+TESTSSL.src.pgp.libressl-3.8.4  = https://github.com/libressl/portable/releases/download/v3.9.2/libressl-3.9.2.tar.gz.asc
+TESTSSL.src.git.libressl-3.8.4  = 
+TESTSSL.src.url.libressl-3.8.4  = https://github.com/libressl/portable/releases/download/v3.8.4/libressl-3.8.4.tar.gz
+#  .pgp. not yet used
+
+TESTSSL.src.tar.libressl-3.8.3  = libressl-3.8.3.tar.gz
+TESTSSL.src.sig.libressl-3.8.3  = 9d39cd629255863689a5b9caab7b96f898119edf
+TESTSSL.src.pgp.libressl-3.8.3  =
+TESTSSL.src.git.libressl-3.8.3  = 
+TESTSSL.src.url.libressl-3.8.3  = https://github.com/libressl/portable/releases/download/v3.8.3/libressl-3.8.3.tar.gz
+
+# define settings for "make build install"; they are used herein only
 TESTSSL.src.configure.libressl  =\
 	--enable-static --disable-option-checking --disable-tests --enable-nc
 
-# define setting per vendor (type) of SSL-/TLS-server (use vendor's default)
-libressl-%:           TESTSSL.vm.version    = 1.4
-libressl-%:           TESTSSL.vm.type       = libressl
-libressl-%:           TESTSSL.vm.port       = 5443
-libressl-%:           TESTSSL.src.packages = $(TESTSSL.default.apk)
-libressl-%:           TESTSSL.src.configure += $(TESTSSL.src.configure.libressl)
-libressl-%:           TESTSSL.vm.client     = openssl
-libressl-%:           TESTSSL.vm.client.help= s_client help
-libressl-%:           TESTSSL.vm.server.help= s_server help
-libressl-%:           TESTSSL.vm.server.dtls= openssl s_server -dtls -key $(TESTSSL.vm.home)/etc/key.pem -cert $(TESTSSL.vm.home)/etc/cert.pem
-libressl-%:           TESTSSL.vm.server.tls = openssl
-libressl-%:           TESTSSL.vm.server.args= s_server -accept $(TESTSSL.vm.port) -WWW -www -key $(TESTSSL.vm.home)/etc/key.pem -cert $(TESTSSL.vm.home)/etc/cert.pem
-# TODO: s_server -servername $(TESTSSL.vm.hostname)
-# TODO: s_server -tls1_2 -tls1_3  # are both together possible?
-
-# sometimes ./autogen.sh does not exist, call is if available only
-TESTSSL.vm.build.compile.libressl = \
-	test -x ./autogen.sh && ./autogen.sh || true && \\ $(_NL)\
-	./configure $(TESTSSL.src.configure)         && \\ $(_NL)\
-	make
-
-TESTSSL.src.install.libressl      = \
+TESTSSL.src.install.libressl    =\
 	apps/ocspcheck/ocspcheck \
 	apps/openssl/openssl     \
 	apps/nc/nc               \
@@ -65,6 +76,15 @@ TESTSSL.src.install.libressl      = \
 	tls/.libs/lib*.so*       \
 	crypto/.libs/lib*.a      \
 	crypto/.libs/lib*.so*
+
+#_____________________________________________________________________________
+#______________________________________ variables with commands for targets __|
+
+# sometimes ./autogen.sh does not exist, call is if available only
+TESTSSL.vm.build.compile.libressl = \
+	test -x ./autogen.sh && ./autogen.sh || true && \\ $(_NL)\
+	./configure $(TESTSSL.src.configure)         && \\ $(_NL)\
+	make
 
 # TODO: starting liberssl's openssl fails with following error:
 #    Error configuring OpenSSL
