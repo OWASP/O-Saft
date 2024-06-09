@@ -12,28 +12,28 @@
 #?      include Makefile.testssl.libressl
 #?
 #? VERSION
-#?      @(#) Makefile.testssl.libressl 1.7 24/06/09 01:39:16
+#?      @(#) Makefile.testssl.libressl 1.8 24/06/09 09:51:43
 #?
 #? AUTHOR
 #?      04-jun-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl.libressl  := 1.7
+_SID.testssl.libressl  := 1.8
 #_MYSELF                := $(firstword $(MAKEFILE_LIST))
 
 #_____________________________________________________________________________
 #_____________________________________ global variables for image and build __|
 
-libressl-%:     TESTSSL.vm.version      = Makefile.testssl.libressl 1.7
+libressl-%:     TESTSSL.vm.version      = Makefile.testssl.libressl 1.8
 libressl-%:     TESTSSL.vm.type         = libressl
 libressl-%:     TESTSSL.vm.port         = 5443
 libressl-%:     TESTSSL.vm.client       = openssl
 libressl-%:     TESTSSL.vm.client.help  = s_client help
 libressl-%:     TESTSSL.vm.server.help  = s_server help
-libressl-%:     TESTSSL.vm.server.dtls  = openssl s_server -dtls -key $(TESTSSL.vm.home)/etc/key.pem -cert $(TESTSSL.vm.home)/etc/cert.pem
+libressl-%:     TESTSSL.vm.server.dtls  = openssl s_server -dtls -key $(TESTSSL.vm.server.key) -cert $(TESTSSL.vm.server.cert)
 libressl-%:     TESTSSL.vm.server.tls   = openssl
-libressl-%:     TESTSSL.vm.server.args  = s_server -accept $(TESTSSL.vm.port) -WWW -www -key $(TESTSSL.vm.home)/etc/key.pem -cert $(TESTSSL.vm.home)/etc/cert.pem
+libressl-%:     TESTSSL.vm.server.args  = s_server -accept $(TESTSSL.vm.port) -WWW -www -key $(TESTSSL.vm.server.key) -cert $(TESTSSL.vm.server.cert)
 # TODO: s_server -servername $(TESTSSL.vm.hostname)
 # TODO: s_server -tls1_2 -tls1_3  # are both together possible?
 libressl-%:     TESTSSL.src.packages    = $(TESTSSL.default.apk)
@@ -93,15 +93,16 @@ TESTSSL.vm.build.compile.libressl = \
 #       module name:conf/conf_mod.c:196:module=providers
 # this happens even we've istalled openssl.cnf, but it seems to be incomplete
 # as workaround (6/2024) we use the environment variable OPENSSL_CONF  set to
-# the installed $(TESTSSL.vm.home)/etc/ssl/openssl.cnf
+# the installed $(TESTSSL.default.bin)/ssl/openssl.cnf
 # openssl seems to be happy with that
 TESTSSL.vm.build.install.libressl = \
-	mv $(TESTSSL.src.install.libressl) $(TESTSSL.vm.home)/bin/ && \\ $(_NL)\
-	mkdir -p $(TESTSSL.vm.home)/etc/ssl        && \\ $(_NL)\
-	mv openssl.cnf $(TESTSSL.vm.home)/etc/ssl  && \\ $(_NL)\
-	cd $(TESTSSL.vm.home)/etc/                 && \\ $(_NL)\
-	export OPENSSL_CONF=$(TESTSSL.vm.home)/etc/ssl/openssl.cnf && \\ $(_NL)\
-	$(TESTSSL.vm.home)/bin/openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -sha256 -days 3650 -nodes -subj "/C=DE/ST=stateless/L=here/O=TESTSSL/OU=none/CN=127.0.0.1"
+	mv $(TESTSSL.src.install.libressl) $(TESTSSL.default.bin)/ && \\ $(_NL)\
+	mv openssl.cnf    $(TESTSSL.default.bin)/    && \\ $(_NL)\
+	export OPENSSL_CONF=$(TESTSSL.default.bin)/openssl.cnf && \\ $(_NL)\
+	$(TESTSSL.default.bin)/openssl req -x509 -newkey rsa:4096 \\ $(_NL)\
+	    -keyout $(TESTSSL.vm.server.key) -out $(TESTSSL.vm.server.cert) \\ $(_NL)\
+	    -sha256 -days 3650 -nodes -subj \\ $(_NL)\
+	    "/C=DE/ST=stateless/L=here/O=TESTSSL/OU=none/CN=127.0.0.1"
 
 TESTSSL.vm.build.testing.libressl = \
 	echo -n '\# number of ciphers $(TESTSSL.vm.client)):' ; \\ $(_NL)\
