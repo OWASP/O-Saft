@@ -88,7 +88,14 @@
 #?          TESTSSL.vm.server.args  TESTSSL.vm.server.help
 #?
 #?      Optional variables (used in %-build-n only):
-#?          TESTSSL.src.configure   TESTSSL.src.install
+#?        TESTSSL.src.configure is preset to options for ./configure and should
+#?        be used like:
+#?          TESTSSL.src.configure += $(TESTSSL.src.configure.your-var)
+#?        It is finally used in TESTSSL.vm.build.compile.your-var .
+#?        TESTSSL.src.install is used in TESTSSL.vm.build.install.your-var .
+#?        If the preset values should not be used, set the variables like:
+#?          TESTSSL.src.configure  = $(TESTSSL.src.configure.your-var)
+#?          TESTSSL.src.install    = $(TESTSSL.src.install.your-var)
 #?
 #?      The existing Makefile.testssl.* contain following sections:
 #?
@@ -428,6 +435,40 @@
 #         no avoid history persistence, for example with:
 #           echo "HISTFILESIZE=1" >> /etc/profile
 #
+#    Build, compile
+#       The commands to build (make) the server are different for every type of
+#       server. Hence they are defined in the proper Makefile.testssl.*  in the
+#       the variables:
+#           TESTSSL.vm.build.compile.mytool
+#           TESTSSL.vm.build.install.mytool
+#           TESTSSL.vm.build.testing.mytool
+#           TESTSSL.vm.build.cleanup.mytool
+#       The commands in the variables are then called in the corresponding part
+#       of the %-build target herein.
+#
+#       Additionaly following variables are used:
+#           TESTSSL.src.configure
+#           TESTSSL.src.install
+#       For a usage-description, please see section  Makefile.testssl.*  above.
+#       TESTSSL.src.configure is intended to contain options for  ./configure .
+#       It's preset with following options: 
+#          --prefix=DIR --bindir=DIR --libdir=DIR --mandir=DIR --sysconfdir=DIR
+#       (where DIR is the installtion directory TESTSSL.default.bin).
+#
+#       LDFLAGS
+#       When linking the binaries, the RUNPATH variable should be set to DIR as
+#       it reduces the risk of missing other objects. Unfortunatelly there's no
+#       common option to do it with ./confugure, some have an option, others do
+#       not, some complain if unknown options are passed. A workaround for such
+#       is to set the environment variable LDFLAGS which is knwon by compilers:
+#           export LDFLAGS=-Wl,-rpath,$(TESTSSL.default.bin)
+#       If another variable is needed (for example EXTRA_LDFLAGS) or the option
+#       needs to be adapted, simply use such an "export ." line in the variable
+#           TESTSSL.vm.build.compile.mytool =
+#               export LDFLAGS='$Wl -rpath=$(TESTSSL.default.bin)'
+#               ...
+#       which then overwrite the global setting.
+#
 #    Certificates
 #       Some servers requiere a valid  certificate and a valid key file.  These
 #       should be generated with the tool itself (if it operates in  client and
@@ -511,14 +552,14 @@
 #       All files are installed in the same directory  TESTSSL.default.bin .
 #?
 #? VERSION
-#?      @(#) Makefile.testssl 1.28 24/06/09 10:06:22
+#?      @(#) Makefile.testssl 1.29 24/06/09 14:24:40
 #?
 #? AUTHOR
 #?      24-mai-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl       := 1.28
+_SID.testssl       := 1.29
 _MYSELF            := $(firstword $(MAKEFILE_LIST))
 
 # NOTE: include must be done after our variable and target definitions
@@ -680,7 +721,12 @@ TESTSSL.src.pgp        ?=  undef
 TESTSSL.src.url        ?=  undef
 TESTSSL.src.git        ?=  undef
 TESTSSL.src.packages    = $(TESTSSL.default.apt)
-TESTSSL.src.configure   = --prefix=$(TESTSSL.vm.home)
+TESTSSL.src.configure   = \
+		--prefix=$(TESTSSL.default.bin) \
+		--bindir=$(TESTSSL.default.bin) \
+		--libdir=$(TESTSSL.default.bin) \
+		--mandir=$(TESTSSL.default.bin) \
+		--sysconfdir=$(TESTSSL.default.bin)
 TESTSSL.src.install     =
 
 # now get name and checksum of tarball, needed for %-build target only
@@ -811,6 +857,7 @@ TESTSSL.vm.build.cleanup.$(TESTSSL.vm.type) ?= true
 TESTSSL.vm.build.compile = \
 	$(call _TESTSSL.echo,"Compile executables"); \\ $(_NL)\
 	pwd          && \\ $(_NL)\
+	export LDFLAGS=-Wl,-rpath,$(TESTSSL.default.bin) && \\ $(_NL)\
 	$(TESTSSL.vm.build.compile.$(TESTSSL.vm.type))
 
 TESTSSL.vm.build.install = \
@@ -822,8 +869,8 @@ TESTSSL.vm.build.install = \
 TESTSSL.vm.build.testing = \
 	$(call _TESTSSL.echo,"List installation")  ; \\ $(_NL)\
 	echo "PATH=\$$PATH"                        ; \\ $(_NL)\
-	cd       $(TESTSSL.default.bin)  ; pwd    ; \\ $(_NL)\
-	ls -l    $(TESTSSL.default.bin)           ; \\ $(_NL)\
+	cd       $(TESTSSL.default.bin)  ; pwd     ; \\ $(_NL)\
+	ls -l    $(TESTSSL.default.bin)            ; \\ $(_NL)\
 	$(TESTSSL.vm.build.testing.$(TESTSSL.vm.type)) ; \\ $(_NL)\
 	true
 
@@ -846,7 +893,7 @@ COPY	$(TESTSSL.host.copy)/$(TESTSSL.src.tar) $(TESTSSL.vm.tmp)/ $(_NL)\
 COPY	$(TESTSSL.host.copy)/testssl-cert.pem   $(TESTSSL.vm.tmp)/ $(_NL)\
 COPY	$(TESTSSL.host.copy)/testssl-key.pem    $(TESTSSL.vm.tmp)/ $(_NL)\
         $(_NL)\
-LABEL	$(TESTSSL.default.label)='generated by Makefile.testssl 1.28'$(_NL)\
+LABEL	$(TESTSSL.default.label)='generated by Makefile.testssl 1.29'$(_NL)\
 LABEL	DESCRIPTION='docker image with $(TESTSSL.vm.from) for testing'$(_NL)\
         $(_NL)\
 RUN	\\  $(TESTSSL.vm.build.adduser)         $(_NL)\
@@ -862,7 +909,7 @@ TESTSSL.vm.build.server = $(_NL)\
 $(call _TESTSSL.gen-by,TESTSSL.vm.build.server) $(_NL)\
 FROM	testos AS $(*)             $(_NL)\
         $(_NL)\
-LABEL	$(TESTSSL.default.label)='generated by Makefile.testssl 1.28, $(TESTSSL.vm.version)'$(_NL)\
+LABEL	$(TESTSSL.default.label)='generated by Makefile.testssl 1.29, $(TESTSSL.vm.version)'$(_NL)\
 LABEL	DESCRIPTION='docker image with $(*) for testing'$(_NL)\
 LABEL	USAGE_TCP='docker run --rm $(TESTSSL.vm.run.env) $(TESTSSL.vm.run.args) -p $(TESTSSL.host.port):$(TESTSSL.vm.port) $(_tag)' $(_NL)\
 ENV	TERM            xterm                   $(_NL)\
