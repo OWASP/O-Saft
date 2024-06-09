@@ -12,20 +12,20 @@
 #?      include Makefile.testssl.botan
 #?
 #? VERSION
-#?      @(#) Makefile.testssl.botan 1.6 24/06/09 01:36:07
+#?      @(#) Makefile.testssl.botan 1.7 24/06/09 09:54:44
 #?
 #? AUTHOR
 #?      04-jun-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl.botan     := 1.6
+_SID.testssl.botan     := 1.7
 #_MYSELF                := $(firstword $(MAKEFILE_LIST))
 
 #_____________________________________________________________________________
 #_____________________________________ global variables for image and build __|
 
-botan-%:        TESTSSL.vm.version      = Makefile.testssl.botan 1.6
+botan-%:        TESTSSL.vm.version      = Makefile.testssl.botan 1.7
 botan-%:        TESTSSL.vm.type         = botan
 botan-%:        TESTSSL.vm.port         = 3443
 botan-%:        TESTSSL.vm.client       = botan tls_client
@@ -33,7 +33,7 @@ botan-%:        TESTSSL.vm.client.help  = help
 botan-%:        TESTSSL.vm.server.help  = tls_server --help
 botan-%:        TESTSSL.vm.server.dtls  = $(TESTSSL.vm.server.tls) $(TESTSSL.vm.server.args)
 botan-%:        TESTSSL.vm.server.tls   = botan
-botan-%:        TESTSSL.vm.server.args  = tls_server $(TESTSSL.vm.home)/etc/cert.pem $(TESTSSL.vm.home)/etc/key.pem --port=$(TESTSSL.vm.port)
+botan-%:        TESTSSL.vm.server.args  = tls_server $(TESTSSL.vm.server.cert) $(TESTSSL.vm.server.key) --port=$(TESTSSL.vm.port)
 #botan-%:        TESTSSL.vm.run.args     = --network=host
 botan-%:        TESTSSL.src.packages    = $(TESTSSL.default.apk) python3 g++
 botan-%:        TESTSSL.src.configure  += $(TESTSSL.src.configure.botan)
@@ -61,14 +61,14 @@ TESTSSL.vm.build.compile.botan  = \
 
 # TODO generate cert by botan (see below) does not work, hence defaults are used
 TESTSSL.vm.build.install.botan  = \
-	mv $(TESTSSL.src.install.botan) $(TESTSSL.vm.home)/bin/ && \\ $(_NL)\
-	cp $(TESTSSL.vm.tmp)/testssl-cert.pem $(TESTSSL.vm.home)/etc/cert.pem ; \\ $(_NL)\
-	cp $(TESTSSL.vm.tmp)/testssl-key.pem  $(TESTSSL.vm.home)/etc/key.pem
+	mv $(TESTSSL.src.install.botan) $(TESTSSL.default.bin)/ && \\ $(_NL)\
+	cp $(TESTSSL.vm.tmp)/testssl-cert.pem $(TESTSSL.vm.server.cert) ; \\ $(_NL)\
+	cp $(TESTSSL.vm.tmp)/testssl-key.pem  $(TESTSSL.vm.server.key)
 
 TESTSSL.vm.build.install.erzeugt--falsche--zertifikate =\
 	echo "mit diesen Zertifikaten akzeptiert botan keine Cipher" ; \\ $(_NL)\
-	$(TESTSSL.vm.home)/bin/botan keygen > key.pem && \\ $(_NL)\
-	$(TESTSSL.vm.home)/bin/botan gen_self_signed key.pem CN --country=DE --days=3650 > cert.pem
+	$(TESTSSL.default.bin)/botan keygen        > $(TESTSSL.vm.server.key) && \\ $(_NL)\
+	$(TESTSSL.default.bin)/botan gen_self_signed $(TESTSSL.vm.server.key) CN --country=DE --days=3650 > $(TESTSSL.vm.server.cert)
 
 TESTSSL.vm.build.testing.botan  = \
 	echo -n '\# number of ciphers $(TESTSSL.vm.client)):' ; \\ $(_NL)\
