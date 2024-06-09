@@ -12,20 +12,20 @@
 #?      include Makefile.testssl.wolfssl
 #?
 #? VERSION
-#?      @@(#) Makefile.testssl.wolfssl 1.9 24/06/09 01:38:03
+#?      @@(#) Makefile.testssl.wolfssl 1.10 24/06/09 09:53:28
 #?
 #? AUTHOR
 #?      04-jun-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl.wolfssl   := 1.9
+_SID.testssl.wolfssl   := 1.10
 #_MYSELF                := $(firstword $(MAKEFILE_LIST))
 
 #_____________________________________________________________________________
 #_____________________________________ global variables for image and build __|
 
-wolfssl-%:      TESTSSL.vm.version      = Makefile.testssl.wolfssl 1.9
+wolfssl-%:      TESTSSL.vm.version      = Makefile.testssl.wolfssl 1.10
 wolfssl-%:      TESTSSL.vm.type         = wolfssl
 wolfssl-%:      TESTSSL.vm.port         = 11111
 wolfssl-%:      TESTSSL.vm.client       = client
@@ -107,14 +107,13 @@ TESTSSL.vm.build.compile.wolfssl = \
 	make
 
 TESTSSL.vm.build.install.wolfssl = \
-	mv $(TESTSSL.src.install.wolfssl) $(TESTSSL.vm.home)/bin/ && \\ $(_NL)\
-	ln -s     $(TESTSSL.vm.home)/bin/certs /certs
+	mv $(TESTSSL.src.install.wolfssl) $(TESTSSL.default.bin)/ && \\ $(_NL)\
+	ln -s  $(TESTSSL.default.bin)/certs /certs
 # TODO: wolfssl-5.5.4 (and probably older one) miss:
 #    examples/sctp/.libs/sctp-client-dtls examples/sctp/.libs/sctp-server-dtls
 #    examples/sctp/sctp-client examples/pem/.libs/pem
-# forces error message vor mv above, not critical
+# forces error message for mv above, not critical
 
-# optional
 TESTSSL.vm.build.testing.wolfssl = \
 	echo -n '\# number of ciphers $(TESTSSL.vm.client)):' ; \\ $(_NL)\
 	$(TESTSSL.vm.client) -e|tr ':' ' ' | wc -l ; \\ $(_NL)\
