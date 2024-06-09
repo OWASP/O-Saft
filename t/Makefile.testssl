@@ -143,7 +143,7 @@
 #?   Automatically computed settings
 #?      Following variables need not to be set in the Makefile.testssl.*,  they
 #?      are computed based on  TESTSSL.vm.type :
-#?          TESTSSL.src.dockerfile  TESTSSL.vm.hostname
+#?          TESTSSL.src.dockerfile  TESTSSL.vm.hostname   TESTSSL.default.bin
 #?          TESTSSL.vm.user         TESTSSL.vm.home
 #?
 #?      The port number of the listening port on the host and the exported port
@@ -272,8 +272,8 @@
 #       * bug: remove CLI args TESTSSL.vm.run.env and TESTSSL.vm.run.args from
 #         general TESTSSL.args
 #       * correct and improve values for USAGE_*
+#       * set --prefix-instetc= or alike; see "Installation directory"
 #       * build proper server.pem and install it (openssl)
-#       * provide variable TESTSSL.vm.server.cert (for building sef-signed cert)
 #       * implement general mechanism to use custom Makefile.testssl.VENDOR
 #         (vendor-specific settings should go away here, so we just have the
 #          functionality using defaults, special settings are in customizable
@@ -285,7 +285,7 @@
 #       * currently each vendor and/or version builds its own docker image,
 #         provide a mode where they are all in the same image;
 #         ** user (in /etc/passwd) is already ok, just one for each vendor
-#         ** need a sub-directory for each version in TESTSSL.vm.home
+#         ** need a sub-directory for each version in TESTSSL.default.bin
 #            this will break compitibililty of older images created by this Makefile
 #         ** starting a specific version is difficult with make
 #       * provide a %-latest target which tags the "newest" image of a type
@@ -298,6 +298,7 @@
 #
 #       # issue fixed   _SID    description
 #       #------+-------+-------+-----------------------------------------------
+#        6/2024 6/2024  1.27    provide variable TESTSSL.vm.server.cert .key
 #        6/2024 6/2024  1.23    provide variable TESTSSL.src.install as list of
 #                               files to be installed (simplifies macro
 #                               TESTSSL.vm.build.install.* )
@@ -430,7 +431,7 @@
 #    Certificates
 #       Some servers requiere a valid  certificate and a valid key file.  These
 #       should be generated with the tool itself (if it operates in  client and
-#       server mode). Both files are installed in  TESTSSL.vm.home .
+#       server mode). Both files are installed in  TESTSSL.default.bin .
 #       For various reasons generation of the files fail. Therfore defaults are
 #       provided which then will be installed instead. 
 #
@@ -501,16 +502,23 @@
 #       For debugging sizes in the image following command can be used, it must
 #       be added manually to the build stages:
 #           du -h /|awk -F/ '(2==NF){print}'
+#         
+#    Installation directory
+#       After building (make) the server in the image,  all its executables and
+#       configuration files are moved to  TESTSSL.default.bin .
+#       Most installations are usually done to the bin/ lib/ and etc/ directory
+#       there. For a simple and unified installtion for different servers types
+#       All files are installed in the same directory  TESTSSL.default.bin .
 #?
 #? VERSION
-#?      @(#) Makefile.testssl 1.26 24/06/09 01:31:57
+#?      @(#) Makefile.testssl 1.27 24/06/09 09:49:31
 #?
 #? AUTHOR
 #?      24-mai-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl       := 1.26
+_SID.testssl       := 1.27
 _MYSELF            := $(firstword $(MAKEFILE_LIST))
 
 # NOTE: include must be done after our variable and target definitions
@@ -579,6 +587,7 @@ TESTSSL.vars.ALL  =\
     TESTSSL.default.apk     - default required packages for apk (alpine)$(_NL)\
     TESTSSL.default.apt     - default required packages for apt (debian)$(_NL)\
     TESTSSL.default.port    - listening port on host; used in %-shell target$(_NL)\
+    TESTSSL.default.bin     - installation directory; $(TESTSSL.vm.home)/bin$(_NL)\
     TESTSSL.host.port       - listening port on host connected to server$(_NL)\
     TESTSSL.host.copy       - directory on hosts to copy data for build $(_NL)\
     TESTSSL.vm.tmp          - temporary directory during build          $(_NL)\
@@ -597,6 +606,8 @@ TESTSSL.vars.ALL  =\
     TESTSSL.vm.server.tls   - server program to be started for TLS      $(_NL)\
     TESTSSL.vm.server.args  - additional arguments to start server      $(_NL)\
     TESTSSL.vm.server.help  - server program's argument to show its help$(_NL)\
+    TESTSSL.vm.server.cert  - public certifikate; default: $(TESTSSL.default.bin)/cert.pem$(_NL)\
+    TESTSSL.vm.server.key   - private key; default: $(TESTSSL.default.bin)/key.pem$(_NL)\
     TESTSSL.src.tar         - filename of tarball (without path)        $(_NL)\
     TESTSSL.src.sig         - (reserved for future use)                 $(_NL)\
     TESTSSL.src.sha         - SHA1 signature of tarball                 $(_NL)\
@@ -666,8 +677,8 @@ TESTSSL.src.tar        ?=  testssl.tgz
 TESTSSL.src.sig        ?=  undef
 TESTSSL.src.sha        ?=  undef
 TESTSSL.src.pgp        ?=  undef
-TESTSSL.src.url        ?=  http://demo/testssl.tgz
-TESTSSL.src.git        ?=  http://demo/testssl.git
+TESTSSL.src.url        ?=  undef
+TESTSSL.src.git        ?=  undef
 TESTSSL.src.packages    = $(TESTSSL.default.apt)
 TESTSSL.src.configure   = --prefix=$(TESTSSL.vm.home)
 TESTSSL.src.install     =
@@ -682,7 +693,7 @@ TESTSSL.src.install     =
 %-build-n:      TESTSSL.src.sha = $(TESTSSL.src.sha.$(*))
 %-build:        TESTSSL.src.sha = $(TESTSSL.src.sha.$(*))
 
-# settings done automatically (but can be from with make environment also)
+# settings done automatically (but can be with make environment also)
 TESTSSL.src.dockerfile  = $(TESTSSL.vm.tmp)/Dockerfile.$(TESTSSL.vm.type)
 TESTSSL.host.port       = $(TESTSSL.vm.port)
 TESTSSL.vm.hostname     = $(TESTSSL.vm.type)
@@ -692,6 +703,10 @@ TESTSSL.vm.context      = $(TESTSSL.vm.build.context) $(TESTSSL.vm.build.server)
 TESTSSL.vm.help         = $(TESTSSL.vm.server.help)
 # use TLS as default server; may change in future
 TESTSSL.vm.server       = $(TESTSSL.vm.server.tls)
+TESTSSL.default.bin     = $(TESTSSL.vm.home)/bin
+TESTSSL.vm.server.cert  = $(TESTSSL.default.bin)/cert.pem
+TESTSSL.vm.server.key   = $(TESTSSL.default.bin)/key.pem
+
 # distingush client and server
 # note that suffix is .client instead of -client because latter would tricker %-client
 # this may change in future
@@ -801,15 +816,14 @@ TESTSSL.vm.build.compile = \
 TESTSSL.vm.build.install = \
 	$(call _TESTSSL.echo,"Install executables"); \\ $(_NL)\
 	pwd          && \\ $(_NL)\
-	mkdir $(TESTSSL.vm.home)/bin/             && \\ $(_NL)\
-	mkdir $(TESTSSL.vm.home)/etc/             && \\ $(_NL)\
+	mkdir    $(TESTSSL.default.bin)           && \\ $(_NL)\
 	$(TESTSSL.vm.build.install.$(TESTSSL.vm.type))
 
 TESTSSL.vm.build.testing = \
 	$(call _TESTSSL.echo,"List installation")  ; \\ $(_NL)\
 	echo "PATH=\$$PATH"                        ; \\ $(_NL)\
-	cd        $(TESTSSL.vm.home)/bin  ; pwd    ; \\ $(_NL)\
-	ls -l     $(TESTSSL.vm.home)/bin/          ; \\ $(_NL)\
+	cd       $(TESTSSL.default.bin)  ; pwd    ; \\ $(_NL)\
+	ls -l    $(TESTSSL.default.bin)           ; \\ $(_NL)\
 	$(TESTSSL.vm.build.testing.$(TESTSSL.vm.type)) ; \\ $(_NL)\
 	true
 
@@ -832,7 +846,7 @@ COPY	$(TESTSSL.host.copy)/$(TESTSSL.src.tar) $(TESTSSL.vm.tmp)/ $(_NL)\
 COPY	$(TESTSSL.host.copy)/testssl-cert.pem   $(TESTSSL.vm.tmp)/ $(_NL)\
 COPY	$(TESTSSL.host.copy)/testssl-key.pem    $(TESTSSL.vm.tmp)/ $(_NL)\
         $(_NL)\
-LABEL	VERSION='1.26'                           $(_NL)\
+LABEL	VERSION='1.27'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(TESTSSL.vm.from) for testing'$(_NL)\
         $(_NL)\
 RUN	\\  $(TESTSSL.vm.build.adduser)         $(_NL)\
@@ -849,7 +863,7 @@ $(call _TESTSSL.gen-by,TESTSSL.vm.build.server) $(_NL)\
 FROM	testos AS $(*)             $(_NL)\
         $(_NL)\
 LABEL	$(TESTSSL.default.label)='$(TESTSSL.vm.version)'$(_NL)\
-LABEL	VERSION='1.26'                           $(_NL)\
+LABEL	VERSION='1.27'                           $(_NL)\
 LABEL	DESCRIPTION='docker image with $(*) for testing'$(_NL)\
 LABEL	USAGE_TCP='docker run --rm $(TESTSSL.vm.run.env) $(TESTSSL.vm.run.args) -p $(TESTSSL.host.port):$(TESTSSL.vm.port) $(_tag)' $(_NL)\
 ENV	TERM            xterm                   $(_NL)\
@@ -868,7 +882,7 @@ RUN $(call _TESTSSL.trace)       ;   \\ $(_NL)\
     $(TESTSSL.vm.build.cleanup)         $(_NL)\
         $(_NL)\
 WORKDIR	$(TESTSSL.vm.home)              $(_NL)\
-ENTRYPOINT "$(TESTSSL.vm.server.tls) $(TESTSSL.vm.server.args)" $(_NL)\
+ENTRYPOINT "$(TESTSSL.default.bin)/$(TESTSSL.vm.server.tls) $(TESTSSL.vm.server.args)" $(_NL)\
 CMD	"$(TESTSSL.vm.client)"          $(_NL)\
 EXPOSE	$(TESTSSL.vm.port)/tcp          $(_NL)\
 EXPOSE	$(TESTSSL.vm.port)/udp          $(_NL)\
