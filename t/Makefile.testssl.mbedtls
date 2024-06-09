@@ -12,20 +12,20 @@
 #?      include Makefile.testssl.mbedtls
 #?
 #? VERSION
-#?      @(#) Makefile.testssl.mbedtls 1.8 24/06/09 01:37:13
+#?      @(#) Makefile.testssl.mbedtls 1.9 24/06/09 09:52:30
 #?
 #? AUTHOR
 #?      04-jun-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl.mbedtls   := 1.8
+_SID.testssl.mbedtls   := 1.9
 #_MYSELF                := $(firstword $(MAKEFILE_LIST))
 
 #_____________________________________________________________________________
 #_____________________________________ global variables for image and build __|
 
-mbedtls-%:      TESTSSL.vm.version      = Makefile.testssl.mbedtls 1.8
+mbedtls-%:      TESTSSL.vm.version      = Makefile.testssl.mbedtls 1.9
 mbedtls-%:      TESTSSL.vm.type         = mbedtls
 mbedtls-%:      TESTSSL.vm.port         = 4433
 mbedtls-%:      TESTSSL.vm.client       = ssl_client
@@ -82,7 +82,7 @@ TESTSSL.vm.build.compile.mbedtls = \
 
 # manuall installation keeps the original names of the executables, no mbedtls_ prefix
 TESTSSL.vm.build.install.mbedtls = \
-	mv $(TESTSSL.src.install.mbedtls) $(TESTSSL.vm.home)/bin/
+	mv $(TESTSSL.src.install.mbedtls) $(TESTSSL.default.bin)/
 
 TESTSSL.vm.build.testing.mbedtls = \
 	echo '\# mbedtls client does not list cipher suites'
