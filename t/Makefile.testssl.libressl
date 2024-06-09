@@ -12,20 +12,20 @@
 #?      include Makefile.testssl.libressl
 #?
 #? VERSION
-#?      @(#) Makefile.testssl.libressl 1.8 24/06/09 09:51:43
+#?      @(#) Makefile.testssl.libressl 1.9 24/06/09 13:44:02
 #?
 #? AUTHOR
 #?      04-jun-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl.libressl  := 1.8
+_SID.testssl.libressl  := 1.9
 #_MYSELF                := $(firstword $(MAKEFILE_LIST))
 
 #_____________________________________________________________________________
 #_____________________________________ global variables for image and build __|
 
-libressl-%:     TESTSSL.vm.version      = Makefile.testssl.libressl 1.8
+libressl-%:     TESTSSL.vm.version      = Makefile.testssl.libressl 1.9
 libressl-%:     TESTSSL.vm.type         = libressl
 libressl-%:     TESTSSL.vm.port         = 5443
 libressl-%:     TESTSSL.vm.client       = openssl
@@ -109,7 +109,7 @@ TESTSSL.vm.build.testing.libressl = \
 	$(TESTSSL.vm.client) ciphers ALL:eNULL:kNULL |tr ':' ' ' | wc -w ; \\ $(_NL)\
 	$(TESTSSL.vm.client) ciphers ALL:eNULL:kNULL
 
-TESTSSL.vm.build.cleanup.libressl =
+TESTSSL.vm.build.cleanup.libressl = true
 
 #_____________________________________________________________________________
 #________________________________________ private targets, not fully tested __|
