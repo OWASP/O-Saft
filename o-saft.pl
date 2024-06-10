@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.58 24/06/07 22:06:56"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.59 24/06/10 09:53:12"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -415,7 +415,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.58"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.59"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -4793,6 +4793,15 @@ sub checkprot       {
     if (_is_cfg_ssl('TLSv13')) {
         $checks{'hastls13'}->{val}  = " " if ($OCfg::prot{'TLSv13'}->{'cnt'} <= 0);
     }
+    if (_is_cfg_ssl('DTLSv1')) {
+        $checks{'hasdtls1'}->{val}  = " " if ($OCfg::prot{'DTLSv1'}->{'cnt'} <= 0);
+    }
+    if (_is_cfg_ssl('DTLSv12')) {
+        $checks{'hasdtls12'}->{val} = " " if ($OCfg::prot{'DTLSv12'}->{'cnt'} <= 0);
+    }
+    if (_is_cfg_ssl('DTLSv13')) {
+        $checks{'hasdtls13'}->{val} = " " if ($OCfg::prot{'DTLSv13'}->{'cnt'} <= 0);
+    }
 
     # check ALPN and NPN support
     checkalpn($host, $port);    #
@@ -7210,7 +7219,7 @@ while ($#argv >= 0) {
     if ($arg eq  '+sts')                { $arg = '+hsts';           } # alias:
     if ($arg eq  '+sigkey')             { $arg = '+sigdump';        } # alias:
     if ($arg =~ /^\+sigkey$p?algorithm/i){$arg = '+signame';        } # alias:
-    if ($arg eq  '+protocol')           { $arg = '+session_protocol'; } # alias:
+    if ($arg eq  '+protocol')           { $arg = '+session_protocol'; } # alias: # NOTE different to +protocols
     if ($arg =~ /^\+selected$p?protocol/i){$arg= '+session_protocol'; } # alias:
     if ($arg =~ /^\+rfc$p?2818$/i)      { $arg = '+rfc_2818_names'; } # alias:
     if ($arg =~ /^\+rfc$p?2818$p?names/i){$arg = '+rfc_2818_names'; } # alias:
