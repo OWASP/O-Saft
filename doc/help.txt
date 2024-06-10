@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.19 24/06/07 13:13:31
+# SID   @(#) help.txt 3.20 24/06/10 12:56:54
 
 NAME
 
@@ -1353,7 +1353,8 @@ OPTIONS
 
           * 'SSL'       can be any of:
             ssl, ssl2, ssl3, sslv2, sslv3, tls1, tls1, tls11, tls1.1, tls1-1,
-            tlsv1, tlsv11, tlsv1.1, tlsv1-1 (and similar variants for tlsv1.2).
+            tlsv1, tlsv11, tlsv1.1, tlsv1-1 (and similar variants for tlsv1.2
+            and tlsv1.3), dtls1, dtls12, dtls13.
           For example:  --tls1  --tlsv1  --tlsv1_1  are all the same.
 
           (--SSL variants):    Test ciphers for this SSL/TLS version.
@@ -2265,6 +2266,11 @@ OPTIONS
 
           Supress printing of warning messages with number NNN (**WARNING:).
           Mainly used for internal testing.
+
+      --quiet
+      --silent
+
+          Shortcut for:  --no-warning --no-hint .
 
       --exit=KEY
 
