@@ -10,7 +10,7 @@
 #       Makefile.hlp .
 #
 #? VERSION
-#?      @(#) Makefile.hlp 3.3 24/01/27 09:20:28
+#?      @(#) Makefile.hlp 3.4 24/06/10 12:10:58
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -19,7 +19,7 @@
 
 HELP-help.test.hlp  = targets for testing '$(SRC.pl)' --help options
 
-_SID.hlp           := 3.3
+_SID.hlp           := 3.4
 
 _MYSELF.hlp        := t/Makefile.hlp
 ALL.includes       += $(_MYSELF.hlp)
@@ -81,7 +81,7 @@ LIST.hlp.help-section  := \
 	--help=hint  --help=opt   --help=intern  --help=legacy      \
 	--help=range --help=regex --help=options --help=pattern     \
 	--help=text  --help=rfc   --help=ourstr  --help=program.code \
-	--help=development \
+	--help=info  --help=development \
 	--help=toc   --help=todo  --help=tools   --help=warnings    \
 	--help=error --help=exit  --help=ABOUT   --help=cipherpattern \
 	--help=cfg-cmd  --help=cfg-check --help=cfg-data  --help=cfg-hint   \
