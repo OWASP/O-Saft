@@ -29,19 +29,19 @@
 #?      contains a brief description for the next new command defined with
 #?     --cfg_cmd= . This will be used in the GUI only.
 #? VERSION
-#?      @(#) .o-saft.pl 1.110 23/11/15 19:36:01
+#?      @(#) .o-saft.pl 1.112 24/06/10 10:33:16
 #? AUTHOR
 #?      13-dec-13 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.rc = 1.110; # our own SID required for Makefile and some tools
+_SID.rc = 1.112; # our own SID required for Makefile and some tools
 
 ###
 ### force to use private openssl
 ###
---openssl=/usr/local/openssl/bin/openssl
---openssl-cnf=/usr/local/openssl/ssl/openssl.cnf
+#--openssl=/usr/local/openssl/bin/openssl
+#--openssl-cnf=/usr/local/openssl/ssl/openssl.cnf
 #--force-openssl
 ### or
 #--lib=/usr/local/lib
@@ -211,7 +211,8 @@ _SID.rc = 1.110; # our own SID required for Makefile and some tools
 ###
 ### redefine command +check
 ###
---cfg_cmd=check=cipher_selected cipher_strong hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 cipher_null cipher_adh cipher_exp cipher_cbc cipher_des cipher_rc4 cipher_edh cipher_pfs cipher_pfsall dh_512 dh_2048 ecdh_256 ecdh_512 ism pci fips tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525 beast breach ccs crime time drown freak heartbleed logjam lucky13 poodle rc4 robot sloth sweet32 sni hostname reversehost cps crl crl_valid dv ev+ ev- ev_chars crnlnull nonprint ocsp_uri ocsp_valid fp_not_md5 sha2signature sig_encryption sig_enc_known pub_encryption pub_enc_known modulus_exp_1 modulus_exp_65537 modulus_exp_oldssl modulus_size_oldssl expired dates rootcert selfsigned constraints verify certfqdn wildcard wildhost rfc_2818_names rfc_6125_names sernumber http_https hsts_is301 hsts_is30x hsts_redirect hsts_samehost hsts_fqdn hsts_ip hsts_httpequiv hsts_sts hsts_location hsts_refresh sts_preload sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxage18 sts_maxagexy sts_expired https_pins krb5 psk_identity psk_hint session_ticket session_lifetime session_random ocsp_stapling closure sgc zlib open_pgp lzo hasalpn hasnpn fallback master_secret renegotiation resumption srp compression heartbeat sstp scsv cnt_checks_yes cnt_checks_no cnt_checks_noo cnt_ciphers cnt_totals cnt_chaindepth cnt_altname cnt_wildcard len_cps len_crl len_crl_data len_ocsp len_oids len_altname len_chain len_issuer len_pembase64 len_pembinary len_publickey len_sigdump len_subject len_sernumber check
+--cfg_cmd=check=cipher_selected cipher_strong hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 hasdtls12 cipher_null cipher_adh cipher_exp cipher_cbc cipher_des cipher_rc4 cipher_edh cipher_pfs cipher_pfsall dh_512 dh_2048 ecdh_256 ecdh_512 ism pci fips tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525 beast breach ccs crime time drown freak heartbleed logjam lucky13 poodle rc4 robot sloth sweet32 sni hostname reversehost cps crl crl_valid dv ev+ ev- ev_chars crnlnull nonprint ocsp_uri ocsp_valid fp_not_md5 sha2signature sig_encryption sig_enc_known pub_encryption pub_enc_known modulus_exp_1 modulus_exp_65537 modulus_exp_oldssl modulus_size_oldssl expired dates rootcert selfsigned constraints verify certfqdn wildcard wildhost rfc_2818_names rfc_6125_names sernumber http_https hsts_is301 hsts_is30x hsts_redirect hsts_samehost hsts_fqdn hsts_ip hsts_httpequiv hsts_sts hsts_location hsts_refresh sts_preload sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxage18 sts_maxagexy sts_expired https_pins krb5 psk_identity psk_hint session_ticket session_lifetime session_random ocsp_stapling closure sgc zlib open_pgp lzo hasalpn hasnpn fallback master_secret renegotiation resumption srp compression heartbeat sstp scsv cnt_checks_yes cnt_checks_no cnt_checks_noo cnt_ciphers cnt_totals cnt_chaindepth cnt_altname cnt_wildcard len_cps len_crl len_crl_data len_ocsp len_oids len_altname len_chain len_issuer len_pembase64 len_pembinary len_publickey len_sigdump len_subject len_sernumber check
+# missing because rarely used: hasdtls1 and hasdtls13
 # useless for +check:    ip
 # don't use   +check:    cnt_exitcode (for debugging or special purpose only)
 # following TBD:         cipher_order, cipher_weak, cps_valid
@@ -219,7 +220,8 @@ _SID.rc = 1.110; # our own SID required for Makefile and some tools
 ###
 ### redefine command +quick
 ###
---cfg_cmd=quick=sslversion hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 cipher cipher_selected cipher_strong cipher_null cipher_adh cipher_exp cipher_cbc cipher_des cipher_rc4 cipher_edh cipher_pfs beast ccs crime drown freak heartbleed logjam lucky13 poodle rc4 robot sloth sweet32 fingerprint_hash fp_not_md5 sha2signature pub_encryption email serial subject dates verify compression expansion heartbeat hostname hsts_sts crl master_secret renegotiation resumption
+--cfg_cmd=quick=sslversion hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 hasdtls12 cipher cipher_selected cipher_strong cipher_null cipher_adh cipher_exp cipher_cbc cipher_des cipher_rc4 cipher_edh cipher_pfs beast ccs crime drown freak heartbleed logjam lucky13 poodle rc4 robot sloth sweet32 fingerprint_hash fp_not_md5 sha2signature pub_encryption email serial subject dates verify compression expansion heartbeat hostname hsts_sts crl master_secret renegotiation resumption
+# missing because rarely used: hasdtls1 and hasdtls13
 
 ###
 ### redefine command +sizes
@@ -239,7 +241,8 @@ _SID.rc = 1.110; # our own SID required for Makefile and some tools
 ###
 ### redefine command +protocols
 ###
---cfg_cmd=prots=hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 hasalpn hasnpn session_protocol fallback_protocol alpns npns alpn npn next_protocols https_protocols http_protocols https_svc http_svc
+--cfg_cmd=prots=hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 hasdtls1 hasdtls12 hasdtls13 hasalpn hasnpn session_protocol fallback_protocol alpns npns alpn npn next_protocols https_protocols http_protocols https_svc http_svc
+# lists all protocols, even the rarely used
 
 ###
 ### redefine command +vulns
