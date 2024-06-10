@@ -6,7 +6,7 @@
 #?      make help.test.mod
 #?
 #? VERSION
-#?      @(#) Makefile.mod 3.9 24/05/27 22:33:40
+#?      @(#) Makefile.mod 3.10 24/06/10 10:31:13
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.mod  = targets for testing module functionality
 
-_SID.mod           := 3.9
+_SID.mod           := 3.10
 
 _MYSELF.mod        := t/Makefile.mod
 ALL.includes       += $(_MYSELF.mod)
@@ -66,8 +66,10 @@ LIST.lib-Ciphers.pm    := \
 	getter=0xCC,0xA9  getter=0x0300CCA9 get_key=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 \
 	get_key=DHE-PSK-AES128-SHA     get_key=DHE_PSK_WITH_AES_128_CBC_SHA \
 	get_key=DHE-PSK-AES128-SHA256  get_key=DHE-PSK-AES128-CBC-SHA256    \
+	get_const=0x03001301 \
 	text2key=0x1301   text2key=0x13,0x01    key2text=0x03001301 \
 	is_valid_key=0x1  is_valid_key=03001301 is_valid_key=0x03001301 \
+	find_consts=AES_128_GCM_SHA256 \
 	find_name=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 \
 	find_names=DHE-PSK-AES128 find_keys=DHE-PSK-AES128
     # only $(LIST.lib-Ciphers.pm-cmd) is tested here, as they all produce the
