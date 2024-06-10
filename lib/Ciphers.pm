@@ -25,7 +25,7 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.36 24/06/10 10:29:25";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.37 24/06/10 16:01:41";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 #_____________________________________________________________________________
@@ -641,6 +641,14 @@ Find all matching cipher names for given cipher name (pattern).
 
 Find all matching hex keys for given cipher name (pattern).
 
+=head3 find_keys_any( $cipher_pattern)
+
+Return keys for all matching hex keys, cipher names, aliases or constants.
+
+=head3 find_names_any( $cipher_pattern)
+
+Return cipher names for all matching hex keys, cipher names, aliases or constants.
+
 =head3 find_name( $cipher)
 
 Find cipher key(s) for given cipher name or cipher constant.
@@ -771,6 +779,39 @@ sub find_names  {
     _trace("find_names($pattern)");
     return grep{/$pattern/} get_names_list();
 } # find_names
+
+sub find_keys_any   {
+    #? find all cipher suite keys for which given cipher pattern matches, key or name or alias or constant
+    my $pattern =  shift;
+       $pattern =~ s/:/|/g;
+    my @list;
+    _trace("find_keys_any: search $pattern");
+    # should match below: my $key = get_key($pattern);
+    foreach my $key (sort keys %ciphers) {
+        next if $key =~ m/^\s*$/;
+        if ($key =~ m/$pattern/) {
+            push(@list, $key);
+            next;
+        }
+        # get name and all aliases
+        my  @names = grep{/$pattern/} get_names($key);
+        if (@names) {   push(@list, $key);  next; }
+        # get constants
+            @names = grep{/$pattern/} get_consts($key);
+        if (@names) {   push(@list, $key);  next; }
+    }
+    return @list;
+} # find_keys_any
+
+sub find_names_any  {
+    #? find all cipher suite names for which given cipher pattern matches, key or name or constant
+    my $pattern =  shift;
+       $pattern =~ s/:/|/g;
+    my @list;
+    foreach my $key (find_keys_any($pattern)) { push(@list, get_name($key)); }
+    return wantarray ? (@list) : join(' ', (sort @list));
+    return @list;
+} # find_names_any
 
 sub find_name   {
     #? TODO  check if given cipher name is a known cipher
@@ -1527,9 +1568,11 @@ sub show            {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     print get_pfs($1)       if ($arg =~ m/^(?:get.)?pfs=(.*)/   );
     print find_name($1)     if ($arg =~ m/^find.?name=(.*)/     );
     # enforce string value for returned arrays
-    print join(" ", find_consts($1))    if ($arg =~ m/^find.?consts=(.*)/    );
+    print join(" ", find_names_any($1)) if ($arg =~ m/^find.?names.?any=(.*)/);
+    print join(" ", find_keys_any($1))  if ($arg =~ m/^find.?keys.?any=(.*)/ );
     print join(" ", find_names($1))     if ($arg =~ m/^find.?names=(.*)/     );
     print join(" ", find_keys($1))      if ($arg =~ m/^find.?keys=(.*)/      );
+    print join(" ", find_consts($1))    if ($arg =~ m/^find.?consts=(.*)/    );
     print join(" ", get_names($1))      if ($arg =~ m/^(?:get.)?names=(.*)/  );
     print join(" ", get_aliases($1))    if ($arg =~ m/^(?:get.)?aliases=(.*)/);
     print join(" ", get_consts($1))     if ($arg =~ m/^(?:get.)?consts=(.*)/ );
@@ -1778,7 +1821,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.36 2024/06/10
+3.37 2024/06/10
 
 
 =head1 AUTHOR
