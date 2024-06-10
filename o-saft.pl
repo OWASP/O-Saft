@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.61 24/06/10 11:58:23"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.63 24/06/10 14:26:19"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -417,7 +417,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.61"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.63"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -7001,6 +7001,11 @@ while ($#argv >= 0) {
     if ($arg =~ /^--(?:tcp|tls)$/i)     { $cfg{$_} = 1 foreach (qw(SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13)); }
     if ($arg =~ /^--no(?:udp|dtls)$/i)  { $cfg{$_} = 0 foreach (qw(DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)); }
     if ($arg =~ /^--(?:udp|dtls)$/i)    { $cfg{$_} = 1 foreach (qw(DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13)); }
+    # next 4 just for alias documentation
+    if ($arg eq  '--notcp')             { $arg = '--notls';         } # alias:
+    if ($arg eq  '--noudp')             { $arg = '--nodtls';        } # alias:
+    if ($arg eq  '--tcp')               { $arg = '--tls';           } # alias:
+    if ($arg eq  '--udp')               { $arg = '--dtls';          } # alias:
     # options for +cipher
     if ($arg eq   '-cipher')            { $typ = 'CIPHER_ITEM';     } # openssl
     if ($arg eq  '--cipher')            { $typ = 'CIPHER_ITEM';     }
