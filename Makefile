@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.27 24/06/06 16:54:11
+#?      @(#) Makefile 3.28 24/06/10 13:30:05
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 3.27
+_SID            = 3.28
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -319,8 +319,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.27 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.27
+_INST.genbytext = generated data by Makefile 3.28 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.28
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
 		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DOC.dir)@'              \
 		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-LIB.dir)@'              \
@@ -592,8 +592,8 @@ docs:       $(GEN.docs)
 standalone: $(GEN.src)
 stand-alone:$(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.27
-tar:     _INST.is_edit  = 3.27
+_INST.is_edit           = 3.28
+tar:     _INST.is_edit  = 3.28
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
@@ -671,10 +671,12 @@ $(O-TMP.dir)/$(O-LIB.dir) $(O-TMP.dir)/$(O-DOC.dir) $(O-TMP.dir)/$(O-USR.dir) $(
 	mkdir -p $@
 
 # cp fails if SRC.pl is read-only, hence we remove it; it is generated anyway
+# target does nothing if $(DEV.pl) does not exist
 $(SRC.pl): $(DEV.pl)
 	@$(TRACE.target)
-	rm -f $@
-	cp $< $@
+	test -f $(DEV.pl) && rm -f $@ || true
+	test -f $(DEV.pl) && cp $< $@ || touch $@
+	test -s $(SRC.pl)
 
 # generation fails if GEN.src is read-only, hence we remove it; it is generated anyway
 $(GEN.src):  $(EXE.single) $(SRC.pl) $(ALL.pm)
