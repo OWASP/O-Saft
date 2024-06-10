@@ -15,7 +15,7 @@ package OData;
 use strict;
 use warnings;
 
-my  $SID_odata  =  "@(#) OData.pm 3.19 24/05/28 13:09:36";
+my  $SID_odata  =  "@(#) OData.pm 3.20 24/06/10 08:08:10";
 our $VERSION    =  "24.01.24";
 
 #_____________________________________________________________________________
@@ -421,6 +421,9 @@ our %check_dest = (  # target (connection) data
     'hastls11_old'  => {'txt' => "Target supports TLSv1.1"},# until 23.04.23 version
     'hastls12'      => {'txt' => "Target supports TLSv1.2"},
     'hastls13'      => {'txt' => "Target supports TLSv1.3"},
+    'hasdtls1'      => {'txt' => "Target supports DTLSv1"},
+    'hasdtls12'     => {'txt' => "Target supports DTLSv1.2"},
+    'hasdtls13'     => {'txt' => "Target supports DTLSv1.3"},
     'hasalpn'       => {'txt' => "Target supports ALPN"},
     'hasnpn'        => {'txt' => "Target supports  NPN"},
     'cipher_strong' => {'txt' => "Target selects strongest cipher"},
@@ -557,6 +560,9 @@ our %shorttexts = (
     'hastls11'      => "No TLSv1.1",
     'hastls12'      => "TLSv1.2",
     'hastls13'      => "TLSv1.3",
+    'hasdtls1'      => "DTLSv1",
+    'hasdtls12'     => "DTLSv1.2",
+    'hasdtls13'     => "DTLSv1.3",
     'hasalpn'       => "Supports ALPN",
     'hasnpn'        => "Supports  NPN",
     'alpn'          => "Selected ALPN",
@@ -1183,7 +1189,7 @@ _init();
 
 =head1 VERSION
 
-3.19 2024/05/28
+3.20 2024/06/10
 
 
 =head1 AUTHOR
