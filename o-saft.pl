@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.60 24/06/10 11:55:28"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.61 24/06/10 11:58:23"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -257,6 +257,7 @@ sub _hint   {
     # check must be done on ARGV, because $cfg{'out'}->{'hint_info'} may not yet set
     my @txt = @_;
     return if _is_argv('(?:--no.?hint)');
+    return if not _is_cfg_out('hint_info');
     printf($STR{HINT} . "%s\n", join(" ", @txt));
     return;
 } # _hint
@@ -266,7 +267,8 @@ sub _warn   {
     my @txt = @_;
     my $_no =  "@txt";
        $_no =~ s/^\s*([0-9(]{3}):?.*/$1/smx;   # message number, usually
-    return if _is_argv('(?:--no.?warn(?:ings?)$)'); # ugly hack 'cause we won't pass $cfg{use}{warning}
+    return if _is_argv('(?:--no.?warn(?:ings?)$)'); # ugly hack 'cause we won't always pass $cfg{use}{warning}
+    return if not _is_cfg_out('warning');
     # other configuration values can be retrieved from %cfg
     if (0 < (grep{/^$_no$/} @{$cfg{out}->{'warnings_no_dups'}})) {
         # SEE  Note:warning-no-duplicates
@@ -415,7 +417,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.60"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.61"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
