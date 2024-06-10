@@ -25,7 +25,7 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.35 24/06/07 22:00:28";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.36 24/06/10 10:29:25";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 #_____________________________________________________________________________
@@ -629,6 +629,10 @@ Returns space-separetd string or array depending on calling context.
 Get list of all defined cipher suite names in C<%ciphers>.
 Returns space-separetd string or array depending on calling context.
 
+=head3 find_consts()
+
+Find all matching constants for given cipher constant (pattern).
+
 =head3 find_names( $cipher_pattern)
 
 Find all matching cipher names for given cipher name (pattern).
@@ -742,6 +746,21 @@ sub find_keys   {
     _trace("find_keys($pattern)");
     return map({get_key($_);} grep{/$pattern/} get_names_list());
 } # find_keys
+
+sub find_consts {
+    #? find all constants of cipher suite for which given cipher pattern matches in %ciphers
+    # NOTE: matches the primary cipher suite name only, not aliases or constants
+    my $pattern =  shift;
+       $pattern =~ s/:/|/g;
+    my @list;
+    _trace("find_consts($pattern)");
+    foreach my $key (sort keys %ciphers) {
+        my @const = grep{/$pattern/} get_consts($key);
+        next if not @const;
+        push(@list, @const);
+    }
+    return @list;
+} # find_consts
 
 sub find_names  {
     #? find all cipher suite names for which given cipher pattern matches in %ciphers
@@ -1508,6 +1527,7 @@ sub show            {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     print get_pfs($1)       if ($arg =~ m/^(?:get.)?pfs=(.*)/   );
     print find_name($1)     if ($arg =~ m/^find.?name=(.*)/     );
     # enforce string value for returned arrays
+    print join(" ", find_consts($1))    if ($arg =~ m/^find.?consts=(.*)/    );
     print join(" ", find_names($1))     if ($arg =~ m/^find.?names=(.*)/     );
     print join(" ", find_keys($1))      if ($arg =~ m/^find.?keys=(.*)/      );
     print join(" ", get_names($1))      if ($arg =~ m/^(?:get.)?names=(.*)/  );
@@ -1758,7 +1778,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.35 2024/06/07
+3.36 2024/06/10
 
 
 =head1 AUTHOR
