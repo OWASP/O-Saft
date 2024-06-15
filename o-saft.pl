@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.66 24/06/15 09:18:50"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.67 24/06/15 09:43:47"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -253,11 +253,11 @@ sub _tprint { my @txt = @_; printf("#%s: %s\n", $cfg{'me'}, join(" ", @txt)); re
     #? same as OTrace::trace; needed before loading module
 sub _hint   {
     #? print hint message if wanted
-    # don't print if --no-hint given
+    # don't print if --no-hint given; checks for $cfg{'out'}->{'hint_*'} must be done in caller
     # check must be done on ARGV, because $cfg{'out'}->{'hint_info'} may not yet set
     my @txt = @_;
     return if _is_argv('(?:--no.?hint)');
-    return if not _is_cfg_out('hint_info');
+    return if not _is_cfg_out('hint');
     printf($STR{HINT} . "%s\n", join(" ", @txt));
     return;
 } # _hint
@@ -417,7 +417,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.66"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.67"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1372,7 +1372,7 @@ sub _enable_functions   {
             if ($version_openssl  < 0x01000000) {
                 warn $STR{WARN}, "125: $txo < 1.0.0; $txt_buggysni";
             }
-            _hint("use '--force-openssl' to disable this check");
+            _hint("use '--force-openssl' to disable this check") if (_is_cfg_out('hint_check'));
         }
     }
     trace(" cfg{use}->{sni}= $cfg{'use'}->{'sni'}");
@@ -1386,7 +1386,7 @@ sub _enable_functions   {
             if ($version_openssl  < 0x10002000) {
                 warn $STR{WARN}, "128: $txo < 1.0.2" if ($cfg{'verbose'} > 1);
             }
-            _hint("use '--no-alpn' to disable this check");
+            _hint("use '--no-alpn' to disable this check") if (_is_cfg_out('hint_check'));
         }
     }
     trace(" cfg{use}->{alpn}= $cfg{'use'}->{'alpn'}");
@@ -1399,19 +1399,19 @@ sub _enable_functions   {
             if ($version_openssl  < 0x10001000) {
                 warn $STR{WARN}, "132: $txo < 1.0.1" if ($cfg{'verbose'} > 1);
             }
-            _hint("use '--no-npn' to disable this check");
+            _hint("use '--no-npn' to disable this check") if (_is_cfg_out('hint_check'));
         }
     }
     trace(" cfg{use}->{npn}= $cfg{'use'}->{'npn'}");
 
     if ($cfg{'ssleay'}->{'can_ocsp'} == 0) {    # Net::SSLeay < 1.59  and  OpenSSL 1.0.0
         warn $STR{WARN}, "133: $txt; tests for OCSP disabled";
-        #_hint("use '--no-ocsp' to disable this check");
+        #_hint("use '--no-ocsp' to disable this check") if (_is_cfg_out('hint_check'));
     }
 
     if ($cfg{'ssleay'}->{'can_ecdh'} == 0) {    # Net::SSLeay < 1.56
         warn $STR{WARN}, "134: $txt; setting curves disabled";
-        #_hint("use '--no-cipher-ecdh' to disable this check");
+        #_hint("use '--no-cipher-ecdh' to disable this check") if (_is_cfg_out('hint_check'));
     }
     trace("_enable_functions() }");
     return;
@@ -2998,7 +2998,7 @@ sub ciphers_prot_openssl {
             if (0 >= $cfg{'cipher_md5'}) {
                 # Net::SSLeay:SSL supports *MD5 for SSLv2 only
                 # detailled description see OPTION  --no-cipher-md5
-                #_hint("use '--no-cipher-md5' to disable checks with MD5 ciphers");
+                #_hint("use '--no-cipher-md5' to disable checks with MD5 ciphers") if (_is_cfg_out('hint_check'));
                 _vprint("  check cipher (MD5): $ssl:$c\n") if (1 < $cfg{'verbose'});
                 next if (($ssl ne "SSLv2") && ($c =~ m/MD5/));
             }
@@ -3736,7 +3736,7 @@ sub checkciphers    {
     if (defined $results->{'_admin'}{'session_protocol'}) {
         checkciphers_pfs($cnt_all, $cnt_pfs, $results->{'_admin'}{'session_protocol'});
     } else {
-        _hint("no session protocol detected, PFS ciphers may be wrong; consider using '--ciphermode=intern'");
+        _hint("no session protocol detected, PFS ciphers may be wrong; consider using '--ciphermode=intern'") if (_is_cfg_out('hint_ciphers'));
         # for ciphermode=openssl|ssleay only; reason not yet identified (12/2023)
     }
     trace("checkciphers() }");
@@ -5779,7 +5779,9 @@ sub printciphersummary  {
         print_line($legacy, $host, $port, 'cipher_selected',
                    $data{'cipher_selected'}->{txt}, $OCfg::prot{'cipher_selected'});
     }
-    _hint("consider using '--cipheralpn=, --ciphernpn=,' also") if _is_cfg_verbose();
+    if (_is_cfg_out('hint_ciphers')) {
+        _hint("consider using '--cipheralpn=, --ciphernpn=,' also") if _is_cfg_verbose();
+    }
     trace("printciphersummary() }");
     return;
 } # printciphersummary
@@ -7553,7 +7555,7 @@ if ((0 < _need_cipher()) or (0 < _need_default())) {
             # TODO: funktioniert nicht sauber; OWASP-Rating fehlt bei modernen ECDHE-ECDSA-*
             #$cfg{'legacy'} = 'owasp' if ($do eq 'cipher_intern'); # new default
             #$legacy = $cfg{'legacy'};
-            #_hint("+cipher : functionality changed, please see '$cfg{'me'} --help=TECHNIC'");
+            #_hint("+cipher : functionality changed, please see '$cfg{'me'} --help=TECHNIC'") if (_is_cfg_out('hint_ciphers'));
         }
     }
 }
@@ -9502,7 +9504,7 @@ They can be printed immediately (without being specified in `$cfg{hints}':
 
 It is not recommended to use:
 
-    print $STR[HINT}, "my text";
+    print $STR{HINT}, "my text";
 
 
 =head2 Note:tty
