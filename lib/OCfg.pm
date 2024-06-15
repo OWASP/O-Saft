@@ -24,7 +24,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.30 24/06/07 02:02:45";
+our $SID_ocfg   =  "@(#) OCfg.pm 3.32 24/06/15 08:43:43";
 $OCfg::VERSION  =  "24.01.24";  # official version number of this file
 
 #_____________________________________________________________________________
@@ -2273,8 +2273,9 @@ our %cfg = (    # main data structure for configuration
     'cmd-check'     => [],      # commands for +check, simply anything from %checks
     'cmd-sizes'     => [],      # commands for +sizes
     'cmd-quick'     => [        # commands for +quick
+                                # missing because rarely used: hasdtls1 and hasdtls13
                         qw(
-                         sslversion hassslv2 hassslv3 hastls12
+                         sslversion hassslv2 hassslv3 hastls12 hastls13 hasdtls12
                          cipher_selected cipher_strong cipher_null cipher_adh
                          cipher_exp cipher_cbc cipher_des cipher_rc4 cipher_edh
                          cipher_pfs beast crime drown freak heartbleed logjam
@@ -2301,7 +2302,7 @@ our %cfg = (    # main data structure for configuration
                          renegotiation resumption
                        )],
     'cmd-prots'     => [        # commands for checking protocols
-                        qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 hasalpn hasnpn session_protocol fallback_protocol alpn alpns npns next_protocols https_protocols http_protocols https_svc http_svc)
+                        qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 hasdtls1 hasdtls12 hasdtls13 hasalpn hasnpn session_protocol fallback_protocol alpn alpns npn npns next_protocols https_protocols http_protocols https_svc http_svc)
                        ],
     'cmd-NL'        => [        # commands which need NL when printed
                                 # they should be available with +info --v only
@@ -2848,7 +2849,6 @@ our %cfg = (    # main data structure for configuration
         'renegotiation' => "checks only if renegotiation is implemented server-side according RFC 5746 ",
         'drown'     => "checks only if the target server itself is vulnerable to DROWN ",
         'robot'     => "checks only if the target offers ciphers vulnerable to ROBOT ",
-        'cipher'    => "+cipher : functionality changed, please see '$cfg__me --help=TECHNIC'",
         'cipherall' => "+cipherall : functionality changed, please see '$cfg__me --help=TECHNIC'",
         'cipherraw' => "+cipherraw : functionality changed, please see '$cfg__me --help=TECHNIC'",
         'openssl3'  => "OpenSSL 3.x changed some functionality, please see '$cfg__me --help=TECHNIC'",
@@ -3546,7 +3546,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.30"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.32"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3595,7 +3595,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.30 2024/06/07
+3.32 2024/06/15
 
 =head1 AUTHOR
 
