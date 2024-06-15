@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.67 24/06/15 09:43:47"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.68 24/06/15 11:43:39"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -417,7 +417,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.67"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.68"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -3736,7 +3736,7 @@ sub checkciphers    {
     if (defined $results->{'_admin'}{'session_protocol'}) {
         checkciphers_pfs($cnt_all, $cnt_pfs, $results->{'_admin'}{'session_protocol'});
     } else {
-        _hint("no session protocol detected, PFS ciphers may be wrong; consider using '--ciphermode=intern'") if (_is_cfg_out('hint_ciphers'));
+        _hint("no session protocol detected, PFS ciphers may be wrong; consider using '--ciphermode=intern'"); # if (_is_cfg_out('hint_ciphers'));
         # for ciphermode=openssl|ssleay only; reason not yet identified (12/2023)
     }
     trace("checkciphers() }");
