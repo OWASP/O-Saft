@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.65 24/06/15 09:12:31"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.66 24/06/15 09:18:50"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -417,7 +417,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.65"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.66"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -7043,18 +7043,29 @@ while ($#argv >= 0) {
     if ($arg eq  '--nodisabled')        { _set_cfg_out('disabled',    0); }
     if ($arg =~ /^--headers?$/)         { _set_cfg_out('header',      1); } # some people type --headers
     if ($arg =~ /^--noheaders?$/)       { _set_cfg_out('header',      0); }
-    if ($arg =~ /^--hints?$/)           { _set_cfg_out('hint_info',   1); _set_cfg_out('hint_check', 1); }
-    if ($arg =~ /^--nohints?$/)         { _set_cfg_out('hint_info',   0); _set_cfg_out('hint_check', 0); }
     if ($arg =~ /^--hints?infos?/)      { _set_cfg_out('hint_info',   1); }
     if ($arg =~ /^--nohints?infos?/)    { _set_cfg_out('hint_info',   0); }
     if ($arg =~ /^--hints?checks?/)     { _set_cfg_out('hint_check',  1); }
     if ($arg =~ /^--nohints?checks?/)   { _set_cfg_out('hint_check',  0); }
     if ($arg =~ /^--hints?cipher/)      { _set_cfg_out('hint_cipher', 1); }
     if ($arg =~ /^--nohints?cipher/)    { _set_cfg_out('hint_cipher', 0); }
+    if ($arg =~ /^--hints?$/)           {
+        _set_cfg_out('hint',        1);
+        _set_cfg_out('hint_info',   1);
+        _set_cfg_out('hint_check',  1); 
+        _set_cfg_out('hint_cipher', 1); 
+    }
+    if ($arg =~ /^--nohints?$/)         {
+        _set_cfg_out('hint',        0);
+        _set_cfg_out('hint_info',   0);
+        _set_cfg_out('hint_check',  0);
+        _set_cfg_out('hint_cipher', 0); 
+    }
     if ($arg eq  '--quiet')             { $arg = '--silent';              } # alias:
     if ($arg eq  '--silent')            { } # see next line
     if ($arg =~ /^--(?:silent|quiet)$/) {
         _set_cfg_out('warning',     0);
+        _set_cfg_out('hint',        0);
         _set_cfg_out('hint_info',   0);
         _set_cfg_out('hint_check',  0);
         _set_cfg_out('hint_cipher', 0);
