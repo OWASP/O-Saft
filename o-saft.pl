@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.63 24/06/10 14:26:19"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.65 24/06/15 09:12:31"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -417,7 +417,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.63"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.65"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -2839,9 +2839,9 @@ sub _get_cipherslist    {
     } # --cipher=
     if ($pattern) {
         if (_is_cfg_ciphermode('intern|dump')) {
+            # find names, aliases and constants
             foreach my $name (split(":", $pattern)) {
-                # find names, aliases and constants
-                push(@ciphers, Ciphers::get_key($name));
+                push(@ciphers, Ciphers::find_names_any($name));
             }
         } else { # _is_cfg_ciphermode('openssl')
             # 'intern' is the default cipher range (see o-saft-lib.pm), which
@@ -7327,7 +7327,9 @@ while ($#argv >= 0) {
             push(@{$cfg{'do'}}, lc($val));      # lc() as only lower case keys are allowed since 14.10.13
         } else {
             _warn("049: command '$val' unknown; command ignored");
-            _hint($cfg{'hints'}->{'cipher'}) if ($val =~ m/^cipher(?:all|raw)/);
+            if (_is_cfg_out('hint_cipher')) {   # SEE Note:hints
+                _hint($cfg{'hints'}->{$val}) if ($val =~ m/^cipher(?:all|raw)/);
+            }
         }
         next;
     }
@@ -7403,7 +7405,6 @@ if (_is_cfg_do('cipher') and (0 == $#{$cfg{'do'}})) {
     $cfg{'use'}->{'https'}  = 0;
     $cfg{'use'}->{'http'}   = 0;
     $cfg{'use'}->{'dns'}    = 0;
-    _hint($cfg{'hints'}->{'cipher'});
 }
 
 if (_is_cfg_do('list')) {
@@ -7538,9 +7539,10 @@ if ((0 < _need_cipher()) or (0 < _need_default())) {
             # add: cipher_intern, cipher_openssl, cipher_ssleay, cipher_dump
             my $do = 'cipher_' . $mode;
             push(@{$cfg{'do'}}, $do) if (not _is_cfg_do($do)); # only if not yet set
-            # TODO: funktioniert nicht sauber
+            # TODO: funktioniert nicht sauber; OWASP-Rating fehlt bei modernen ECDHE-ECDSA-*
             #$cfg{'legacy'} = 'owasp' if ($do eq 'cipher_intern'); # new default
             #$legacy = $cfg{'legacy'};
+            #_hint("+cipher : functionality changed, please see '$cfg{'me'} --help=TECHNIC'");
         }
     }
 }
@@ -7801,6 +7803,7 @@ if ($fail > 0) {
         # contain a list of commands. So the hint is a bit vage.
 } else {
     # print warnings and hints if necessary
+    # don't bother user with hints defined for commands in @{$cfg{'commands_hint'}}
     foreach my $cmd (@{$cfg{'do'}}) {
         if (_is_member($cmd, \@{$cfg{'commands_hint'}})) {
             _hint("+$cmd : please see '$cfg{'me'} --help=CHECKS' for more information");
