@@ -578,7 +578,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 3.20 Spring Edition 2024
+#?      @(#) 3.21 Summer Edition 2024
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -591,11 +591,17 @@ exec wish "$0" ${1+"$@"}
 # -----------------------------------------------------------------------------
 
 set cfg(testtcl) 0
+set cfg(needtk)  1              ;# load Tk if needed only; dirty hack for --h
 #package require Tcl     8.5    ;# for documentation only
 #package require Tk      8.5    ;# modern Tcl/Tk doesn't need it anymore
+if { [regexp -- {--h(elp)?} $argv]} {
+    set cfg(needtk)  0
+}
 if {![regexp -- {--test-?tcl} $argv]} {
     # keep some systems quiet
-    package require Tk
+    if {0<$cfg(needtk)} {
+        package require Tk
+    }
     set cfg(testtcl) 1
 }
 
@@ -611,7 +617,7 @@ if {![regexp -- {--test-?tcl} $argv]} {
 # might be defined later in the code, but it must be done before any usage.
 # Hence it's defined right below.
 
-if {0<$cfg(testtcl)} {
+if {0<$cfg(testtcl) && 0<$cfg(needtk)} {
     # do not bind in debug-only mode to avoid errors, see "Key Bindings"
     foreach klasse [list  Button  Combobox  Entry  Label  Text Message Spinbox \
                          TButton TCombobox TEntry TLabel TText Frame Menu \
@@ -662,12 +668,12 @@ proc copy2clipboard {w shift} {
 #____________________________________________________________ configuration __|
 
 # this section mainly contains variable initialisations, it also defines some
-# functions for easy acces to configurations
+# functions for easy access to configurations
 # following arrays contain the index DESC multiple times, which means that it
 # will be overwritten; doesn't harm, because it's used for documentation only
 # in the code herein
 
-proc config_docker  {mode}  {
+proc docker_config  {mode}  {
     #? initilise configuration for use with Docker image
     #  may be called with $mode=opt for --docker option or with $mode=prg to
     #  check if program name matches *-docker
@@ -685,14 +691,27 @@ proc config_docker  {mode}  {
     if {1==[info exists env(o_saft_docker_tag)] } { set prg(docker-tag) $env(o_saft_docker_tag)  }
     if {1==[info exists env(o_saft_docker_name)]} { set prg(docker-id)  $env(o_saft_docker_name) }
     return
-}; # config_docker
+}; # docker_config
+
+proc docker_args    {}      {
+    #? if in "docker mode" pass image ID to Docker;
+    # note that docker specific options must be before o-saft.pl commands or options
+    global prg
+        set do  {}
+    if {[regexp {\-docker$} $prg(SAFT)]} {
+        lappend do "-id=$prg(docker-id)"
+#lappend do "-tag=$prg(docker-tag)"
+# FIXME: need to distinguish if --id= or --tag= was specified
+    }
+    return $do
+}; # docker_args
 
 if {![info exists argv0]} { set argv0 "o-saft.tcl" }   ;# if it is a tclet
 
-set cfg(SID)    "@(#) o-saft.tcl 3.20 24/06/15 09:53:22"
-set cfg(mySID)  "$cfg(SID) Winter Edition 2024"
+set cfg(SID)    "@(#) o-saft.tcl 3.21 24/06/15 15:47:19"
+set cfg(mySID)  "$cfg(SID) Summer Edition 2024"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {3.20}
+set cfg(VERSION) {3.21}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -855,7 +874,7 @@ set cfg(guiwidgets) {}         ;# contains the widgets of the GUI
 set cfg(guimenus)   {}         ;# contains the widgets of the GUI's menus
                                 # debugging only for --gui-layout=tablet
 
-config_docker prg              ;# may initialise some docker-specific settings
+docker_config prg              ;# may initialise some docker-specific settings
 
 catch {
     set fid [open $prg(INIT) r] ;# read .o-saft.pl
@@ -1376,6 +1395,201 @@ proc _dbx   {level txt} {
     return
 }; # _dbx
 
+proc osaft_about {mode} {
+    #? extract description from myself; returns text
+    _dbx 2 "{$mode}{"
+    global arrv argv0
+    set fid [open $argv0 r]
+    set txt [read $fid]
+    set hlp ""
+    foreach l [split $txt "\r\n"] {
+        if {![regexp {^#[?.]} $l]} { continue }
+        if { [regexp {^#\.}   $l] && $mode eq {ABOUT}} { continue }
+        if { [regexp {^\s*$}  $l]} { continue }
+        set l [regsub -all {\$0} $l $argv0]
+        set hlp "$hlp\n[regsub {^#[?.]} $l {}]"
+    }
+    close $fid
+    _dbx 2 "=... about text ... }"
+    return $hlp
+}; # osaft_about
+
+proc osaft_write_rc     {}  {
+    #? print data for resource file
+    # print all lines between  RC-ANF and RC-END
+    _dbx 2 "{}{"
+    global cfg argv0
+    set qq {"} ;# dumm "
+    if [catch { set fid [open $argv0 r]} err] { puts "**ERROR: $err"; exit 2 }
+    # $rc_doc is used to define help text with the same syntax as used for this
+    # file to avoid that it will be extracted with  --help  option, the text is
+    # defined with a leading space in each line.
+    # Note that the VERSION of the generated file is the same as the VERSION of
+    # this file itself.
+    set rc_doc "#?
+ #? NAME
+ #?      .o-saft.tcl -  resource file for o-saft.tcl
+ #?
+ #? SYNOPSIS
+ #?      source .o-saft.tcl
+ #?
+ #? DESCRIPTION
+ #?      This is the user-configuration file for O-Saft's GUI  o-saft.tcl .
+ #?
+ #? USAGE
+ #?      This file must reside in the user's  HOME  directory or the  directory
+ #?      where  o-saft.tcl  will be started.
+ #?
+ #? SYNTAX
+ #?      Content of this file must be valid Tcl syntax. Values may contain  Tcl
+ #?      variables.
+ #?
+ #? VERSION
+ #?      @(#) .o-saft.tcl generated by 3.21 24/06/15 15:47:19
+ #?
+ #? AUTHOR
+ #?      dooh, who is author of this file? cultural, ethical, discussion ...
+ #?
+ # -----------------------------------------------------------------------------"
+    puts "#!/bin/cat
+[regsub -all -line {^ } $rc_doc ""]
+
+set cfg(RCSID)  {1.7};  # initial SID, do not remove
+
+package require Tcl 8.5
+
+set cfg(TITLE)  {$cfg(TITLE)}"
+
+    global cfg_colors cfg_texts cfg_tipps
+
+    puts "\narray set cfg_color $qq"
+    puts "    DESC\t{$cfg_colors(DESC)}"
+    foreach key [lsort [array names cfg_colors]] {
+        if {[regexp ^DESC $key]} { continue }
+        puts "    $key\t{$cfg_colors($key)}"
+    }
+    puts "$qq;"
+
+    puts "\narray set cfg_label $qq"
+    puts "    DESC\t{-- CONFIGURATION texts used at various places ---------------}"
+    foreach key [lsort [array names cfg_texts]] {
+        if {[regexp ^DESC $key]} { continue }
+        puts "    $key\t{$cfg_texts($key)}"
+    }
+    puts "$qq;"
+
+    puts "\narray set cfg_tipp $qq"
+    puts "    DESC\t{$cfg_tipps(DESC)}"
+    foreach key [lsort [array names cfg_tipps]] {
+        if {[regexp ^DESC $key]} { continue }
+        puts "    $key\t{$cfg_tipps($key)}"
+    }
+    puts "$qq;"
+
+    set skip 1
+    foreach l [split [read $fid] "\r\n"] {
+        if {[regexp {^# RC-ANF} $l]} { set skip 0; continue }
+        if {[regexp {^# RC-END} $l]} { set skip 1; break    }
+        if {1==$skip} { continue }
+        set l [regsub -all {\$0} $l $cfg(ICH)]
+        puts $l
+    }
+    close $fid
+
+    puts "
+#-----------------------------------------------------------------------------{
+#   Tcl's  option  command can be used here too, for example:
+# option add *Button.font Bold
+# option add *Label.font  Bold
+# option add *Text.font   mono
+    # NOTE  that setting other fonts may change the layout of the GUI,  it may
+    #       only be necessary to adapt some sizes (see myX) too.
+#
+# set prg(option) 1  ;# set to 1 to avoid internal 'option add ...' commands
+    # To avoid  o-saft.tcl  using its private settings,  this variable must be
+    # set to  1
+#-----------------------------------------------------------------------------}
+";
+
+    _dbx 2 "}"
+    return
+}; # osaft_write_rc
+
+proc osaft_write_opts   {}  {
+    #? extract and print options from myself
+    _dbx 2 "{}{"
+    global argv0
+    set fid [open $argv0 r]
+    set txt [read $fid]
+    # The goal here is to extract all known options of this tool.  They are
+    # found in  __ main __  where there is a  switch  statement.  All cases
+    # there look like:
+    #       --opt1 -
+    #       --opt2 {
+    #       --opt3 { some tcl code 
+    #       +opt   {
+    #       --d=*  {
+    # If a line matches  ^\s*[+-]  it will be trimmed to remove leading and
+    # trailing spaces, also all other saces are sqeezed to one space.  Then
+    # it can be split at spaces,  which results in an array with the option
+    # as first and  -  or  {  as second element.
+    # The options  --*  and  +*  are ignored.
+    # dummy line with }}}}} to keep Tcl parser happy
+    foreach l [split $txt "\r\n"] {
+        if {![regexp {^\s*[+-]}      $l]}   { continue }
+        if { [regexp {^\s*[+-]-?[*]} $l]}   { continue }
+        set cols [split [regsub -all {\s+} [string trim $l] " "] " "]
+        set col2 [lindex $cols 1]
+        if { "\{" eq $col2 || "-" eq $col2 } { puts [lindex $cols 0] }
+    }
+    close $fid
+    _dbx 2 "}"
+    return
+}; # osaft_write_opts
+
+proc _get_data_filename  {mode} {
+    _dbx 2 "{$mode}{}"
+    global cfg
+    return "$cfg(docs-dir)/$cfg(O-Saft).$mode" ;# TODO: directory hardcoded
+}; # _get_data_filename
+
+proc osaft_write_docs   {}  {
+    #? get documentation and help texts from o-saft.pl and store in file
+    # see also "make doc.data" and "make static.docs"
+    _dbx 2 "{}{"
+    global prg
+    putv  " exec {*}$prg(PERL) $prg(SAFT) [docker_args] --no-rc --help=gen-docs"
+    catch { exec {*}$prg(PERL) $prg(SAFT) [docker_args] --no-rc --help=gen-docs } txt
+    _dbx 2 "}"
+    return
+}; # osaft_write_docs
+
+#_____________________________________________________________________________
+#____________________________________________________________ early actions __|
+
+# To avoid loading and using Tk functionality, some actions are performed very
+# early, right before definige other variables and functions.
+# These are actions requested by options which only print ASCII data.
+# To fulfill these action, some data and some function are defined here.
+
+
+foreach arg $argv {
+    switch -glob $arg {
+        +VERSION        { puts $cfg(VERSION);        exit;  }
+        --version       { puts $cfg(mySID);          exit;  }
+        --h             -
+        --help          { puts [osaft_about "HELP"]; exit;  }
+        --help=opts     { osaft_write_opts;          exit;  }
+        --rc            { osaft_write_rc;            exit;  }
+        --gen-docs      { osaft_write_docs;          exit;  }
+        -- { break; }
+    }
+    #   -- never reached because stripped away in shebang :-(
+}
+
+#_____________________________________________________________________________
+#________________________________________________________________ functions __|
+
 proc _trace      {args} {
     #? trace output
     global cfg
@@ -1410,7 +1624,7 @@ proc trace_commands  {} {
     append _trace_cmds "[info procs create*] "
     append _trace_cmds "[info procs osaft*]  "
     append _trace_cmds "[info procs search*] "
-    append _trace_cmds "images_read remove_host www_browser show_window "
+    append _trace_cmds "images_read remove_host guibrowser_start guiwindow_show "
     append _trace_cmds "gui_init gui_main guitheme_init update_cfg"
         # procs not found by info command before
     foreach _cmd $_trace_cmds {
@@ -1680,18 +1894,58 @@ proc guistatus_set    {val} {
     return
 }; # guistatus_set
 
-proc docker_args  {}        {
-    #? if in "docker mode" pass image ID to Docker;
-    # note that docker specific options must be before o-saft.pl commands or options
-    global prg
-        set do  {}
-    if {[regexp {\-docker$} $prg(SAFT)]} {
-        lappend do "-id=$prg(docker-id)"
-#lappend do "-tag=$prg(docker-tag)"
-# FIXME: need to distinguish if --id= or --tag= was specified
+proc guiwindow_show   {w}   {
+    #? show window near current cursor position
+    set y   [winfo pointery $w]; incr y 23
+    set x   [winfo pointerx $w]; incr x 23
+    wm geometry  $w "+$x+$y"
+    wm deiconify $w
+    return
+}; # guiwindow_show
+
+proc guibrowser_start {url} {
+    #? open URL in browser, uses system's native browser
+    global cfg prg
+    if {[string length $prg(BROWSER)] < 1} { pwarn [_get_text no_browser]; return }
+    #win32# [tk windowingsystem]  eq "win32"
+    #win32# { does not work with ActiveTcl
+    #win32# package require twapi_com
+    #win32# set ie [twapi::comobj InternetExplorer.Application]
+    #win32# puts "IE $ie"
+    #win32# $ie Visible true
+    #win32# set ie [twapi::comobj Firefox.Application]
+    #win32# puts "IE $ie"
+    #win32# $ie Visible true
+    #win32# }
+    #win32# { works with ActiveTcl
+    #win32# folgendes funktioniert, aber IE läuft im Vordergrund, d.h. Rest fehlt
+    #win32# package require dde
+    #win32# dde execute iexplore WWW_OpenURL http://www.tcl.tk/
+    #win32# }
+    putv  " exec {*}$prg(BROWSER) $url & "
+    catch { exec {*}$prg(BROWSER) $url & }
+    return
+}; # guibrowser_start
+
+proc guibrowser_bind  {w tagname}  {
+    #? search for URLs in $w, mark them and bind key to open browser
+    global cfg
+    set anf [$w search -regexp -all -count end {\shttps?://[^\s]*} 1.0]
+    set i 0
+    foreach a $anf {
+        set e [lindex $end $i]
+        set t [string trim [$w get $a "$a + $e c"]]
+        set l [string length $t]
+        incr i
+        $w tag add    $tagname     $a "$a + $e c"
+        $w tag add    $tagname-$i  $a "$a + $e c"
+        $w tag config $tagname-$i -foreground [_get_color link]
+        $w tag bind   $tagname-$i <ButtonPress> "guibrowser_start $t"
+        if {0==$cfg(gui-tip)} { tooltip::tooltip $w -tag $tagname-$i "[_get_tipp open_browser] $t" }
+            # cannot use guitip_set as we want to bind to $tagname and not $w
     }
-    return $do
-}; # docker_args
+    return
+}; # guibrowser_bind
 
 proc toggle_cfg          {w opt val}      {
     #? use widget config command to change options value
@@ -1891,59 +2145,6 @@ proc apply_filter    {w layout cmd} {
     }
     return
 }; # apply_filter
-
-proc show_window       {w}          {
-    #? show window near current cursor position
-    set y   [winfo pointery $w]; incr y 23
-    set x   [winfo pointerx $w]; incr x 23
-    wm geometry  $w "+$x+$y"
-    wm deiconify $w
-    return
-}; # show_window
-
-proc www_browser       {url}        {
-    #? open URL in browser, uses system's native browser
-    global cfg prg
-    if {[string length $prg(BROWSER)] < 1} { pwarn [_get_text no_browser]; return }
-    #win32# [tk windowingsystem]  eq "win32"
-    #win32# { does not work with ActiveTcl
-    #win32# package require twapi_com
-    #win32# set ie [twapi::comobj InternetExplorer.Application]
-    #win32# puts "IE $ie"
-    #win32# $ie Visible true
-    #win32# set ie [twapi::comobj Firefox.Application]
-    #win32# puts "IE $ie"
-    #win32# $ie Visible true
-    #win32# }
-    #win32# { works with ActiveTcl
-    #win32# folgendes funktioniert, aber IE läuft im Vordergrund, d.h. Rest fehlt
-    #win32# package require dde
-    #win32# dde execute iexplore WWW_OpenURL http://www.tcl.tk/
-    #win32# }
-    putv  " exec {*}$prg(BROWSER) $url & "
-    catch { exec {*}$prg(BROWSER) $url & }
-    return
-}; # www_browser
-
-proc bind_browser      {w tagname}  {
-    #? search for URLs in $w, mark them and bind key to open browser
-    global cfg
-    set anf [$w search -regexp -all -count end {\shttps?://[^\s]*} 1.0]
-    set i 0
-    foreach a $anf {
-        set e [lindex $end $i]
-        set t [string trim [$w get $a "$a + $e c"]]
-        set l [string length $t]
-        incr i
-        $w tag add    $tagname     $a "$a + $e c"
-        $w tag add    $tagname-$i  $a "$a + $e c"
-        $w tag config $tagname-$i -foreground [_get_color link]
-        $w tag bind   $tagname-$i <ButtonPress> "www_browser $t"
-        if {0==$cfg(gui-tip)} { tooltip::tooltip $w -tag $tagname-$i "[_get_tipp open_browser] $t" }
-            # cannot use guitip_set as we want to bind to $tagname and not $w
-    }
-    return
-}; # bind_browser
 
 proc create_selected   {title val}  {
     #? opens toplevel window with selectable text
@@ -2416,7 +2617,7 @@ proc create_filter      {parent cmd}    {
     #? create new window with filter commands for exec results; store widget in cfg(winF)
     _dbx 2 "{$parent, $cmd}{"
     global cfg f_key f_bg f_fg f_cmt filter_bool myX
-    if {[winfo exists $cfg(winF)]}  { show_window $cfg(winF); return }
+    if {[winfo exists $cfg(winF)]}  { guiwindow_show $cfg(winF); return }
     set obj $parent;    # we want to have a short variable name
     set geo [split [winfo geometry .] {x+-}]
     set myX(geoF) +[expr [lindex $geo 2] + [lindex $geo 0]]+[expr [lindex $geo 3]+100]
@@ -2580,7 +2781,7 @@ proc create_ciphers     {}  {
     # SEE Cipher:text (in lib/OMan.pm) for expected data
     _dbx 2 "{}{"
     global cfg myX
-    if {[winfo exists $cfg(winD)]}  { show_window $cfg(winD); return }
+    if {[winfo exists $cfg(winD)]}  { guiwindow_show $cfg(winD); return }
     set cfg(winD) [create_window [_get_text win_cipher] $myX(geoD)]
     set data  [osaft_ciphers]]
     # extract column headers from data and convert data to array
@@ -2631,7 +2832,7 @@ proc create_about       {}  {
     #  Show the text starting with  #?  from this file.
     _dbx 2 "{}{"
     global cfg myX
-    if {[winfo exists $cfg(winA)]}  { show_window $cfg(winA); return }
+    if {[winfo exists $cfg(winA)]}  { guiwindow_show $cfg(winA); return }
     set cfg(winA) [create_window [_get_text win_about] $myX(geoA)]
     set txt [create_text $cfg(winA) [osaft_about "ABOUT"]].t
     $txt config -bg [_get_color osaft]
@@ -2647,7 +2848,7 @@ proc create_about       {}  {
     $txt tag config sektion -font osaftBold
 
     # bind buttons and keys
-    bind_browser $txt ABOUT-URL
+    guibrowser_bind $txt ABOUT-URL
     bind  $txt <KeyPress>   "search_view $txt %K"
     _dbx 2 "}"
     return
@@ -2911,7 +3112,7 @@ proc create_help  {sect} {
     }
 
     _dbx 4 " 8. highlight all URLs and bind key"
-    bind_browser $txt   HELP-URL
+    guibrowser_bind $txt HELP-URL
 
     # finally global markups
     $txt tag config     HELP-CODE -background [_get_color code]
@@ -3070,7 +3271,7 @@ proc create_win   {parent title cmd} {
             _dbx 4 " create window: $win »$dat«"
             set dat [string toupper [string trim $dat ] 0 0]
             set win [create_window $dat ""]
-            if {"" eq $win} { return }     ;# do nothing, even no: show_window $this
+            if {"" eq $win} { return }     ;# do nothing, even no: guiwindow_show $this
             set this $win.g
             frame $this                    ;# frame for grid
             continue
@@ -3769,156 +3970,6 @@ proc search_list  {direction} {
     return
 }; # search_list
 
-proc osaft_write_rc     {}  {
-    #? print data for resource file
-    # print all lines between  RC-ANF and RC-END
-    _dbx 2 "{}{"
-    global cfg argv0
-    set qq {"} ;# dumm "
-    if [catch { set fid [open $argv0 r]} err] { puts "**ERROR: $err"; exit 2 }
-    # $rc_doc is used to define help text with the same syntax as used for this
-    # file to avoid that it will be extracted with  --help  option, the text is
-    # defined with a leading space in each line.
-    # Note that the VERSION of the generated file is the same as the VERSION of
-    # this file itself.
-    set rc_doc "#?
- #? NAME
- #?      .o-saft.tcl -  resource file for o-saft.tcl
- #?
- #? SYNOPSIS
- #?      source .o-saft.tcl
- #?
- #? DESCRIPTION
- #?      This is the user-configuration file for O-Saft's GUI  o-saft.tcl .
- #?
- #? USAGE
- #?      This file must reside in the user's  HOME  directory or the  directory
- #?      where  o-saft.tcl  will be started.
- #?
- #? SYNTAX
- #?      Content of this file must be valid Tcl syntax. Values may contain  Tcl
- #?      variables.
- #?
- #? VERSION
- #?      @(#) .o-saft.tcl generated by 3.20 24/06/15 09:53:22
- #?
- #? AUTHOR
- #?      dooh, who is author of this file? cultural, ethical, discussion ...
- #?
- # -----------------------------------------------------------------------------"
-    puts "#!/bin/cat
-[regsub -all -line {^ } $rc_doc ""]
-
-set cfg(RCSID)  {1.7};  # initial SID, do not remove
-
-package require Tcl 8.5
-
-set cfg(TITLE)  {$cfg(TITLE)}"
-
-    global cfg_colors cfg_texts cfg_tipps
-
-    puts "\narray set cfg_color $qq"
-    puts "    DESC\t{$cfg_colors(DESC)}"
-    foreach key [lsort [array names cfg_colors]] {
-        if {[regexp ^DESC $key]} { continue }
-        puts "    $key\t{$cfg_colors($key)}"
-    }
-    puts "$qq;"
-
-    puts "\narray set cfg_label $qq"
-    puts "    DESC\t{-- CONFIGURATION texts used at various places ---------------}"
-    foreach key [lsort [array names cfg_texts]] {
-        if {[regexp ^DESC $key]} { continue }
-        puts "    $key\t{$cfg_texts($key)}"
-    }
-    puts "$qq;"
-
-    puts "\narray set cfg_tipp $qq"
-    puts "    DESC\t{$cfg_tipps(DESC)}"
-    foreach key [lsort [array names cfg_tipps]] {
-        if {[regexp ^DESC $key]} { continue }
-        puts "    $key\t{$cfg_tipps($key)}"
-    }
-    puts "$qq;"
-
-    set skip 1
-    foreach l [split [read $fid] "\r\n"] {
-        if {[regexp {^# RC-ANF} $l]} { set skip 0; continue }
-        if {[regexp {^# RC-END} $l]} { set skip 1; break    }
-        if {1==$skip} { continue }
-        set l [regsub -all {\$0} $l $cfg(ICH)]
-        puts $l
-    }
-    close $fid
-
-    puts "
-#-----------------------------------------------------------------------------{
-#   Tcl's  option  command can be used here too, for example:
-# option add *Button.font Bold
-# option add *Label.font  Bold
-# option add *Text.font   mono
-    # NOTE  that setting other fonts may change the layout of the GUI,  it may
-    #       only be necessary to adapt some sizes (see myX) too.
-#
-# set prg(option) 1  ;# set to 1 to avoid internal 'option add ...' commands
-    # To avoid  o-saft.tcl  using its private settings,  this variable must be
-    # set to  1
-#-----------------------------------------------------------------------------}
-";
-
-    _dbx 2 "}"
-    return
-}; # osaft_write_rc
-
-proc osaft_write_opts   {}  {
-    #? extract and print options from myself
-    _dbx 2 "{}{"
-    global argv0
-    set fid [open $argv0 r]
-    set txt [read $fid]
-    # The goal here is to extract all known options of this tool.  They are
-    # found in  __ main __  where there is a  switch  statement.  All cases
-    # there look like:
-    #       --opt1 -
-    #       --opt2 {
-    #       --opt3 { some tcl code 
-    #       +opt   {
-    #       --d=*  {
-    # If a line matches  ^\s*[+-]  it will be trimmed to remove leading and
-    # trailing spaces, also all other saces are sqeezed to one space.  Then
-    # it can be split at spaces,  which results in an array with the option
-    # as first and  -  or  {  as second element.
-    # The options  --*  and  +*  are ignored.
-    # dummy line with }}}}} to keep Tcl parser happy
-    foreach l [split $txt "\r\n"] {
-        if {![regexp {^\s*[+-]}      $l]}   { continue }
-        if { [regexp {^\s*[+-]-?[*]} $l]}   { continue }
-        set cols [split [regsub -all {\s+} [string trim $l] " "] " "]
-        set col2 [lindex $cols 1]
-        if { "\{" eq $col2 || "-" eq $col2 } { puts [lindex $cols 0] }
-    }
-    close $fid
-    _dbx 2 "}"
-    return
-}; # osaft_write_opts
-
-proc _get_data_filename  {mode} {
-    _dbx 2 "{$mode}{}"
-    global cfg
-    return "$cfg(docs-dir)/$cfg(O-Saft).$mode" ;# TODO: directory hardcoded
-}; # _get_data_filename
-
-proc osaft_write_docs   {}  {
-    #? get documentation and help texts from o-saft.pl and store in file
-    # see also "make doc.data" and "make static.docs"
-    _dbx 2 "{}{"
-    global prg
-    putv  " exec {*}$prg(PERL) $prg(SAFT) [docker_args] --no-rc --help=gen-docs"
-    catch { exec {*}$prg(PERL) $prg(SAFT) [docker_args] --no-rc --help=gen-docs } txt
-    _dbx 2 "}"
-    return
-}; # osaft_write_docs
-
 proc osaft_read_data {norc mode} {
     #? return configuration from prg(SAFT) or corresponding file
     #  $mode denotes the type of configuration; it is also the file suffix,
@@ -3954,25 +4005,6 @@ proc osaft_read_data {norc mode} {
     _dbx 2 "=... RC text ... }"
     return $txt
 }; # osaft_read_data
-
-proc osaft_about {mode} {
-    #? extract description from myself; returns text
-    _dbx 2 "{$mode}{"
-    global arrv argv0
-    set fid [open $argv0 r]
-    set txt [read $fid]
-    set hlp ""
-    foreach l [split $txt "\r\n"] {
-        if {![regexp {^#[?.]} $l]} { continue }
-        if { [regexp {^#\.}   $l] && $mode eq {ABOUT}} { continue }
-        if { [regexp {^\s*$}  $l]} { continue }
-        set l [regsub -all {\$0} $l $argv0]
-        set hlp "$hlp\n[regsub {^#[?.]} $l {}]"
-    }
-    close $fid
-    _dbx 2 "=... about text ... }"
-    return $hlp
-}; # osaft_about
 
 proc osaft_ciphers   {} {
     #? get description of cipher suites from o-saft.pl; returns text
@@ -4769,15 +4801,17 @@ switch $cfg(ICH) {
 #  for some options following variants are allowed: {^--?(PREFIX-?)?OPT=}
 #  which is:   -OPT=val  -PREFIXOPT=val  -PREFIX-OPT=val
 #             --OPT=val --PREFIXOPT=val --PREFIX-OPT=val
+#{ options already done:
+#       +VERSION        { puts $cfg(VERSION);        exit;      }
+#       --version       { puts $cfg(mySID);          exit;      }
+#       --h             -
+#       --help          { puts [osaft_about "HELP"]; exit;      }
+#       --help=opts     { osaft_write_opts;          exit;      }
+#       --rc            { osaft_write_rc;            exit;      }
+#       --gen-docs      { osaft_write_docs;          exit;      }
+#}
 foreach arg $argv {
     switch -glob $arg {
-        +VERSION        { puts $cfg(VERSION);        exit;      }
-        --version       { puts $cfg(mySID);          exit;      }
-        --h             -
-        --help          { puts [osaft_about "HELP"]; exit;      }
-        --help=opts     { osaft_write_opts;          exit;      }
-        --rc            { osaft_write_rc;            exit;      }
-        --gen-docs      { osaft_write_docs;          exit;      }
         --nodoc         -
         --nodocs        -
         --no-docs       { set   cfg(docs-src) "dynamic";        }
@@ -4793,7 +4827,7 @@ foreach arg $argv {
         options__for_runtime_behavior { set dumm "-----------"; }
         options__for_use_with_docker  { set dumm "-----------"; }
          -docker        -
-        --docker        { config_docker opt;                    }
+        --docker        { docker_config opt;                    }
          -id=*          -
          -dockerid=*    -
          -docker-id=*   -
