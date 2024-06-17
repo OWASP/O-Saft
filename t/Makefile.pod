@@ -20,7 +20,7 @@ just containing the user (developer) documentation.
 SEE Documentation  in L<o-saft.pl|o-saft.pl> also.
 
 
-=head1 ASTRACT
+=head1 ABSTRACT
 
 While the main  Makefile  is intended for ordinary users to  perfom common
 task for maintaining the project's installation, all other t/Makefile* are
@@ -88,7 +88,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 3.4 24/05/29 01:38:24
+@(#) Makefile.pod 3.5 24/06/17 11:21:23
 
 =head1 AUTHOR
 
