@@ -19,7 +19,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.29 24/05/28 16:09:38";
+my  $SID_odoc   = "@(#) ODoc.pm 3.30 24/06/17 09:59:26";
 our $VERSION    = "24.01.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -303,7 +303,7 @@ sub _get_standalone {
        $name =~ s#(.*[/\\]+)##g;    # help.txt
     my $path = __FILE__;
        $path =~ s#/[^/\\]*$##;
-    foreach my $f ("$file,     $path/$file",      "$path/$name",
+    foreach my $f ("$file",   "$path/$file",      "$path/$name",
                       "$path/$cfg{'dirs'}->{'doc'}/$name",
                       "$path/$cfg{'dirs'}->{'lib'}/$name",
                       "$path/$cfg{'dirs'}->{'lib'}/$file",
@@ -612,7 +612,7 @@ lib/OText.pm
 
 =head1 VERSION
 
-3.29 2024/05/28
+3.30 2024/06/17
 
 
 =head1 AUTHOR
