@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.21 24/06/18 10:57:47
+# SID   @(#) help.txt 3.22 24/06/18 14:48:02
 
 NAME
 
@@ -4301,10 +4301,10 @@ ABOUT CGI
                           Each provided +command buttons submit the form with
                           the selected options and the clicked command.
 
-          ** Full GUI Commands & Options
-                        - form with all commands and options,  its content is
-                          The same as the  COMMANDS  and  OPTIONS  section of
-                          the complete help page (see  --help  ).
+          ** Full GUI Commands & Options - form with all commands and options
+                          Its content is the same as in sections  COMMANDS  
+                          and  OPTIONS  of the complete help page (see --help
+                          option).
 
         In both GUI sections following buttons exist:
 
@@ -4312,7 +4312,7 @@ ABOUT CGI
         * start         - submit form with selected command and options
 
         In general, command buttons which submit the form are yellow. Buttons
-        which show some help, mainly in a new browser tab, are gray.
+        which show some help, mainly in a new browser tab, are grey.
 
     CGI-form limitations
 
