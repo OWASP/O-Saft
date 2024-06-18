@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.20 24/06/10 12:56:54
+# SID   @(#) help.txt 3.21 24/06/18 10:57:47
 
 NAME
 
@@ -2143,14 +2143,11 @@ OPTIONS
 
           Note that  --v  is different from  -v  (see above).
 
-# following option still there, but behaves like --v since 24.01.24
-#
-#      --v-cipher --cipher-v
-#
-#          Print remotely checked ciphers.
-#          In contrast to  --v --v  above,  this just prints the ciphers while
-#          being checked, but no other verbose messages.
-#
+      --v-cipher
+      --cipher-v
+
+          Print each cipher being checked (with  --ciphermode=openssl  only).
+
 # following no longer implemented (8/2016, 12/2023)
 #
 #      --v --v
