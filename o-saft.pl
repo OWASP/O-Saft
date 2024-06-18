@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.70 24/06/18 10:53:25"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.71 24/06/18 14:51:18"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -418,7 +418,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.70"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.71"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6715,6 +6715,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^[+,](abbr|abk|glossar|todo)$/i)   { $arg = "--help=$1"; }     # for historic reason
     # get matching string right of =
     if ($arg =~ /^(?:--|\+|,)help=?(.*)?$/) {
+        _trace_info("  HELP    - OMan::man_printhelp($arg)");
         # we allow:  --help=SOMETHING  or  +help=SOMETHING
         if (defined $1) {
             $arg = $1 if ($1 !~ /^\s*$/);   # pass bare word, if it was --help=*
@@ -7413,6 +7414,7 @@ local $\ = "\n";
 # TODO: use cfg{'targets'} for proxy
 if ($cfg{'proxyhost'} ne "" && 0 == $cfg{'proxyport'}) {
     my $q = "'";
+    _trace_info("  USAGE   -");
     printusage_exit("$q--proxyhost=$cfg{'proxyhost'}$q requires also '--proxyport=NN'");
 }
 $verbose = $cfg{'verbose'};
