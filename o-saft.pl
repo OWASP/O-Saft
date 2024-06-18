@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.69 24/06/15 15:56:15"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.70 24/06/18 10:53:25"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -418,7 +418,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.69"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.70"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -5391,6 +5391,10 @@ sub print_data      {
         } else {
             $v  = $k;
             $k  = "";
+        }
+        if ($value =~ m/^(Signature Value)(.*)$/i) { # i.e +sigkey_value
+            $k  = "$1 ";# trailng space added for better (human) readability
+            $v  = $2;
         }
         if ($cfg{'format'} eq "hex") {
             $v =~ s#(..)#$1:#g;
