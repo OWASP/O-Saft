@@ -24,7 +24,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.33 24/06/15 09:33:31";
+our $SID_ocfg   =  "@(#) OCfg.pm 3.34 24/06/18 10:52:05";
 $OCfg::VERSION  =  "24.01.24";  # official version number of this file
 
 #_____________________________________________________________________________
@@ -2379,8 +2379,12 @@ our %cfg = (    # main data structure for configuration
                          fingerprint fingerprint_hash fingerprint_md5
                          fingerprint_sha1 fingerprint_sha2
                          sigkey_value pubkey_value modulus
+                         subject_hash issuer_hash
+                         ocsp_public_hash ocsp_subject_hash
                          master_key session_id session_ticket
-                       )],      # fingerprint is special, see _ishexdata()
+                       )],      # fingerprint, sigkey_value are special
+                                # no need to convert modulus_exponent, serial
+                                # because openssl returns integer and hex
    #------------------+---------+----------------------------------------------
 
     'ignore-out'    => [qw(https_body)],# commands (output) to be ignored, SEE Note:ignore-out
@@ -3547,7 +3551,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.33"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.34"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3596,7 +3600,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.33 2024/06/15
+3.34 2024/06/18
 
 =head1 AUTHOR
 
