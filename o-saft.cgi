@@ -141,13 +141,15 @@ For debugging only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 3.3 24/06/18 14:01:23";
+my $SID_cgi = "@(#) o-saft.cgi 3.4 24/06/18 14:46:51";
 my $VERSION = '24.01.24';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
    $mepath  = './' if ($mepath eq $me);
 my $header  = 1;
 local $|    = 1;    # don't buffer, synchronize STDERR and STDOUT
+my %STR = ( 'ERROR' => "**ERROR:", 'WARN' => "**WARNING: " );
+                    # %STR should be same as in lib/OText.pm
 
 ##############################################################################
 my $osaft   = "$mepath/o-saft.pl";
@@ -161,15 +163,14 @@ my @argv    = @ARGV;
 
 sub _print_if_test  {
 	#? print text if environment variable OSAFT_CGI_TEST is set
-	local $\ = "\n";
-	print @_ if (defined $ENV{'OSAFT_CGI_TEST'});
+	print @_ . "\n" if (defined $ENV{'OSAFT_CGI_TEST'});
 	return;
 } # _print_if_test
 
 sub _warn_and_exit  {
 	#? print error and exit
 	my $txt = shift;
-	_print_if_test "**ERROR 033: $txt";
+	_print_if_test "$STR{ERROR} 033: $txt";
 	# ####################################################################
 	#
 	# This function should print an empty string and exit with status 0 in
@@ -182,7 +183,7 @@ sub _warn_and_exit  {
 } # _warn_and_exit
 
 if (not $ENV{'QUERY_STRING'}) {
-	print "**WARNING 035: test mode: restart using args as value in QUERY_STRING\n";
+	print "$STR{WARN} 035: test mode: restart using args as value in QUERY_STRING\n";
 	_warn_and_exit "call without parameters" if (1 > $#argv);
 	# may be a command line call without QUERY_STRING environment variable
 	# call myself with QUERY_STRING to simulate a call from CGI
@@ -225,7 +226,7 @@ if ($me =~/\.cgi$/) {
 	$cgi = shift @argv || '';       # remove first argument, which must be --cgi
 	                                # || ''   avoids uninitialized value
 	push(@argv, "--cgi-exec");      # argument required for some more checks
-	die  "**ERROR 030: CGI mode requires strict settings\n" if ($cgi !~ /^--cgi=?$/);
+	die  "$STR{ERROR} 030: CGI mode requires strict settings\n" if ($cgi !~ /^--cgi=?$/);
 
 	# TODO: check if following RegEx need $ at end
 	$typ    = 'html' if ($qs =~ m/--html/); # --html already in @argv
@@ -236,12 +237,12 @@ if ($me =~/\.cgi$/) {
 	        my $_typ = $typ;    # check if force using text/html
 	           $_typ = 'html' if ($qs =~ m/--content-type=html/);
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 3.3\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 3.4\r\n";
 		print "Content-type: text/$_typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
 
-	_print_if_test "**WARNING 036: test mode: die with detailed messages on errors";
+	_print_if_test "$STR{WARN} 036: test mode: die with detailed messages on errors";
 
 	if (defined $ENV{'REQUEST_METHOD'}) { # ToDo: NOT WORKING
 		$qs .= <> if ($ENV{'REQUEST_METHOD'} eq 'POST');# add to GET data
@@ -486,8 +487,8 @@ if ($me =~/\.cgi$/) {
 
 		) {
 		if ($qs =~ m#$dangerous#) {
-			_print_if_test "**ERROR 031: $qs";
-			_print_if_test "**ERROR 032: $dangerous";
+			_print_if_test "$STR{ERROR} 031: $qs";
+			_print_if_test "$STR{ERROR} 032: $dangerous";
 			$err++;
 		}
 	}
