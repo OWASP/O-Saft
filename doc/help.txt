@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.22 24/06/18 14:48:02
+# SID   @(#) help.txt 3.23 24/06/18 16:27:02
 
 NAME
 
@@ -4294,7 +4294,7 @@ ABOUT CGI
           ** Opt        - quick options menu
           ** Help       - various help pages
 
-        * input field for a target (hostname or URL)
+        * input field "Host[:Port]" for a target (hostname or URL)
 
         * GUI sections
           ** Simple GUI - simple form with most common commands and options
@@ -4304,7 +4304,7 @@ ABOUT CGI
           ** Full GUI Commands & Options - form with all commands and options
                           Its content is the same as in sections  COMMANDS  
                           and  OPTIONS  of the complete help page (see --help
-                          option).
+                          option or "☰ -> ? Help" in top menu bar).
 
         In both GUI sections following buttons exist:
 
@@ -4337,8 +4337,9 @@ ABOUT CGI
 
         * Use of dangerous commands or options.
 
-        For deatils pleasesee
+        For deatils please see
 
+              $0 --help=ABOUT
               perldoc o-saft.cgi
 
 
