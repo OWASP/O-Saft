@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.28 24/06/10 13:30:05
+#?      @(#) Makefile 3.29 24/06/18 13:51:00
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 3.28
+_SID            = 3.29
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -319,8 +319,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.28 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.28
+_INST.genbytext = generated data by Makefile 3.29 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.29
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
 		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DOC.dir)@'              \
 		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-LIB.dir)@'              \
@@ -592,8 +592,8 @@ docs:       $(GEN.docs)
 standalone: $(GEN.src)
 stand-alone:$(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.28
-tar:     _INST.is_edit  = 3.28
+_INST.is_edit           = 3.29
+tar:     _INST.is_edit  = 3.29
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
@@ -725,7 +725,7 @@ $(GEN.tgz)--to-noisy: $(ALL.src)
 # TODO: this is a dirty hack, because no Makefiles from t/ should be used here
 # most files could also be generated with: $(SRC.pl) --gen-docs
 # SEE GNU Make:Pattern Rule
-$(O-DOC.dir)/$(SRC.pl).%warnings: Makefile $(SRC.pl) $(SRC.pm) $(TEST.dir)/Makefile.warnings
+$(O-DOC.dir)/$(SRC.pl).%warnings: Makefile $(SRC.pl) $(SRC.pm) $(SRC.cgi) $(TEST.dir)/Makefile.warnings
 	@$(TRACE.target)
 	$(MAKE_COMMAND) -s warnings-info > $@
 
