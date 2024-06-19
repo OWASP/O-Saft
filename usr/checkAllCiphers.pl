@@ -35,18 +35,24 @@ use strict;
 use warnings;
 use Carp;                                           #replaces warn and die
 
-our $SID_check  = "@(#) checkAllCiphers.pl 3.3 24/05/27 11:21:02"; # version of this file
+our $SID_check  = "@(#) 5×ÿY 3.4 24/06/19 11:05:00"; # version of this file
 my  $VERSION    = "24.01.24";
 
 BEGIN {
+    my  $me     = $0;  $me     =~ s#.*(?:/|\\)##;
+    my  $mepath = $0;  $mepath =~ s#/[^/\\]*$##;
+        $mepath = "./" if ($mepath eq $me);
     # SEE Perl:BEGIN perlcritic
     # SEE Perl:@INC
     my $_path = $0;    $_path =~ s#[/\\][^/\\]*$##;
    if (exists $ENV{'PWD'} and not (grep{/^$ENV{'PWD'}$/} @INC) ) {
-        unshift(@INC, $ENV{'PWD'});
+        unshift(@INC,  $ENV{'PWD'});
     }
-    unshift(@INC, $_path)   if not (grep{/^$_path$/} @INC);
-    unshift(@INC, "lib")    if not (grep{/^lib$/}    @INC);
+    if ($0 ne $_path) {
+        unshift(@INC, $_path)       if not (grep{/^$_path$/} @INC);
+    }
+    unshift(@INC, "lib")            if not (grep{/^lib$/}    @INC);
+    unshift(@INC, "$mepath/../lib") if not (grep{/^$mepath....lib$/} @INC);
 }
 
 use OText qw(%STR);
@@ -201,15 +207,13 @@ return;
 # Modul name includes a hyphen -> '' and .pm are necessary
 if (! eval {require 'lib/OTrace.pm';} ) {
     # o-saft-dbx may not be installed, try to find in program's directory
-    push(@INC, $mepath);
-    require('lib/OTrace.pm');
+    require('../lib/OTrace.pm');
 }
 ##use critic
 
 if (! eval {require('lib/SSLhello.pm');} ) {
     # SSLhello may not be installed, try to find in program's directory
-    push(@INC, $mepath);
-    require('lib/SSLhello.pm');
+    require('../lib/SSLhello.pm');
 }
 
 my $arg = "";
