@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.72 24/06/21 20:57:11"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.73 24/06/21 21:01:29"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -418,7 +418,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.72"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.73"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -5551,7 +5551,8 @@ sub print_cipherline    {
         $bits = sprintf("%3s bits", $bits);
 #        printf("    %s  %s  %s\n", $ssl, $bit, $cipher);
 # TODO: new format 1.11.0
-        printf("Accepted  %s    %s bits  %s\n", $ssl, $bits, $cipher);
+# TODO: new format 2.0.7
+        printf("Accepted  %s    %s  %s\n", $ssl, $bits, $cipher);
     }
     if ($legacy eq 'thcsslcheck') {
         # AES256-SHA - 256 Bits -   supported
