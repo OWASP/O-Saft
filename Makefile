@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.29 24/06/18 13:51:00
+#?      @(#) Makefile 3.30 24/06/22 00:25:12
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 3.29
+_SID            = 3.30
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -251,6 +251,12 @@ O-DIRS          = $(O-LIB.dir) $(O-DOC.dir) $(O-WEB.dir) $(O-USR.dir) $(TEST.dir
 GEN.docs        = $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.wiki) $(GEN.man) $(GEN.DOC.data)
 # NOTE: sequence in ALL.Makefiles is important, for example when used in target doc
 ALL.Makefiles   = $(SRC.make) $(SRC.Makefiles)
+ALL.devfiles    = \
+		  $(SRC.misc) \
+		  $(SRC.test) \
+		  $(SRC.make) \
+		  $(SRC.Makefiles) \
+		  $(SRC.Makefiles.ssl)
 ALL.osaft       = $(SRC.pl)  $(SRC.gui) $(SRC.pm)  $(SRC.sh) $(O-SRC.txt) $(SRC.rc) $(SRC.docker)
 ALL.exe         = $(SRC.exe) $(SRC.cgi) $(SRC.php) $(GEN.src) $(SRC.docker)
 ALL.tst         = $(SRC.test)
@@ -313,19 +319,23 @@ _INST.osaft_cgi = $(sort $(SRC.cgi) $(SRC.php) $(GEN.cgi.html))
 _INST.osaft_doc = $(sort $(GEN.pod) $(GEN.man) $(GEN.html))
 _INST.usr       = $(sort $(ALL.usr))
 _INST.osaft     = $(sort $(ALL.osaft))
+_INST.devfiles  = $(sort $(ALL.devfiles))
 _INST.devtools  = $(sort $(ALL.devtools))
 _INST.tools_int = $(sort $(_ALL.devtools.intern))
 _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.29 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.29
+_INST.genbytext = generated data by Makefile 3.30 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.30
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
 		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DOC.dir)@'              \
 		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-LIB.dir)@'              \
 		  -e 's@INSERTED_BY_MAKE_USR_DIR@$(O-USR.dir)@'              \
+		  -e 's@INSERTED_BY_MAKE_TST_DIR@$(TEST.dir)@'               \
+		  -e 's@INSERTED_BY_MAKE_LOG_DIR@$(TEST.logdir)@'            \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.usr)@'              \
+		  -e 's@INSERTED_BY_MAKE_DEV_FILES@$(_INST.devfiles)@'       \
 		  -e 's@INSERTED_BY_MAKE_TOOLS_OTHER@$(_INST.tools_other)@'  \
 		  -e 's@INSERTED_BY_MAKE_TOOLS_OPT@$(_INST.tools_opt)@'      \
 		  -e 's@INSERTED_BY_MAKE_DEVTOOLSINT@$(_INST.tools_int)@'    \
@@ -592,8 +602,8 @@ docs:       $(GEN.docs)
 standalone: $(GEN.src)
 stand-alone:$(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.29
-tar:     _INST.is_edit  = 3.29
+_INST.is_edit           = 3.30
+tar:     _INST.is_edit  = 3.30
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
