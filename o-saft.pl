@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.71 24/06/18 14:51:18"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.72 24/06/21 20:57:11"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -418,7 +418,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.71"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.72"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -5906,9 +5906,11 @@ sub printciphers        {
     } # $ssl
 
     if ($legacy eq 'sslscan') {
-        my $ssl = ${$cfg{'version'}}[4];
+        my $ssl = ${$cfg{'version'}}[$#{$cfg{'version'}}];
         print_cipherpreferred($legacy, $ssl, $host, $port);
-        # TODO: there is only one $data{'cipher_selected'}
+        # there is only one $data{'cipher_selected'}
+        # it is for the last protocol, usually, hence we extract the last
+        # TODO: need to search the selected one
         #foreach my $ssl (@{$cfg{'version'}}) {
         #    print_cipherpreferred($legacy, $ssl, $host, $port);
         #}
