@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 3.7 24/06/22 10:07:47
+#?      @(#) Makefile.dev 3.8 24/06/22 10:10:38
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 3.7
+_SID.dev           := 3.8
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -227,7 +227,7 @@ testarg-dev-INSTALL.sh_--install--instdev:  TEST.args += --install  --instdev
 
 ALL.test.dev.INSTALL.sh += testarg-dev-INSTALL.sh_--checkdev--other \
 			   testarg-dev-INSTALL.sh_--install--gnuenv \
-			   testarg-dev-INSTALL.sh_--install--useenv
+			   testarg-dev-INSTALL.sh_--install--useenv \
 			   testarg-dev-INSTALL.sh_--install--instdev
 ALL.test.dev            += testarg-dev-INSTALL.sh_--checkdev--other \
 			   testarg-dev-INSTALL.sh_--install--gnuenv \
