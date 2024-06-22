@@ -295,7 +295,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) Ò`gc 3.22 24/06/22 10:09:06
+#?      @(#) INSTALL-template.sh 3.22 24/06/22 10:09:06
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
