@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 3.6 24/05/31 11:57:45
+#?      @(#) Makefile.dev 3.7 24/06/22 10:07:47
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 3.6
+_SID.dev           := 3.7
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -213,7 +213,7 @@ ALL.test.dev            += \
 testarg-dev-usr-install_openssl_%:  TEST.args = --n
 testarg-dev-INSTALL.sh_%:           TEST.args = --n --v /tmp/o-saft
 # targets for INSTALL.sh are for testing INSTALL.sh's behaviour, they are not
-# intendet to install anything, hence they are called with --n  which results
+# intended to install anything, hence they are called with --n  which results
 # in some error messsages. Returns following errors, which is OK for --n :
 #   #   ../INSTALL.sh: 877: cd: can't cd to /tmp/o-saft
 #   #   **ERROR: 040: /tmp/o-saft does not exist; exit
@@ -223,13 +223,16 @@ testarg-dev-INSTALL.sh_%:           TEST.args = --n --v /tmp/o-saft
 testarg-dev-INSTALL.sh_--checkdev--other:   TEST.args += --checkdev --other
 testarg-dev-INSTALL.sh_--install--gnuenv:   TEST.args += --install  --gnuenv
 testarg-dev-INSTALL.sh_--install--useenv:   TEST.args += --install  --useenv
+testarg-dev-INSTALL.sh_--install--instdev:  TEST.args += --install  --instdev
 
 ALL.test.dev.INSTALL.sh += testarg-dev-INSTALL.sh_--checkdev--other \
 			   testarg-dev-INSTALL.sh_--install--gnuenv \
 			   testarg-dev-INSTALL.sh_--install--useenv
+			   testarg-dev-INSTALL.sh_--install--instdev
 ALL.test.dev            += testarg-dev-INSTALL.sh_--checkdev--other \
 			   testarg-dev-INSTALL.sh_--install--gnuenv \
-			   testarg-dev-INSTALL.sh_--install--useenv
+			   testarg-dev-INSTALL.sh_--install--useenv \
+			   testarg-dev-INSTALL.sh_--install--instdev
 
 # special option for gen_standalone.sh; must remove the generated file
 # generated file has permissions 555, hence  rm -f
