@@ -295,7 +295,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) �gzV 3.21 24/06/22 00:23:45
+#?      @(#) �`gc 3.22 24/06/22 10:09:06
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -502,6 +502,17 @@ echo_red    () {
 	[ -z "$colour" ] && echo "$@" && return
 	\echo "\033[1;31m$@\033[0m"
 }
+echo_error  () {
+	# $1 number of errors
+	echo ""
+	echo -n "# checks$tab"
+	if [ $1 -eq 0 ]; then
+		echo_green "passed"
+	else
+		echo_red   "failed , $1 error(s) detected"
+	fi
+	return
+}
 
 check_pm    () {
 	# check if passed name is own perl module; return 0 if it is own module
@@ -525,6 +536,19 @@ check_commands () {
 		is=`\command -v $c`
 		[ -n "$is" ] && echo_green "$is" || echo_red "missing"
 	done
+	return
+}
+
+check_development () {
+	# $1 is -d -e -f or -L ; $2 is name of directory, file, link, ...
+	# use own label instead of echo_label
+	perl -le "printf'# %25s%c','$2',0x09"
+	if [ $1 "$2" ]; then
+		echo_green  "OK"
+	else 
+		echo_red "missing; install with: »$0 $inst_directory --instdev«"
+		err=`expr $err + 1`
+	fi
 	return
 }
 
@@ -619,7 +643,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.21 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.22 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -853,6 +877,23 @@ fi; # install mode }
 if [ "$mode" = "checkdev" ]; then
 	# does not use echo_info(), because text always printed
 	echo      "# check system for development usage ..."
+
+	echo_head "# check setup for development ..."
+	for f in Makefile CHANGES README.md; do
+		d="$inst_directory/$f"
+		check_development -f $d
+	done
+	d="$inst_directory/$tst_dir"
+	check_development -d $d
+	for d in $doc_dir $lib_dir $usr_dir; do
+		d="$inst_directory/$tst_dir/$d"
+		check_development -L $d
+	done
+	for f in $files_install_dev; do
+		d="$inst_directory/$f"  # $f already contains $tst_dir
+		check_development -f $d
+	done
+
 	echo_head "# check for tools used with/in make targets"
 	check_commands $tools_intern
 	check_commands $tools_extern
@@ -876,13 +917,15 @@ if [ "$mode" = "checkdev" ]; then
 	echo_foot
 	echo ""
 
-	[ $other -eq 0 ] && exit 0;
+	if [ $other -ne 0 ]; then
+		# printed with --other only
+		echo_head "# check for other SSL-related tools"
+		check_commands $tools_other
+		echo_foot
+	fi
 
-	# printed with --other only
-	echo_head "# check for other SSL-related tools"
-	check_commands $tools_other
-	echo_foot
-	exit 0
+	echo_error $err
+	exit $err
 fi; # checkdev mode }
 
 # ------------------------- check mode ----------- {
@@ -1124,14 +1167,8 @@ for c in $files_contrib $osaft_one ; do
 	#err=`expr $err + 1`    # not counted as error
 done
 echo_foot
+echo_error $err
 
-echo ""
-echo -n "# checks$tab"
-if [ $err -eq 0 ]; then
-	echo_green "passed"
-else
-	echo_red   "failed , $err error(s) detected"
-fi
 # more hints, if no installation directory was given; uses echo!
 [ -z "$new_dir" ] && echo "# default installation directory »$inst_directory« used"
 [ -z "$new_dir" ] && echo "# consider using »$0 path/to/directory« "
