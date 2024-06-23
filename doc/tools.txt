@@ -1,5 +1,5 @@
 
-# SID   @(#) tools.txt 3.3 24/01/26 15:47:13
+# SID   @(#) tools.txt 3.4 24/06/23 15:14:56
 
 NAME
 
@@ -27,7 +27,7 @@ SYNOPSIS
 
         https://o-saft.pl/o-saft.cgi?--cgi&OPTIONS&--cmd=CMD&--host=target
 
-        checkAllCiphers.pl
+        usr/checkAllCiphers.pl
 
         INSTALL.sh
 
@@ -60,7 +60,7 @@ CONCEPTS
           GUI             o-saft.tcl      # use o-saft.pl from GUI
           CGI             o-saft.cgi      # use o-saft.pl from web server
           VM              o-saft-docker   # use o-saft.pl inside docker
-          CLI             checkAllCiphers.pl    # simple quick cipher check
+          CLI             usr/checkAllCiphers.pl  # simple quick cipher check
           Postprocess     usr/*           # prostprocessor tools
           Advanced Tools  usr/*           # use o-saft.pl in advanced modes
           Installation    INSTALL.sh      # simple installation tool
@@ -95,7 +95,7 @@ TOOLS
 
     Simple check for ciphers
 
-          checkAllCiphers.pl target
+          usr/checkAllCiphers.pl target
 
     GUI
         o-saft.tcl is the graphical user interface for  o-saft.pl .
@@ -143,7 +143,7 @@ TOOLS
 
         Formatting quick cipher check:
 
-          checkAllCiphers.pl target > target-alerts.csv
+          usr/checkAllCiphers.pl target > target-alerts.csv
           usr/alertscript.pl --csv=target-alerts.csv
 
     Advanced Tools
