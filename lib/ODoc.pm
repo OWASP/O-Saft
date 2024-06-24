@@ -19,8 +19,8 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.30 24/06/17 09:59:26";
-our $VERSION    = "24.01.24";   # official verion number of this file
+my  $SID_odoc   = "@(#) ODoc.pm 3.31 24/06/24 15:27:50";
+our $VERSION    = "24.06.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
     # SEE Perl:@INC
@@ -612,7 +612,7 @@ lib/OText.pm
 
 =head1 VERSION
 
-3.30 2024/06/17
+3.31 2024/06/24
 
 
 =head1 AUTHOR
