@@ -24,8 +24,8 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.35 24/06/24 14:53:35";
-$OCfg::VERSION  =  "24.01.24";  # official version number of this file
+our $SID_ocfg   =  "@(#) OCfg.pm 3.36 24/06/24 15:24:36";
+$OCfg::VERSION  =  "24.06.24";  # official version number of this file
 
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
@@ -3552,7 +3552,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.35"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.36"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3601,7 +3601,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.35 2024/06/24
+3.36 2024/06/24
 
 =head1 AUTHOR
 
