@@ -34,8 +34,8 @@ use warnings;
 use utf8;
 use vars qw(%checks %data);
 
-my  $SID_oman   = "@(#) OMan.pm 3.47 24/06/18 13:44:20";
-our $VERSION    = "24.01.24";
+my  $SID_oman   = "@(#) OMan.pm 3.48 24/06/24 15:28:46";
+our $VERSION    = "24.06.24";
 
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
@@ -811,7 +811,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.47'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.48'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2740,7 +2740,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.47 2024/06/18
+3.48 2024/06/24
 
 
 =head1 AUTHOR
