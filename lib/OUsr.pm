@@ -14,8 +14,8 @@ package OUsr;
 use strict;
 use warnings;
 
-my  $SID_ousr       = "@(#) OUsr.pm 3.16 24/04/21 13:14:06";
-our $VERSION        = "24.01.24";   # changed only if fucntionality changed!
+my  $SID_ousr       = "@(#) OUsr.pm 3.17 24/06/24 15:30:50";
+our $VERSION        = "24.06.24";   # changed only if fucntionality changed!
 
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
@@ -301,7 +301,7 @@ sub done    {}; # dummy to check successful include
 
 =head1 VERSION
 
-3.16 2024/04/21
+3.17 2024/06/24
 
 =head1 AUTHOR
 
