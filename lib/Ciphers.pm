@@ -25,8 +25,8 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.37 24/06/10 16:01:41";
-our $VERSION    = "24.01.24";   # official verion number of this file
+my  $SID_ciphers= "@(#) Ciphers.pm 3.38 24/06/24 15:26:36";
+our $VERSION    = "24.06.24";   # official verion number of this file
 
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
@@ -1821,7 +1821,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.37 2024/06/10
+3.38 2024/06/24
 
 
 =head1 AUTHOR
