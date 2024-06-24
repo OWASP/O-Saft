@@ -9,8 +9,8 @@ package OText;
 use strict;
 use warnings;
 
-my  $SID_otext  =  "@(#) OText.pm 3.14 24/05/28 16:12:20";
-our $VERSION    =  "24.01.24";
+my  $SID_otext  =  "@(#) OText.pm 3.15 24/06/24 15:29:26";
+our $VERSION    =  "24.06.24";
 
 #_____________________________________________________________________________
 #________________________________________________ public (export) variables __|
@@ -129,7 +129,7 @@ Print data from given hash (used for --usage option).
 
 =head1 VERSION
 
-3.14 2024/05/28
+3.15 2024/06/24
 
 
 =head1 AUTHOR
