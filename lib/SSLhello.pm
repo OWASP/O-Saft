@@ -55,9 +55,12 @@ package SSLhello;
 use strict;
 use warnings;
 
-my  $SID_sslhello = "@(#) SSLhello.pm 3.24 24/05/26 14:54:25";
-our $VERSION    = "24.01.24";
+my  $SID_sslhello = "@(#) SSLhello.pm 3.26 24/06/24 15:32:30";
+our $VERSION    = "24.06.24";
 my  $SSLHELLO   = "SSLhello";
+
+# 04jun24 ah: using error_handler->reset_err( {module => "#$SSLHELLO", ...)
+# dirty hack: so that printed message start with # like in __y_me_ts()
 
 BEGIN {
     # SEE Perl:@INC
@@ -1792,7 +1795,7 @@ sub checkSSLciphers ($$$@) {
     printConstants ()  if ($SSLhello::trace > 3);              # additional trace information
     printParameters () if ($SSLhello::trace > 3);              # additional trace information
 
-    error_handler->reset_err( {module => ($SSLHELLO), sub => 'checkSSLciphers', print => ($SSLhello::trace > 3), trace => $SSLhello::trace} );
+    error_handler->reset_err( {module => "#$SSLHELLO", sub => 'checkSSLciphers', print => ($SSLhello::trace > 3), trace => $SSLhello::trace} );
 
     _trace("checkSSLciphers($host, $port, $ssl,");
     _trace_cipher_array( " ) {", @cipher_str_array);
@@ -1839,7 +1842,7 @@ sub checkSSLciphers ($$$@) {
             if ( $arrayLen >= $maxCiphers) { # test up to ... ciphers ($SSLhello::max_ciphers = $CST{'_MY_SSL3_MAX_CIPHERS'}) with 1 doCheckSSLciphers (=> Client Hello)
                 $my_error = ""; # reset error message
                 # reset error_handler and set basic information for this sub
-                error_handler->reset_err( {module => ($SSLHELLO), sub => 'checkSSLciphers', print => ($SSLhello::trace > 3), trace => $SSLhello::trace} );
+                error_handler->reset_err( {module => "#$SSLHELLO", sub => 'checkSSLciphers', print => ($SSLhello::trace > 3), trace => $SSLhello::trace} );
                 $cipher_spec = join ("",@cipherSpecArray); # all ciphers to test in this round
 
                 if ($SSLhello::trace > 1) { # print ciphers that are tested this round:
@@ -1912,7 +1915,7 @@ sub checkSSLciphers ($$$@) {
                         }
                         $my_error = ""; # reset error message
                         #reset error_handler and set basic information for this sub
-                        error_handler->reset_err( {module => ($SSLHELLO), sub => 'checkSSLciphers', print => ($SSLhello::trace > 3), trace => $SSLhello::trace} );
+                        error_handler->reset_err( {module => "#$SSLHELLO", sub => 'checkSSLciphers', print => ($SSLhello::trace > 3), trace => $SSLhello::trace} );
                     } # else: no cipher accepted but no error
                     @cipherSpecArray =(); # => Empty @cipherSpecArray
                 } # end: if 'no ciphers accepted'
@@ -2319,7 +2322,7 @@ sub openTcpSSLconnection ($$) {
 
     my %startTlsTypeHash;
     local $my_error = ""; # reset error message
-    error_handler->reset_err( {module => ($SSLHELLO), sub => 'openTcpSSLconnection', print => ($SSLhello::trace > 3), trace => $SSLhello::trace} );
+    error_handler->reset_err( {module => "#$SSLHELLO", sub => 'openTcpSSLconnection', print => ($SSLhello::trace > 3), trace => $SSLhello::trace} );
     if ( ($SSLhello::proxyhost) && ($SSLhello::proxyport) ) { # via proxy
         _trace2 (" openTcpSSLconnection: Try to connect and open a SSL connection to $host:$port via proxy ".$SSLhello::proxyhost.":".$SSLhello::proxyport."\n");
     } else {
@@ -2383,7 +2386,7 @@ sub openTcpSSLconnection ($$) {
     }
 
     RETRY_TO_OPEN_SSL_CONNECTION: { do { # connect to #server:port (via proxy) and open a ssl connection (use STARTTLS if activated)
-        error_handler->reset_err( {module => ($SSLHELLO), sub => 'openTcpSSLconnection', print => ($SSLhello::trace > 3), trace => $SSLhello::trace} );
+        error_handler->reset_err( {module => "#$SSLHELLO", sub => 'openTcpSSLconnection', print => ($SSLhello::trace > 3), trace => $SSLhello::trace} );
         if ( defined($SSLhello::connect_delay) && ($SSLhello::connect_delay > 0) ) {
             _trace_ ("\n");
             _trace  (" openTcpSSLconnection: connect delay $cfg{'connect_delay'} second(s)\n");
@@ -3005,7 +3008,7 @@ sub _doCheckSSLciphers ($$$$;$$) {
 
     _trace4 (sprintf ("_doCheckSSLciphers ($host, $port, $ssl: >0x%04X<\n          >",$protocol).hexCodedString ($cipher_spec,"           ") ."<) {\n");
     local $my_error = ""; # reset error message
-    error_handler->reset_err( {module => ($SSLHELLO), sub => '_doCheckSSLciphers', print => ($SSLhello::trace > 3), trace => $SSLhello::trace} );
+    error_handler->reset_err( {module => "#$SSLHELLO", sub => '_doCheckSSLciphers', print => ($SSLhello::trace > 3), trace => $SSLhello::trace} );
     $isUdp = ( (($protocol & 0xFF00) == $PROTOCOL_VERSION{'DTLSfamily'}) || ($protocol == $PROTOCOL_VERSION{'DTLSv09'})  ); # udp for DTLS1.x or DTLSv09 (OpenSSL pre 0.9.8f)
 
     unless ($isUdp) { # NO UDP = TCP
@@ -3293,7 +3296,7 @@ sub _readRecord ($$$;$$$$) {
     $select->add($socket) if ($SSLhello::trace > 0);
 
     #reset error_handler and set basic information for this sub
-    error_handler->reset_err( {module => ($SSLHELLO), sub => '_readRecord', print => ($SSLhello::trace > 3), trace => $SSLhello::trace} );
+    error_handler->reset_err( {module => "#$SSLHELLO", sub => '_readRecord', print => ($SSLhello::trace > 3), trace => $SSLhello::trace} );
 
     ###### receive the answer (SSL+TLS: ServerHello, DTLS: Hello Verify Request or ServerHello)
     vec($rin = '',fileno($socket),1 ) = 1; # mark SOCKET in $rin
@@ -5392,7 +5395,7 @@ sub parseHandshakeRecord ($$$$$$$;$) {
     }
 
     #reset error_handler and set basic information for this sub
-    error_handler->reset_err( {module => ($SSLHELLO), sub => 'parseHandshakeRecord', print => ($SSLhello::trace > 3), trace => $SSLhello::trace} );
+    error_handler->reset_err( {module => "#$SSLHELLO", sub => 'parseHandshakeRecord', print => ($SSLhello::trace > 3), trace => $SSLhello::trace} );
 
     $SSLhello::use_sni_name = 1 if ( ($SSLhello::use_sni_name == 0) && ($SSLhello::sni_name) && ($SSLhello::sni_name ne "1") ); ###FIX: quickfix until migration of o-saft.pl is compleated (tbd)
     unless ($SSLhello::use_sni_name) {
@@ -5923,7 +5926,7 @@ sub parseTLS_ServerHello {
     $serverHello{'extensions_len'} = 0;
 
     #reset error_handler and set basic information for this sub
-    error_handler->reset_err( {module => ($SSLHELLO), sub => 'parseTLS_ServerHello', print => ($SSLhello::trace > 3), trace => $SSLhello::trace} );
+    error_handler->reset_err( {module => "#$SSLHELLO", sub => 'parseTLS_ServerHello', print => ($SSLhello::trace > 3), trace => $SSLhello::trace} );
 
     if (defined $client_protocol) {
         _trace3("parseTLS_ServerHello: Server '$host:$port': (expected protocol=".sprintf ("%04X", $client_protocol).",\n     ".hexCodedString (substr($buffer,0,48),"       ")."...)\n");
