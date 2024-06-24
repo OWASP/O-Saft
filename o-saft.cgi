@@ -141,8 +141,8 @@ For debugging only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 3.4 24/06/18 14:46:51";
-my $VERSION = '24.01.24';
+my $SID_cgi = "@(#) o-saft.cgi 3.5 24/06/24 15:21:42";
+my $VERSION = '24.06.24';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
    $mepath  = './' if ($mepath eq $me);
@@ -237,7 +237,7 @@ if ($me =~/\.cgi$/) {
 	        my $_typ = $typ;    # check if force using text/html
 	           $_typ = 'html' if ($qs =~ m/--content-type=html/);
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 3.4\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 3.5\r\n";
 		print "Content-type: text/$_typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
