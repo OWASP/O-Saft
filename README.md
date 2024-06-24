@@ -131,14 +131,14 @@ Get Docker Image (latest stable release)
 
 ## VERSION
 
-**24.01.24**
+**24.06.24**
 
 The version of the tarball `o-saft.tgz` represents the version listed on top
 herein. All other files in the repository may be ahead of this tarball version.
 
 SHA256 checksum of [o-saft.tgz](https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz)
 ```
-3332af75f20933b4be4dd2e49c8d67cd505fc7856f4844211671e2fd304bbefb
+3f3eb35982717931cd23f384b378c77c07b0ce75fa5341ede574a3e153c9b48d
 ```
 
 [//]: # (above checksum for version 23.11.23)
