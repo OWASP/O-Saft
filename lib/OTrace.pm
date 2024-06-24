@@ -41,8 +41,8 @@ no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_trace      = "@(#) OTrace.pm 3.31 24/06/06 18:10:05";
-our $VERSION        = "24.01.24";
+my  $SID_trace      = "@(#) OTrace.pm 3.32 24/06/24 15:30:22";
+our $VERSION        = "24.06.24";
 
 # public package variables
 our $trace          = 0;
@@ -1214,7 +1214,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.31 2024/06/06
+3.32 2024/06/24
 
 =head1 AUTHOR
 
