@@ -1,4 +1,114 @@
 
+Version: 24.03.24
+### NOTE
+### BUGFIX
+    * o-saft-docker: BF: wrong markup corrected (minor issue with -help only)
+    * usr/checkAllCiphers.pl: BF: adaptet to changes in lib/error_handler.pm 3.6 (OERR_* constants are %OERR hash now)
+    * doc/help.txt: BD: wrong option --trace=FILE, it is --rc=FILE
+    * t/Makefile.misc: ET: variables for targets docs.subs and docs.anno improved
+    * Makefile: EF: target docs depends on generated o-saft.pl.--help* files
+    * lib/Cipher.pm: BF: get_key() searches for name in all constants
+    * lib/Cipher.pm: BF: show_getter() prints all defined constants and aliases
+    * lib/OMan.pm: BF: output for help=info
+    * lib/OMan.pm: BF: _VERSION() from main must be called ::_VERSION()
+    * lib/ODoc.pm: BF: list of paths in _get_standalone() corrected
+    * o-saft.tcl: BF: ignore errors, warnings lines when building window with ciphers
+    * o-saft.tcl: BF: alias names corrected
+    * o-saft.tcl: BF: change layout button corrected in "tablet" layout
+    * o-saft.pl: BF: avoid " "Use of uninitilized value $ssl ..." with --legacy=sslscan
+    * o-saft.pl: BF: +sigkey_value needs special handling with --format=hex
+    * o-saft.pl: BF: --cipher accepts cipher constants, suite names, or aliases
+    * o-saft.pl: BF: special error check for +sstp (response from wolfSSL is slightly different)
+    * o-saft.pl: BF: reading from RC-FILE also if no --trace given
+    * o-saft.pl: BF: syntax corrected (bug since 3.14 only)
+### CHANGES
+    * o-saft.cgi: EF: use own %STR variable (to be compatible with various Makefiles)
+    * lib/OCfg.pm: EF: more values added to be handled by --format=hex
+    * lib/OCfg.pm: EF: hasdtls1 hasdtls12 hasdtls13 added some list of commands
+    * lib/OCfg.pm: EF: cipher 0x030000FE (WDM-NULL-SHA256) added to some ranges
+    * lib/Cipher.pm: EF: cipher -WDM-NULL-SHA256 (wolfSSL DTLS Multicast) added
+    * doc/help.txt: ED: description for --cipherrange=RANGE improved
+    * doc/help.txt: ED: KNOWN PROBLEM "+cipher hangs" added
+    * t/gen-graph-annotations.sh: EF: sub-directories adapted to new directory structure
+    * usr/INSTALL-template.sh: EF: option --instdev implemented
+    * usr/INSTALL-template.sh: EF: list of file "not to be installed" and moved with --clean improved
+    * usr/INSTALL-template.sh: EF: $dirs__ancient implemented; messages improved
+    * usr/INSTALL-template.sh: EF: messages and documentation improved
+    * usr/INSTALL-template.sh: EF: checking ancient files improved; checking ancient directories
+    * usr/INSTALL-template.sh: EF: accept environment variable OSAFT_Dir as installation directory
+    * usr/INSTALL-template.sh: EF: special handlicg for o-saft-docker
+    * t/Makefile.cmd: ET: some targets use filter to remove random data in generated .log
+    * Makefile: EF: EXE.docker renamed to EXE.o_docker; EXE.docker=docker added
+    * Makefile: EF: target INSTALL.sh depends on Makefile.misc
+    * Makefile: EF: checkAllCiphers.pl is now usr/checkAllCiphers.pl
+    * o-saft.cgi: EF: do not allow --inc= and --no-inc=
+    * o-saft.pl: EF: options --no-tls and --no-dtls added (aliases)
+    * o-saft.pl: EF: --ignore-warning= implemented
+    * o-saft.pl: EF: printversion() prints all own modules
+    * o-saft.pl: ED: --v output improved
+    * o-saft.pl: EF: security checks implemented and documented for use of qx()
+    * o-saft.pl: EF: +version prints Perl version also
+    * o-saft.pl: EF: some warning messages about ::VERSION improved; warning 127 and 130 removed
+    * lib/Cipher.pm: ED: output format of gett03() is the same as of show_getter()
+    * lib/SSLhello.pm: ED: message printed by error_handler->reset_err() unified
+    * lib/SSLinfo.pm: EF: --testopenssl also prints openssl executable which returned capabilities/options
+    * lib/OTrace.pm: EF: --test-memory prints sorted data
+    * lib/OTrace.pm: EF: simplified use of Exporter module
+    * lib/OText.pm: EF: simplified use of Exporter module
+    * lib/OData.pm: EF: simplified use of Exporter module
+    * lib/ODoc.pm: EF: simplified use of Exporter module
+    * lib/OCfg.pm: EF: simplified use of Exporter module
+    * lib/OMan.pm: EF: simplified use of Exporter module
+    * lib/OMan.pm: EF: man_warnings() simplified
+    * lib/OMan.pm: EF: documentation improved; --pod=* and --file=* option implemented
+    * lib/OMan.pm: EF: click outside menu closes menu in navigation bar on website
+    * lib/SSLinfo.pm: ED: output format for --test-* options unified
+    * lib/OTrace.pm: EF: calling SSLinfo::test_openssl() for --test-openssl
+    * doc/help.txt: ED: environment variables OSAFT_CONFIG and OSAFT_OPTIONS added; description of reading RC-FILE and options
+    * doc/help.txt: ED: documentation improved
+    * doc/devel.txt: ED: documentation improved
+    * doc/coding.txt: ED: documentation improved
+    * doc/coding.txt: ED: note about qx() security added
+    * t/.perlcriticrc: EF: some pragmas and description improved
+    * t/Makefile.mod: ET: more targets for --test-* options
+    * usr/install_openssl.sh: EF: handle errors returnd by find
+    * usr/install_openssl.sh: EF: dependency changed: libidn2-0-dev -> libidn2-dev
+### NEW
+    * t/Makefile.docker: NF: targets mbedtls.* for Mbed TLS server docker image
+    * t/Makefile.docker: ET: target for command hacker added
+    * t/Makefile.docker: NT: target testarg-docker- added
+    * lib/Cipher.pm: NF: new functions find_consts() find_keys_any() and find_names_any()
+    * lib/OData.pm: NF: hasdtls1, hasdtls12, hasdtls13 added to %check_conn
+    * lib/OTEXT.pm: NF: general function usage_show() for printing --usage
+    * lib/OData.pm: NF: --usage implemented
+    * lib/OCfg.pm: NF: --usage implemented
+    * o-saft.tcl: NF: option --rc=FILE added
+    * o-saft.tcl: NF: --no-rc option implemented
+    * o-saft.pl: NF: option --silent (shortcut for --nowarning --nohint) added
+    * o-saft.pl: NF: hasdtls1, hasdtls12, hasdtls13 checks implemented
+    * o-saft.pl: NF: environment variable OSAFT_CONFIG, OSAFT_OPTIONS implemented
+    * o-saft.pl: NF: --inc=* and --no-inc=* added
+
+Version: 24.02.24
+### NOTE
+### BUGFIX
+    * lib/OMan.pm: BF: avoid Perl's "Use of uninitialized value $OMan::cfg{"me"} ..." (in o-saft-standalone.pl only)
+    * usr/INSTALL-template.sh: BF: script can be executed in any directory
+    * lib/SSLhello.pm: BF: use full qualified %error_handler::OERR in standalone mode
+### CHANGES
+    * usr/o-saft-standalone.pl: EF: remove POD and comments from generated code
+    * lib/OMan.pm: EF: +VERSION implemented
+    * lib/OText.pm: EF: +VERSION implemented
+    * lib/SSLhello.pm: EF: +VERSION implemented
+    * usr/INSTALL-template.sh: EF: echo_info() implemented
+    * lib/SSLhello.pm: EF: constants OERR_* replaced be variable $OERR (adaption to erro_handler 3.8)
+    * lib/SSLinfo.pm: EF: constants SSLINFO* replaced by hash %CST
+    * lib/error_handler: EF: OERR_* constants are %OERR hash now; %ERROR_TYPE_RHASH_REF replaced by %OERR_map
+    * t/Makefile.tcl: ET: --trace-CLI added to o-saft.tcl calls
+### NEW
+    * o-saft.tcl: ET: --trace-CLI added to o-saft.tcl calls
+    * usr/INSTALL-template.sh: EF: --v option (instead of logging)
+
 Version: 24.01.24
 ### NOTE
     This release is a major redesign (refactoring) of the project. The top
@@ -11,7 +121,7 @@ Version: 24.01.24
 
     Functionally the options `--v`  and  `--trace`  behave different now.
 
-    Beside many formal changes, following bugfixes and chages have been done.
+    Beside many formal changes, following bugfixes and changes have been done.
 
 ### BUGFIX
     * o-saft.pl: BT: print sorted list of ciphers for --ciphermode=dump (important for testing only)
