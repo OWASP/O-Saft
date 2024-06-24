@@ -46,8 +46,8 @@ package SSLinfo;
 
 use strict;
 use warnings;
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.16 24/05/28 12:58:44";
-our $VERSION        =  "24.01.24";  # official verion number of this file
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.17 24/06/24 15:33:11";
+our $VERSION        =  "24.06.24";  # official verion number of this file
 
 BEGIN {
     # SEE Perl:@INC
