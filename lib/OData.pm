@@ -15,8 +15,8 @@ package OData;
 use strict;
 use warnings;
 
-my  $SID_odata  =  "@(#) OData.pm 3.20 24/06/10 08:08:10";
-our $VERSION    =  "24.01.24";
+my  $SID_odata  =  "@(#) OData.pm 3.21 24/06/24 15:27:24";
+our $VERSION    =  "24.06.24";
 
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
@@ -1189,7 +1189,7 @@ _init();
 
 =head1 VERSION
 
-3.20 2024/06/10
+3.21 2024/06/24
 
 
 =head1 AUTHOR
