@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) yeast.pl 3.73 24/06/21 21:01:29"; # version of this file
+our $SID_main   = "@(#) yeast.pl 3.75 24/06/26 09:59:47"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -184,7 +184,7 @@ BEGIN {
     # SEE Perl:BEGIN
     # SEE Perl:BEGIN perlcritic
     _trace_info("BEGIN0  - start");
-    sub _VERSION { return "24.01.24"; } # <== our official version number
+    sub _VERSION { return "24.06.24"; } # <== our official version number
         # get official version (used for --help=* and in private modules)
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##;
     my $_pwd  = $ENV{PWD} || ".";   # . as fallback if $ENV{PWD} not defined
@@ -418,7 +418,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.73"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.75"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -2662,7 +2662,7 @@ sub _useopenssl     {
 sub _can_connect    {
     # return 1 if host:port can be connected; 0 otherwise
     my ($host, $port, $sni, $timeout, $ssl) = @_;
-    trace("_can_connect($host, $port', $sni, $timeout, $ssl) {");
+    trace("_can_connect($host, $port, $sni, $timeout, $ssl) {");
     if (not defined $sni) { $sni = $STR{UNDEF}; } # defensive programming
     local $? = 0; local $! = undef;
     my $socket;
