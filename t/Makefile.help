@@ -21,7 +21,7 @@
 #?          make targets.me
 #?
 #? VERSION
-#?      @(#) Makefile.help 3.1 24/01/23 13:39:26
+#?      @(#) Makefile.help 3.2 24/06/30 19:16:38
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -30,7 +30,7 @@
 
 HELP-help.test.help = targets to get information/documentation from Makefiles
 
-_SID.help          := 3.1
+_SID.help          := 3.2
 
 _MYSELF.help       := t/Makefile.help
 ALL.includes       += $(_MYSELF.help)
@@ -187,11 +187,11 @@ _help.FOOT:
 	@echo "$(HELP_LINE)"
 
 _help.BODY:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(EXE.help) $(_MYSELF.$(HELP_TYPE))
 
 _help.LIST:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@echo "$(_HELP-help.LIST)"
 
 # same as _help.FOOT but unique name, so it can be used together with _help.FOOT
@@ -201,7 +201,7 @@ _help.LINE:
 # neet to set own variable name because $($(HELP.$(HELP_TYPE))) does not work
 _help.HELP:  _HELP_HELP = HELP.$(HELP_TYPE)
 _help.HELP:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@echo "$($(_HELP_HELP))"
 	@echo "$(_HELP-help.make)"
 
@@ -269,7 +269,7 @@ help.doc.all:     HELP_HEAD = $(HELP_RULE)
 target:           HELP_HEAD = $(HELP_RULE)
 
 help.%: _help.HEAD _help.BODY _help.FOOT _help.LIST _help.HELP
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 
 # The main difference between the targets  help  and  doc  is, that help  uses
 # external tools to extract the information from Makefile*,  while target  doc
@@ -318,24 +318,24 @@ _line:
 .PHONY: _notempty _line
 
 help-makefiletitle-%:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(EXE.echo) "Makefile.$*$(O-TAB)# $(HELP-help.test.$*)"
 
 macros:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(EXE.list) $(MAKEFILE_LIST)    | sort $(_EXE.sort-opt)
 macros%me:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(EXE.list) $(MAKEFILE)         | sort $(_EXE.sort-opt)
 vars: macros
 list: macros
 lists%me: macros.me
 
 targets:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(EXE.targets) $(MAKEFILE_LIST) | sort -u -f
 targets%me:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(EXE.targets) $(MAKEFILE)      | sort -u -f
 rules: targets
 rules%me: targets.me
@@ -344,7 +344,7 @@ rules%me: targets.me
 #       @$(EXE.echo) "$($@)$(O-TAB)$(O-TAB)# $(HELP-$($@))"
 # pretty printed format using awk see below
 eval:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(EXE.echo) "$($@) $(HELP-$($@))" | awk '{t="\t# ";if(length($$1)<8){t="\t\t# ";}sub(/ /,t);print}'
 
 # Following targets are used to show information about variables and targets:
@@ -361,29 +361,29 @@ eval:
 
 # FIXME: echo fails if the content of the variable contains braces or semicolon
 echo:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(EXE.echo) '$($($@))'
 
 show: _notempty=show
 show: _notempty
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(EXE.echo) '$($@) = '
 	@$(EXE.echo) '$($($@))' | $(EXE.wordperline)
 
 macro: _notempty=macro
 macro: _notempty
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(EXE.macro) $(MAKEFILE_LIST)
 makro: macro
 
 pmacro: _notempty=pmacro
 pmacro: _notempty
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(EXE.pmacro) $(MAKEFILE_LIST)
 
 target: _notempty=target
 target: _notempty
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(EXE.target) $(MAKEFILE_LIST)
 
 # following rules are shortcuts for the above targets
