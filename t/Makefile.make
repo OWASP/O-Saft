@@ -6,7 +6,7 @@
 #?      make help.test.make
 #?
 #? VERSION
-#?      @(#) Makefile.make 3.1 24/01/23 13:39:29
+#?      @(#) Makefile.make 3.3 24/06/30 19:17:47
 #?
 #? AUTHOR
 #?      19-jul-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.make = targets for testing Makefile help* targets
 
-_SID.make          := 3.1
+_SID.make          := 3.3
 
 _MYSELF.make       := t/Makefile.make
 ALL.includes       += $(_MYSELF.make)
@@ -53,12 +53,12 @@ HELP.test.make.all  = # no special documentation yet
 _HELP-maketitle = \#__________________________________ purpose of t/Makefile.* _
 _HELP.maketitle = $(ALL.inc.type:%=help-makefiletitle-%)
 _help.makefiles.doc:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@echo "\n\t\t$(_HELP-maketitle)"
 	@$(MAKE) -s $(_HELP.maketitle)
 help.makefiles.doc:   HELP_HEAD = $(HELP_INFO)
 help.makefiles.doc:  _help.HEAD _help.makefiles.doc
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 
 HELP-testarg-make-help.test*  = test help.test.* targets of Makefiles
 HELP-testarg-make-s-ALL.test* = test ALL.test.* variables of Makefiles
@@ -90,14 +90,14 @@ ALL.test.make      += $(ALL.testmake)
 
 testarg-make%:      EXE.pl      = $(MAKE)
 testarg-make%:      TEST.init   =
-testarg-make%:      TRACE.target= echo "\#\#$(EXE.pl) $(TEST.init) $(TEST.args)$(_NL)"
-testarg-make%.log:  TRACE.target=
-    # targets should print the command, the TRACE.target variable is misused
-    # for that (assuming that all target use $(TRACE.target) ).
-    # $(TRACE.target) is empty for testarg-make%log to avoid double printing
+testarg-make%:      O-TRACE.target  = echo "\#\#$(EXE.pl) $(TEST.init) $(TEST.args)$(_NL)"
+testarg-make%.log:  O-TRACE.target  =
+    # targets should print the command, the O-TRACE.target variable is misused
+    # for that (assuming that all target use $(O-TRACE.target) ).
+    # $(O-TRACE.target) is empty for testarg-make%log to avoid double printing
 testarg-make-n:     TEST.init   = tests -n
 testarg-make-n:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(MAKE) -s tests -n  ALL.test.make=$(ALL.testmake)
 # setting ALL.test.make= in recursive call avoids endless recursion
 # might also be done by checking $(MAKELEVEL) > 2
