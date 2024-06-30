@@ -88,7 +88,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 3.5 24/06/17 11:21:23
+@(#) Makefile.pod 3.6 24/06/30 19:13:43
 
 =head1 AUTHOR
 
@@ -318,7 +318,7 @@ Examples:
    testarg-cgi-host_some.tld    TEST.args  += --cgi
    testarg-cgi-host_localhost:  TEST.args  += --cgi
    testarg-cgi-host_:
-           @$(TRACE.target)
+           @$(O-TRACE.target)
            @do something $(TEST.args) $*
 
    ALL.test.cgi    += testarg-cgi-host_some.tld testarg-cgi-host_localhost
@@ -1399,8 +1399,8 @@ narrow down the problem source:
 
 * use same target with  -v  appended:  test-v  instead of  test
   the executed target would then be printed; see Makefile for examples and
-  how to set the  TRACE.target  variable; please not that for  *.log
-  targets  TRACE.target.log  can also be used
+  how to set the  O-TRACE.target  variable; please not that for  *.log
+  targets  O-TRACE.target.log  can also be used
 
 * use -n option for make
 
