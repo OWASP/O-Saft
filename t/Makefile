@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 3.7 24/06/03 12:53:39
+#?      @(#) Makefile 3.8 24/06/30 19:07:14
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 3.7
+_SID.test          := 3.8
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -146,11 +146,11 @@ ifndef O-USR.dir
     O-USR.dir = usr
 endif
 
-# Tracing just the log-targets is special. Using  $(TRACE.target)  is not an
+# Tracing just the log-targets is special. Using $(O-TRACE.target) is not an
 # option, because it would als change the final target called with  $(MAKE) .
 # Hence an additional variable is used.
 # TODO: not public, not documented, variable needs to be defined here
-TRACE.target.log    =
+O-TRACE.target.log  =
     # example  = echo "\# $*\tcalling: $(MAKE) -s testcmd-$*"
 
 TEST.today         := $(shell date +%Y""%m%d)
@@ -208,9 +208,9 @@ _EXE.target_to_arr.awk  = /^.*%/{next} /^$(TEST.target_prefix)*/{arr[$$1]=1}
 _EXE.print_arr_END.awk := END{for(idx in arr){print idx}}
 _EXE.print_file.awk    := (FNR==1){ x="";for(i=1;i<62;i++){x=sprintf("%s%c",x,"-")};print "\n\t\t\#"x}
 
-# TRACE.target is not empty if target was  test*-compare-v or test*-move-v . So
-# it is sufficent to check TRACE.target. If it's not empty, verbose information
-# will be printed.
+# O-TRACE.target is not empty if target was  test*-compare-v or test*-move-v .
+# So it is sufficent to check if  O-TRACE.target is not empty to print verbose
+# information.
 # TODO: not tested if following defines could be written as macros
 # SEE Make:defines with commands
 
@@ -219,7 +219,7 @@ define EXE.log-compare
 	echo "# compare "`ls $(TEST.target_prefix)*.log$(TEST.log-suffix) | wc -l`" file ..." && \
 	for f in $(TEST.target_prefix)*.log; do \
 	    [ -f $${f}$(TEST.log-suffix) ] || continue ; \
-	    [ -n '$(TRACE.target)' ] && echo "# $(TEST.logdir)/$${f} ..." ; \
+	    [ -n '$(O-TRACE.target)' ] && echo "# $(TEST.logdir)/$${f} ..." ; \
 	    $(EXE.log-diff) $${f} $${f}$(TEST.log-suffix) >/dev/null 2>&1 ; \
 	done ; \
 	exit 0
@@ -238,7 +238,7 @@ define EXE.log-move
 	cd $(TEST.logdir) && \
 	for f in $(TEST.target_prefix)*.log; do \
 	    [ -f $${f}$(TEST.log-suffix) ] || continue ; \
-	    [ -n '$(TRACE.target)' ] && echo "# $(TEST.logdir)/$${f} ..." ; \
+	    [ -n '$(O-TRACE.target)' ] && echo "# $(TEST.logdir)/$${f} ..." ; \
 	    mv $${f}$(TEST.log-suffix) $${f} ; \
 	done ; \
 	exit 0
@@ -313,7 +313,7 @@ HELP.test.test  = $(HELP.test)
 HELP.test.all   = $(HELP.test.test.all)
 help.test:          help.test.test
 help.test.all:      help.test.test.all
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 # convenience to satisfy  help.test.all
 
 help.tests:           HELP_TYPE = test
@@ -342,25 +342,25 @@ HELP-help.test.targets      = print all available targets for tests; followed by
 
 # experimental: some targets print too many shell commands
 help.test.test.all-n:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(MAKE) -n $(ALL.tests)
 
 # following roughly the same as "make s-ALL.tests"
 help.test.test.alls:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@echo " # $(words $(ALL.tests)) targets for tests:"
 	@echo $(ALL.tests) | $(EXE.wordperline) | sort $(_EXE.sort-opt)
 	@echo ""
 
 help.test.%.all:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@echo " # individual targets for testing $* :"
 	@echo $(ALL.test.$*) | $(EXE.wordperline) | sort $(_EXE.sort-opt)
 	@echo ""
 	@echo "$(HELP.test.$*.all)"
 
 help.test.%.internal:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@echo " # TEST.file:       $(TEST.file)"
 	@echo " # TEST.init.$*:    $(TEST.init.$*)"
 	@echo " # TEST.$*.hosts:   $(TEST.$*.hosts)"
@@ -408,7 +408,7 @@ test.file-1:
 test,file-2:
 test_file-3:
 testcmd-test.internal: test.file-1 test,file-2 test_file-3
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@echo 'testcmd-test.internal: test.file-1 test-file-2 test_file-3'
 	@echo '# SIDs of included Makefile* (file not included if SID missing):'
 	@echo '# $$(_SID)          = $(_SID)'
@@ -544,7 +544,7 @@ HELP-test.links = create required symbolic links in '$(TEST.dir)'
 # Because the target itself is never created, it will always be executed. Use
 # this target (rule)  with care!
 ../%:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	cd $(TEST.dir) && ln --force -s $@
 
 test.links: $(TEST.symlinks)
@@ -624,7 +624,7 @@ _FORCE:
 
 # target succeeds if message is there
 message-%:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@-if expr "$(TEST.args)" ":" "^TODO" >/dev/null ; then \
 	    echo "$@:    $(TEST.args)"; \
 	else \
@@ -641,21 +641,21 @@ message-%:
 # target succeeds if message is missing
 # TODO: need more examples beside those in t/Makefile.cgi
 no.message-%:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@echo "$(TEST.rc)" > $(TEST.tmp.rc)
 	cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | awk '/ $*/{exit 1}'
 	@rm -f $(TEST.tmp.rc)
 
 # Simple target to calL: $(EXE.pl) $(TEST.init) $(TEST.args)
 testarg-%:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	-cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args)
 
 # SEE Make:--dry-run
 # following pattern rule should be unified with testcmd-%.log
 testarg-%.log: $(TEST.logdir) _FORCE
-	@$(TRACE.target)
-	@$(TRACE.target.log)
+	@$(O-TRACE.target)
+	@$(O-TRACE.target.log)
 	@$(eval _target  := $(basename     $@) )   # remove .log in name
 	@$(eval _OLD.log := $(TEST.logdir)/$@)
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(TEST.today))
@@ -727,7 +727,7 @@ testarg-%.log: $(TEST.logdir) _FORCE
 #       #   returns: testcmd-c00_aa.tld testcmd-c01_aa.tld testcmd-c00_bb.tld testcmd_c01-bb.tld
 
 testcmd-%:
-	@$(TRACE.target)
+	@$(O-O-TRACE.target)
 	-cd $(TEST.dir) && $(EXE.pl) $(shell echo "$*" | awk -F_ '{print $$NF}') $(TEST.init) $(TEST.args)
 # TODO: need verbose for executed command
 # TODO: need to add --no-dns if hostname is an IP
@@ -744,8 +744,8 @@ testcmd-%:
 # NOTE: testcmd-%.log  called from within t/ may return:  is up to date.
 
 testcmd-%.log: $(TEST.logdir) _FORCE
-	@$(TRACE.target)
-	@$(TRACE.target.log)
+	@$(O-TRACE.target)
+	@$(O-TRACE.target.log)
 	@$(eval _target  := $(basename     $@) )   # remove .log in name
 	@$(eval _OLD.log := $(TEST.logdir)/$@)
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(TEST.today))
@@ -768,11 +768,11 @@ testcmd-%.log: $(TEST.logdir) _FORCE
 #       test.pattern--header
 #
 dbx-test.pattern-%:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(eval _targets = $(shell echo "$(ALL.tests)" | $(EXE.wordperline) | awk '/$*/{print $$0;}'))
 	@echo "# $(_targets) #"
 test.pattern-%:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(eval _targets = $(shell echo "$(ALL.tests)" | $(EXE.wordperline) | awk '/$*/{print $$0;}'))
 	@-test -n "$(_targets)" \
 	    && $(MAKE) $(MFLAGS) -s $(_targets) \
@@ -780,8 +780,8 @@ test.pattern-%:
 
 # TODO: logging not yet tested (01/2019)
 test.pattern-%.log:
-	@$(TRACE.target)
-	@$(TRACE.target.log)
+	@$(O-TRACE.target)
+	@$(O-TRACE.target.log)
 	@$(eval _targets = $(shell echo "$(ALL.tests)" | $(EXE.wordperline) | awk '/$*/{print $$0".log";}'))
 	@-test -n "$(_targets)" \
 	    && $(MAKE) $(MFLAGS) -s $(_targets) \
@@ -897,13 +897,13 @@ HELP-test.log.ls    = list files in '$(TEST.logdir)/' generated by test.log
 HELP-test.%.log.ls  = list files in '$(TEST.logdir)/' generated by test.EXT.log
 HELP-test.pattern-% = only execute targets matching '%'
 
-tests: TRACE.target = echo "\\012\#\# $@: $(EXE.pl) $(TEST.args)"
+tests: O-TRACE.target = echo "\\012\#\# $@: $(EXE.pl) $(TEST.args)"
 tests:      $(ALL.tests)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(MAKE) $(MFLAGS) -s $(ALL.tests)
 
 tests.log:  $(ALL.tests.log)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(MAKE) $(MFLAGS) -s $(ALL.tests.log)
 	@-$(EXE.log-compare-hint)
 	@-$(EXE.log-move-hint)
@@ -925,34 +925,34 @@ tests.quick:
 #	@$(MAKE) $(MFLAGS) -s tests.log ALL.test.ext= ALL.test.misc ALL.test.critic=
 # FIXME: tests.quick.log not yet working; need to use variable in each Makefile.*
 tests.quick.log:
-	@$(TRACE.target)
-	@$(TRACE.target.log)
+	@$(O-TRACE.target)
+	@$(O-TRACE.target.log)
 	$(MAKE) $(MFLAGS) -s tests.log ALL.tests.log="test.warnings.log test.cmd.log test.exit.log test.opt.log test.cgi.log test.tcl.log"
 	@-$(EXE.log-compare-hint)
 
 tests.quick.log-compare:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@-$(EXE.log-compare)
 	@-$(EXE.log-move-hint)
 	@echo "# 12 logfiles with differences could be expected."
 
 tests.quick.log-move:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	$(EXE.log-move)
 
 # aliases for convenience
 test:       tests
 test.log:   tests.log
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@echo "# to show differences with $(EXE.diff), use:"
 	@echo "    $(MAKE_COMMAND) $@-compare"
 
 test.log.ls:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@-ls $(TEST.logdir)/test.*log
 
 test.%.log.ls:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@-ls -l $(TEST.logdir)/test*-$(*)*log
 
 
@@ -1012,21 +1012,21 @@ test.log-compare-hint:
 	@-$(EXE.log-compare-hint)
 
 test.%.log-compare:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@-$(EXE.log-compare)
 	@-$(EXE.log-move-hint)
 
 test.%.log-move:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	$(EXE.log-move)
 
 test.log-compare:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@-$(EXE.log-compare)
 	@-$(EXE.log-move-hint)
 
 test.log-move:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	$(EXE.log-move)
 
 #_____________________________________________________________________________
