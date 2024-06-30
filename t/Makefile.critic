@@ -6,7 +6,7 @@
 #?      make help.test.critic
 #?
 #? VERSION
-#?      @(#) Makefile.critic 3.4 24/05/27 11:36:22
+#?      @(#) Makefile.critic 3.5 24/06/30 19:18:48
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.critic = targets for using perlcritic
 
-_SID.critic        := 3.4
+_SID.critic        := 3.5
 
 _MYSELF.critic     := t/Makefile.critic
 ALL.includes       += $(_MYSELF.critic)
@@ -123,14 +123,14 @@ perlcritic-%: $(TEST.critic.dir)
 # target prints command with echo so that it is also shown when called with
 # "make -s critic ..."
 critic: $(TEST.critic.dir)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	-cd $(TEST.critic.dir) && $(EXE.critic) $(ALL.critic:%=../%) $(TEST.critic.severity) $(TEST.critic.opt)
 
 # Same target as above but piped to filter for pretty printing.
 # Because the filter is a pipe, we loose the coloured output from perlcritic
 # FIXME: gawk in critic-pretty does not work properly after 19.01.19
 critic-pretty: $(TEST.critic.dir)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	-cd $(TEST.critic.dir) && $(EXE.critic) $(ALL.critic:%=../%) $(TEST.critic.severity) $(TEST.critic.opt) \
 	  | awk '\
     { gsub(/\.$$/,"");  C=" remove trailing . (for --statistics-only)"; }\
@@ -169,11 +169,11 @@ $(ALL.test.critic): critic
 criticp critic-5p critic-4p critic-3p critic-2p: critic-pretty
 
 c5-% c4-% c3-% c2-%:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(MAKE) -s ALL.critic=$* critic TEST.critic.severity=$(TEST.critic.severity)
 
 c5v-% c4v-% c3v-% c2v-%:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(MAKE) -s ALL.critic=$* critic TEST.critic.severity=$(TEST.critic.severity) TEST.critic.opt="$(TEST.opt.verb10o)"
 
 _TEST.critic-3.txt  = $(TEST.critic.dir)/perlcritic-$(TEST.today)/severity-3.txt
@@ -181,7 +181,7 @@ _TEST.critic-4.txt  = $(TEST.critic.dir)/perlcritic-$(TEST.today)/severity-4.txt
 _TEST.critic-5.txt  = $(TEST.critic.dir)/perlcritic-$(TEST.today)/severity-5.txt
 
 $(TEST.critic.dir)/perlcritic-$(TEST.today)/severity%.txt: $(TEST.critic.dir)/perlcritic-$(TEST.today)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@(echo "" && echo "" && echo "## Anzahl Fehler ...")    > $@
 	@$(MAKE) $(MFLAGS) -s TEST.critic.severity=$* critic-count  >> $@
 	@(echo "" && echo "" && echo "## Statistik ...")       >> $@
