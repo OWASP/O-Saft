@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 3.10 24/05/30 10:26:25
+#?      @(#) Makefile.misc 3.11 24/06/30 19:08:18
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 3.10
+_SID.misc          := 3.11
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -129,21 +129,21 @@ HELP.test.misc.all  = # no special documentation yet
 
 bench: test.bench
 test.bench:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	$(EXE.bench) $(TEST.bench.host)
 	@echo "# use '$(MAKE_COMMAND) test.bench.log' to save result in '$(TEST.bench.times)'"
 $(TEST.bench.times):
-	@$(TRACE.target)
-	@$(TRACE.target.log)
+	@$(O-TRACE.target)
+	@$(O-TRACE.target.log)
 	$(EXE.bench) $(TEST.bench.host) >> $@
 test.bench.log: $(TEST.bench.times)
 
 test.bunt: $(EXE.test.bunt)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	-cat $(EXE.test.bunt) | $(O-USR.dir)/bunt.pl
 $(TEST.bunt.log):
-	@$(TRACE.target)
-	@$(TRACE.target.log)
+	@$(O-TRACE.target)
+	@$(O-TRACE.target.log)
 	-cat $(EXE.test.bunt) | $(O-USR.dir)/bunt.pl > $@
 test.bunt.log: $(TEST.bunt.log)
 # TODO: test.bunt.log should use testarg%log target
@@ -168,10 +168,10 @@ HELP-docs.subs.all  = generate graph with defined and used perl subroutines for 
 # generate graph fo a single source file
 # quick&dirty without check if passed file exists, must be in /lib
 docs.anno.%:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(EXE.graph-anno) --dir=$(O-DOC.dir) --prefix=$(*)_  $(O-LIB.dir)/$(*)
 docs.subs.%:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(EXE.graph-subs) --dir=$(O-DOC.dir) --prefix=$(*)_  $(O-LIB.dir)/$(*)
 
 ALL.docsanno    = $(O-LIB.pm:%=docs.anno.%)
@@ -179,14 +179,14 @@ ALL.docssubs    = $(O-LIB.pm:%=docs.subs.%)
 
 # only one target, as it generates multiple files anyway
 docs.anno:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(EXE.graph-anno) --dir=$(O-DOC.dir) --prefix=$(O-Project)_ --make=e-ALL.src
 	@$(EXE.graph-anno) --dir=$(O-DOC.dir) --prefix=$(SRC.pl)_    $(SRC.pl)
 docs.annotations: docs.anno
 
 # only one target, as it generates multiple files anyway
 docs.subs:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(EXE.graph-subs) --dir=$(O-DOC.dir) --prefix=$(O-Project)_ --make=e-ALL.pm
 	@$(EXE.graph-subs) --dir=$(O-DOC.dir) --prefix=$(SRC.pl)_    $(SRC.pl)
 
@@ -221,7 +221,7 @@ HELP-cloc.stat.log  = same as cloc but redirect to '$(_TEST.cloc.log)' also
 # NOTE: --quiet suppresses count of files also, hence not used by default
 
 testarg-misc.wc::
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@echo "#make: $(HELP-test.wc) ..."
 	@$(EXE.echo) "# lines\t  words\t   bytes\tfile"
 	@$(EXE.echo) "#-------+--------+--------+-----------------------------"
@@ -233,7 +233,7 @@ test.wc.log: testarg-misc.wc.log
 .PHONY: test.wc testarg.wc
 
 cloc%:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(EXE.cloc) $(TEST.opt.cloc) $(_TEST.cloc.src) | $(EXE.cloc.filter)
 	@$(EXE.echo) "$(_NL)# $(_TEST.cloc.hint)"
 
@@ -249,7 +249,7 @@ cloc:       cloc.stat
 # if STDOUT and STDERR is redirected to a file
 _TEST.cloc.log   = $(TEST.logdir)/test.cloc.stat.log
 $(_TEST.cloc.log):
-	@echo "# Makefile.misc 3.10: $(MAKE) cloc.stat.log" > $@
+	@echo "# Makefile.misc 3.11: $(MAKE) cloc.stat.log" > $@
 	@$(MAKE) -i cloc.stat >> $@ 2>&1
 cloc.stat.log: $(_TEST.cloc.log)
 
@@ -302,11 +302,11 @@ $(_TEST.analyse.dst):
 analyse:         TEST.opt.analyse.dir   = --source-dir=$(_TEST.analyse.src)
 analyse-output:  TEST.opt.analyse.dir   = --output-dir=$(_TEST.analyse.dst)
 analyse: $(_TEST.analyse.dst) $(SRC.pl) $(SRC.pm)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(EXE.analyse)        $(TEST.opt.analyse.dat) $(TEST.opt.analyse.dir) $(TEST.opt.analyse)
 $(_TEST.analyse.dat): analyse
 analyse-output: $(_TEST.analyse.dat)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(EXE.analyse-output) $(TEST.opt.analyse.dat) $(TEST.opt.analyse.dir) --format=html
 analyse-out: analyse-output
 
@@ -334,7 +334,7 @@ LIST.norc.no-out.keys   := master_key \
 LIST.norc.no-out.opt    := $(LIST.norc.no-out.keys:%=--no-out=%)
 LIST.norc.opts          := --header --traceKEY
 test.norc%:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(eval _cmd = $(shell echo $* | sed -e 's/.log//'))
 	@$(eval _log = $(_TEST.norc.dir)-$(_cmd))
 	@$(eval _ext = log-$(TEST.today))
@@ -375,7 +375,7 @@ profile.sub.exit.log%:  PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=2  $(_lineinf
 profile.sub.args.log%:  PERL.OPTS   = PERLDB_OPTS='NonStop=1 frame=15 $(_lineinfo)'
 
 profile.sub%:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(eval _args   = $(shell echo "$*" | awk -F_ '{i=1;while(i<NF){i++;print $$i}}'))
 	@$(eval my.args = $(shell [ -n "$(_args)" ] && echo $(_args) || echo $(TEST.args.misc) ))
 	-env $(PERL.OPTS) perl -dS $(DEV.pl) $(TEST.profile.host) $(my.args) 2>&1 
@@ -390,12 +390,12 @@ profile.sub%:
 _TEST.nytprof.dir   = $(TEST.logdir)/nytprof
 _TEST.nytprof.log   = $(TEST.logdir)/nytprof.out
 nytprof.out: $(_TEST.nytprof.log)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@perl -d:NYTProf $(DEV.pl) $(TEST.profile.host) $(TEST.args.misc)
 	@mv $@ $<
 	@echo "# inspect with: nytprofcalls $(_TEST.nytprof.log)"
 nytprof.html: $(_TEST.nytprof.log)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(EXE.nytprof) $(TEST.opt.nytprof) -out $(_TEST.nytprof.dir) --file $<
 	@echo "# inspect with: firefox $(_TEST.nytprof.dir)/index.html"
 nytprof: nytprof.html
@@ -403,7 +403,7 @@ nytprof: nytprof.html
 # requires perl module Devel/DProf or package, for example libdevel-dprof-perl
 _TEST.dprof.log     = $(TEST.logdir)/dprof.out
 $(_TEST.dprof.log):
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@env PERL_DPROF_OUT_FILE_NAME=$(_TEST.dprof.log) perl -d:DProf $(DEV.pl) $(TEST.profile.host) $(TEST.args.misc)
 	@$(EXE.dprofpp) $(TEST.opt.dprofpp) $(_TEST.dprof.log)
 	@echo ""
@@ -500,11 +500,11 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 3.10: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 3.11: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
-	@$(TRACE.target)
-	@$(TRACE.target.log)
+	@$(O-TRACE.target)
+	@$(O-TRACE.target.log)
 	@diff $(TEST.logdir)/$@ $(_TEST.quality.log) \
 	    && rm $(_TEST.quality.log) \
 	    || mv $(_TEST.quality.log) $(TEST.logdir)/$@
@@ -551,7 +551,7 @@ test.misc.todo:           $(ALL.test.misc.todo)
 test.misc.todo.log:       $(ALL.test.misc.todo.log)
 test.misc.info:           $(ALL.test.misc.info)
 test.misc.info.log:       $(ALL.test.misc.info.log)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 .PHONY: $(ALL.test.misc.log)
 
 # define PHONY target to avoid misleading error messages when files are missing
