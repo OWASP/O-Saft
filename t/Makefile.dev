@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 3.8 24/06/22 10:10:38
+#?      @(#) Makefile.dev 3.9 24/06/30 19:18:21
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-_SID.dev           := 3.8
+_SID.dev           := 3.9
 
 _MYSELF.dev        := t/Makefile.dev
 ALL.includes       += $(_MYSELF.dev)
@@ -256,13 +256,13 @@ test.dev.pod.log:   $(ALL.test.dev.pod:%=%.log)
 # useless generated targets (as these are shell not perl programs)
 # disabled target produces then: make 'testarg-dev-...' is up to date.
 testarg-dev-o-saft_pod:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 testarg-dev-o-saft-docker_pod:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 testarg-dev-usr-openssl_pod:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 testarg-dev-INSTALL.sh_pod:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 
 #_____________________________________________________________________________
 #______________________________________________ special targets for testing __|
@@ -285,21 +285,21 @@ HELP-test.dev.grep.all      = all targets testarg-dev-grep_*
 # extract from our source (information for developers)
 # TODO: need to generate individual targets
 testarg-dev-grep_subs:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(foreach prg, $(LIST.sources), echo "" && echo "# egrep '^[[:space:]]*sub[[:space:]]' $(prg) ..." && cd $(TEST.dir)&&egrep '^[[:space:]]*sub[[:space:]]' $(prg); )
 testarg-dev-grep_desc:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(foreach prg, $(LIST.sources), echo "" && echo "# egrep '^((#___*|sub|our|proc)[[:space:]]|[[:space:]]+#[?])' $(prg) | egrep -v '(SID_)' ..." && cd $(TEST.dir)&&egrep -s '^((#___*|sub|our|proc)[[:space:]]|[[:space:]]+#[?])' $(prg) | egrep -v '(SID_)'; )
 testarg-dev-grep_flow:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(foreach prg, $(LIST.sources), echo "" && echo "# egrep '^[[:space:]]*#[|]' $(prg) ..." && cd $(TEST.dir)&&egrep -s '^[[:space:]]*#[|]' $(prg); )
 _TEST.brace=(
 # ) beat Make's foreach dragon
 testarg-dev-grep_hint:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(foreach prg, $(LIST.sources), echo "" && echo "# grep '_hint$(_TEST.brace)' $(prg) ..." && cd $(TEST.dir)&&grep -H '_hint$(_TEST.brace)' $(prg) |sed -e 's/: */\t/'; )
 testarg-dev-grep_warn:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(foreach prg, $(LIST.sources), echo "" && echo "# grep '_warn$(_TEST.brace)' $(prg) ..." && cd $(TEST.dir)&&grep -H '_warn$(_TEST.brace)' $(prg) |sed -e 's/: */\t/'; )
 # TODO: all above $(foreach ...) requires a ; at end, which may fail on Windows
 
@@ -330,7 +330,7 @@ test.dev.grep.all:  $(ALL.test.dev.grep)
 # some special targets
 testarg-dev-o-saft_notyet:  TEST.dev.hosts  = localhost
 testarg-dev-o-saft_notyet:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@cd $(TEST.dir) && $(EXE.pl) --norc --header $(TEST.dev.hosts) $(LIST.o-saft.notyet)
 
 test.dev.grep.sub:  testarg-dev-grep_sub
