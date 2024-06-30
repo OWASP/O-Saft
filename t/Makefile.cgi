@@ -6,7 +6,7 @@
 #?      make help.test.cgi
 #?
 #? VERSION
-#?      @(#) Makefile.cgi 3.1 24/01/23 13:39:18
+#?      @(#) Makefile.cgi 3.2 24/06/30 19:15:57
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cgi  = targets for testing '$(SRC.cgi)' (mainly invalid arguments)
 
-_SID.cgi           := 3.1
+_SID.cgi           := 3.2
 
 _MYSELF.cgi        := t/Makefile.cgi
 ALL.includes       += $(_MYSELF.cgi)
@@ -274,17 +274,17 @@ test.cgi.log-move:      TEST.target_prefix  = testcmd-cgi
 # NOTE: --exit=BEGIN0 must not be the last argument, because it triggers buggy
 #       check in o-saft.cgi (at least up to version 1.44), hence --dummy added
 testarg-cgi-%:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(MAKE) $(MFLAGS) no.message-exit.BEGIN0 EXE.pl=$(EXE.pl) TEST.init="$(TEST.init)" TEST.args=--dummy
 
 testcmd-cgi-%:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(eval _host := $(shell echo "$*" | awk -F_ '{print $$NF}'))
 	@$(MAKE) $(MFLAGS) no.message-exit.BEGIN0 EXE.pl=$(EXE.pl) TEST.init="$(TEST.init) --host=$(_host)" TEST.args=--dummy
 
 # TODO: following target prints "#o-saft.pl..."
 testcmd-cgi-good%:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@$(eval _host := $(shell echo "$*" | awk -F_ '{print $$NF}'))
 	@$(MAKE) $(MFLAGS)    message-exit.BEGIN0 EXE.pl=$(EXE.pl) TEST.init="$(TEST.init) --host=$(_host)" TEST.args=--dummy
 
@@ -314,13 +314,13 @@ test.cgi.goodhosts:$(ALL.cgi.goodhosts)
 _TEST.cgi.log   = $(TEST.logdir)/test.cgi.log-$(TEST.today)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.cgi.log):
-	@echo "# Makefile.cgi 3.1: $(MAKE) test.cgi.log" > $@
+	@echo "# Makefile.cgi 3.2: $(MAKE) test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 # not yet needed: test.log-compare-hint
 test.cgi.log: $(_TEST.cgi.log) $(ALL.cgi.header:%=%.log)
-	@$(TRACE.target)
-	@$(TRACE.target.log)
+	@$(O-TRACE.target)
+	@$(O-TRACE.target.log)
 	@diff $(TEST.logdir)/$@ $(_TEST.cgi.log) \
 	    && rm $(_TEST.cgi.log) \
 	    || mv $(_TEST.cgi.log) $(TEST.logdir)/$@
@@ -331,12 +331,12 @@ ALL.test.cgi.log   += test.cgi.log
 
 ifndef ALL.Makefiles
 # NOTE: needed if called with -f Makefile.cgi
-%-v: TRACE.target   = echo "\# $@: $?"
+%-v: O-TRACE.target = echo "\# $@: $?"
 %-v: %
 	echo CGI $(TEST.init)
 	@$(EXE.dummy)
 
-%-vv: TRACE.target  = echo "\# $@: $^"
+%-vv: O-TRACE.target= echo "\# $@: $^"
 %-vv: %
 	echo CGI
 	@$(EXE.dummy)
