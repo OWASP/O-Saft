@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 3.2 24/05/30 19:34:31
+#?      @(#) Makefile.cmd 3.3 24/06/30 19:15:12
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cmd           := 3.2
+_SID.cmd           := 3.3
 
 _MYSELF.cmd        := t/Makefile.cmd
 ALL.includes       += $(_MYSELF.cmd)
@@ -192,7 +192,7 @@ testrun-%:  EXE.pl      = ../$(SRC.pl)
 testrun-%:  TEST.init   = --trace-CLI
 testrun-%:  TEST.args  += $(TEST.cmd.hosts)
 testrun-%:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	-cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $* $(TEST.args)
 
 
