@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.31 24/06/22 19:54:44
+#?      @(#) Makefile 3.32 24/06/30 19:20:56
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 3.31
+_SID            = 3.32
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -120,7 +120,7 @@ SRC.inst        = $(O-USR.dir)/INSTALL-template.sh
 
 # contrib / usr files
 $(O-USR.dir)/HTML%-table.awk: $(O-USR.dir)/HTML-table.awk
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	cp $< $@
 # should be ln -s $< $@ ; but some systems are too stupid for symlinks
 
@@ -328,8 +328,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.31 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.31
+_INST.genbytext = generated data by Makefile 3.32 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.32
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
 		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DOC.dir)@'              \
 		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-LIB.dir)@'              \
@@ -433,7 +433,7 @@ _help_also:
 
 # ensure that target help: from this file is used and not help%
 help help.all doc doc.all: _help.HEAD $$(_help_body_) $$(_help_list_) $$(_help_also_)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 
 help.all-v help.all-vv: help.all
 	@$(EXE.dummy)
@@ -452,7 +452,7 @@ HELP-install    = install tool in '$(O-INSTALL.dir)' using '$(GEN.inst)', $(O-IN
 HELP-uninstall  = remove installtion directory '$(O-INSTALL.dir)' completely
 
 $(O-INSTALL.dir):
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	mkdir $(_INSTALL_FORCE_) $(O-INSTALL.dir)
 
 all:    help
@@ -462,14 +462,14 @@ clear:  clean
 
 # target calls installed $(SRC.pl) to test general functionality
 install: $(GEN.inst) $(O-INSTALL.dir)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	$(GEN.inst) $(O-INSTALL.dir) \
 	    && $(O-INSTALL.dir)/$(SRC.pl) --no-warning --tracearg +quit > /dev/null
 install-f: _INSTALL_FORCE_ = -p
 install-f: install
 
 uninstall:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	-rm -r --interactive=never $(O-INSTALL.dir)
 
 _RELEASE    = $(shell perl -nle '/^\s*sub _VERSION/ && do { s/.*?"([^"]*)".*/$$1/;print }' $(SRC.pl))
@@ -478,7 +478,7 @@ release.show:
 	@echo "Release: $(_RELEASE)"
 
 release: $(GEN.tgz)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	mkdir -p $(_RELEASE)
 	sha256sum $(GEN.tgz) > $(_RELEASE)/$(GEN.tgz).sha256
 	@cat $(_RELEASE)/$(GEN.tgz).sha256
@@ -604,8 +604,8 @@ docs:       $(GEN.docs)
 standalone: $(GEN.src)
 stand-alone:$(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.31
-tar:     _INST.is_edit  = 3.31
+_INST.is_edit           = 3.32
+tar:     _INST.is_edit  = 3.32
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
@@ -628,18 +628,18 @@ tcldata:    tcl.data
 
 # docker target uses project's own script to build and remove the image
 docker.build:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	$(EXE.o_docker) -OSAFT_VERSION=$(_RELEASE) build
 	$(EXE.o_docker) cp Dockerfile
 	$(EXE.o_docker) cp README.md
 docker: docker.build
 
 docker.rm:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	$(EXE.o_docker) rmi
 
 docker.dev:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	docker build --force-rm --rm \
 		--build-arg "OSAFT_VM_SRC_OSAFT=https://github.com/OWASP/O-Saft/archive/master.tar.gz" \
 		--build-arg "OSAFT_VERSION=$(_RELEASE)" \
@@ -651,27 +651,27 @@ docker.dev:
 #       a Docker image already exists.  Need a target, which checks the current
 #       Docker image for the proper version.
 docker.push:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	docker push owasp/o-saft:latest
 
 .PHONY: pl cgi man pod html wiki standalone tar tmptar tmptgz cleantar cleantmp help
 .PHONY: docker docker.rm docker.dev docker.push
 
 clean.gen:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	rm -rf $(ALL.gen) $(GEN.inst)
 clean.tmp:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	rm -rf $(O-TMP.dir)
 clean.tar:
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	rm -rf $(GEN.tgz)
 clean.tgz: clean.tar
 clean.docker: docker.rm
 
 # avoid matching implicit rule help% in some of following targets
 $(O-DOC.dir)/help.txt: 
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 
 #_____________________________________________________________________________
 #_______________________________________________ targets for generated files__|
@@ -679,55 +679,55 @@ $(O-DOC.dir)/help.txt:
 # targets for generation: $(O-DIRS:%=$(O-TMP.dir)/%)
 # no pattern rule $(O-TMP.dir)/%:  used to avoid creation of unused directories
 $(O-TMP.dir)/$(O-LIB.dir) $(O-TMP.dir)/$(O-DOC.dir) $(O-TMP.dir)/$(O-USR.dir) $(O-TMP.dir)/$(TEST.dir):
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	mkdir -p $@
 
 # cp fails if SRC.pl is read-only, hence we remove it; it is generated anyway
 # target does nothing if $(DEV.pl) does not exist
 $(SRC.pl): $(DEV.pl)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	test -f $(DEV.pl) && rm -f $@ || true
 	test -f $(DEV.pl) && cp $< $@ || touch $@
 	test -s $(SRC.pl)
 
 # generation fails if GEN.src is read-only, hence we remove it; it is generated anyway
 $(GEN.src):  $(EXE.single) $(SRC.pl) $(ALL.pm)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@rm -rf $@
 	$(EXE.single) --exe=$(SRC.pl) --s --t          > $@
 	@chmod 555 $@
 
 $(GEN.man):  $(SRC.pl) $(O-DOC.pm) $(O-MAN.pm) $(O-SRC.txt) $(GEN.pod)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	$(SRC.pl) --no-rc --no-warning --help=gen-man  > $@
 
 $(GEN.pod):  $(SRC.pl) $(O-DOC.pm) $(O-MAN.pm) $(O-SRC.txt)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	$(SRC.pl) --no-rc --no-warning --help=gen-pod  > $@
 
 $(GEN.text): $(SRC.pl) $(O-DOC.pm) $(O-MAN.pm) $(O-SRC.txt)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	$(SRC.pl) --no-rc --no-warning --help          > $@
 
 $(GEN.wiki): $(SRC.pl) $(O-DOC.pm) $(O-MAN.pm) $(O-SRC.txt)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	$(SRC.pl) --no-rc --no-warning --help=gen-wiki > $@
 
 $(GEN.html): $(SRC.pl) $(O-DOC.pm) $(O-MAN.pm) $(O-SRC.txt)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	$(SRC.pl) --no-rc --no-warning --help=gen-html > $@
 
 $(GEN.cgi.html): $(SRC.pl) $(O-DOC.pm) $(O-MAN.pm) $(O-SRC.txt)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	$(SRC.pl) --no-rc --no-warning --help=gen-cgi  > $@
 
 $(GEN.inst): $(SRC.inst) Makefile $(TEST.dir)/Makefile.misc
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	$(EXE.install) $(SRC.inst) > $@
 	chmod +x $@
 
 $(GEN.tgz)--to-noisy: $(ALL.src)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@grep -q '$(_INST.is_edit)' $? \
 	    && echo "file(s) being edited or with invalid SID" \
 	    || echo tar zcf $@ $^
@@ -738,14 +738,14 @@ $(GEN.tgz)--to-noisy: $(ALL.src)
 # most files could also be generated with: $(SRC.pl) --gen-docs
 # SEE GNU Make:Pattern Rule
 $(O-DOC.dir)/$(SRC.pl).%warnings: Makefile $(SRC.pl) $(SRC.pm) $(SRC.cgi) $(TEST.dir)/Makefile.warnings
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	$(MAKE_COMMAND) -s warnings-info > $@
 
 # pattern rule for generating $(O-DOC.dir)/$(SRC.pl).--help=*
 # unfortunately the target name does not contain any hint on which source file
 # it depends, hence all possible dependencies are used
 $(O-DOC.dir)/$(SRC.pl).%: Makefile $(SRC.pl) $(SRC.pm)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	$(SRC.pl) --no-rc $* > $@
 
 # use libreoffice to generate PDF from .odg
@@ -757,13 +757,13 @@ $(O-DOC.dir)/$(SRC.pl).%: Makefile $(SRC.pl) $(SRC.pm)
 #        compared to the file generated interactively (reason yet unknown)
 #        we keep the generation here, to avoid missing files
 $(O-DOC.dir)/%.pdf: $(O-DOC.dir)/%.odg
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	$(EXE.office) --headless --nologo --nolockcheck --norestore --convert-to pdf:draw_pdf_Export --outdir $(O-DOC.dir)/ $^ 
 
 # Special target to check for edited files;  it only checks the source files of
 # the tool (o-saft.pl) but no other source files.
 _notedit: $(SRC.exe) $(SRC.pm) $(SRC.rc) $(O-SRC.txt)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	@grep -q '$(_INST.is_edit)' $? \
 	    && echo "file(s) being edited or with invalid SID" \
 	    && exit 1 \
@@ -783,43 +783,43 @@ _notedit: $(SRC.exe) $(SRC.pm) $(SRC.rc) $(O-SRC.txt)
 # path with $(PWD).
 # The directory prefix in the tarball is the current directory, aka $(PWD) .
 $(GEN.tgz): $(ALL.src) $(GEN.tags) $(GEN.inst) $(GEN.rel)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	cd .. && tar zcf $(PWD)/$@ $(ALL.tgz)
 
 $(GEN.tmptgz): $(ALL.src) $(GEN.tags)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 	tar zcf $@ $^
 
 #_____________________________________________________________________________
 #__________________________________________________________ verbose targets __|
 
 # verbose/trace command
-#       TRACE.target    is the command to be used to print the target's name
+#       O-TRACE.target  is the command to be used to print the target's name
 #                       it is epmty by default
-#       TRACE.target    can be set as environment variable, or used on command
+#       O-TRACE.target  can be set as environment variable, or used on command
 #                       line when calling make
 #                       it is also used internal for the -v targets, see below
 # examples:
-#  TRACE.target = echo "\# --Target: $@--"
-#  TRACE.target = echo "\# --Target: $@: newer dependencies: $? --"
-#  TRACE.target = echo "\# --Target: $@: all dependencies: $^ --"
+#  O-TRACE.target = echo "\# --Target: $@--"
+#  O-TRACE.target = echo "\# --Target: $@: newer dependencies: $? --"
+#  O-TRACE.target = echo "\# --Target: $@: all dependencies: $^ --"
 
 # verbose targets
 # NOTE: need at least one command for target execution
-%-v: TRACE.target   = echo "\# $@: $?"
+%-v: O-TRACE.target = echo "\# $@: $?"
 %-v: %
 	@$(EXE.dummy)
 
-%-vv: TRACE.target  = echo "\# $@: $^"
+%-vv: O-TRACE.target= echo "\# $@: $^"
 %-vv: %
 	@$(EXE.dummy)
 
 # the traditional way, when target-dependent variables do not work
 #%-v:
-#	@$(MAKE) $(MFLAGS) $(MAKEOVERRIDES) $* 'TRACE.target=echo \# $$@: $$?'
+#	@$(MAKE) $(MFLAGS) $(MAKEOVERRIDES) $* 'O-TRACE.target=echo \# $$@: $$?'
 #
 #%-vv:
-#	@$(MAKE) $(MFLAGS) $(MAKEOVERRIDES) $* 'TRACE.target=echo \# $$@: $$^'
+#	@$(MAKE) $(MFLAGS) $(MAKEOVERRIDES) $* 'O-TRACE.target=echo \# $$@: $$^'
 
 #_____________________________________________________________________________
 #_____________________________________________ targets for testing and help __|
