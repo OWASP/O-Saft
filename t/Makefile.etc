@@ -6,7 +6,7 @@
 #?      make help.test.etc
 #?
 #? VERSION
-#?      @(#) Makefile.etc 3.1 24/01/23 13:39:23
+#?      @(#) Makefile.etc 3.2 24/06/30 19:17:09
 #?
 #? AUTHOR
 #?      19-mar-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.etc  = targets for testing ciphers with various other tools
 
-_SID.etc           := 3.1
+_SID.etc           := 3.2
 
 _MYSELF.etc        := t/Makefile.etc
 ALL.includes       += $(_MYSELF.etc)
@@ -125,7 +125,7 @@ ALL.testetc-count   = \
 _testcmd-etc-count-head:
 	@$(EXE.echo) "# number of known ciphers supported by various tools"
 testcmd-etc-count: _testcmd-etc-count-head $(ALL.testetc-count)
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 
 # use testcmd-% pattern rule for all o-saft.pl +cipher tests
 testcmd-etc-osaft_%:     TEST.args = --enabled --header --no-hint $(TEST.hosts)
