@@ -13,7 +13,7 @@
 #?      the warning message is not present.
 #?
 #? VERSION
-#?      @(#) Makefile.warnigs 3.14 24/06/18 14:45:11
+#?      @(#) Makefile.warnigs 3.15 24/06/30 19:14:22
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -22,7 +22,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-_SID.warnings      := 3.14
+_SID.warnings      := 3.15
 
 _MYSELF.warnings   := t/Makefile.warnings
 ALL.includes       += $(_MYSELF.warnings)
@@ -140,7 +140,7 @@ warning-%:          TEST.init   =
 #   specific warning message.
 
 warning-%: message-%
-	@$(TRACE.target)
+	@$(O-TRACE.target)
 
 #   The pattern rule  message-%  searches (grep) the output of  o-saft.pl
 #   for a string, which is the pattern of the target name.
@@ -426,8 +426,8 @@ warnings-show.difficult:
 	grep "^warning..*difficult" $(_MYSELF.warnings)
 
 warnings-%.log: $(TEST.logdir)
-	@$(TRACE.target)
-	@$(TRACE.target.log)
+	@$(O-TRACE.target)
+	@$(O-TRACE.target.log)
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(TEST.today))
 	@$(MAKE) $(MFLAGS) -s warnings-$* > $@ 2>&1
 	@expr "$(MAKEFLAGS)" : n >/dev/null \
@@ -443,7 +443,7 @@ warnings-%.log: $(TEST.logdir)
 # $(_TEST.warning.log) calls "make -s" to avoid printing of executed commands
 _TEST.warning.log   = $(TEST.logdir)/test.warnings.log-$(TEST.today)
 $(_TEST.warning.log):
-	@echo "# $(_MYSELF.warnings) 3.14: $(MAKE) test.warnings.log" > $@
+	@echo "# $(_MYSELF.warnings) 3.15: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
@@ -454,8 +454,8 @@ $(_TEST.warning.log):
 # FIXME: following target should have $(SRC.pl) as dependency,  but that fails
 #        if make is called from within ./t/ directory; hence no dependency
 test.warnings.log: $(_TEST.warning.log)
-	@$(TRACE.target)
-	@$(TRACE.target.log)
+	@$(O-TRACE.target)
+	@$(O-TRACE.target.log)
 	@diff $(TEST.logdir)/$@ $(_TEST.warning.log) \
 	    && rm $(_TEST.warning.log) \
 	    || mv $(_TEST.warning.log) $(TEST.logdir)/$@
