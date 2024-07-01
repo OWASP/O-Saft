@@ -6,7 +6,7 @@
 #?      make help.test.ext
 #?
 #? VERSION
-#?      @(#) Makefile.ext 3.2 24/07/01 11:31:57
+#?      @(#) Makefile.ext 3.4 24/07/01 16:28:58
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,16 +15,15 @@
 
 HELP-help.test.ext  = targets for testing '$(SRC.pl)' with external FQDN
 
-_SID.ext           := 3.2
-
-_MYSELF.ext        := t/Makefile.ext
-ALL.includes       += $(_MYSELF.ext)
+O-SID.ext          := 3.4
+O-SELF.ext         := t/Makefile.ext
+ALL.includes       += $(O-SELF.ext)
 ALL.inc.type       += ext
 ALL.help.tests     += help.test.ext
 
 first-ext-target-is-default: help.test.ext
 
-ifeq (,$(_SID.test))
+ifeq (,$(O-SID.test))
     -include t/Makefile
 endif
 
@@ -87,7 +86,7 @@ testcmd-e070_%: TEST.args  += +modulus +modulus_exponent +pubkey +pubkey_value +
 testcmd-e071_%: TEST.args  += +modulus_exp_1 +modulus_size_oldssl +modulus_exp_65537 +modulus_exp_oldssl +pub_encryption +pub_enc_known +sig_encryp tion +sig_enc_known --tracekey --nodns --nohttp
 testcmd-e081_%: TEST.args  += +cn +subject +altname +serial +serial_hex +serial_int +sernumber +rfc6125_names  --tracekey --nodns --nohttp
 
-ALL.testext         = $(shell awk -F_ '/^testcmd-e[0-9]/{arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.ext))
+ALL.testext         = $(shell awk -F_ '/^testcmd-e[0-9]/{arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(O-SELF.ext))
 ALL.by_host         = $(foreach host,$(TEST.ext.hosts),$(ALL.testext:%=%_$(host)))
 ALL.by_command      = $(foreach cmd,$(ALL.testext),$(TEST.ext.hosts:%=$(cmd)_%))
 ALL.ext.host        = $(ALL.by_host)
