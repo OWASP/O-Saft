@@ -6,7 +6,7 @@
 #?      make help.test.gen
 #?
 #? VERSION
-#?      @(#) Makefile.gen 3.1 24/01/23 13:39:25
+#?      @(#) Makefile.gen 3.2 24/07/01 11:30:59
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.gen  = make functions to generate targets
 
-_SID.gen           := 3.1
+_SID.gen           := 3.2
 
 _MYSELF.gen        := t/Makefile.gen
 ALL.includes       += $(_MYSELF.gen)
@@ -47,9 +47,9 @@ HELP-GEN.targets    = GEN.targets(prefix,typ,tool,var-name,var-for-args,var-set-
 HELP-GEN.targets-args = GEN.targets-args(prefix,typ,tool,var-name)
 HELP-GEN.targets-init = GEN.targets-init(prefix,typ,tool,var-name)
 
-HELP.gen            = $(_NL)\
-\#    Beside the target 'test.gen' for internal testing, no other targets are$(_NL)\
-\#    provides but only functions. The desciption of the targets can be found$(_NL)\
+HELP.gen            = $(O-NL)\
+\#    Beside the target 'test.gen' for internal testing, no other targets are$(O-NL)\
+\#    provides but only functions. The desciption of the targets can be found$(O-NL)\
 \#    in Makefile.pod, SEE Make:target generation .
 
 #_____________________________________________________________________________
