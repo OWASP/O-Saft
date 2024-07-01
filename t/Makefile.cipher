@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 3.3 24/06/07 13:31:28
+#?      @(#) Makefile.cipher 3.4 24/07/01 11:35:31
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cipher        := 3.3
+_SID.cipher        := 3.4
 
 _MYSELF.cipher     := t/Makefile.cipher
 ALL.includes       += $(_MYSELF.cipher)
@@ -46,17 +46,17 @@ HELP-test.cipher       = test all commands with '$(TEST.cipher.hosts)'
 HELP-test.cipher.log   = same as test.cipher but store output in '$(TEST.logdir)/'
 HELP-_cipher2          = ________________________________ testing a special command _
 
-HELP.cipher         = $(_NL)\
-\# Targets can be executed individually, or a group of targets can be executed$(_NL)\
-\# by using the pattern rule  test.pattern-%  (see Makefile).$(_NL)\
-\# Examples to execute individual targets:$(_NL)\
-\#    $(MAKE_COMMAND) testcmd-cipher+cipher--cipher-alpn_localhost$(_NL)\
-\# Examples to execute group of similar targets:$(_NL)\
-\#    $(MAKE_COMMAND) test.pattern-+cipher$(_NL)\
-\# All following examples are the same:$(_NL)\
-\#    $(MAKE_COMMAND) testcmd-+cipher TEST.init='--header --enabled localhost'$(_NL)\
-\#    $(MAKE_COMMAND) testcmd-+cipher TEST.args='--header --enabled localhost'$(_NL)\
-\#$(_NL)\
+HELP.cipher         = $(O-NL)\
+\# Targets can be executed individually, or a group of targets can be executed$(O-NL)\
+\# by using the pattern rule  test.pattern-%  (see Makefile).$(O-NL)\
+\# Examples to execute individual targets:$(O-NL)\
+\#    $(MAKE_COMMAND) testcmd-cipher+cipher--cipher-alpn_localhost$(O-NL)\
+\# Examples to execute group of similar targets:$(O-NL)\
+\#    $(MAKE_COMMAND) test.pattern-+cipher$(O-NL)\
+\# All following examples are the same:$(O-NL)\
+\#    $(MAKE_COMMAND) testcmd-+cipher TEST.init='--header --enabled localhost'$(O-NL)\
+\#    $(MAKE_COMMAND) testcmd-+cipher TEST.args='--header --enabled localhost'$(O-NL)\
+\#$(O-NL)\
 \# Some of the examples above use  localhost  as hostname by default.
 
 HELP.test.cipher.all   = # no special documentation yet
