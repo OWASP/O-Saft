@@ -6,7 +6,7 @@
 #?      make help.test.ext
 #?
 #? VERSION
-#?      @(#) Makefile.ext 3.1 24/01/23 13:39:25
+#?      @(#) Makefile.ext 3.2 24/07/01 11:31:57
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.ext  = targets for testing '$(SRC.pl)' with external FQDN
 
-_SID.ext           := 3.1
+_SID.ext           := 3.2
 
 _MYSELF.ext        := t/Makefile.ext
 ALL.includes       += $(_MYSELF.ext)
@@ -53,13 +53,13 @@ HELP-_ext2              = ________________ testing a special cmd with external h
 HELP-testcmd-eDDD_HOST  = specific test target with HOST
 HELP-testcmd-eDDD_HOST.log  = store output of testcmd-DDD_HOST in t/testcmd-DDD_HOST.log
 
-HELP.ext                = $(_NL)\
-\# Examples:$(_NL)\
-\#    $(MAKE_COMMAND) testcmd-e001_localhost$(_NL)\
-\#    $(MAKE_COMMAND) s-ALL.ext.host TEST.file=t/Makefile.FQDN $(_NL)\
-\#    $(MAKE_COMMAND) s-ALL.ext.host TEST.hosts='a1.tld a2.tld'$(_NL)\
-\#    $(MAKE_COMMAND)  test.ext.host TEST.hosts='a1.tld a2.tld'$(_NL)\
-\#$(_NL)\
+HELP.ext                = $(O-NL)\
+\# Examples:$(O-NL)\
+\#    $(MAKE_COMMAND) testcmd-e001_localhost$(O-NL)\
+\#    $(MAKE_COMMAND) s-ALL.ext.host TEST.file=t/Makefile.FQDN $(O-NL)\
+\#    $(MAKE_COMMAND) s-ALL.ext.host TEST.hosts='a1.tld a2.tld'$(O-NL)\
+\#    $(MAKE_COMMAND)  test.ext.host TEST.hosts='a1.tld a2.tld'$(O-NL)\
+\#$(O-NL)\
 \# Note that external hosts are listed one per line in t/Makefile.FQDN
 
 HELP.test.ext.all       = # no special documentation yet
