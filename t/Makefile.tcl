@@ -6,7 +6,7 @@
 #?      make help.test.tcl
 #?
 #? VERSION
-#?      @(#) Makefile.tcl 3.3 24/05/27 14:45:51
+#?      @(#) Makefile.tcl 3.5 24/07/01 16:29:10
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,16 +15,15 @@
 
 HELP-help.test.tcl  = targets for testing '$(O-Project).tcl'
 
-_SID.tcl           := 3.3
-
-_MYSELF.tcl        := t/Makefile.tcl
-ALL.includes       += $(_MYSELF.tcl)
+O-SID.tcl          := 3.5
+O-SELF.tcl         := t/Makefile.tcl
+ALL.includes       += $(O-SELF.tcl)
 ALL.inc.type       += tcl
 ALL.help.tests     += help.test.tcl
 
 first-tcl-target-is-default: help.test.tcl
 
-ifeq (,$(_SID.test))
+ifeq (,$(O-SID.test))
     -include t/Makefile
 endif
 
