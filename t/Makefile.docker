@@ -6,7 +6,7 @@
 #?      make help.test.docker
 #?
 #? VERSION
-#?      @(#) Makefile.docker 3.10 24/06/30 18:34:29
+#?      @(#) Makefile.docker 3.11 24/07/01 11:34:51
 #?
 #? AUTHOR
 #?      19-dec-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.docker = targets for testing $(O-Project)-docker
 
-_SID.docker        := 3.10
+_SID.docker        := 3.11
 
 _MYSELF.docker     := t/Makefile.docker
 ALL.includes       += $(_MYSELF.docker)
@@ -42,13 +42,13 @@ HELP-_docker1       = _______________ testing o-saft-docker and o-saft in docker
 HELP-test.docker    = test functionality of '$(EXE.o_docker)'
 HELP-test.docker.log = same as test.docker but store output in '$(TEST.logdir)/'
 
-HELP.docker     = $(_NL)\
-\# Testing docker functionality consist of two parts:$(_NL)\
-\#    - building, installing, pushing the docker image$(_NL)\
-\#    - testing the docker image$(_NL)\
-\# This Makefile is about testing '$(EXE.o_docker)' working with the docker image.$(_NL)\
-\# Examples:$(_NL)\
-\#    $(MAKE_COMMAND) testarg-docker-status$(_NL)\
+HELP.docker     = $(O-NL)\
+\# Testing docker functionality consist of two parts:$(O-NL)\
+\#    - building, installing, pushing the docker image$(O-NL)\
+\#    - testing the docker image$(O-NL)\
+\# This Makefile is about testing '$(EXE.o_docker)' working with the docker image.$(O-NL)\
+\# Examples:$(O-NL)\
+\#    $(MAKE_COMMAND) testarg-docker-status$(O-NL)\
 \#    $(MAKE_COMMAND) testarg-docker-call-env
 
 HELP.test.docker.all = # no special documentation yet
