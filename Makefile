@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.32 24/06/30 19:20:56
+#?      @(#) Makefile 3.33 24/07/01 08:42:18
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID            = 3.32
+_SID            = 3.33
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -73,8 +73,7 @@ O-TMP.dir       = /tmp/$(O-Project)
 O-INSTALL.dir   = /usr/local/$(O-Project)
 
 # tool source files
-SRC.lic         = yeast.lic
-DEV.pl          = yeast.pl
+O-SRC.lic       = o-saft.lic
 O-LIB.pm        = \
 		  OCfg.pm \
 		  Ciphers.pm \
@@ -112,7 +111,7 @@ SRC.docker      = \
 		  Dockerfile
 SRC.rc          = .$(SRC.pl)
 
-SRC.exe         = $(SRC.pl) $(SRC.gui) $(DEV.pl) $(SRC.sh)
+SRC.exe         = $(SRC.pl) $(SRC.gui) $(SRC.sh) $(O-Project)-docker
 
 SRC.make        = Makefile
 SRC.misc        = README.md CHANGES
@@ -328,8 +327,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.32 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.32
+_INST.genbytext = generated data by Makefile 3.33 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.33
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
 		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DOC.dir)@'              \
 		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-LIB.dir)@'              \
@@ -604,8 +603,8 @@ docs:       $(GEN.docs)
 standalone: $(GEN.src)
 stand-alone:$(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.32
-tar:     _INST.is_edit  = 3.32
+_INST.is_edit           = 3.33
+tar:     _INST.is_edit  = 3.33
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
@@ -681,14 +680,6 @@ $(O-DOC.dir)/help.txt:
 $(O-TMP.dir)/$(O-LIB.dir) $(O-TMP.dir)/$(O-DOC.dir) $(O-TMP.dir)/$(O-USR.dir) $(O-TMP.dir)/$(TEST.dir):
 	@$(O-TRACE.target)
 	mkdir -p $@
-
-# cp fails if SRC.pl is read-only, hence we remove it; it is generated anyway
-# target does nothing if $(DEV.pl) does not exist
-$(SRC.pl): $(DEV.pl)
-	@$(O-TRACE.target)
-	test -f $(DEV.pl) && rm -f $@ || true
-	test -f $(DEV.pl) && cp $< $@ || touch $@
-	test -s $(SRC.pl)
 
 # generation fails if GEN.src is read-only, hence we remove it; it is generated anyway
 $(GEN.src):  $(EXE.single) $(SRC.pl) $(ALL.pm)
