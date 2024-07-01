@@ -6,7 +6,7 @@
 #?      make help.test.critic
 #?
 #? VERSION
-#?      @(#) Makefile.critic 3.5 24/06/30 19:18:48
+#?      @(#) Makefile.critic 3.6 24/07/01 11:32:39
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.critic = targets for using perlcritic
 
-_SID.critic        := 3.5
+_SID.critic        := 3.6
 
 _MYSELF.critic     := t/Makefile.critic
 ALL.includes       += $(_MYSELF.critic)
@@ -95,17 +95,17 @@ HELP-c3v-FILE       = perlcritic --severity 3 FILE --verbose 10
 HELP-_critic7       = _______________________ targets with pretty-printed output _
 HELP-TARGETp        = call TARGET and pretty print output
 
-HELP.critic         = $(_NL)\
-\# Where   FILE   is any of the *.pm or *.pl files (including path).$(_NL)\
-\# Where  TARGET  is any of:$(_NL)\
-\#        critic critic-5 critic-4 critic-3 critic-2 critic-count critic-stat$(_NL)\
-\#$(_NL)\
-\# None of the  critic-*  targets is available with the  -v or -vv  suffix$(_NL)\
-\# because verbose does not make sense here.$(_NL)\
-\#$(_NL)\
-\# Note about perlcritic used here:$(_NL)\
-\#   * perlcritic is executed in directory '$(TEST.critic.dir)'$(_NL)\
-\#   * perlcritic uses '$(TEST.critic.dir)/$(TEST.critic.rc)'$(_NL)\
+HELP.critic         = $(O-NL)\
+\# Where   FILE   is any of the *.pm or *.pl files (including path).$(O-NL)\
+\# Where  TARGET  is any of:$(O-NL)\
+\#        critic critic-5 critic-4 critic-3 critic-2 critic-count critic-stat$(O-NL)\
+\#$(O-NL)\
+\# None of the  critic-*  targets is available with the  -v or -vv  suffix$(O-NL)\
+\# because verbose does not make sense here.$(O-NL)\
+\#$(O-NL)\
+\# Note about perlcritic used here:$(O-NL)\
+\#   * perlcritic is executed in directory '$(TEST.critic.dir)'$(O-NL)\
+\#   * perlcritic uses '$(TEST.critic.dir)/$(TEST.critic.rc)'$(O-NL)\
 \# See also '$(O-USR.dir)/critic.sh'
 
 HELP.test.critic.all= # no special documentation yet
