@@ -12,14 +12,14 @@
 #?      Defines general variables used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 3.3 24/05/31 12:03:39
+#?      @(#) Makefile.inc 3.4 24/07/01 08:53:32
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.inc       := 3.3
+_SID.inc       := 3.4
 
 _MYSELF.inc    := t/Makefile.inc
 ALL.includes   += $(_MYSELF.inc)
@@ -83,10 +83,6 @@ endif
 
 ifndef SRC.tcl
     SRC.tcl    := o-saft.tcl
-endif
-
-ifndef DEV.pl
-    DEV.pl     := yeast.pl
 endif
 
 ifndef MAKEFILE
