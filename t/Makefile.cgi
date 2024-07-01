@@ -6,7 +6,7 @@
 #?      make help.test.cgi
 #?
 #? VERSION
-#?      @(#) Makefile.cgi 3.3 24/07/01 11:25:48
+#?      @(#) Makefile.cgi 3.5 24/07/01 16:28:51
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,16 +15,15 @@
 
 HELP-help.test.cgi  = targets for testing '$(SRC.cgi)' (mainly invalid arguments)
 
-_SID.cgi           := 3.3
-
-_MYSELF.cgi        := t/Makefile.cgi
-ALL.includes       += $(_MYSELF.cgi)
+O-SID.cgi          := 3.5
+O-SELF.cgi         := t/Makefile.cgi
+ALL.includes       += $(O-SELF.cgi)
 ALL.inc.type       += cgi
 ALL.help.tests     += help.test.cgi
 
 first-cgi-target-is-default: help.test.cgi
 
-ifeq (,$(_SID.test))
+ifeq (,$(O-SID.test))
     -include t/Makefile
 endif
 
@@ -187,7 +186,7 @@ testarg-cgi-host-2133465000: TEST.init += 2133465000
 testarg-cgi-host-7f00_1:    TEST.init  += 7f00:1
 testarg-cgi-host-ffff__1:   TEST.init  += ffff::1
 
-ALL.cgi.badarg  = $(shell awk -F: '/^testarg-cgi-host-/ {arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.cgi))
+ALL.cgi.badarg  = $(shell awk -F: '/^testarg-cgi-host-/ {arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(O-SELF.cgi))
 
 # special targets to test bad --cgi
 #testarg-cgi---cgi_ok:       TEST.init   = --cgi --ok.to.show.failed-status --exit=BEGIN0 +quit
@@ -254,7 +253,7 @@ testcmd-cgi-chr-caret_any.FQDN:    TEST.init  += '--bad-char=_^_'
 testcmd-cgi-chr-bar_any.FQDN:      TEST.init  += '--bad-char=_|_'
 testcmd-cgi-chr-hash_any.FQDN:     TEST.init  += '--bad-char=_\#_'
 
-ALL.cgi.badchr  = $(shell awk -F: '/^testcmd-cgi-chr-/ {arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.cgi))
+ALL.cgi.badchr  = $(shell awk -F: '/^testcmd-cgi-chr-/ {arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(O-SELF.cgi))
 
 # check HTTP header options
 # NOTE: target name is testarg-cgi_ instead of testarg-cgi- because it should
@@ -314,7 +313,7 @@ test.cgi.goodhosts:$(ALL.cgi.goodhosts)
 _TEST.cgi.log   = $(TEST.logdir)/test.cgi.log-$(TEST.today)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.cgi.log):
-	@echo "# Makefile.cgi 3.3: $(MAKE) test.cgi.log" > $@
+	@echo "# Makefile.cgi 3.5: $(MAKE) test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 # not yet needed: test.log-compare-hint
