@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 3.11 24/06/30 19:08:18
+#?      @(#) Makefile.misc 3.12 24/07/01 08:35:52
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 3.11
+_SID.misc          := 3.12
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -249,7 +249,7 @@ cloc:       cloc.stat
 # if STDOUT and STDERR is redirected to a file
 _TEST.cloc.log   = $(TEST.logdir)/test.cloc.stat.log
 $(_TEST.cloc.log):
-	@echo "# Makefile.misc 3.11: $(MAKE) cloc.stat.log" > $@
+	@echo "# Makefile.misc 3.12: $(MAKE) cloc.stat.log" > $@
 	@$(MAKE) -i cloc.stat >> $@ 2>&1
 cloc.stat.log: $(_TEST.cloc.log)
 
@@ -282,9 +282,9 @@ HELP-analyse        = analyse code with Perl::Analyzer
 HELP-analyse-output = analyse code and generate '$(_TEST.analyse.html)'
 HELP-test.norc      = special target testing with/without -norc option
 HELP-tags           = generate tags file for vi(m)
-HELP-profile.sub.entry  = generate function calling tree of '$(DEV.pl)' (entry only)
-HELP-profile.sub.exit   = generate function calling tree of '$(DEV.pl)' (entry and exit)
-HELP-profile.sub.args   = generate function calling tree of '$(DEV.pl)' (in, out and parameter)
+HELP-profile.sub.entry  = generate function calling tree of '$(SRC.pl)' (entry only)
+HELP-profile.sub.exit   = generate function calling tree of '$(SRC.pl)' (entry and exit)
+HELP-profile.sub.args   = generate function calling tree of '$(SRC.pl)' (in, out and parameter)
 HELP-nytprof.out    = generate profiling data (for nytprofcalls)
 HELP-nytprof.html   = generate profiling data in HTML format
 HELP-dprof.out      = generate profiling data (for dprofpp; times, counts, calling tree)
@@ -338,8 +338,8 @@ test.norc%:
 	@$(eval _cmd = $(shell echo $* | sed -e 's/.log//'))
 	@$(eval _log = $(_TEST.norc.dir)-$(_cmd))
 	@$(eval _ext = log-$(TEST.today))
-	@$(DEV.pl) $(TEST.norc.host) $(_cmd) $(LIST.norc.no-out.opt) $(LIST.norc.opts)         | sort > $(_log).$(_ext)
-	@$(DEV.pl) $(TEST.norc.host) $(_cmd) $(LIST.norc.no-out.opt) $(LIST.norc.opts) --no-rc | sort > $(_log)--no-rc.$(_ext)
+	@$(SRC.pl) $(TEST.norc.host) $(_cmd) $(LIST.norc.no-out.opt) $(LIST.norc.opts)         | sort > $(_log).$(_ext)
+	@$(SRC.pl) $(TEST.norc.host) $(_cmd) $(LIST.norc.no-out.opt) $(LIST.norc.opts) --no-rc | sort > $(_log)--no-rc.$(_ext)
 	@-diff $(_log).$(_ext) $(_log)--no-rc.$(_ext) || exit 0
 	@rm    $(_log).$(_ext) $(_log)--no-rc.$(_ext)
 
@@ -378,7 +378,7 @@ profile.sub%:
 	@$(O-TRACE.target)
 	@$(eval _args   = $(shell echo "$*" | awk -F_ '{i=1;while(i<NF){i++;print $$i}}'))
 	@$(eval my.args = $(shell [ -n "$(_args)" ] && echo $(_args) || echo $(TEST.args.misc) ))
-	-env $(PERL.OPTS) perl -dS $(DEV.pl) $(TEST.profile.host) $(my.args) 2>&1 
+	-env $(PERL.OPTS) perl -dS $(SRC.pl) $(TEST.profile.host) $(my.args) 2>&1 
 
 # TODO: 
 #     make profile.sub.entry | sed -e 's/ entering //'
@@ -391,7 +391,7 @@ _TEST.nytprof.dir   = $(TEST.logdir)/nytprof
 _TEST.nytprof.log   = $(TEST.logdir)/nytprof.out
 nytprof.out: $(_TEST.nytprof.log)
 	@$(O-TRACE.target)
-	@perl -d:NYTProf $(DEV.pl) $(TEST.profile.host) $(TEST.args.misc)
+	@perl -d:NYTProf $(SRC.pl) $(TEST.profile.host) $(TEST.args.misc)
 	@mv $@ $<
 	@echo "# inspect with: nytprofcalls $(_TEST.nytprof.log)"
 nytprof.html: $(_TEST.nytprof.log)
@@ -404,7 +404,7 @@ nytprof: nytprof.html
 _TEST.dprof.log     = $(TEST.logdir)/dprof.out
 $(_TEST.dprof.log):
 	@$(O-TRACE.target)
-	@env PERL_DPROF_OUT_FILE_NAME=$(_TEST.dprof.log) perl -d:DProf $(DEV.pl) $(TEST.profile.host) $(TEST.args.misc)
+	@env PERL_DPROF_OUT_FILE_NAME=$(_TEST.dprof.log) perl -d:DProf $(SRC.pl) $(TEST.profile.host) $(TEST.args.misc)
 	@$(EXE.dprofpp) $(TEST.opt.dprofpp) $(_TEST.dprof.log)
 	@echo ""
 	@echo "# show calling tree: dprofpp -t $(_TEST.dprof.log)"
@@ -500,7 +500,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 3.11: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 3.12: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(O-TRACE.target)
