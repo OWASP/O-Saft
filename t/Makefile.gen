@@ -6,7 +6,7 @@
 #?      make help.test.gen
 #?
 #? VERSION
-#?      @(#) Makefile.gen 3.2 24/07/01 11:30:59
+#?      @(#) Makefile.gen 3.4 24/07/01 16:29:00
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,16 +15,15 @@
 
 HELP-help.test.gen  = make functions to generate targets
 
-_SID.gen           := 3.2
-
-_MYSELF.gen        := t/Makefile.gen
-ALL.includes       += $(_MYSELF.gen)
+O-SID.gen          := 3.4
+O-SELF.gen         := t/Makefile.gen
+ALL.includes       += $(O-SELF.gen)
 ALL.inc.type       += gen
 ALL.help.tests     += help.test.gen
 
 first-gen-target-is-default: help.test.gen
 
-ifeq (,$(_SID.test))
+ifeq (,$(O-SID.test))
     -include t/Makefile
 endif
 
