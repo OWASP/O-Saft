@@ -25,8 +25,8 @@
 #       ALL.tests.log   - list of targets for testing writing to logfile
 #
 #    Variables specific for each t/Makefile*
-#       _SID.myTYPE     - version number
-#       _MYSELF.myTYPE  - name of current file
+#       O-SID.myTYPE    - version number
+#       O-SELF.myTYPE   - name of current file
 #       HELP.myTYPE     - documentation (help) text for the corresponding file
 #       HELP.myTYPE.all - list of all targets for the corresponding file
 #       HELP.myTYPE.internal  - some more documentation (help) text
@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 3.9 24/07/01 11:21:06
+#?      @(#) Makefile 3.11 24/07/01 16:28:48
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,10 +57,9 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 3.9
-
-_MYSELF.test       := t/Makefile
-ALL.includes       += $(_MYSELF.test)
+O-SID.test         := 3.11
+O-SELF.test        := t/Makefile
+ALL.includes       += $(O-SELF.test)
 ALL.inc.type       += test
 ALL.help.tests     += help.test
 
@@ -383,7 +382,7 @@ HELP-testcmd-test.internal = print GNU Make's internals and global project setti
 HELP-help.test.makevars = print all variables
 
 # internal information (nothing related to $(O-Project))
-# NOTE: $(_SID*) variables indicate if a t/Makefile* was included.
+# NOTE: $(O-SID*) variables indicate if a t/Makefile* was included.
 # NOTE: $$  needs to be used to ensure that the variables are evaluated when
 #       the target executes and not when the Makefile is read.
 # NOTE: when target testcmd-test.internal is called with  -n ; the command:
@@ -391,17 +390,17 @@ HELP-help.test.makevars = print all variables
 #       will produce output:
 #           # $(MAKE)          = make
 #       SEE GNU Make:MAKE vs. MAKE_COMMAND
-# TODO: list of $(_SID.*) should be generated using $(ALL.inc.type)
+# TODO: list of $(O-SID.*) should be generated using $(ALL.inc.type)
 
-# Makefile and Makefile.pod are nowhere included, hence their _SID is missing
+# Makefile and Makefile.pod are nowhere included, hence their O-SID is missing
 # here and must be exracted from the file directly, ugly workaround ...
-ifndef _SID
-    _SID        = $(shell awk '($$1=="_SID"){print $$3}' ../Makefile)
+ifndef O-SID
+    O-SID       = $(shell awk '($$1=="O-SID"){print $$3}' ../Makefile)
 endif
-ifndef _SID.pod
-    _SID.pod    = $(shell awk '($$1=="@(#)"){print $$3}' t/Makefile.pod)
+ifndef O-SID.pod
+    O-SID.pod   = $(shell awk '($$1=="@(#)"){print $$3}' t/Makefile.pod)
 endif
-#   _SID.TEMPL  = missing, as it is not so important
+#   O-SID.TEMPL = missing, as it is not so important
 
 # next 3 empty targets are dummies to get values for $< $? $^ and $+
 test.file-1:
@@ -411,31 +410,31 @@ testcmd-test.internal: test.file-1 test,file-2 test_file-3
 	@$(O-TRACE.target)
 	@echo 'testcmd-test.internal: test.file-1 test-file-2 test_file-3'
 	@echo '# SIDs of included Makefile* (file not included if SID missing):'
-	@echo '# $$(_SID)          = $(_SID)'
-	@echo '# $$(_SID.help)     = $(_SID.help)'
-	@echo '# $$(_SID.test)     = $(_SID.test)'
-	@echo '# $$(_SID.critic)   = $(_SID.critic)'
-	@echo '# $$(_SID.warnings) = $(_SID.warnings)'
-	@echo '# $$(_SID.cipher)   = $(_SID.cipher)'
-	@echo '# $$(_SID.make)     = $(_SID.make)'
-	@echo '# $$(_SID.exit)     = $(_SID.exit)'
-	@echo '# $$(_SID.init)     = $(_SID.init)'
-	@echo '# $$(_SID.misc)     = $(_SID.misc)'
-	@echo '# $$(_SID.cmd)      = $(_SID.cmd)'
-	@echo '# $$(_SID.dev)      = $(_SID.dev)'
-	@echo '# $$(_SID.mod)      = $(_SID.mod)'
-	@echo '# $$(_SID.etc)      = $(_SID.etc)'
-	@echo '# $$(_SID.ext)      = $(_SID.ext)'
-	@echo '# $$(_SID.cgi)      = $(_SID.cgi)'
-	@echo '# $$(_SID.gen)      = $(_SID.gen)'
-	@echo '# $$(_SID.hlp)      = $(_SID.hlp)'
-	@echo '# $$(_SID.inc)      = $(_SID.inc)'
-	@echo '# $$(_SID.opt)      = $(_SID.opt)'
-	@echo '# $$(_SID.pod)      = $(_SID.pod)'
-	@echo '# $$(_SID.tcl)      = $(_SID.tcl)'
-	@echo '# $$(_SID.docker)   = $(_SID.docker)'
-	@echo '# $$(_SID.legacy)   = $(_SID.legacy)'
-	@echo '# $$(_SID.TEMPL)    = $(_SID.TEMPL)'
+	@echo '# $$(O-SID)          = $(O-SID)'
+	@echo '# $$(O-SID.help)     = $(O-SID.help)'
+	@echo '# $$(O-SID.test)     = $(O-SID.test)'
+	@echo '# $$(O-SID.critic)   = $(O-SID.critic)'
+	@echo '# $$(O-SID.warnings) = $(O-SID.warnings)'
+	@echo '# $$(O-SID.cipher)   = $(O-SID.cipher)'
+	@echo '# $$(O-SID.make)     = $(O-SID.make)'
+	@echo '# $$(O-SID.exit)     = $(O-SID.exit)'
+	@echo '# $$(O-SID.init)     = $(O-SID.init)'
+	@echo '# $$(O-SID.misc)     = $(O-SID.misc)'
+	@echo '# $$(O-SID.cmd)      = $(O-SID.cmd)'
+	@echo '# $$(O-SID.dev)      = $(O-SID.dev)'
+	@echo '# $$(O-SID.mod)      = $(O-SID.mod)'
+	@echo '# $$(O-SID.etc)      = $(O-SID.etc)'
+	@echo '# $$(O-SID.ext)      = $(O-SID.ext)'
+	@echo '# $$(O-SID.cgi)      = $(O-SID.cgi)'
+	@echo '# $$(O-SID.gen)      = $(O-SID.gen)'
+	@echo '# $$(O-SID.hlp)      = $(O-SID.hlp)'
+	@echo '# $$(O-SID.inc)      = $(O-SID.inc)'
+	@echo '# $$(O-SID.opt)      = $(O-SID.opt)'
+	@echo '# $$(O-SID.pod)      = $(O-SID.pod)'
+	@echo '# $$(O-SID.tcl)      = $(O-SID.tcl)'
+	@echo '# $$(O-SID.docker)   = $(O-SID.docker)'
+	@echo '# $$(O-SID.legacy)   = $(O-SID.legacy)'
+	@echo '# $$(O-SID.TEMPL)    = $(O-SID.TEMPL)'
 	@echo '# show some private make variables:'
 	@echo '# $$(PWD)           = $(PWD)'
 	@echo '# $$(PWD.dir)       = $(notdir $(PWD))'
@@ -803,83 +802,83 @@ test.patt-%: test.pattern-%
 # errors complaining about target redefinitions
 # for a detailed description see t/Makefile.template
 
-ifeq (,$(_SID.gen))
+ifeq (,$(O-SID.gen))
     -include t/Makefile.gen
 endif
 
-ifeq (,$(_SID.help))
+ifeq (,$(O-SID.help))
     -include t/Makefile.help
 endif
 
-ifeq (,$(_SID.warnings))
+ifeq (,$(O-SID.warnings))
     -include t/Makefile.warnings
 endif
 
-ifeq (,$(_SID.cipher))
+ifeq (,$(O-SID.cipher))
     -include t/Makefile.cipher
 endif
 
-ifeq (,$(_SID.cmd))
+ifeq (,$(O-SID.cmd))
     -include t/Makefile.cmd
 endif
 
-ifeq (,$(_SID.exit))
+ifeq (,$(O-SID.exit))
     -include t/Makefile.exit
 endif
 
-ifeq (,$(_SID.opt))
+ifeq (,$(O-SID.opt))
     -include t/Makefile.opt
 endif
 
-ifeq (,$(_SID.ext))
+ifeq (,$(O-SID.ext))
     -include t/Makefile.ext
 endif
 
-ifeq (,$(_SID.hlp))
+ifeq (,$(O-SID.hlp))
     -include t/Makefile.hlp
 endif
 
-ifeq (,$(_SID.cgi))
+ifeq (,$(O-SID.cgi))
     -include t/Makefile.cgi
 endif
 
-ifeq (,$(_SID.tcl))
+ifeq (,$(O-SID.tcl))
     -include t/Makefile.tcl
 endif
 
-ifeq (,$(_SID.etc))
+ifeq (,$(O-SID.etc))
     -include t/Makefile.etc
 endif
 
-ifeq (,$(_SID.dev))
+ifeq (,$(O-SID.dev))
     -include t/Makefile.dev
 endif
 
-ifeq (,$(_SID.mod))
+ifeq (,$(O-SID.mod))
     -include t/Makefile.mod
 endif
 
-ifeq (,$(_SID.init))
+ifeq (,$(O-SID.init))
     -include t/Makefile.init
 endif
 
-ifeq (,$(_SID.misc))
+ifeq (,$(O-SID.misc))
     -include t/Makefile.misc
 endif
 
-ifeq (,$(_SID.critic))
+ifeq (,$(O-SID.critic))
     -include t/Makefile.critic
 endif
 
-ifeq (,$(_SID.docker))
+ifeq (,$(O-SID.docker))
     -include t/Makefile.docker
 endif
 
-ifeq (,$(_SID.legacy))
+ifeq (,$(O-SID.legacy))
     -include t/Makefile.legacy
 endif
 
-ifeq (,$(_SID.make))
+ifeq (,$(O-SID.make))
     -include t/Makefile.make
 endif
 
