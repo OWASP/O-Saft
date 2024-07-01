@@ -13,7 +13,7 @@
 #?      the warning message is not present.
 #?
 #? VERSION
-#?      @(#) Makefile.warnigs 3.15 24/06/30 19:14:22
+#?      @(#) Makefile.warnigs 3.16 24/07/01 11:22:38
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -22,7 +22,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-_SID.warnings      := 3.15
+_SID.warnings      := 3.16
 
 _MYSELF.warnings   := t/Makefile.warnings
 ALL.includes       += $(_MYSELF.warnings)
@@ -111,19 +111,19 @@ HELP-warnings-show.todo     = show not implemented tests for warnings
 HELP-warnings-show.difficult= show tests for warnings which are difficult to implement
 HELP-warnings.gen.template  = generate template Makefile for testing warning messages
 
-HELP.warnings           = $(_NL)\
-\# Hint: message-STR can test for any string in output, example$(_NL)\
-\#    $(MAKE_COMMAND) message-Certificate TEST.args='+cn localhost'$(_NL)\
-\#$(_NL)\
-\# Examples:$(_NL)\
-\#    $(MAKE_COMMAND) warning-042$(_NL)\
-\#    $(MAKE_COMMAND) message-Certificate TEST.args='+cn localhost'$(_NL)\
-\#$(_NL)\
+HELP.warnings           = $(O-NL)\
+\# Hint: message-STR can test for any string in output, example$(O-NL)\
+\#    $(MAKE_COMMAND) message-Certificate TEST.args='+cn localhost'$(O-NL)\
+\#$(O-NL)\
+\# Examples:$(O-NL)\
+\#    $(MAKE_COMMAND) warning-042$(O-NL)\
+\#    $(MAKE_COMMAND) message-Certificate TEST.args='+cn localhost'$(O-NL)\
+\#$(O-NL)\
 \# Note that using -n reports a bunch of shell commands.
 
 HELP.test.warnings.all  = \
-\# for more details, use:$(_NL)\
-\#    $(MAKE_COMMAND) t-warn$(_NL)\
+\# for more details, use:$(O-NL)\
+\#    $(MAKE_COMMAND) t-warn$(O-NL)\
 
 # SEE Make:target name
 # SEE Make:target name prefix
@@ -443,7 +443,7 @@ warnings-%.log: $(TEST.logdir)
 # $(_TEST.warning.log) calls "make -s" to avoid printing of executed commands
 _TEST.warning.log   = $(TEST.logdir)/test.warnings.log-$(TEST.today)
 $(_TEST.warning.log):
-	@echo "# $(_MYSELF.warnings) 3.15: $(MAKE) test.warnings.log" > $@
+	@echo "# $(_MYSELF.warnings) 3.16: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
