@@ -10,7 +10,7 @@
 #       Makefile.hlp .
 #
 #? VERSION
-#?      @(#) Makefile.hlp 3.4 24/06/10 12:10:58
+#?      @(#) Makefile.hlp 3.6 24/07/01 16:29:03
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -19,16 +19,15 @@
 
 HELP-help.test.hlp  = targets for testing '$(SRC.pl)' --help options
 
-_SID.hlp           := 3.4
-
-_MYSELF.hlp        := t/Makefile.hlp
-ALL.includes       += $(_MYSELF.hlp)
+O-SID.hlp          := 3.6
+O-SELF.hlp         := t/Makefile.hlp
+ALL.includes       += $(O-SELF.hlp)
 ALL.inc.type       += hlp
 ALL.help.tests     += help.test.hlp
 
 first-hlp-target-is-default: help.test.hlp
 
-ifeq (,$(_SID.test))
+ifeq (,$(O-SID.test))
     -include t/Makefile
 endif
 
