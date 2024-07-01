@@ -6,7 +6,7 @@
 #?      make help.test.make
 #?
 #? VERSION
-#?      @(#) Makefile.make 3.4 24/07/01 11:28:10
+#?      @(#) Makefile.make 3.6 24/07/01 16:29:06
 #?
 #? AUTHOR
 #?      19-jul-19 Achim Hoffmann
@@ -15,16 +15,15 @@
 
 HELP-help.test.make = targets for testing Makefile help* targets
 
-_SID.make          := 3.4
-
-_MYSELF.make       := t/Makefile.make
-ALL.includes       += $(_MYSELF.make)
+O-SID.make         := 3.6
+O-SELF.make        := t/Makefile.make
+ALL.includes       += $(O-SELF.make)
 ALL.inc.type       += make
 ALL.help.tests     += help.test.make
 
 first-make-target-is-default: help.test.make
 
-ifeq (,$(_SID.test))
+ifeq (,$(O-SID.test))
     -include t/Makefile
 endif
 
