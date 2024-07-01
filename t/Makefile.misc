@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 3.12 24/07/01 08:35:52
+#?      @(#) Makefile.misc 3.13 24/07/01 11:27:31
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 3.12
+_SID.misc          := 3.13
 
 _MYSELF.misc       := t/Makefile.misc
 ALL.includes       += $(_MYSELF.misc)
@@ -121,8 +121,8 @@ HELP-test.bench     = call '$(EXE.bench)' for some benchmarks
 HELP-test.bench.log = call '$(EXE.bench)' and save result in '$(TEST.bench.times)'
 HELP-test.bunt      = test '$(O-USR.dir)/bunt.pl' with sample file
 
-HELP.misc           = $(_NL)\
-\# Make may return status code for any  qa.*  target, even the result is not$(_NL)\
+HELP.misc           = $(O-NL)\
+\# Make may return status code for any  qa.*  target, even the result is not$(O-NL)\
 \# errorneous. The target  test.quality  is not part of '\$$(ALL.test.misc)'.
 
 HELP.test.misc.all  = # no special documentation yet
@@ -235,7 +235,7 @@ test.wc.log: testarg-misc.wc.log
 cloc%:
 	@$(O-TRACE.target)
 	@$(EXE.cloc) $(TEST.opt.cloc) $(_TEST.cloc.src) | $(EXE.cloc.filter)
-	@$(EXE.echo) "$(_NL)# $(_TEST.cloc.hint)"
+	@$(EXE.echo) "$(O-NL)# $(_TEST.cloc.hint)"
 
 cloc.stat:  TEST.opt.cloc  +=
 cloc.file:  TEST.opt.cloc  += --by-file
@@ -249,7 +249,7 @@ cloc:       cloc.stat
 # if STDOUT and STDERR is redirected to a file
 _TEST.cloc.log   = $(TEST.logdir)/test.cloc.stat.log
 $(_TEST.cloc.log):
-	@echo "# Makefile.misc 3.12: $(MAKE) cloc.stat.log" > $@
+	@echo "# Makefile.misc 3.13: $(MAKE) cloc.stat.log" > $@
 	@$(MAKE) -i cloc.stat >> $@ 2>&1
 cloc.stat.log: $(_TEST.cloc.log)
 
@@ -500,7 +500,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 3.12: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 3.13: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(O-TRACE.target)
