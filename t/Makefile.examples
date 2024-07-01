@@ -6,7 +6,7 @@
 #?      make help.test.examples
 #?
 #? VERSION
-#?      @(#) Makefile.examples 3.1 24/01/23 13:39:23
+#?      @(#) Makefile.examples 3.3 24/07/01 16:28:57
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,16 +15,15 @@
 
 HELP-help.test.examples = print targets for testing documented examples
 
-_SID.examples      := 3.1
-
-_MYSELF.examples   := t/Makefile.examples
-ALL.includes       += $(_MYSELF.examples)
+O-SID.examples     := 3.3
+O-SELF.examples    := t/Makefile.examples
+ALL.includes       += $(O-SELF.examples)
 ALL.inc.type       += examples
 ALL.help.tests     += help.test.examples
 
 first-examples-target-is-default: help.test.examples
 
-ifeq (,$(_SID.test))
+ifeq (,$(O-SID.test))
     -include t/Makefile
 endif
 
@@ -119,7 +118,7 @@ test.examples.log-compare:          TEST.target_prefix  = testarg-examples
 test.examples.log-move:             TEST.target_prefix  = testarg-examples
 test.examples.log:                  TEST.target_prefix  = testarg-examples
 
-ALL.testexamples     = $(shell awk -F: '/^testarg-example-.*%/{next} /^testarg-example-/{arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.examples))
+ALL.testexamples     = $(shell awk -F: '/^testarg-example-.*%/{next} /^testarg-example-/{arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(O-SELF.examples))
 ALL.test.examples    = $(ALL.testexamples)
 ALL.test.examples.log= $(ALL.test.examples:%=%.log) test.log-compare-hint
 
