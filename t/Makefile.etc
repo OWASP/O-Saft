@@ -6,7 +6,7 @@
 #?      make help.test.etc
 #?
 #? VERSION
-#?      @(#) Makefile.etc 3.2 24/06/30 19:17:09
+#?      @(#) Makefile.etc 3.4 24/07/01 16:28:56
 #?
 #? AUTHOR
 #?      19-mar-19 Achim Hoffmann
@@ -15,16 +15,15 @@
 
 HELP-help.test.etc  = targets for testing ciphers with various other tools
 
-_SID.etc           := 3.2
-
-_MYSELF.etc        := t/Makefile.etc
-ALL.includes       += $(_MYSELF.etc)
+O-SID.etc          := 3.4
+O-SELF.etc         := t/Makefile.etc
+ALL.includes       += $(O-SELF.etc)
 ALL.inc.type       += etc
 ALL.help.tests     += help.test.etc
 
 first-etc-target-is-default: help.test.etc
 
-ifeq (,$(_SID.test))
+ifeq (,$(O-SID.test))
     -include t/Makefile
 endif
 
