@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 3.4 24/07/01 11:35:31
+#?      @(#) Makefile.cipher 3.6 24/07/01 16:28:52
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,16 +15,15 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cipher        := 3.4
-
-_MYSELF.cipher     := t/Makefile.cipher
-ALL.includes       += $(_MYSELF.cipher)
+O-SID.cipher       := 3.6
+O-SELF.cipher      := t/Makefile.cipher
+ALL.includes       += $(O-SELF.cipher)
 ALL.inc.type       += cipher
 ALL.help.tests     += help.test.cipher
 
 first-cipher-target-is-default: help.test.cipher
 
-ifeq (,$(_SID.test))
+ifeq (,$(O-SID.test))
     -include t/Makefile
 endif
 
