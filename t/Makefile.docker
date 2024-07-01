@@ -6,7 +6,7 @@
 #?      make help.test.docker
 #?
 #? VERSION
-#?      @(#) Makefile.docker 3.11 24/07/01 11:34:51
+#?      @(#) Makefile.docker 3.13 24/07/01 16:28:55
 #?
 #? AUTHOR
 #?      19-dec-19 Achim Hoffmann
@@ -15,16 +15,15 @@
 
 HELP-help.test.docker = targets for testing $(O-Project)-docker
 
-_SID.docker        := 3.11
-
-_MYSELF.docker     := t/Makefile.docker
-ALL.includes       += $(_MYSELF.docker)
+O-SID.docker       := 3.13
+O-SELF.docker      := t/Makefile.docker
+ALL.includes       += $(O-SELF.docker)
 ALL.inc.type       += docker
 ALL.help.tests     += help.test.docker
 
 first-docker-target-is-default: help.test.docker
 
-ifeq (,$(_SID.test))
+ifeq (,$(O-SID.test))
     -include t/Makefile
 endif
 
