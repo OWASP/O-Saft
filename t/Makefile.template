@@ -9,7 +9,7 @@
 #       This file itself is not used (included) in t/Makefile.
 # 
 #? VERSION
-#?      @(#) Makefile.template 3.2 24/07/01 11:26:54
+#?      @(#) Makefile.template 3.4 24/07/01 16:29:11
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
@@ -19,21 +19,21 @@
 HELP-help.test.TEMPL = targets for testing SOMETHING
                 # Makefile with template for new targets in Makefile.TEMPL
 
-_SID.TEMPL     := 3.2
+O-SID.TEMPL        := 3.4
 
-_MYSELF.TEMPL  := t/Makefile.template
+O-SELF.TEMPL       := t/Makefile.template
                 # must be hardcoded because  $(firstword $(MAKEFILE_LIST))
                 # gets the file of the initial call "make" command
-ALL.includes   += $(_MYSELF.TEMPL)
+ALL.includes       += $(O-SELF.TEMPL)
                 # add ourself to list of all included makefiles
-ALL.inc.type   += TEMPL
+ALL.inc.type       += TEMPL
                 # add our type to list of all included types
-ALL.help.tests += help.test.TEMPL
+ALL.help.tests     += help.test.TEMPL
 
 first-TEMPL-target-is-default: help.test.TEMPL
     # otherwise the first target from other included files would be used
 
-ifeq (,$(_SID.test))
+ifeq (,$(O-SID.test))
     -include t/Makefile
     # get general macros for testing from master makefile
 endif
@@ -111,7 +111,7 @@ testcmd-TEMPL%:     TEST.init   = +quit
 testcmd-TEMPL001_%: TEST.args  += +VERSION
 testcmd-TEMPL002_%: TEST.args  += --help
 
-ALL.testTEMPL       = $(shell awk -F% '($$1 ~ /^testcmd-TEMPL..._/){arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.TEMPL))
+ALL.testTEMPL       = $(shell awk -F% '($$1 ~ /^testcmd-TEMPL..._/){arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(O-SELF.TEMPL))
                 # dynamically generate list of all  testcmd_TEMPLDDD  targets
 
 ## Variant-1 }
@@ -124,7 +124,7 @@ testTEMPL-%:        TEST.init   = +quit
 testTEMPL-001_%:    TEST.args  += +VERSION
 testTEMPL-002_%:    TEST.args  += --help
 
-ALL.testTEMPL       = $(shell awk -F% '($$1 ~ /^testTEMPL-..._/){arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.TEMPL))
+ALL.testTEMPL       = $(shell awk -F% '($$1 ~ /^testTEMPL-..._/){arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(O-SELF.TEMPL))
 
 # pattern rule to map to testcmd-%
 testTEMPL-%:  testcmd-%
