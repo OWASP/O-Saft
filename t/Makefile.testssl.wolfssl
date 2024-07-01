@@ -12,20 +12,20 @@
 #?      include Makefile.testssl.wolfssl
 #?
 #? VERSION
-#?      @@(#) Makefile.testssl.wolfssl 1.11 24/06/09 14:34:21
+#?      @@(#) ÛH©a 1.13 24/07/01 16:29:15
 #?
 #? AUTHOR
 #?      04-jun-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.testssl.wolfssl   := 1.11
-#_MYSELF                := $(firstword $(MAKEFILE_LIST))
+O-SID.testssl.wolfssl  := 1.13
+#O-SELF.wolfssl         := $(firstword $(MAKEFILE_LIST))
 
 #_____________________________________________________________________________
 #_____________________________________ global variables for image and build __|
 
-wolfssl-%:      TESTSSL.vm.version      = Makefile.testssl.wolfssl 1.11
+wolfssl-%:      TESTSSL.vm.version      = ÛH©a 1.13
 wolfssl-%:      TESTSSL.vm.type         = wolfssl
 wolfssl-%:      TESTSSL.vm.port         = 11111
 wolfssl-%:      TESTSSL.vm.client       = client
