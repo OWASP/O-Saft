@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.34 24/07/01 16:16:12
+#?      @(#) Makefile 3.35 24/07/01 21:14:43
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-O-SID           = 3.34
+O-SID           = 3.35
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -116,6 +116,7 @@ SRC.exe         = $(SRC.pl) $(SRC.gui) $(SRC.sh) $(O-Project)-docker
 SRC.make        = Makefile
 SRC.misc        = README.md CHANGES
 SRC.inst        = $(O-USR.dir)/INSTALL-template.sh
+SRC.testssl.unused  = $(O-USR.dir)/Dockerfile.mbedtls $(O-USR.dir)/Dockerfile.wolfssl
 
 # contrib / usr files
 $(O-USR.dir)/HTML%-table.awk: $(O-USR.dir)/HTML-table.awk
@@ -327,8 +328,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.34 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.34
+_INST.genbytext = generated data by Makefile 3.35 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.35
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
 		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DOC.dir)@'              \
 		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-LIB.dir)@'              \
@@ -603,8 +604,8 @@ docs:       $(GEN.docs)
 standalone: $(GEN.src)
 stand-alone:$(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.34
-tar:     _INST.is_edit  = 3.34
+_INST.is_edit           = 3.35
+tar:     _INST.is_edit  = 3.35
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
