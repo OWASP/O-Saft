@@ -41,7 +41,7 @@ no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_trace      = "@(#) OTrace.pm 3.32 24/06/24 15:30:22";
+my  $SID_trace      = "@(#) OTrace.pm 3.33 24/07/01 11:08:12";
 our $VERSION        = "24.06.24";
 
 # public package variables
@@ -179,6 +179,8 @@ sub __trac      {
         /^$/    && do { $data .= ___K_V($key, $ref->{$key}); last SWITCH; };
         /CODE/  && do { $data .= ___K_V($key, "<<code>>");   last SWITCH; };
         /SCALAR/&& do { $data .= ___K_V($key, $ref->{$key}); last SWITCH; };
+        /Regexp/&& do { $data .= ___K_V($key, $ref->{$key}); last SWITCH; };
+                # unsure if Regexp is a real Perl type, may be > 5.8
         /ARRAY/ && do { $data .= ___K_V($key, ___ARR(@{$ref->{$key}})); last SWITCH; };
         /HASH/  && do { last SWITCH if (2 >= $ref->{'trace'});  # print hashes for full trace only
                         $data .= __TEXT("# - - - - HASH: $key= {\n");
@@ -1214,7 +1216,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.32 2024/06/24
+3.33 2024/07/01
 
 =head1 AUTHOR
 
