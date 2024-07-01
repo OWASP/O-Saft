@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 3.8 24/06/30 19:07:14
+#?      @(#) Makefile 3.9 24/07/01 11:21:06
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-_SID.test          := 3.8
+_SID.test          := 3.9
 
 _MYSELF.test       := t/Makefile
 ALL.includes       += $(_MYSELF.test)
@@ -270,44 +270,44 @@ define EXE.log-make_or_print
         )
 endef
 
-HELP.test       = $(_NL)\
-\# The term '%'  in the targets names described here, may be any of:$(_NL)\
-\#   $(ALL.inc.type)$(_NL)\
-\#$(_NL)\
-\# Following variables are intended to be used on command line:$(_NL)\
-\#   EXE.pl      - program to perform tests, default: '$(EXE.pl)'$(_NL)\
-\#   TEST.init   - arguments and options always passed to EXE.pl; default: '$(TEST.init)'$(_NL)\
-\#   TEST.args   - arguments and options to be  passed to EXE.pl per target$(_NL)\
-\#   TEST.host   - hostname to be used for tests (when only one is expected)$(_NL)\
-\#   TEST.hosts  - list of hostnames to perform tests with$(_NL)\
-\#   TEST.dir    - directory in which EXE.pl will be executed; default: '$(TEST.dir)/'$(_NL)\
-\#   TEST.logdir - directory where results of EXE.pl will be stored; default: '$(TEST.logdir)/'$(_NL)\
-\#   TEST.rc     - content of RC-file to be used by EXE.pl: '$(TEST.rc)'$(_NL)\
-\#   TEST.target_prefix - prefix of log-filename; see help.test.log-info$(_NL)\
-\#   TEST.log-suffix    - suffix of log-filename; see help.test.log-info$(_NL)\
-\#$(_NL)\
-\# Notes about some spezial targets:$(_NL)\
-\#   help.test   - automatically generated target; alias for help.test.test$(_NL)\
-\#   help.test.test.alls -$(_NL)\
-\#   help.test.test.all - be prepared for huge output$(_NL)\
-\#$(_NL)\
-\# Keep in mind that following files are located in '$(TEST.dir)/':$(_NL)\
-\#   .o-saft.pl  $(TEST.rc)  .o-saft.tcl$(_NL)\
+HELP.test       = $(O-NL)\
+\# The term '%'  in the targets names described here, may be any of:$(O-NL)\
+\#   $(ALL.inc.type)$(O-NL)\
+\#$(O-NL)\
+\# Following variables are intended to be used on command line:$(O-NL)\
+\#   EXE.pl      - program to perform tests, default: '$(EXE.pl)'$(O-NL)\
+\#   TEST.init   - arguments and options always passed to EXE.pl; default: '$(TEST.init)'$(O-NL)\
+\#   TEST.args   - arguments and options to be  passed to EXE.pl per target$(O-NL)\
+\#   TEST.host   - hostname to be used for tests (when only one is expected)$(O-NL)\
+\#   TEST.hosts  - list of hostnames to perform tests with$(O-NL)\
+\#   TEST.dir    - directory in which EXE.pl will be executed; default: '$(TEST.dir)/'$(O-NL)\
+\#   TEST.logdir - directory where results of EXE.pl will be stored; default: '$(TEST.logdir)/'$(O-NL)\
+\#   TEST.rc     - content of RC-file to be used by EXE.pl: '$(TEST.rc)'$(O-NL)\
+\#   TEST.target_prefix - prefix of log-filename; see help.test.log-info$(O-NL)\
+\#   TEST.log-suffix    - suffix of log-filename; see help.test.log-info$(O-NL)\
+\#$(O-NL)\
+\# Notes about some spezial targets:$(O-NL)\
+\#   help.test   - automatically generated target; alias for help.test.test$(O-NL)\
+\#   help.test.test.alls -$(O-NL)\
+\#   help.test.test.all - be prepared for huge output$(O-NL)\
+\#$(O-NL)\
+\# Keep in mind that following files are located in '$(TEST.dir)/':$(O-NL)\
+\#   .o-saft.pl  $(TEST.rc)  .o-saft.tcl$(O-NL)\
 \# which are used by EXE.pl or other tools used for the tests.
 
 # following variable contains (huge) list of all available targets
-HELP.test.test.all  = $(_NL)\
-\# $(words $(ALL.tests)) targets for tests:$(_NL)\
-$(ALL.tests)$(_NL)\
-\#$(_NL)\
-\# $(words $(ALL.tests.log)) targets which write results to logfiles:$(_NL)\
-$(ALL.tests.log)$(_NL)\
-\#$(_NL)\
-\# summary targets for tests:$(_NL)\
-$(ALL.help.tests:help.%=%)$(_NL)\
-\#$(_NL)\
-\# for more details of the targets, following targets can be used:$(_NL)\
-$(foreach target,$(ALL.inc.type),t-$(target))$(_NL)
+HELP.test.test.all  = $(O-NL)\
+\# $(words $(ALL.tests)) targets for tests:$(O-NL)\
+$(ALL.tests)$(O-NL)\
+\#$(O-NL)\
+\# $(words $(ALL.tests.log)) targets which write results to logfiles:$(O-NL)\
+$(ALL.tests.log)$(O-NL)\
+\#$(O-NL)\
+\# summary targets for tests:$(O-NL)\
+$(ALL.help.tests:help.%=%)$(O-NL)\
+\#$(O-NL)\
+\# for more details of the targets, following targets can be used:$(O-NL)\
+$(foreach target,$(ALL.inc.type),t-$(target))$(O-NL)
 
 HELP.test.test  = $(HELP.test)
 HELP.test.all   = $(HELP.test.test.all)
@@ -969,31 +969,31 @@ HELP-test.log-compare   = compare logfiles of previous with latest test
 HELP-test.log-move      = rename logfiles of latest test
 HELP-help.test.log-info = print more details about test.log.* targets
 
-HELP.test.log-info      = $(_NL)\
-\#                      $(HELP-_compare)$(_NL)\
-test.log-compare    \# static rule to compare logfiles$(_NL)\
-test.log-move       \# static rule to rename (move) latest logfiles to "standard" logfile$(_NL)\
-test.%.log-compare  \# pattern rule for test.log-compare$(_NL)\
-test.%.log-move     \# pattern rule for test.log-move$(_NL)\
-$(_NL)\
-\#$(_NL)\
-\# all above targets can be controlled with environment variables:$(_NL)\
-\#   TEST.logdir        - directory where to find logfiles$(_NL)\
-\#   TEST.target_prefix - prefix of targets to search logfiles for (files to be matched)$(_NL)\
-\#   TEST.log-suffix    - suffix of logfiles to be compared to "standard" logfile$(_NL)\
-\#   EXE.log-diff       - program used to show difference of latest and "standard" logfile$(_NL)\
-\# defaults:$(_NL)\
-\#   TEST.logdir        = $(TEST.logdir)$(_NL)\
-\#   TEST.target_prefix = $(TEST.target_prefix)$(_NL)\
-\#   TEST.log-suffix    = $(TEST.log-suffix)$(_NL)\
-\#   EXE.log-diff       = $(EXE.log-diff)$(_NL)\
-\# test example with adapted environment variables:$(_NL)\
-\#   $(MAKE_COMMAND) $@  TEST.logdir=/tmp TEST.log-suffix=-0815$(_NL)\
-\#$(_NL)\
-\# to see what the targets actually do, use$(_NL)\
-\# (environment variables may be added as needed, see above):$(_NL)\
-\#   $(MAKE_COMMAND) -n test.log-compare$(_NL)\
-\#   $(MAKE_COMMAND) -n test.log-move$(_NL)\
+HELP.test.log-info      = $(O-NL)\
+\#                      $(HELP-_compare)$(O-NL)\
+test.log-compare    \# static rule to compare logfiles$(O-NL)\
+test.log-move       \# static rule to rename (move) latest logfiles to "standard" logfile$(O-NL)\
+test.%.log-compare  \# pattern rule for test.log-compare$(O-NL)\
+test.%.log-move     \# pattern rule for test.log-move$(O-NL)\
+$(O-NL)\
+\#$(O-NL)\
+\# all above targets can be controlled with environment variables:$(O-NL)\
+\#   TEST.logdir        - directory where to find logfiles$(O-NL)\
+\#   TEST.target_prefix - prefix of targets to search logfiles for (files to be matched)$(O-NL)\
+\#   TEST.log-suffix    - suffix of logfiles to be compared to "standard" logfile$(O-NL)\
+\#   EXE.log-diff       - program used to show difference of latest and "standard" logfile$(O-NL)\
+\# defaults:$(O-NL)\
+\#   TEST.logdir        = $(TEST.logdir)$(O-NL)\
+\#   TEST.target_prefix = $(TEST.target_prefix)$(O-NL)\
+\#   TEST.log-suffix    = $(TEST.log-suffix)$(O-NL)\
+\#   EXE.log-diff       = $(EXE.log-diff)$(O-NL)\
+\# test example with adapted environment variables:$(O-NL)\
+\#   $(MAKE_COMMAND) $@  TEST.logdir=/tmp TEST.log-suffix=-0815$(O-NL)\
+\#$(O-NL)\
+\# to see what the targets actually do, use$(O-NL)\
+\# (environment variables may be added as needed, see above):$(O-NL)\
+\#   $(MAKE_COMMAND) -n test.log-compare$(O-NL)\
+\#   $(MAKE_COMMAND) -n test.log-move$(O-NL)\
 
 help.test.log-info:
 	@echo "$(HELP.test.log-info)"
