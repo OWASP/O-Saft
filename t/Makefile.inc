@@ -12,18 +12,17 @@
 #?      Defines general variables used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 3.6 24/07/01 11:18:47
+#?      @(#) Makefile.inc 3.9 24/07/01 16:29:03
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.inc       := 3.6
-
-_MYSELF.inc    := t/Makefile.inc
-ALL.includes   += $(_MYSELF.inc)
-ALL.inc.type   += inc
+O-SID.inc          := 3.9
+O-SELF.inc         := t/Makefile.inc
+ALL.includes       += $(O-SELF.inc)
+ALL.inc.type       += inc
 
 .DEFAULT:
 	@echo "**ERROR: unknown target: $(MAKECMDGOALS)"
@@ -31,11 +30,11 @@ ALL.inc.type   += inc
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-HELP.inc        = $(_NL)\
-\# Makefile to define required variables. It does not contain targets. $(_NL)\
-\# Note that all definitions herein should be idempotent, so that this $(_NL)\
-\# file could be included several times. That's why only  =  and no  +=$(_NL)\
-\# assignments are used. $(_NL)\
+HELP.inc        = $(O-NL)\
+\# Makefile to define required variables. It does not contain targets. $(O-NL)\
+\# Note that all definitions herein should be idempotent, so that this $(O-NL)\
+\# file could be included several times. That's why only  =  and no  +=$(O-NL)\
+\# assignments are used. $(O-NL)\
 
 # ensure that messages and sorting are the same, important to compare results
 LANG           := C
@@ -87,7 +86,6 @@ _EXE.pod2man-opt   ?= --utf8
 O-TAB          ?= \\011
 O-NL           ?= \\012
 O-CR           ?= \\015
-_NL            ?= \\012
 
 # also set pseudo variable .SUFFIXES empty (in the hope, it's never needed)
 .SUFFIXES:
