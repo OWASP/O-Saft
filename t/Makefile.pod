@@ -88,7 +88,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 3.6 24/06/30 19:13:43
+@(#) Makefile.pod 3.7 24/07/01 08:32:10
 
 =head1 AUTHOR
 
@@ -1226,7 +1226,7 @@ argument (see description how to split arguments above).
 =head2 Make:profile.sub% target rule
 
 This rule matches all targets, e.g.  profile.sub.entry, profile.sub.args .
-It should also be possible to pass additional arguments to  $(DEV.pl). The
+It should also be possible to pass additional arguments to  $(EXE.pl). The
 default argument is defined in  $(TEST.args). Other arguments to be passed
 are simply added to the target, separated by  _  for example:
 
@@ -1266,10 +1266,10 @@ This is done using (see above):
 * miss-spelled  targets  fall back to the corresponding  basic conditional
   rules; for example  profile.sub.args-+cn  calls  profile.sub.args
 
-* if called from within  $(TEST.dir),  $(DEV.pl)  should be set on make
+* if called from within  $(TEST.dir),  $(EXE.pl)  should be set on make
   call like:
 
-       make profile.sub.args-+cn DEV.pl=../yeast.pl
+       make profile.sub.args-+cn EXE.pl=../yeast.pl
 
 
 =head2 Make:podchecker
