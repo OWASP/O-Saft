@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 3.13 24/07/01 11:27:31
+#?      @(#) Makefile.misc 3.15 24/07/01 16:29:06
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,16 +15,15 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-_SID.misc          := 3.13
-
-_MYSELF.misc       := t/Makefile.misc
-ALL.includes       += $(_MYSELF.misc)
+O-SID.misc         := 3.15
+O-SELF.misc        := t/Makefile.misc
+ALL.includes       += $(O-SELF.misc)
 ALL.inc.type       += misc
 ALL.help.tests     += help.test.misc
 
 first-misc-target-is-default: help.test.misc
 
-ifeq (,$(_SID.test))
+ifeq (,$(O-SID.test))
     -include t/Makefile
 endif
 
@@ -249,7 +248,7 @@ cloc:       cloc.stat
 # if STDOUT and STDERR is redirected to a file
 _TEST.cloc.log   = $(TEST.logdir)/test.cloc.stat.log
 $(_TEST.cloc.log):
-	@echo "# Makefile.misc 3.13: $(MAKE) cloc.stat.log" > $@
+	@echo "# Makefile.misc 3.15: $(MAKE) cloc.stat.log" > $@
 	@$(MAKE) -i cloc.stat >> $@ 2>&1
 cloc.stat.log: $(_TEST.cloc.log)
 
@@ -500,7 +499,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 3.13: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 3.15: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(O-TRACE.target)
