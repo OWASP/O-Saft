@@ -88,7 +88,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 3.9 24/07/01 11:29:51
+@(#) Makefile.pod 3.11 24/07/01 16:29:09
 
 =head1 AUTHOR
 
@@ -279,7 +279,7 @@ option, for example::
     cd t && make -f Makefile.exit
 
 Therefore each  Makefile*  includes  t/Makefile  depending on existence of
-the  _SID.test  variable.
+the  O-SID.test  variable.
 
 Following Makefile* are not included and provide additional information:
 
@@ -338,7 +338,7 @@ Most targets and variables are named with one of following prefixes:
    TEST
    _HELP
    _TEST
-   _SID
+   O-SID
    help
    test
 
@@ -364,12 +364,12 @@ if it does not fit in one line.
 
 Each Makefile defines its own unique SID as variable with a version number
 as value.  This SID is used  several times verbatim.  One might argue that
-the variable  _SID  or  _SID.*  should be used instead for all usages. But
+the variable  O-SID or O-SID.*  should be used instead for all usages. But
 it is used verbatim to ensure  that exactly this string is used and cannot
 be overwritten (i.e. with an environment variable) when make is called.
 If a Makefile is changed, all occurrences of the string must be changed.
 
-The value of the _SID.* variables should be managed by the version control
+The value of the O-SID* variables should be managed by the version control
 system.
 
 
@@ -377,11 +377,11 @@ system.
 
 Following internal variables in each Makefile* are used:
 
-    _SID            - version in project's Makefile
-    _SID.*          - version in included Makefile*
-    _MYSELF.*       - path of the Makefile itself (in included Makefile*)
+    O-SID           - version in project's Makefile
+    O-SID.*         - version in included Makefile*
+    O-SELF.*        - path of the Makefile itself (in included Makefile*)
 
-The  _SID.*  variables are used to check if sub-makefiles were included.
+The  O-SID.*  variables are used to check if sub-makefiles were included.
 
 Following general (global) variables are set in each Makefile*:
 
@@ -649,10 +649,10 @@ This avoids sophistcated syntax in the files itself, like:
     endif
 
 GNU Make also cannot manage recursive includes of the same file. This must
-be checked before including. The private  _SID.*  variable is used,  which
+be checked before including. The private  O-SID.*  variable is used, which
 is set in all Makefile*. Example:
 
-    ifeq (,$(_SID.test))
+    ifeq (,$(O-SID.test))
         -include t/Makefile
     endif
 
@@ -841,7 +841,7 @@ For collecting all targets defined in a Makefile.*, following $(shell awk)
 is used:
 
     $(shell awk -F% '($$1 ~ /^target-/){arr[$$1]=1}$(_EXE.print_arr_END.awk)'\
-        $(_MYSELF.some-type))
+        $(O-SELF.some-type))
 
 (where  target-  is an example target name, and _EXE.print_arr_END.awk is
 the awk code to print the defined array  arr[]).
