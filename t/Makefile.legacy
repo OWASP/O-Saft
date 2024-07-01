@@ -6,7 +6,7 @@
 #?      make help.test.legacy
 #?
 #? VERSION
-#?      @(#) Makefile.legacy 3.1 24/01/23 13:39:28
+#?      @(#) Makefile.legacy 3.3 24/07/01 16:29:05
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,16 +15,15 @@
 
 HELP-help.test.legacy = targets for testing '$(SRC.pl)' +cipher --legacy=* commands
 
-_SID.legacy        := 3.1
-
-_MYSELF.legacy     := t/Makefile.legacy
-ALL.includes       += $(_MYSELF.legacy)
+O-SID.legacy       := 3.3
+O-SELF.legacy      := t/Makefile.legacy
+ALL.includes       += $(O-SELF.legacy)
 ALL.inc.type       += legacy
 ALL.help.tests     += help.test.legacy
 
 first-legacy-target-is-default: help.test.legacy
 
-ifeq (,$(_SID.test))
+ifeq (,$(O-SID.test))
     -include t/Makefile
 endif
 
