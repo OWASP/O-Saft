@@ -8,7 +8,7 @@
 #?      make help.test.opt
 #?
 #? VERSION
-#?      @(#) Makefile.opt 3.1 24/01/23 13:39:30
+#?      @(#) Makefile.opt 3.2 24/07/01 11:28:49
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -17,7 +17,7 @@
 
 HELP-help.test.opt  = targets for testing '$(SRC.pl)' options
 
-_SID.opt           := 3.1
+_SID.opt           := 3.2
 
 _MYSELF.opt        := t/Makefile.opt
 ALL.includes       += $(_MYSELF.opt)
@@ -46,10 +46,10 @@ HELP-test.stdformat = test various --std-format= options
 HELP-test.opt       = test all options and alias options
 HELP-test.opt.log   = same as test.opt but store output in t/testcmd-CMD.log
 
-HELP.opt            = $(_NL)\
-\# Examples:$(_NL)\
-\#    make testarg-opt-alias-ipv6$(_NL)\
-\#    make testarg-opt-stdformat-crlf$(_NL)\
+HELP.opt            = $(O-NL)\
+\# Examples:$(O-NL)\
+\#    make testarg-opt-alias-ipv6$(O-NL)\
+\#    make testarg-opt-stdformat-crlf$(O-NL)\
 \#    make testarg-opt-stdformat-raw
 
 HELP.test.opt.all   = # no special documentation yet
