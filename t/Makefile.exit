@@ -6,7 +6,7 @@
 #?      make help.test.exit
 #?
 #? VERSION
-#?      @(#) Makefile.exit 3.1 24/01/23 13:39:24
+#?      @(#) Makefile.exit 3.3 24/07/01 16:28:58
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,16 +15,15 @@
 
 HELP-help.test.exit = targets for testing '$(SRC.pl)' --exit= option
 
-_SID.exit          := 3.1
-
-_MYSELF.exit       := t/Makefile.exit
-ALL.includes       += $(_MYSELF.exit)
+O-SID.exit         := 3.3
+O-SELF.exit        := t/Makefile.exit
+ALL.includes       += $(O-SELF.exit)
 ALL.inc.type       += exit
 ALL.help.tests     += help.test.exit
 
 first-exit-target-is-default: help.test.exit
 
-ifeq (,$(_SID.test))
+ifeq (,$(O-SID.test))
     -include t/Makefile
 endif
 
