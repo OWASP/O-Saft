@@ -6,7 +6,7 @@
 #?      make help.test.make
 #?
 #? VERSION
-#?      @(#) Makefile.make 3.3 24/06/30 19:17:47
+#?      @(#) Makefile.make 3.4 24/07/01 11:28:10
 #?
 #? AUTHOR
 #?      19-jul-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.make = targets for testing Makefile help* targets
 
-_SID.make          := 3.3
+_SID.make          := 3.4
 
 _MYSELF.make       := t/Makefile.make
 ALL.includes       += $(_MYSELF.make)
@@ -39,10 +39,10 @@ HELP-test.make.log  = same as test.make but store output in '$(TEST.logdir)/'
 HELP-testarg-make-n = execute 'make tests -n'
 HELP-test.make.log-compare  = compare results of test.make.log (if any)
 
-HELP.make           = $(_NL)\
-\# Note that  test.make  uses "make help.test.*" to show each Makefile's$(_NL)\
-\# documentation. In contrast,  test.hlp  uses "o-saft.pl --help*"  to show$(_NL)\
-\# (user-)documentation of "o-saft.pl"$(_NL)\
+HELP.make           = $(O-NL)\
+\# Note that  test.make  uses "make help.test.*" to show each Makefile's$(O-NL)\
+\# documentation. In contrast,  test.hlp  uses "o-saft.pl --help*"  to show$(O-NL)\
+\# (user-)documentation of "o-saft.pl"$(O-NL)\
 
 # dumm '
 
@@ -90,7 +90,7 @@ ALL.test.make      += $(ALL.testmake)
 
 testarg-make%:      EXE.pl      = $(MAKE)
 testarg-make%:      TEST.init   =
-testarg-make%:      O-TRACE.target  = echo "\#\#$(EXE.pl) $(TEST.init) $(TEST.args)$(_NL)"
+testarg-make%:      O-TRACE.target  = echo "\#\#$(EXE.pl) $(TEST.init) $(TEST.args)$(O-NL)"
 testarg-make%.log:  O-TRACE.target  =
     # targets should print the command, the O-TRACE.target variable is misused
     # for that (assuming that all target use $(O-TRACE.target) ).
