@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 3.4 24/07/01 11:34:09
+#?      @(#) Makefile.cmd 3.6 24/07/01 16:28:53
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,16 +15,15 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cmd           := 3.4
-
-_MYSELF.cmd        := t/Makefile.cmd
-ALL.includes       += $(_MYSELF.cmd)
+O-SID.cmd          := 3.6
+O-SELF.cmd         := t/Makefile.cmd
+ALL.includes       += $(O-SELF.cmd)
 ALL.inc.type       += cmd
 ALL.help.tests     += help.test.cmd
 
 first-cmd-target-is-default: help.test.cmd
 
-ifeq (,$(_SID.test))
+ifeq (,$(O-SID.test))
     -include t/Makefile
 endif
 
