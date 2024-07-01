@@ -88,7 +88,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 3.8 24/07/01 09:02:32
+@(#) Makefile.pod 3.9 24/07/01 11:29:51
 
 =head1 AUTHOR
 
@@ -508,7 +508,7 @@ and their definitions, following special naming syntax is used:
 
 * The variable with the prefix  HELP. for example  HELP.help,  is used for
   additional documentation; as the variable often contains multiline texts
-  each line must be terminated with  $(_NL)\  which will be evaluated when
+  each line must be terminated with $(O-NL)\  which will be evaluated when
   the variable is used. It is good practice to start each line with  \# .
 
 All variable names used for help texts use  - (dash)  instead of  . (dot).
@@ -522,8 +522,8 @@ Example:
     HELP-_cgi0      = _______________________________ some targets _
     HELP-help       = print overview of all targets
     HELP-doc        = same as help, but evaluates variables
-    HELP.typ        = $(_NL)\
-    \# some additional text with more than one line $(_NL)\
+    HELP.typ        = $(O-NL)\
+    \# some additional text with more than one line $(O-NL)\
     \# other line
 
 These  variables (above) are used by the  help  and  doc  target. They are
@@ -1045,9 +1045,9 @@ use (double) quotes for variable's usage.  This also has the benefit, that
 a variable is identifiable as "descriptive text" when used.
 
 Keep in mind, that newlines to be printed must be explicitly  written in a
-variable's value, $(_NL) is used for that.
+variable's value, $(O-NL) is used for that.
 
-GNU Make's define  directive, which would avoid the use of  $(_NL), is not
+GNU Make's define directive, which would avoid the use of  $(O-NL), is not
 used to set variables. May change in future ...
 
 
