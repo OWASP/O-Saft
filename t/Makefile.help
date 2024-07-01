@@ -21,7 +21,7 @@
 #?          make targets.me
 #?
 #? VERSION
-#?      @(#) Makefile.help 3.2 24/06/30 19:16:38
+#?      @(#) Makefile.help 3.3 24/07/01 11:24:52
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -30,7 +30,7 @@
 
 HELP-help.test.help = targets to get information/documentation from Makefiles
 
-_SID.help          := 3.2
+_SID.help          := 3.3
 
 _MYSELF.help       := t/Makefile.help
 ALL.includes       += $(_MYSELF.help)
@@ -50,10 +50,10 @@ help.test.help-v:     HELP_TYPE = help
 
 # internal variables
 O-TAB          := \\011
-_NL            := \\012
+O-NL           := \\012
 O-CR           := \\015
 # not yet used {
-# O-T            := $$""(_NL)
+# O-T            := $$""(O-NL)
 # define O-SP containing a single space (tricky as _TEST.empty is empty)
 # _TEST.empty    :=
 # O-SP           := $(_TEST.empty) $(_TEST.empty)
@@ -136,7 +136,7 @@ EXE.pmacro      = sed -n -e '/.*$($@).*[        :+]*=/{' \
 EXE.target      = sed -n -e ':t' -e '/^[^:\#]*$($@)[^:\#]*[:]/{' \
 			 -e ':c' -e 'p' -e 'n' -e '/^       /bc' -e 'bt' -e '}'
 EXE.targets     = awk       '$(_EXE.print_file.awk)$(_EXE.target_by_line.awk)'
-EXE.wordperline = tr -s " $(O-TAB)" "$(_NL)$(_NL)"
+EXE.wordperline = tr -s " $(O-TAB)" "$(O-NL)$(O-NL)"
 #               # must use " so that make's variables are evaluated correctly
 EXE.wordperline:= awk '{for(i=1;i<=NF;i++){printf("\t\t  %s\n",$$i)}}'
 
@@ -170,15 +170,15 @@ _HELP-help.BODY = print table body   for documentation texts (all HELP-* lines)
 _HELP-help.FOOT = print table footer for documentation texts
 _HELP-help.HELP = print individual documentation texts (HELP.TYP variale)
 #HELP-help.LIST = print targets for getting list of targets (testing targets only)
-_HELP-help.LIST = $(_NL)\
-\# To get a list of targets, use:$(_NL)\
-\#    make help.test.$(HELP_TYPE).all$(_NL)\
-\#    make e-ALL.test.$(HELP_TYPE)$(_NL)\
+_HELP-help.LIST = $(O-NL)\
+\# To get a list of targets, use:$(O-NL)\
+\#    make help.test.$(HELP_TYPE).all$(O-NL)\
+\#    make e-ALL.test.$(HELP_TYPE)$(O-NL)\
 \#    make s-ALL.test.$(HELP_TYPE)
 
-_HELP-help.make = $(_NL)\
-\# To see which commands in a TARGET are executed, simply call 'make -n TARGET'$(_NL)\
-\# Note that the *.log targets then report a bunch of shell commands.$(_NL)\
+_HELP-help.make = $(O-NL)\
+\# To see which commands in a TARGET are executed, simply call 'make -n TARGET'$(O-NL)\
+\# Note that the *.log targets then report a bunch of shell commands.$(O-NL)\
 
 _help.HEAD:
 	@echo "$(HELP_HEADER)"
@@ -238,22 +238,22 @@ HELP-help.critic= print documentation about perlcritic targets
 HELP-help.makefiles.doc = print documentation about available Makefile.*
 #               # HELP-help.makefiles.doc - also in Makefile.makefiles
 
-HELP.help       = $(_NL)\
-\# To see in which Makefile* the listed targets are defined, use following:$(_NL)\
-\#    $(MAKE_COMMAND) help.all-v        $(_NL)\
-\# The targets to show information/content from the Makefile are:$(_NL)\
-\#    echo eval macro pmacro show target$(_NL)\
-\# which are used like:                 $(_NL)\
-\#    $(MAKE_COMMAND) echo  echo=MYVAR  $(_NL)\
-\#    $(MAKE_COMMAND) macro macro=MYVAR $(_NL)\
-\# For easy use, following alias exist: $(_NL)\
-\#    e-  m-  p-  s-  t-                $(_NL)\
-\# which are used like:                 $(_NL)\
-\#    $(MAKE_COMMAND) e-TEST.MYmacro    $(_NL)\
-\#    $(MAKE_COMMAND) m-TEST.MYmacro    $(_NL)\
-\#    $(MAKE_COMMAND) p-TEST.MYmacro    $(_NL)\
-\#    $(MAKE_COMMAND) s-TEST.MYmacro    $(_NL)\
-\#    $(MAKE_COMMAND) t-MYtarget        $(_NL)\
+HELP.help       = $(O-NL)\
+\# To see in which Makefile* the listed targets are defined, use following:$(O-NL)\
+\#    $(MAKE_COMMAND) help.all-v        $(O-NL)\
+\# The targets to show information/content from the Makefile are:$(O-NL)\
+\#    echo eval macro pmacro show target$(O-NL)\
+\# which are used like:                 $(O-NL)\
+\#    $(MAKE_COMMAND) echo  echo=MYVAR  $(O-NL)\
+\#    $(MAKE_COMMAND) macro macro=MYVAR $(O-NL)\
+\# For easy use, following alias exist: $(O-NL)\
+\#    e-  m-  p-  s-  t-                $(O-NL)\
+\# which are used like:                 $(O-NL)\
+\#    $(MAKE_COMMAND) e-TEST.MYmacro    $(O-NL)\
+\#    $(MAKE_COMMAND) m-TEST.MYmacro    $(O-NL)\
+\#    $(MAKE_COMMAND) p-TEST.MYmacro    $(O-NL)\
+\#    $(MAKE_COMMAND) s-TEST.MYmacro    $(O-NL)\
+\#    $(MAKE_COMMAND) t-MYtarget        $(O-NL)\
 
 ALL.help       += help.help help.critic help.doc
 ALL.help       += $(ALL.help.tests)
