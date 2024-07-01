@@ -6,7 +6,7 @@
 #?      make help.test.cgi
 #?
 #? VERSION
-#?      @(#) Makefile.cgi 3.2 24/06/30 19:15:57
+#?      @(#) Makefile.cgi 3.3 24/07/01 11:25:48
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cgi  = targets for testing '$(SRC.cgi)' (mainly invalid arguments)
 
-_SID.cgi           := 3.2
+_SID.cgi           := 3.3
 
 _MYSELF.cgi        := t/Makefile.cgi
 ALL.includes       += $(_MYSELF.cgi)
@@ -51,19 +51,19 @@ HELP-test.cgi.goodIPs   = test IPs to be passed
 HELP-test.cgi-NAME      = same as testcmd-cgi-bad_NAME
 HELP-testcmd-cgi-bad_NAME = check if a single NAME (IP or hostname) allowed in '$(SRC.cgi)'
 
-HELP.cgi                = $(_NL)\
-\# Examples: $(_NL)\
-\#    $(MAKE_COMMAND) test.cgiall$(_NL)\
-\#    $(MAKE_COMMAND) testcmd-cgi-bad_42.42.42.42$(_NL)\
-\#    $(MAKE_COMMAND) testcmd-cgi-bad_127.0.0.127$(_NL)\
-\#    $(MAKE_COMMAND) testcmd-cgi-bad_localhost$(_NL)\
-\#    $(MAKE_COMMAND) e-LIST.cgi.badhosts$(_NL)\
-\#    $(MAKE_COMMAND) s-LIST.cgi.badIPs$(_NL)\
-\#    $(MAKE_COMMAND) s-LIST.cgi.badopt$(_NL)\
-\#$(_NL)\
-\# There are no  test.cgi.*.log targets, please use  test.cgi.log  instead.$(_NL)\
-\#$(_NL)\
-\# Hint: use  test.pattern-cgi-  instead of  test.pattern-cgi , as the$(_NL)\
+HELP.cgi                = $(O-NL)\
+\# Examples: $(O-NL)\
+\#    $(MAKE_COMMAND) test.cgiall$(O-NL)\
+\#    $(MAKE_COMMAND) testcmd-cgi-bad_42.42.42.42$(O-NL)\
+\#    $(MAKE_COMMAND) testcmd-cgi-bad_127.0.0.127$(O-NL)\
+\#    $(MAKE_COMMAND) testcmd-cgi-bad_localhost$(O-NL)\
+\#    $(MAKE_COMMAND) e-LIST.cgi.badhosts$(O-NL)\
+\#    $(MAKE_COMMAND) s-LIST.cgi.badIPs$(O-NL)\
+\#    $(MAKE_COMMAND) s-LIST.cgi.badopt$(O-NL)\
+\#$(O-NL)\
+\# There are no  test.cgi.*.log targets, please use  test.cgi.log  instead.$(O-NL)\
+\#$(O-NL)\
+\# Hint: use  test.pattern-cgi-  instead of  test.pattern-cgi , as the$(O-NL)\
 \#       patttern  cgi  may match other targets too.
 
 LIST.cgi.badhosts  := \
@@ -107,9 +107,9 @@ LIST.cgi.badIPv6   := \
 	fc00\:21ab\:22cd\:2323\:\:1 fdff\:21ab\:22cd\:2323\:\:1 \
 
 HELP.cgi.internal   = "\
-\# test.cgi.badhosts: $(LIST.cgi.badhosts)$(_NL)\
-\# test.cgi.badIPs:   $(LIST.cgi.badIPs)$(_NL)\
-\# test.cgi.goodIPs:  $(LIST.cgi.goodIPs)$(_NL)\
+\# test.cgi.badhosts: $(LIST.cgi.badhosts)$(O-NL)\
+\# test.cgi.badIPs:   $(LIST.cgi.badIPs)$(O-NL)\
+\# test.cgi.goodIPs:  $(LIST.cgi.goodIPs)$(O-NL)\
 "
 
 # TODO: *goodIP*  not yet ready
@@ -131,15 +131,15 @@ ALL.cgi.goodIPs    := $(LIST.cgi.goodIPs:%=testcmd-cgi-good_%)
 ALL.cgi.badhosts   := $(LIST.cgi.badhosts:%=testcmd-cgi-bad_%)
 ALL.cgi.badIPs     := $(LIST.cgi.badIPs:%=testcmd-cgi-bad_%)
 
-HELP.test.cgi.all   = $(_NL)\
-\# targets for testing bad hosts:$(_NL)\
-$(ALL.cgi.badhosts)$(_NL)\
-$(_NL)\
-\# targets for testing bad IPs:$(_NL)\
-$(ALL.cgi.badIPs)$(_NL)\
-$(_NL)\
-\# targets for testing good IPs:$(_NL)\
-$(ALL.cgi.goodIPs)$(_NL)\
+HELP.test.cgi.all   = $(O-NL)\
+\# targets for testing bad hosts:$(O-NL)\
+$(ALL.cgi.badhosts)$(O-NL)\
+$(O-NL)\
+\# targets for testing bad IPs:$(O-NL)\
+$(ALL.cgi.badIPs)$(O-NL)\
+$(O-NL)\
+\# targets for testing good IPs:$(O-NL)\
+$(ALL.cgi.goodIPs)$(O-NL)\
 
 
 # SEE Make:target name
@@ -314,7 +314,7 @@ test.cgi.goodhosts:$(ALL.cgi.goodhosts)
 _TEST.cgi.log   = $(TEST.logdir)/test.cgi.log-$(TEST.today)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.cgi.log):
-	@echo "# Makefile.cgi 3.2: $(MAKE) test.cgi.log" > $@
+	@echo "# Makefile.cgi 3.3: $(MAKE) test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 # not yet needed: test.log-compare-hint
