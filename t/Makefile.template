@@ -9,7 +9,7 @@
 #       This file itself is not used (included) in t/Makefile.
 # 
 #? VERSION
-#?      @(#) Makefile.template 3.1 24/01/23 13:39:32
+#?      @(#) Makefile.template 3.2 24/07/01 11:26:54
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
@@ -19,7 +19,7 @@
 HELP-help.test.TEMPL = targets for testing SOMETHING
                 # Makefile with template for new targets in Makefile.TEMPL
 
-_SID.TEMPL     := 3.1
+_SID.TEMPL     := 3.2
 
 _MYSELF.TEMPL  := t/Makefile.template
                 # must be hardcoded because  $(firstword $(MAKEFILE_LIST))
@@ -86,8 +86,8 @@ HELP-_TEMPL1        = _____________________________________________ testing ... 
 HELP-test.TEMPL     = test functionality of SOMETHING
 HELP-test.TEMPL.log = same as test.TEMPL but store output in '$(TEST.logdir)/'
 
-HELP.TEMPL          = $(_NL)\
-\# Examples:$(_NL)\
+HELP.TEMPL          = $(O-NL)\
+\# Examples:$(O-NL)\
 \#    $(MAKE_COMMAND)t.TEMPL
 
 HELP.test.TEMPL.all = # no special documentation yet
