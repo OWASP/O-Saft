@@ -6,7 +6,7 @@
 #?      make help.test.mod
 #?
 #? VERSION
-#?      @(#) Makefile.mod 3.10 24/06/10 10:31:13
+#?      @(#) Makefile.mod 3.12 24/07/01 16:29:07
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,16 +15,15 @@
 
 HELP-help.test.mod  = targets for testing module functionality
 
-_SID.mod           := 3.10
-
-_MYSELF.mod        := t/Makefile.mod
-ALL.includes       += $(_MYSELF.mod)
+O-SID.mod          := 3.12
+O-SELF.mod         := t/Makefile.mod
+ALL.includes       += $(O-SELF.mod)
 ALL.inc.type       += mod
 ALL.help.tests     += help.test.mod
 
 first-mod-target-is-default: help.test.mod
 
-ifeq (,$(_SID.test))
+ifeq (,$(O-SID.test))
     -include t/Makefile
 endif
 
