@@ -21,7 +21,7 @@
 #?          make targets.me
 #?
 #? VERSION
-#?      @(#) Makefile.help 3.3 24/07/01 11:24:52
+#?      @(#) Makefile.help 3.5 24/07/01 16:29:01
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -30,10 +30,9 @@
 
 HELP-help.test.help = targets to get information/documentation from Makefiles
 
-_SID.help          := 3.3
-
-_MYSELF.help       := t/Makefile.help
-ALL.includes       += $(_MYSELF.help)
+O-SID.help         := 3.5
+O-SELF.help        := t/Makefile.help
+ALL.includes       += $(O-SELF.help)
 ALL.inc.type       += help
 ALL.help.tests     += help.test.help
 
@@ -151,9 +150,9 @@ ifndef EXE.dummy
     EXE.dummy   = /bin/echo -n ""
 endif
 
-ifndef _MYSELF.inc
+ifndef O-SELF.inc
     # dummy setting until Makefile.inc is included, keeps errors away
-    _MYSELF.inc = t/Makefile.inc
+    O-SELF.inc  = t/Makefile.inc
 endif
 
 ifndef _EXE.sort-opt
@@ -188,7 +187,7 @@ _help.FOOT:
 
 _help.BODY:
 	@$(O-TRACE.target)
-	@$(EXE.help) $(_MYSELF.$(HELP_TYPE))
+	@$(EXE.help) $(O-SELF.$(HELP_TYPE))
 
 _help.LIST:
 	@$(O-TRACE.target)
@@ -413,7 +412,7 @@ t-%:
 # HELP-test.help.log  = same as test.help but store output in '$(TEST.logdir)/'
 # HELP-test.help.log-compare  = compare results of test.help.log (if any)
 
-ALL.testhelp        = $(shell awk -F: '/^testcmd-help%/{next} /^testcmd-help/{arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(_MYSELF.help))
+ALL.testhelp        = $(shell awk -F: '/^testcmd-help%/{next} /^testcmd-help/{arr[$$1]=1}$(_EXE.print_arr_END.awk)' $(O-SELF.help))
 ALL.test.help       = $(ALL.testhelp)
 ALL.test.help.log   = $(ALL.test.help:%=%.log)
 
