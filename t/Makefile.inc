@@ -12,14 +12,14 @@
 #?      Defines general variables used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 3.4 24/07/01 08:53:32
+#?      @(#) Makefile.inc 3.5 24/07/01 09:26:51
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.inc       := 3.4
+_SID.inc       := 3.5
 
 _MYSELF.inc    := t/Makefile.inc
 ALL.includes   += $(_MYSELF.inc)
@@ -38,137 +38,55 @@ HELP.inc        = $(_NL)\
 \# assignments are used. $(_NL)\
 
 # ensure that messages and sorting are the same, important to compare results
-LANG=C
-LC_CTYPE=C.UTF-8
+LANG           := C
+LC_CTYPE       := C.UTF-8
 
-ifndef O-Project
-    O-Project  := o-saft
-endif
+O-Project      ?= o-saft
+O-ProjectName  ?= O-Saft
+TEST.host      ?= localhost
+TEST.init      ?= --header
+TEST.dir       ?= t
+TEST.logdir     = $(TEST.dir)/log
+TEST.logtxt     = <<random value replaced by make>>
+O-TMP.dir       = /tmp/$(O-Project)
+SRC.sh         ?= o-saft
+SRC.pl         ?= o-saft.pl
+SRC.cgi        ?= o-saft.cgi
+SRC.tcl        ?= o-saft.tcl
 
-ifndef O-ProjectName
-    O-ProjectName := O-Saft
-endif
-
-ifndef TEST.host
-    TEST.host  := localhost
-endif
-
-ifndef TEST.init
-    TEST.init  := --header
-endif
-
-ifndef TEST.dir
-    TEST.dir   := t
-endif
-
-ifndef TEST.logdir
-    TEST.logdir = $(TEST.dir)/log
-endif
-
-ifndef TEST.logtxt
-    TEST.logtxt = <<random value replaced by make>>
-endif
-
-ifndef O-TMP.dir
-    O-TMP.dir   = /tmp/$(O-Project)
-endif
-
-ifndef SRC.pl
-    SRC.pl     := o-saft.pl
-endif
-
-ifndef SRC.cgi
-    SRC.cgi    := o-saft.cgi
-endif
-
-ifndef SRC.tcl
-    SRC.tcl    := o-saft.tcl
-endif
-
-ifndef MAKEFILE
-    MAKEFILE    = $(firstword $(MAKEFILE_LIST))
-        # Define a variable for myself, it is the first file in MAKEFILE_LIST.
-        # $(MAKEFILE)  will be used where  any makefile is possible.
-        # Makefile  is used when exactly Makefile file is meant.
-        # $(ALL.Makefiles)  is used, when all makefiles are needed.  Existence
-        # of  ALL.Makefiles  can also be used to check if  this file should be
-        # included.
-endif
-
+# Define a variable for myself, it is the first file in MAKEFILE_LIST.
+# $(MAKEFILE)  will be used where  any makefile is possible.
+# Makefile  is used when exactly Makefile file is meant.
+# $(ALL.Makefiles)  is used, when all makefiles are needed.
+# Existence of  ALL.Makefiles  can also be used to check  if this file should
+# be included.
+MAKEFILE        = $(firstword $(MAKEFILE_LIST))
+MAKE            = $(MAKE_COMMAND)
 ifndef ALL.Makefiles
     MAKE        = $(MAKE_COMMAND) -f $(firstword $(MAKEFILE_LIST))
         # Redefine  MAKE  with proper makefile if not called from  ../Makefile
         # makefile given with -f option is first in  MAKEFILE_LIST,  usually
 endif
+MAKEFLAGS      ?= --no-builtin-variables --no-builtin-rules --no-print-directory
 
-# internal used tools (paths hardcoded!)
-ifndef MAKE
-    MAKE        = $(MAKE_COMMAND)
-endif
+# internal used tools (paths hardcoded!) and their options
+export OSAFT_MAKE ?= avoid writing random data (like date and time string)
+EXE.echo       ?= /bin/echo -e
+EXE.pl         ?= o-saft.pl
+EXE.tcl        ?= o-saft.tcl
+EXE.o_docker   ?= o-saft-docker
+EXE.docker     ?= docker
+EXE.dummy      ?= /bin/echo -n ""
+EXE.log-filterarg  ?= cat
+EXE.log-filtercmd  ?= cat
+_EXE.sort-opt      ?= -n -f
+_EXE.perldoc-opt   ?= -n nroff -T
+_EXE.pod2man-opt   ?= --utf8 
 
-ifndef MAKEFLAGS
-    MAKEFLAGS  := --no-builtin-variables --no-builtin-rules --no-print-directory
-endif
-
-ifndef OSAFT_MAKE
-    export OSAFT_MAKE := avoid writing random data (like date and time string)
-endif
-
-ifndef EXE.echo
-    EXE.echo   := /bin/echo -e
-endif
-
-ifndef EXE.pl
-    EXE.pl     := o-saft.pl
-endif
-
-ifndef EXE.tcl
-    EXE.tcl    := o-saft.tcl
-endif
-
-ifndef EXE.o_docker
-    EXE.o_docker := o-saft-docker
-endif
-
-ifndef EXE.docker
-    EXE.docker := docker
-endif
-
-ifndef EXE.dummy
-    EXE.dummy  := /bin/echo -n ""
-endif
-
-ifndef EXE.log-filterarg
-    EXE.log-filterarg  := cat
-endif
-
-ifndef EXE.log-iltercmd
-    EXE.log-filtercmd  := cat
-endif
-
-ifndef _EXE.sort-opt
-    _EXE.sort-opt      := -n -f
-endif
-
-ifndef _EXE.perldoc-opt
-    _EXE.perldoc-opt   := -n nroff -T
-endif
-
-ifndef _EXE.pod2man-opt
-    _EXE.pod2man-opt   := --utf8 
-endif
-
-ifndef O-TAB
-    O-TAB      := \\011
-endif
-
-ifndef _NL
-    _NL        := \\012
-endif
-
-ifndef O-CR
-    O-CR       := \\015
-endif
+# some spezial characters
+O-TAB          ?= \\011
+_NL            ?= \\012
+O-CR           ?= \\015
 
 # also set pseudo variable .SUFFIXES empty (in the hope, it's never needed)
 .SUFFIXES:
