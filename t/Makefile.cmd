@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 3.3 24/06/30 19:15:12
+#?      @(#) Makefile.cmd 3.4 24/07/01 11:34:09
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-_SID.cmd           := 3.3
+_SID.cmd           := 3.4
 
 _MYSELF.cmd        := t/Makefile.cmd
 ALL.includes       += $(_MYSELF.cmd)
@@ -49,19 +49,19 @@ HELP-testrun-CMD.log = same as testrun-CMD but store output in '$(TEST.logdir)/'
 HELP-_cmd3          = __________________________________________ special targets _
 HELP-testcmd-cmd+ignored-keys = special target using commands which return random values
 
-HELP.cmd            = $(_NL)\
-\# Targets can be executed individually, or a group of targets can be executed$(_NL)\
-\# by using the pattern rule  test.pattern-%  (see Makefile).$(_NL)\
-\# Examples to execute individual targets:$(_NL)\
-\#    $(MAKE_COMMAND) testcmd-cmd+info_localhost$(_NL)\
-\#    $(MAKE_COMMAND) testcmd-cmd_vuln+BEAST_localhost$(_NL)\
-\#    $(MAKE_COMMAND) testrun-+cn$(_NL)\
-\# Examples to execute group of similar targets:$(_NL)\
-\#    $(MAKE_COMMAND) test.pattern-+info$(_NL)\
-\#    $(MAKE_COMMAND) test.pattern-+check$(_NL)\
-\#    $(MAKE_COMMAND) test.pattern-+summ$(_NL)\
-\#    $(MAKE_COMMAND) test.pattern-+vuln$(_NL)\
-\#$(_NL)\
+HELP.cmd            = $(O-NL)\
+\# Targets can be executed individually, or a group of targets can be executed$(O-NL)\
+\# by using the pattern rule  test.pattern-%  (see Makefile).$(O-NL)\
+\# Examples to execute individual targets:$(O-NL)\
+\#    $(MAKE_COMMAND) testcmd-cmd+info_localhost$(O-NL)\
+\#    $(MAKE_COMMAND) testcmd-cmd_vuln+BEAST_localhost$(O-NL)\
+\#    $(MAKE_COMMAND) testrun-+cn$(O-NL)\
+\# Examples to execute group of similar targets:$(O-NL)\
+\#    $(MAKE_COMMAND) test.pattern-+info$(O-NL)\
+\#    $(MAKE_COMMAND) test.pattern-+check$(O-NL)\
+\#    $(MAKE_COMMAND) test.pattern-+summ$(O-NL)\
+\#    $(MAKE_COMMAND) test.pattern-+vuln$(O-NL)\
+\#$(O-NL)\
 \# Some of the examples above use  localhost  as hostname by default.
 
 HELP.test.cmd.all   = # no special documentation yet
