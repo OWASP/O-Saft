@@ -88,7 +88,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 3.7 24/07/01 08:32:10
+@(#) Makefile.pod 3.8 24/07/01 09:02:32
 
 =head1 AUTHOR
 
@@ -672,7 +672,7 @@ Remember important variables:
     $(MFLAGS)       - contains all passed arguments/options to make
     $(MAKEFLAGS)    - same as $(MFLAGS) but omitts leading  -  character
     $(MAKECMDGOALS) - name of the target to be satisfied
-    $(MAKEFILE)     - name of the target to be satisfied
+    $(MAKEFILE)     - name of Makefile
     $(MAKEFILES)    - environment variable containing makefiles to be read
     $(MAKEFILE_LIST)- included Makefiles in the order they have been read
 
