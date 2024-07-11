@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) o-saft.pl 3.77 24/07/11 22:03:01"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.78 24/07/12 00:01:15"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -418,7 +418,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.77"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.78"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -689,7 +689,7 @@ if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {    # SEE Note:CGI mode
     $arg =~ s#[^=]+=##; # --trace=./myfile.pl
     $err = _load_file($arg, "trace file");
     if ($err ne "") {
-        die $STR{ERROR}, "012: $err" unless (-e $arg);
+        die $STR{ERROR}, "012: $err\n" unless (-e $arg);
         # no need to continue if file with debug functions does not exist
         # NOTE: if $mepath or $0 is a symbolic link, above checks fail
         #       we don't fix that! Workaround: install file in ./
@@ -1267,7 +1267,7 @@ sub _load_modules   {
 
     $_err = _load_file("lib/SSLhello.pm", "O-Saft module"); # must be found with @INC
     if ("" ne $_err) {
-        die  $STR{ERROR}, "010: $_err"  if (not _is_cfg_do('version'));
+        die  $STR{ERROR}, "010: $_err\n"  if (not _is_cfg_do('version'));
         warn $STR{ERROR}, "010: $_err"; # no reason to die for +version
     }
     if ($cfg{'starttls'}) {
@@ -1277,7 +1277,7 @@ sub _load_modules   {
     goto FIN if (1 > $cfg{'need_netinfo'});
     $_err = _load_file("lib/SSLinfo.pm", "O-Saft module");  # must be found with @INC
     if ("" ne $_err) {
-        die  $STR{ERROR}, "011: $_err"  if (not _is_cfg_do('version'));
+        die  $STR{ERROR}, "011: $_err\n"  if (not _is_cfg_do('version'));
         warn $STR{ERROR}, "011: $_err"; # no reason to die for +version
     }
     FIN:
@@ -1454,7 +1454,7 @@ sub _check_functions    {
 
     if (not defined $Net::SSLeay::VERSION) {# Net::SSLeay auto-loaded by IO::Socket::SSL
         if ($cmd{'extopenssl'} == 0) {
-            die $STR{ERROR}, "014: Net::SSLeay not found, useless use of SSL advanced forensic tool";
+            die $STR{ERROR}, "014: Net::SSLeay not found, useless use of SSL advanced forensic tool\n";
         }
     } else {
         $version_ssleay   = $Net::SSLeay::VERSION;
@@ -2878,7 +2878,8 @@ sub _get_cipherslist    {
             }
             if (0 >= @ciphers) {
                 print "Errors: " . SSLinfo::errors();
-                die $STR{ERROR}, "015: no ciphers found; may happen with openssl pre 1.0.0 according given pattern";
+                die $STR{ERROR}, "015: no ciphers found; may happen with openssl pre 1.0.0 according given pattern\n";
+                    # don't print line number; keep make targets *.log happy
             }
         }
     } # pattern
@@ -2893,7 +2894,7 @@ sub _get_cipherslist    {
             push(@ciphers, OCfg::get_ciphers_range($ssl, $pattern));
             if (0 >= @ciphers) {
                 _warn("063: given pattern '$pattern' did not return cipher list");
-                # die $STR{ERROR}, "016: no ciphers found; invalid --cipher= or --cipher-range="
+                # die $STR{ERROR}, "016: no ciphers found; invalid --cipher= or --cipher-range=\n"
             }
     } # --cipher-range=
     @ciphers    = sort grep{!/^\s*$/} @ciphers;   # remove empty names
