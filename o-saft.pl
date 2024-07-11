@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) o-saft.pl 3.76 24/07/01 08:27:55"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.77 24/07/11 22:03:01"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -418,7 +418,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.76"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.77"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1024,6 +1024,25 @@ sub _set_cfg_out    { my ($is,$val)=@_; $cfg{'out'}->{$is} = $val; return; }
 sub _set_cfg_tty    { my ($is,$val)=@_; $cfg{'tty'}->{$is} = $val; return; }
 sub _set_cfg_use    { my ($is,$val)=@_; $cfg{'use'}->{$is} = $val; return; }
     # set value for given key in $cfg{*}->{key}
+sub _set_cfg_list   { my ($is,$val)=@_;
+    # SEE Note:ALPN, NPN
+    # --protos* is special to simulate empty and undefined arrays
+    #   --protosnpn=value   - add value to array
+    #   --protosnpn=,       - set empty array
+    #   --protosnpn=,,      - set array element to ""
+    # applies also to --ciphercurves= --cipheralpns= --ciphernpns= --protosalpn=
+    # NOTE: distinguish:  [], [""], [" "]
+    $cfg{$is} = [""] if ($val =~ /^[,:][,:]$/);# special to set empty string
+    if ($val =~ /^[,:]$/) {
+        $cfg{$is} = [];
+    } else {
+        push(@{$cfg{$is}}, split(/,/, $val));
+    }
+    # TODO: checking names of protocols needs a sophisticated function
+    #if (1 == (grep{/^$arg$/} split(/,/, $cfg{'protos_next'})) { }
+    #if (1 == (grep{/^$arg$/} @{$cfg{'ciphercurves'}}) { }
+    return;
+} # _set_cfg_list
 
 sub _set_cfg;       # forward to avoid: main::_set_cfg() called too early to check prototype at ...
 sub _set_cfg_from_file {
@@ -6464,6 +6483,13 @@ while ($#argv >= 0) {
         if ($typ eq 'STARTTLSP4')   { $cfg{'starttls_phase'}[4]       = $arg; }
         if ($typ eq 'STARTTLSP5')   { $cfg{'starttls_phase'}[5]       = $arg; }
         if ($typ eq 'PORT')         { $cfg{'port'}                    = $arg; }
+        # SEE Note:ALPN, NPN
+        # applies also to --ciphercurves= --cipheralpns= --ciphernpns= --protosalpn=
+        if ($typ eq 'CIPHER_CURVES'){ _set_cfg_list('ciphercurves', lc($arg)); }
+        if ($typ eq 'CIPHER_ALPNS') { _set_cfg_list('cipher_alpns', lc($arg)); }
+        if ($typ eq 'CIPHER_NPNS')  { _set_cfg_list('cipher_npns',  lc($arg)); }
+        if ($typ eq 'PROTOS_ALPN')  { _set_cfg_list('protos_alpn',  lc($arg)); }
+        if ($typ eq 'PROTOS_NPN')   { _set_cfg_list('protos_npn',   lc($arg)); }
         if ($typ eq 'WARN_IGNORE')  {
             # dirty hack: simulate that warning is already printed
             printf("#$cfg{'me'}: ignore warning $arg $make_text\n") if (defined $ENV{'OSAFT_MAKE'});
@@ -6573,63 +6599,7 @@ while ($#argv >= 0) {
                 _warn("057: option with unknown cipher mode '$arg'; setting ignored") if ($arg !~ /^\s*$/);
             }
         }
-        if ($typ eq 'CIPHER_CURVES') {
-            $arg = lc($arg);
-            $cfg{'ciphercurves'} = [""] if ($arg =~ /^[,:][,:]$/);# special to set empty string
-            if ($arg =~ /^[,:]$/) {
-                $cfg{'ciphercurves'} = [];
-            } else {
-                push(@{$cfg{'ciphercurves'}}, split(/,/, $arg));
-            }
-        }
 
-        # SEE Note:ALPN, NPN
-        # --protos* is special to simulate empty and undefined arrays
-        #   --protosnpn=value   - add value to array
-        #   --protosnpn=,       - set empty array
-        #   --protosnpn=,,      - set array element to ""
-        # NOTE: distinguish:  [], [""], [" "]
-        if ($typ eq 'CIPHER_ALPN'){
-            $arg = lc($arg);
-            $cfg{'cipher_alpns'} = [""] if ($arg =~ /^[,:][,:]$/);# special to set empty string
-            if ($arg =~ /^[,:]$/) {
-                $cfg{'cipher_alpns'} = [];
-            } else {
-                push(@{$cfg{'cipher_alpns'}}, split(/,/, $arg));
-            }
-            # TODO: checking names of protocols needs a sophisticated function
-            #if (1 == (grep{/^$arg$/} split(/,/, $cfg{'protos_next'})) { }
-        }
-        if ($typ eq 'CIPHER_NPN'){
-            $cfg{'cipher_npns'} = [""] if ($arg =~ /^[,:][,:]$/);# special to set empty string
-            if ($arg =~ /^[,:]$/) {
-                $cfg{'cipher_npns'} = [];
-            } else {
-                push(@{$cfg{'cipher_npns'}},  split(/,/, $arg));
-            }
-            # TODO: checking names of protocols needs a sophisticated function
-        }
-        if ($typ eq 'PROTO_ALPN'){
-            $arg = lc($arg);
-            $cfg{'protos_alpn'} = [""] if ($arg =~ /^[,:][,:]$/);# special to set empty string
-            if ($arg =~ /^[,:]$/) {
-                $cfg{'protos_alpn'} = [];
-            } else {
-                push(@{$cfg{'protos_alpn'}}, split(/,/, $arg));
-            }
-            # TODO: checking names of protocols needs a sophisticated function
-            #if (1 == (grep{/^$arg$/} split(/,/, $cfg{'protos_next'})) { }
-        }
-        if ($typ eq 'PROTO_NPN'){
-            $arg = lc($arg);
-            $cfg{'protos_npn'} = [""] if ($arg =~ /^[,:][,:]$/);# special to set empty string
-            if ($arg =~ /^[,:]$/) {
-                $cfg{'protos_npn'} = [];
-            } else {
-                push(@{$cfg{'protos_npn'}},  split(/,/, $arg));
-            }
-            # TODO: checking names of protocols needs a sophisticated function
-        }
         trace_arg("argument= $arg");
 
         # --trace is special for historical reason, we allow:
@@ -7023,8 +6993,8 @@ while ($#argv >= 0) {
     if ($arg eq  '--ciphermode')        { $typ = 'CIPHER_MODE';     }
     if ($arg eq  '--cipherrange')       { $typ = 'CIPHER_RANGE';    }
     if ($arg =~ /^--ciphercurves?/)     { $typ = 'CIPHER_CURVES';   }
-    if ($arg =~ /^--cipheralpns?/)      { $typ = 'CIPHER_ALPN';     }
-    if ($arg =~ /^--ciphernpns?/)       { $typ = 'CIPHER_NPN';      }
+    if ($arg =~ /^--cipheralpns?/)      { $typ = 'CIPHER_ALPNS';    }
+    if ($arg =~ /^--ciphernpns?/)       { $typ = 'CIPHER_NPNS';     }
     if ($arg eq  '--nociphermd5')       { $cfg{'cipher_md5'}= 0;    }
     if ($arg eq  '--ciphermd5')         { $cfg{'cipher_md5'}= 1;    }
     if ($arg eq  '--nocipherdh')        { $cfg{'cipher_dh'} = 0;    }
@@ -7087,8 +7057,8 @@ while ($#argv >= 0) {
     if ($arg eq  '--tab')               { $text{'separator'}= "\t"; } # TAB character
     if ($arg eq  '--protocol')          { $typ = 'PROTOCOL';        } # ssldiagnose.exe
 #   if ($arg eq  '--serverprotocol')    { $typ = 'PROTOCOL';        } # ssldiagnose.exe; # not implemented 'cause we do not support server mode
-    if ($arg =~ /^--protoalpns?/)       { $typ = 'PROTO_ALPN';      } # some people type --protoalpns
-    if ($arg =~ /^--protonpns?/)        { $typ = 'PROTO_NPN';       } # some people type --protonpns
+    if ($arg =~ /^--protoalpns?/)       { $typ = 'PROTOS_ALPN';     } # some people type --protoalpns
+    if ($arg =~ /^--protonpns?/)        { $typ = 'PROTOS_NPN';      } # some people type --protonpns
     if ($arg =~ /^--?h(?:ost)?$/)       { $typ = 'HOST';            } # --h already catched above
     if ($arg =~ /^--?p(?:ort)?$/)       { $typ = 'PORT';            }
     if ($arg =~ /^--exe(?:path)?$/)     { $typ = 'EXE';             }
