@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 3.6 24/07/01 16:28:52
+#?      @(#) Makefile.cipher 3.7 24/07/11 22:03:50
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-O-SID.cipher       := 3.6
+O-SID.cipher       := 3.7
 O-SELF.cipher      := t/Makefile.cipher
 ALL.includes       += $(O-SELF.cipher)
 ALL.inc.type       += cipher
@@ -75,8 +75,10 @@ LIST.cipher-range  := \
 # --range=safe  and  --range=huge  disabled, because it takes a long time
 LIST.cipher        := \
 	--dummy-no-arg  $(LIST.cipher-range) \
-	--legacy=owasp  --force-openssl --showhost  \
-	--cipher-alpn   --cipher-npn    --cipher-openssl  --cipher-curves \
+	--legacy=owasp  --force-openssl  --cipher-openssl --showhost  \
+	--cipher-npn=,  --cipher-alpn=,  --cipher-curves=, \
+	--cipher-npn=,, --cipher-alpn=,, --cipher-curves=,, \
+	--cipher-npn=h2 --cipher-alpn=h2 --cipher-curves=h2 \
 	--traceKEY      --trace  --trace=2
 # NOTE: --traceKEY and not --trace-KEY to avoid addional settings below
 # --trace=3 and --trace=4 not generated because too much diff when used with 
