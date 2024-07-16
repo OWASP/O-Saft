@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 3.2 24/05/27 10:39:10
+# SID	@(#) glossary.txt 3.3 24/07/16 20:45:07
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -20,6 +20,15 @@ Adler32	hash function
 AE	Authenticated Encryption
 AEAD	Authenticated Encryption with Additional Data
 AECDHE	Anonymous Ephemeral ECDH
+AEGIS	A Fast Authenticated Encryption Algorithm (with AEAD), stream or block cipher
+AEGIS-128L	AEGIS cipher
+AEGIS-128X	AEGIS cipher
+AEGIS-128X2	AEGIS cipher
+AEGIS-128X4	AEGIS cipher
+AEGIS-256	AEGIS cipher
+AEGIS-256X	AEGIS cipher
+AEGIS-256X2	AEGIS cipher
+AEGIS-256X4	AEGIS cipher
 AEM	Authenticated Encryption Mode aka Advanced Encryption Mode aka OCB3
 AES	Advanced Encryption Standard, symmetric block cipher
 AESCCM	AES with CCM
@@ -29,6 +38,7 @@ AES-CCM	alias for AESCCM
 AES-GCM	alias for AESGCM
 # AES-GCM	AES-GCM is an authenticated encryption mode that uses the AES block cipher in counter mode with a polynomial MAC based on Galois field multiplication.
 AES-GCM-SIV	Nonce Misuse-Resistant Authenticated Encryption (RFC8452)
+AES-CBC	?
 AES-CTR	?
 AES-XTS	?
 AIA	Authority Information Access (certificate extension)
@@ -81,6 +91,7 @@ BPA	Branch Prediction Analysis
 Brainpool	signature algorithm, from BSI
 BREACH	Browser Reconnaissance & Exfiltration via Adaptive Compression of Hypertext; a variant of CRIME	(Exploit SSL/TLS)
 Bullrun	NSA program to break encrypted communication
+CAESAR	Competition for Authenticated Encryption: Security, Applicability, an
 CAMELLIA	encryption algorithm (by Mitsubishi and NTT), 128-bit symmetric block cipher
 CAST	Carlisle Adams and Stafford Tavares, symmetric block cipher
 CAST-128	Carlisle Adams and Stafford Tavares, 64-bit symmetric block cipher
@@ -97,6 +108,7 @@ CBC  	Ciplier Block Chaining (sometimes)
 CBC-MAC	Cipher Block Chaining - Message Authentication Code
 CBC-MAC-ELB	Cipher Block Chaining - Message Authentication Code - Encrypt Last Block
 CBC3	alias for Tripple DES (sometimes, used in cipher suite names)
+CBOR	Concise Binary Object Representation, hash algorithms
 CCA	chosen-ciphertext attack
 CCM	Counter with CBC-MAC Mode (authenticated encryption block cipher mode) (with 16-octet authentication tag)
 CCM-8	Counter with CBC-MAC Mode (authenticated encryption block cipher mode) (with 8-octet authentication tag)
@@ -129,6 +141,7 @@ CMVP	Cryptographic Module Validation Program (NIST)
 CN	Common Name
 CNT_IMIT	cipher suite
 CTR_OMAC	cipher suite (GOST R 34.12-2015 aka GOST3412-2015)
+COSE	CBOR Object Signing and Encryption
 CP	Certificate Policy (certificate extension)
 CPA	chosen-plaintext attack
 CPD	Certificate Policy Definitions
@@ -190,8 +203,9 @@ DN	Distinguished Name
 DNSSEC	DNS Security Extension
 DPA	Dynamic Passcode Authentication (see CAP)
 DRAGON	stream cipher (2007)
-DRG	Deterministic Random Generator
 DRBG	Deterministic Random Bit Generator
+DRG	Deterministic Random Generator
+DRIP	Secure Hash Algorithm?
 DROWN	Decrypting RSA with Obsolete and Weakened eNcryption	(Exploit SSL/TLS)
 DSA	Digital Signature Algorithm
 DSCP	Differentiated Services Code Point
@@ -199,6 +213,8 @@ DSPR	?
 DSS	Digital Signature Standard
 DTLS	Datagram TLS
 DTLSv1	Datagram TLS 1.0
+DTLSv1.3	Datagram TLS 1.3
+DTLSv13	alias for DTLSv1.3
 Dual EC DBRG	Dual Elliptic Curve Deterministic Random Bit Generator (NIST)
 Dual_EC_DBRG	Dual Elliptic Curve Deterministic Random Bit Generator (NIST)
 DV	Domain Validation
@@ -243,6 +259,7 @@ edwards448	alias for Curve448
 EdDSA	alias for signatures using public key and private key formats, like Curve448 and Curve25519
 EDE	Encryption-Decryption-Encryption
 EDH	Ephemeral Diffie-Hellman
+EDHOC	Ephemeral Diffie-Hellman Over COSE
 EGADS	Entropy Gathering and Distribution System
 EGD	Entropy Gathering Daemon
 EKU	Extended Key Usage
@@ -279,6 +296,7 @@ FIPS186-3	FIPS Digital Signature Standard (DSS)
 FIPS197	FIPS Advanced Encryption Standard (AES)
 FIPS198-1	FIPS The Keyed-Hash Message Authentication Code (HMAC)
 FREAK	Factoring Attack on RSA-EXPORT Keys	(Exploit SSL/TLS)
+FROST	Secure Hash Algorithm?
 FQDN	Fully-qualified Domain Name
 FSB	Fast Syndrome Based Hash
 FSM	Finite State Machine
@@ -355,6 +373,7 @@ INT-CTXT	Integrity of ciphertext
 INT-PTXT	Integrity of plaintext
 IRTF	Internet Research Task Force
 ISAKMP	Internet Security Association and Key Management Protocol
+IP-TFS	IP Traffic Flow Security
 IV	Initialization Vector
 JH	hash function (Hongjun Wu, 2011)
 JH-224	see JH (224 bits)
@@ -373,6 +392,7 @@ KDF	Key Derivation Function
 KEA	Key Exchange Algorithm (alias for FORTEZZA-KEA)
 KEK	Key Encryption Key
 KEM	Key Encapsulation Mechanisms
+KMAC	Secure Hash Algorithm?
 KMS	Key Management Service
 KPAK	KMS Public Authentication Key
 KRB	Key Exchange Kerberos
@@ -464,7 +484,9 @@ OMAC	One-Key CMAC, aka CBC-MAC
 OMAC1	same as CMAC
 OMAC2	same as OMAC
 OPIE	One-time pad Password system
+OPRF	Secure Hash Algorithm?
 ORYX	96-bit key stream cipher (broken 1998)
+OSPF	Open Shortest Path First
 OTP	One Time Pad
 OV	Organisational Validation
 OV-SSL	Organisational Validated Certificate
@@ -663,6 +685,8 @@ SNOW	32-bit word synchronous stream ciphers (by Thomas Johansson and Patrik Ekda
 SNOW 1.0	see SNOW
 SNOW 2.0	see SNOW
 SNOW 3G	see SNOW
+SNOW-V	see SNOW
+SNOW-Vi	see SNOW
 Snuffle 2005	see Salsa20
 Snuffle 2008	see ChaCha
 Sosemanuk	128-bit stream cipher (2005)
@@ -719,6 +743,7 @@ TDEA	Tripple DEA
 TEA	Tiny Encryption Algorithm
 TEK	Traffic Encryption Key
 TET	?
+TFS	Traffic Flow Security
 TGS	Ticket Granting Service (mainly Kerberos)
 TGT	Ticket Granting Ticket (mainly Kerberos)
 Tiger	hash function
@@ -740,6 +765,7 @@ TSK 	TACK signing key
 TSP	trust-Management Service Provider
 TSS	Time Stamp Service
 TTP	trusted Third Party
+TupleHash	Secure Hash Algorithm?
 Twofish	128-bit symmetric block cipher (1998)
 UC 	Unified Capabilities
 UC	Unified Communications (SSL Certificate using SAN)
@@ -770,7 +796,7 @@ X509	X.509: The Directory - Authentication Framework
 X3DH	Extended Triple Diffie-Hellman
 XCBC	eXtended CBC-MAC
 XCBC-MAC	same as XCBC
-XChaCha	512-bit key stream cipher
+XChaCha	eXtended-nonce ChaCha, 512-bit key stream cipher
 XChaCha12	see ChaCha (aka 12-round XChaCha)
 XChaCha20	see ChaCha (aka 20-round XChaCha)
 XEX	XOR Encrypt XOR
@@ -778,7 +804,7 @@ XKMS	XML Key Management Specification
 XMACC	counter-based XOR-MAC
 XMACR	radomized XOR-MAC
 XMLSIG	XML-Signature Syntax and Processing
-XMSS	hash function
+XMSS	eXtended Merkle Signature Scheme, hash function
 XSalsa2	variant of Salsa20
 XTEA	extended Tiny Encryption Algorithm
 XTS	XEX-based tweaked-codebook mode with ciphertext stealing
