@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 3.7 24/07/11 22:03:50
+#?      @(#) Makefile.cipher 3.8 24/07/16 14:58:01
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-O-SID.cipher       := 3.7
+O-SID.cipher       := 3.8
 O-SELF.cipher      := t/Makefile.cipher
 ALL.includes       += $(O-SELF.cipher)
 ALL.inc.type       += cipher
@@ -67,11 +67,13 @@ LIST.cipher-mode       := --ciphermode=intern --ciphermode=openssl --ciphermode=
 LIST.cipher-pattern    := --cipher=AES128-SHA --cipher=0x0300002F  --cipher=IS-UNKNOWN --cipher=is_invalid
 #TODO: --cipher=0x0300002F invalid with --ciphermode=openssl; will be fixed later
 
+# --range is an alias for --cipher-range;
 LIST.cipher-range  := \
-	--dummy-no-arg  \
-	--range=c0xx    --range=ccxx    --range=ecc       --range=SSLv2_long \
-	--range=rfc     --range=long    --range=shifted   --range=SSLv3_SSLv2 \
-	--range=SSLv2   --range=SSLv3   --range=TLSv12    --range=TLSv13
+	--dummy-no-arg  --cipher-range=SSLv2_long   --cipherrange=SSLv3_SSLv2 \
+	--range=c0xx    --range=ccxx    --range=ecc       --range=iana \
+	--range=rfc     --range=long    --range=shifted   \
+	--range=SSLv2   --range=SSLv3   --range=TLSv12    --range=TLSv13 \
+	--range=iana
 # --range=safe  and  --range=huge  disabled, because it takes a long time
 LIST.cipher        := \
 	--dummy-no-arg  $(LIST.cipher-range) \
