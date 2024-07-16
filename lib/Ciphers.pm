@@ -25,7 +25,7 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.39 24/07/16 12:12:25";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.41 24/07/16 14:49:40";
 our $VERSION    = "24.06.24";   # official verion number of this file
 
 #_____________________________________________________________________________
@@ -307,17 +307,6 @@ our %ciphers_notes  = ( # list of notes and comments for ciphers
 
 our %ciphers_cfg    = ( #  cipher-specific configurations
 ); # %ciphers_cfg
-
-our @cipher_iana_recomended =
-    #? list of all ciphers (hex keys) recommended by IANA, see
-    # http://www.iana.org/assignments/tls-parameters/tls-parameters.txt August 2022
-    # NOT YET USED
-    qw(
-    0x0300009E 0x0300009F 0x030000AA 0x030000AB 0x03001301 0x03001302 0x03001303 0x03001304
-    0x0300C02B 0x0300C02C 0x0300C02F 0x0300C030 0x0300C09E 0x0300C09F 
-    0x0300C0A6 0x0300C0A7 0x0300C0A8 0x0300C0A9 0x0300CCAA 0x0300CCAC 0x0300CCAD
-    0x0300D001 0x0300D002 0x0300D005
-); # cipher_iana_recomended
 
 #_____________________________________________________________________________
 #_________________________________________________________ internal methods __|
@@ -690,7 +679,7 @@ sub get_iana    {
     #? return "yes" if cipher suite is recommended by IANA, "no" otherwise
     my $key = shift;
        $key = text2key($key);       # normalize cipher key
-    return (grep{ /^$key/i} @cipher_iana_recomended) ? "yes" : "no";
+    return (grep{ /$key/i} $cfg{'cipherranges'}{'iana'}) ? "yes" : "no";
 } # get_iana
 
 sub get_pfs     {
@@ -750,7 +739,7 @@ Find cipher key(s) for given cipher name or cipher constant.
 
 =cut
 
-sub find_consts {
+sub find_consts     {
     #? return all constants for which given cipher constant (pattern) matches in %ciphers
     # NOTE: matches the primary cipher suite name only, not aliases or constants
     my $pattern =  shift;
@@ -765,7 +754,7 @@ sub find_consts {
     return @list;
 } # find_consts
 
-sub find_keys   {
+sub find_keys       {
     #? return all hex keys for which given cipher name (pattern) matches in %ciphers
     my $pattern = shift;
     _trace("find_keys($pattern)");
@@ -796,7 +785,7 @@ sub find_keys_any   {
     return @list;
 } # find_keys_any
 
-sub find_names  {
+sub find_names      {
     #? find all cipher suite names for which given cipher pattern matches in %ciphers
     #? pattern can be RegEx like GCM|CHACHA or OpenSSL-style pattern like GCM:CHACHA
     # NOTE: matches the primary cipher suite name only, not aliases or constants
@@ -816,7 +805,7 @@ sub find_names_any  {
     return @list;
 } # find_names_any
 
-sub find_name   {
+sub find_name       {
     #? TODO  check if given cipher name is a known cipher
     #  checks in %ciphers, if not found search in all aliases and constants
     #  example: RC4_128_WITH_MD5 -> RC4-MD5 ;  RSA_WITH_AES_128_SHA256 -> AES256-SHA256
@@ -1069,9 +1058,39 @@ sub sort_results    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
 
 =pod
 
-=head1 METHODS
+=head2 Methods intended for inernal use
 
-Methods intended for inernal use are:
+=head3 show_getter03
+
+Show hardcoded example for all getter functions for key 0x03000003 (aka 0x00,0x03).
+
+=head3 show_getter($cipher_key)
+
+Show example for all getter functions for specified cipher key.
+
+=head3 show_description
+
+Show textual description for columns %ciphers hash.
+
+=head3 show_sorted
+
+Show %ciphers sorted according strength.
+
+=head3 show_overview
+
+Show overview of internal checks about %ciphers.
+
+=head3 show_all_names($type)
+
+Show aliases, constants or RFCs for cipher suite names depending on $type.
+
+=head3 show_ssltest
+
+Show internal list of ciphers in format like ssltest.
+
+=head3 show_ciphers($type)
+
+Show internal list of ciphers in specified format.
 
 =cut
 
@@ -1832,7 +1851,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.39 2024/07/16
+3.41 2024/07/16
 
 
 =head1 AUTHOR
