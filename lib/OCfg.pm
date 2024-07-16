@@ -24,7 +24,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.38 24/07/16 12:37:04";
+our $SID_ocfg   =  "@(#) OCfg.pm 3.39 24/07/16 20:18:49";
 $OCfg::VERSION  =  "24.06.24";  # official version number of this file
 
 #_____________________________________________________________________________
@@ -2753,7 +2753,7 @@ our %cfg = (    # main data structure for configuration
         'OWASP_D'       => '(?:^SSLv[23]|(?:NULL|EXP(?:ORT)?(?:40|56|1024)|A(?:EC|NON[_-])?DH|DH(?:A|[_-]ANON)|ECDSA|DSS|CBC|DES|MD[456]|RC[24]|PSK[_-]SHA|UNFFINED))',
             # all PSK-SHA are aliases for PSK-NULL-SHA and hence D
             # TODO:  all AES128-SHA are aliases for AES128-CBC-SHA; severity depends on protocl version
-        'OWASP_NA'      => '(?:^PCT_|ARIA|CAMELLIA|ECDS[AS]|GOST|IDEA|SEED|CECPQ|SM4|FZA[_-]FZA)',
+        'OWASP_NA'      => '(?:^PCT_|AEGIS|ARIA|CAMELLIA|ECDS[AS]|GOST|IDEA|SEED|CECPQ|SM4|FZA[_-]FZA)',
             # PCT are not SSL/TLS; will produce 'miss' in internal tests
         # TODO: need exception, i.e. TLSv1 and TLSv11
         'notOWASP_A    '=> '^(?:TLSv11?)',
@@ -3563,7 +3563,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.38"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.39"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3612,7 +3612,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.38 2024/07/16
+3.39 2024/07/16
 
 =head1 AUTHOR
 
