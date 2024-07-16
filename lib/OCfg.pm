@@ -24,7 +24,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.36 24/06/24 15:24:36";
+our $SID_ocfg   =  "@(#) OCfg.pm 3.37 24/07/16 12:26:07";
 $OCfg::VERSION  =  "24.06.24";  # official version number of this file
 
 #_____________________________________________________________________________
@@ -2110,6 +2110,16 @@ our %cfg = (    # main data structure for configuration
                         0x0300D000 .. 0x0300D0FF,
                         0x0300FE00 .. 0x0300FFFF,
                        ",
+        'iana'      =>          # constants for ciphers recommended by IANA
+                    # http://www.iana.org/assignments/tls-parameters/tls-parameters.txt
+                    # last checked July 2024
+                       "0x0300009E, 0x0300009F, 0x030000AA, 0x030000AB,
+                        0x03001301, 0x03001302, 0x03001303, 0x03001304,
+                        0x0300C02B, 0x0300C02C, 0x0300C02F, 0x0300C030, 0x0300C09E, 0x0300C09F,
+                        0x0300C0A6, 0x0300C0A7, 0x0300C0A8, 0x0300C0A9,
+                        0x0300CCAA, 0x0300CCAC, 0x0300CCAD,
+                        0x0300D001, 0x0300D002, 0x0300D005,
+                       ",
                             # GREASE ciphers added in _cfg_init()
         'shifted'   =>          # constants for ciphers defined in various RFCs shifted with an offset of 64 (=0x40) Bytes
                        "0x03000100 .. 0x0300013F, 0x0300FE00 .. 0x0300FFFF,",
@@ -3552,7 +3562,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.36"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.37"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3601,7 +3611,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.36 2024/06/24
+3.37 2024/07/16
 
 =head1 AUTHOR
 
