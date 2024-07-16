@@ -25,7 +25,7 @@ use warnings;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.38 24/06/24 15:26:36";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.39 24/07/16 12:12:25";
 our $VERSION    = "24.06.24";   # official verion number of this file
 
 #_____________________________________________________________________________
@@ -198,7 +198,7 @@ They are not used here, but they're all related to ciphers, hence defined here.
 #________________________________________________ public (export) variables __|
 
 our %ciphers        = ( # list of all ciphers
-    # will be generated in _ciphers_init() from <DATA>
+    # will be generated in _ciphers_init() from <DATA> (at end of this file)
     #--------------+-------+-------+----+----+----+----+----+----+----+-----------+-----------+-----+
     # key       => [qw( openssl sec ssl  keyx auth enc  bits mac  rfc  name;alias  const       notes )],
     #--------------+-------+-------+----+----+----+----+----+----+----+-----------+-----------+-----+
@@ -246,7 +246,7 @@ our %ciphers_desc   = ( # description of %ciphers table
     'pfs'      => 'PFS',            # )f cipher ha perfect forward secrecy
     'suite'    => 'Cipher Suite',   # cipher suite name, mainly those used by OpenSSL
     'name'     => 'OpenSSL Name',   # cipher suite name used by OpenSSL
-    'names'    => '(Alias) Names',  # Comma-separated list of cipher suite name and aliases
+    'names'    => 'Names, Aliases', # Comma-separated list of cipher suite name and aliases
     'const'    => 'Constant Names', # Comma-separated list of cipher suite constants
     'notes'    => 'Notes/Comments', # Comma-separated list of notes and comments
                             # for this cipher suite; for eaxmple: EXPORT, OSX
@@ -313,7 +313,7 @@ our @cipher_iana_recomended =
     # http://www.iana.org/assignments/tls-parameters/tls-parameters.txt August 2022
     # NOT YET USED
     qw(
-    0x0300009E 0x0300009F 0x030000AA 0x030000AB 0x03001301 0x03001302 0x03001303 0x0300130$
+    0x0300009E 0x0300009F 0x030000AA 0x030000AB 0x03001301 0x03001302 0x03001303 0x03001304
     0x0300C02B 0x0300C02C 0x0300C02F 0x0300C030 0x0300C09E 0x0300C09F 
     0x0300C0A6 0x0300C0A7 0x0300C0A8 0x0300C0A9 0x0300CCAA 0x0300CCAC 0x0300CCAD
     0x0300D001 0x0300D002 0x0300D005
@@ -432,13 +432,11 @@ sub set_sec     { my ($key, $val) = @_; $ciphers{$key}->{'sec'} = $val; return; 
 
 =head3 get_rfc(   $cipher_key)
 
-=head3 get_notes( $cipher_key)
-
 =head3 get_name(  $cipher_key)
 
 =head3 get_names( $cipher_key)
 
-=head3 get_aliases( $cipher_key)
+=head3 get_aliases($cipher_key)
 
 Return all cipher suite names except the first cipher suite name.
 
@@ -604,54 +602,30 @@ sub get_encsize {
 
 =head3 get_key(   $cipher_name)
 
-Get hex key for given cipher name; searches in cipher suite names and in cipher
+Return hex key for given cipher name; searches in cipher suite names and in cipher
 suite constants. Given name must match exactly.
 
 =head3 get_data(  $cipher_key)
 
-Get all data for given cipher key from internal C<%ciphers> data structure.
+Return all data for given cipher key from internal C<%ciphers> data structure.
 
 =head3 get_iana(  $cipher_key)
 
-Return "yes" if cipher suite is recommended by IANA, "no" otherwise.
+Return "yes" if cipher suite for given key is recommended by IANA, "no" otherwise.
 
 =head3 get_pfs(   $cipher_key|$cipher_name)
 
-Return "yes" if cipher suite supports PFS, "no" otherwise.
+Return "yes" if cipher suite for given key supports PFS, "no" otherwise.
 
 =head3 get_keys_list()
 
-Get list of all defined (internal) hex keys for cipher suites in C<%ciphers>.
+Return list of all defined (internal) hex keys for cipher suites in C<%ciphers>.
 Returns space-separetd string or array depending on calling context.
 
 =head3 get_names_list()
 
-Get list of all defined cipher suite names in C<%ciphers>.
+Return list of all defined cipher suite names in C<%ciphers>.
 Returns space-separetd string or array depending on calling context.
-
-=head3 find_consts()
-
-Find all matching constants for given cipher constant (pattern).
-
-=head3 find_names( $cipher_pattern)
-
-Find all matching cipher names for given cipher name (pattern).
-
-=head3 find_keys( $cipher_pattern)
-
-Find all matching hex keys for given cipher name (pattern).
-
-=head3 find_keys_any( $cipher_pattern)
-
-Return keys for all matching hex keys, cipher names, aliases or constants.
-
-=head3 find_names_any( $cipher_pattern)
-
-Return cipher names for all matching hex keys, cipher names, aliases or constants.
-
-=head3 find_name( $cipher)
-
-Find cipher key(s) for given cipher name or cipher constant.
 
 =cut
 
@@ -748,15 +722,36 @@ sub get_names_list  {
     # SEE Note:Testing, sort
 } # get_names_list
 
-sub find_keys   {
-    #? find all hex key for which given cipher pattern matches in %ciphers
-    my $pattern = shift;
-    _trace("find_keys($pattern)");
-    return map({get_key($_);} grep{/$pattern/} get_names_list());
-} # find_keys
+=pod
+
+=head3 find_consts()
+
+Return all constants for which given cipher constant (pattern) matches.
+
+=head3 find_keys( $cipher_pattern)
+
+Return all hex keys for which given cipher name (pattern) matches.
+
+=head3 find_keys_any( $cipher_pattern)
+
+Return all cipher suite keys for which given key, name, alias or constant (pattern) matches.
+
+=head3 find_names( $cipher_pattern)
+
+Find all matching cipher names for given cipher name (pattern).
+
+=head3 find_names_any( $cipher_pattern)
+
+Return cipher names for all matching hex keys, cipher names, aliases or constants.
+
+=head3 find_name( $cipher)
+
+Find cipher key(s) for given cipher name or cipher constant.
+
+=cut
 
 sub find_consts {
-    #? find all constants of cipher suite for which given cipher pattern matches in %ciphers
+    #? return all constants for which given cipher constant (pattern) matches in %ciphers
     # NOTE: matches the primary cipher suite name only, not aliases or constants
     my $pattern =  shift;
        $pattern =~ s/:/|/g;
@@ -770,20 +765,18 @@ sub find_consts {
     return @list;
 } # find_consts
 
-sub find_names  {
-    #? find all cipher suite names for which given cipher pattern matches in %ciphers
-    #? pattern can be RegEx like GCM|CHACHA or OpenSSL-style pattern like GCM:CHACHA
-    # NOTE: matches the primary cipher suite name only, not aliases or constants
-    my $pattern =  shift;
-       $pattern =~ s/:/|/g;
-    _trace("find_names($pattern)");
-    return grep{/$pattern/} get_names_list();
-} # find_names
+sub find_keys   {
+    #? return all hex keys for which given cipher name (pattern) matches in %ciphers
+    my $pattern = shift;
+    _trace("find_keys($pattern)");
+    return map({get_key($_);} grep{/$pattern/} get_names_list());
+} # find_keys
 
 sub find_keys_any   {
-    #? find all cipher suite keys for which given cipher pattern matches, key or name or alias or constant
+    #? return all cipher suite keys for which given key, name, alias or constant (pattern) matches
     my $pattern =  shift;
        $pattern =~ s/:/|/g;
+    # FIXME: hex keys must be upper case
     my @list;
     _trace("find_keys_any: search $pattern");
     # should match below: my $key = get_key($pattern);
@@ -802,6 +795,16 @@ sub find_keys_any   {
     }
     return @list;
 } # find_keys_any
+
+sub find_names  {
+    #? find all cipher suite names for which given cipher pattern matches in %ciphers
+    #? pattern can be RegEx like GCM|CHACHA or OpenSSL-style pattern like GCM:CHACHA
+    # NOTE: matches the primary cipher suite name only, not aliases or constants
+    my $pattern =  shift;
+       $pattern =~ s/:/|/g;
+    _trace("find_names($pattern)");
+    return grep{/$pattern/} get_names_list();
+} # find_names
 
 sub find_names_any  {
     #? find all cipher suite names for which given cipher pattern matches, key or name or constant
@@ -1064,6 +1067,14 @@ sub sort_results    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
 #_____________________________________________________________________________
 #____________________________________________________ internal test methods __|
 
+=pod
+
+=head1 METHODS
+
+Methods intended for inernal use are:
+
+=cut
+
 sub show_getter03   {
     #? show hardcoded example for all getter functions for key 0x03000003 (aka 0x00,0x03)
     _v_print((caller(0))[3]);
@@ -1174,23 +1185,23 @@ EoT
     printf("=-------+--------------+-----------------------+--------");
 
     print ("\n\n= %ciphers : description of one line as Perl code:\n");
-    print ("=------+--------------------------------+---------------+---------------");
+    print ("=------+------------------------------------+---------------+---------------");
     printf("= varname  %-23s\t# example result# description\n", "%ciphers hash");
-    print ("=------+--------------------------------+---------------+---------------");
+    print ("=------+------------------------------------+---------------+---------------");
     $idx = 0;
     foreach my $col (@{$ciphers_desc{head}}) {
         my $var = $ciphers_desc{head}[$idx];    # quick dirty
         my $txt = $ciphers_desc{$var};
-        printf("%6s = \$ciphers{'%s'}{%s};\t# %-7s\t# %s\n",
+	my $tab = (6 > length($col)) ? "\t    " : " "; # dirty hack for pretty printing
+        printf("%6s = \$ciphers{'%s'}{%s};$tab# %-7s\t# %s\n",
             '$' . $var, $hex, $col, $ciphers_desc{sample}->{$hex}[$idx], $txt);
         $idx++;
     }
-    print ("= additional following methods are available:");
-    printf("%6s = \$ciphers{'%s'}{%s};\t# %-7s\t# %s\n",
-            '$' . 'name', $hex, 'name', 'AES256-SHA256', $ciphers_desc{'name'});
-    printf("%6s = \$ciphers{'%s'}{%s};\t# %-7s\t# %s\n",
-            '$' . 'alias', $hex, 'alias', 'Alias', $ciphers_desc{'names'});
-    print ("=------+--------------------------------+---------------+---------------");
+    printf("%6s = \$ciphers{'%s'}{%s}[0];  # %-7s\t# %s\n",
+            '$' . 'name', $hex, 'names', 'AES256-SHA256', $ciphers_desc{'name'});
+    printf("%6s = \$ciphers{'%s'}{%s}[1];  # %-7s\t# %s\n",
+            '$' . 'alias', $hex, 'alias', 'Alias', "first alias");
+    print ("=------+------------------------------------+---------------+---------------");
 
     print  "\n= \%cipher_results : description of hash:\n";
     print  $cipher_results_desc;
@@ -1821,7 +1832,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.38 2024/06/24
+3.39 2024/07/16
 
 
 =head1 AUTHOR
