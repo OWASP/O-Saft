@@ -1,5 +1,5 @@
 
-# SID	@(#) rfc.txt 1.19 23/11/28 12:49:03
+# SID	@(#) rfc.txt 1.20 24/07/16 20:43:38
 
 # number| title / description
 #------+----------------------------------------------------------------------+
@@ -15,6 +15,7 @@ url	http://tools.ietf.org/
 8446	TLS Version 1.3 (with Cipher Suites)
 4347	DTLS Version 0.9
 6347	DTLS Version 1.2
+9147	DTLS Version 1.3
 8447	IANA Registry Updates for TLS and DTLS
 2616	Hypertext Transfer Protocol Version 1 (HTTP/1.1)
 7540	Hypertext Transfer Protocol Version 2 (HTTP/2)
@@ -33,6 +34,7 @@ url	http://tools.ietf.org/
 4518	Internationalized String Preparation in LDAP
 3986	Uniform Resource Identifier (URI): Generic Syntax
 2104	HMAC: Keyed-Hashing for Message Authentication
+2328	OSPF: Open Shortest Path First Version 2
 2405	The ESP DES-CBC Cipher Algorithm With Explicit IV
 2406	IP Encapsulating Security Payload (ESP)
 4303	IP Encapsulating Security Payload (ESP)
@@ -82,6 +84,7 @@ url	http://tools.ietf.org/
 5077	TLS session resumption without Server-Side State
 6961	TLS Multiple Certificate Status Request Extension
 7627	TLS Session Hash and Extended Master Secret Extension
+9002	Using TLS to Secure QUIC
 6176	Prohibiting Secure Sockets Layer (SSL) Version 2.0
 7568	Deprecating Secure Sockets Layer Version 3.0
 6460	NSA Suite B Profile for TLS
@@ -89,6 +92,7 @@ url	http://tools.ietf.org/
 6267	Online Certificate Status Protocol Algorithm Agility (OCSP, obsolete)
 4210	X509 PKI Certificate Management Protocol (CMP)
 3279	x509 Algorithms and Identifiers for X.509 PKI and CRL Profile
+8692	X509 PKI Additional Algorithm Identifiers for RSASSA-PSS and ECDSA Using SHAKEs
 3739	x509 PKI Qualified Certificates Profile; EU Directive 1999/93/EC
 3280	X509 PKI Certificate and Certificate Revocation List (CRL) Profile (obsolete)
 4158	X509 PKI Certification Path Building
@@ -125,6 +129,7 @@ url	http://tools.ietf.org/
 5487	Pre-Shared Key Cipher Suites for TLS with SHA-256/384 and AES Galois Counter Mode
 5489	ECDHE_PSK Cipher Suites for TLS
 5589	Session Initiation Protocol (SIP) Call Control - Transfer
+5709	OSPFv2 HMAC-SHA Cryptographic Authentication
 6040	Tunnelling of Explicit Congestion Notification
 6090	Fundamental Elliptic Curve Cryptography Algorithms
 4492	TLSECC: Elliptic Curve Cryptography (ECC) Cipher Suites for TLS (obsolete)
@@ -174,6 +179,7 @@ url	http://tools.ietf.org/
 4086	Randomness Requirements for Security
 4107	Guidelines for Cryptographic Key Management
 8032	Edwards-Curve Digital Signature Algorithm (EdDSA)
+8391	XMSS: eXtended Merkle Signature Scheme
 7710	Captive Portal Using DHCP
 8484	DNS over HTTPS (DoH)
 8467	Padding for DoH und DoT
@@ -188,8 +194,12 @@ url	http://tools.ietf.org/
 8399	Internationalization Updates to RFC 5280
 8447	IANA Registry Updates for TLS and DTLS
 8478	Zstandard Compression and the application/zstd Media Type
+8702	Use of the SHAKE One-Way Hash Functions in the Cryptographic Message Syntax (CMS)
 8879	TLS Certificate Compression
 7250	Using Raw Public Keys in Transport Layer Security (TLS) and Datagram Transport Layer Security (DTLS)
 7924	Transport Layer Security (TLS) Cached Information Extension
 7932	Brotli Compressed Data Format
+9052	CBOR Object Signing and Encryption (COSE): Structures and Process
+9054	CBOR Object Signing and Encryption (COSE): Hash Algorithms
+9347	Aggregation and Fragmentation Mode for Encapsulating Security Payload (ESP) and Its Use for IP Traffic Flow Security (IP-TFS)
 
