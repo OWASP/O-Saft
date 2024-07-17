@@ -303,7 +303,7 @@
 # -----------------------------------------------------------------------------
 
 # --------------------------------------------- internal variables; defaults
-SID="@(#) INSTALL-template.sh 3.24 24/07/17 10:18:33"
+SID="@(#) ê∫	π–U 3.25 24/07/17 11:13:09"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -646,7 +646,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.24 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.25 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -659,7 +659,8 @@ clean_directory="$inst_directory/$clean_directory"  # set on command line
 
 # --------------------------------------------- main
 
-echo "# $0 $SID ..."    # always print internal SID, makes debugging simpler
+echo "# $0 3.25 ..."    # always print internal SID, makes debugging simpler
+                       # do not use $SID, which is too noisy for make targets
 
 # no echo_info() used for empty mode or mode=expected
 
