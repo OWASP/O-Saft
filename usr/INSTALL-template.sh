@@ -295,7 +295,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) INSTALL-template.sh 3.22 24/06/22 10:09:06
+#?      @(#) INSTALL-template.sh 3.23 24/07/17 02:06:46
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -533,7 +533,7 @@ check_pm    () {
 check_commands () {
 	for c in $* ; do
 		echo_label "$c"
-		is=`\command -v $c`
+		is=$(\command -v $c)
 		[ -n "$is" ] && echo_green "$is" || echo_red "missing"
 	done
 	return
@@ -643,7 +643,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.22 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.23 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -993,8 +993,13 @@ for o in $all_exe ; do
 	# $osaft_cgi cannot be checked here because it behaves different
 	_opt="+VERSION"
 	[ "o-saft-docker" = $o ] && _opt="+V" # has no own +VERSION, see source there
+	if [ "o-saft.tcl" = $o ]; then
+		[ -z "$osaft_gui" ] && \
+			echo_yellow "not checked because »wish« missing" && \
+			continue
+	fi
 	echo_label "$o"
-	e=`\command -v $o`
+	e=$(\command -v $o)
 	if [ -n "$e" ] ; then
 		v=`$o $_opt`
 		txt=`echo "$v $e"|awk '{printf("%8s %s",$1,$2)}'`
