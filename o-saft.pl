@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) o-saft.pl 3.78 24/07/12 00:01:15"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.79 24/07/17 02:25:37"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -418,7 +418,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.78"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.79"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6225,6 +6225,7 @@ sub printversion        {
     # get a quick overview also
     # SEE Perl:import include
     print "= Required (and used) Modules =";
+    printf("    %-22s %-9s%s\n", $me, $SID_main, ""); # own unique SID
     my ($d, $v, %p);
     printf("=   %-22s %-9s%s\n", "module name", "VERSION", "found in");
     printf("=   %s+%s+%s\n",     "-"x22,        "-"x8,     "-"x42);
