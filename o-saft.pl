@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) o-saft.pl 3.82 24/07/17 09:21:30"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.84 24/07/17 11:24:27"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -141,7 +141,7 @@ sub _trace_exit     {
     my $arg =  $txt;    # matches: --exit=INIT{
        $arg =~ s#^\s*##;# strip off leading left spaces
        $arg =~ s# .*##; # strip off anything right of a space
-    if (0 < _is_ARGV(qr/(([+,]|--)exit=\Q$arg\E).*/n)) {  # \Q because of meta chars in $arg
+    if (0 < _is_ARGV(qr/(([+,]|--)exit=\Q$arg\E).*/)) { # \Q because of meta chars in $arg
         my $me  = $0; $me =~ s{.*?([^/\\]+)$}{$1};
         printf STDERR ("#${me}::_trace_exit --exit=$txt\n");
             # assumes that first word of $txt is argument of --exit
@@ -159,7 +159,7 @@ sub _trace_next     {
     my $arg =  $txt;
        $arg =~ s#^\s*##;
        $arg =~ s# .*##;
-    if (0 < _is_ARGV(qr/(([+,]|--)exit=\Q$arg\E).*/n)) {
+    if (0 < _is_ARGV(qr/(([+,]|--)exit=\Q$arg\E).*/)) {
         my $me  = $0; $me =~ s{.*?([^/\\]+)$}{$1};
         printf STDERR ("#${me}::_trace_next --exit=$txt\n");
         return 1;
@@ -418,7 +418,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.82"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.84"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6105,8 +6105,10 @@ sub printversion        {
     my @my_modules = qw(Ciphers OCfg OData ODoc error_handler SSLinfo SSLhello OMan OText OTrace OUsr);
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
-    printf("    %-21s%s\n", $me, $SID_main); # own unique SID
-    if (_is_cfg_verbose()) {
+    if (not _is_cfg_verbose()) {
+        printf("    %-21s%s\n", $me, "3.84");# just version to keep make targets happy
+    } else {
+        printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
         # uses awk for more human readability, instead of readdir, open, ...
         # search and pretty print following lines:
