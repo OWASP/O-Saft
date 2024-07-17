@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 3.12 24/07/01 16:28:55
+#?      @(#) Makefile.dev 3.13 24/07/17 02:12:43
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-O-SID.dev          := 3.12
+O-SID.dev          := 3.13
 O-SELF.dev         := t/Makefile.dev
 ALL.includes       += $(O-SELF.dev)
 ALL.inc.type       += dev
@@ -74,7 +74,9 @@ LIST.t-makefile    :=
 LIST.INSTALL.sh    :=   --install  --clean  --check     --checkdev  --expected --cgi
 # NOTE: ensure that EXE.install is called with --n !
 # NOTE: EXE.install-sh --openssl does not work from t directory
-# TODO: EXE.install-sh not completely working as expected
+# TODO: EXE.install-sh not completely working as expected (in make targets)
+
+# TODO: need test for INSTALL.sh if perl, wish, docker are missing
 
 _TEST.dev.tmpfile  := /tmp/tmpfile
 
