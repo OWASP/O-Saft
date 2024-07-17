@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) o-saft.pl 3.80 24/07/17 07:27:37"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.81 24/07/17 09:20:02"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -418,7 +418,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.80"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.81"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6102,9 +6102,21 @@ sub printversion        {
     } # quick&dirty check, should rarely occour (i.e. when used as CGI)
     # SEE Note:OpenSSL Version
     my $version_openssl  = Net::SSLeay::OPENSSL_VERSION_NUMBER() || $STR{UNDEF};
+    my @my_modules = qw(Ciphers OCfg OData ODoc error_handler SSLinfo SSLhello OMan OText OTrace OUsr);
     my $me = $cfg{'me'};
-    print( "=== $0 " . _VERSION() . " ===");
+    print( "= $0 " . _VERSION() . " =");
     printf("    %-21s%s\n", $me, $SID_main); # own unique SID
+    if (_is_cfg_verbose()) {
+        # print internal SID of our own modules
+        # uses awk for more human readability, instead of readdir, open, ...
+        # search and pretty print following lines:
+        #   our $SID_ocfg   =  "@(#) OCfg.pm 3.42 24/07/42 23:42:42";
+        #   my  $SID_tool   =  "@(#) Tool.pm 3.42 24/07/42 23:42:42";
+        my $cmd = '/ *\$SID_[a-z]* /{ printf("    %-21s%s\n",FILENAME,$2); }';
+	system('awk', '-F"', "$cmd", glob('lib/*.pm'));
+        # TODO: 2024: glob() not yet tested with old perl versions and other platforms
+    }
+exit;
     print( "= perl " . $] . " =");  # SEE Perl:version
     print '    @perl_incorig        ', "@perl_incorig";
     print '    @perl_inc            ', "@perl_inc";
@@ -6203,6 +6215,8 @@ sub printversion        {
     print "    default list of ciphers          " . $list;
     if (_is_cfg_verbose()) {
         # these lists are for special purpose, so with --v only
+        print "    RFC list of ciphers          " . $cfg{'cipherranges'}->{'rfc'};
+        print "    IANA list of ciphers         " . $cfg{'cipherranges'}->{'iana'};
         print "    long list of ciphers         " . $cfg{'cipherranges'}->{'long'};
         print "    huge list of ciphers         " . $cfg{'cipherranges'}->{'huge'};
         print "    safe list of ciphers         " . $cfg{'cipherranges'}->{'safe'};
@@ -6226,7 +6240,7 @@ sub printversion        {
     printf("=   %-22s %-9s%s\n", "module name", "VERSION", "found in");
     printf("=   %s+%s+%s\n",     "-"x22,        "-"x8,     "-"x42);
     # TODO: following list should be same as in _check_modules()
-    foreach my $m (qw(IO::Socket::INET IO::Socket::SSL Time::Local Net::DNS Net::SSLeay Ciphers OCfg OData ODoc error_handler SSLinfo SSLhello OMan OText OTrace OUsr)) {
+    foreach my $m (qw(IO::Socket::INET IO::Socket::SSL Time::Local Net::DNS Net::SSLeay), @my_modules) {
         no strict 'refs';   ## no critic qw(TestingAndDebugging::ProhibitNoStrict TestingAndDebugging::ProhibitProlongedStrictureOverride)
             # avoid: Can't use string ("Net::DNS") as a HASH ref while "strict refs" in use
         # we expect ::VERSION in all these modules
