@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) o-saft.pl 3.81 24/07/17 09:20:02"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.82 24/07/17 09:21:30"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -418,7 +418,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.81"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.82"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6116,7 +6116,6 @@ sub printversion        {
 	system('awk', '-F"', "$cmd", glob('lib/*.pm'));
         # TODO: 2024: glob() not yet tested with old perl versions and other platforms
     }
-exit;
     print( "= perl " . $] . " =");  # SEE Perl:version
     print '    @perl_incorig        ', "@perl_incorig";
     print '    @perl_inc            ', "@perl_inc";
