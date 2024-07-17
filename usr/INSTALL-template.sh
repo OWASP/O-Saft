@@ -295,7 +295,7 @@
 #?          awk, cat, perl, sed, tr, which, /bin/echo
 #?
 #? VERSION
-#?      @(#) INSTALL-template.sh 3.23 24/07/17 02:06:46
+# added with --help
 #?
 #? AUTHOR
 #?      16-sep-16 Achim Hoffmann
@@ -303,6 +303,7 @@
 # -----------------------------------------------------------------------------
 
 # --------------------------------------------- internal variables; defaults
+SID="@(#) ê∫	π–U 3.25 24/07/17 11:13:09"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -605,7 +606,9 @@ new_dir=
 while [ $# -gt 0 ]; do
 	case "$1" in
 	 '-h' | '--h' | '--help' | '-?' | '/?')
-		\sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
+		\sed -n -e "s/\$0/$ich/g" \
+			-e '/^#?/s/#?//p' \
+			-e "/VERSION$/a\      $SID" $0
 		exit 0
 		;;
 	 '-n' | '--n')          optn="--n"; try=echo; ;;
@@ -643,7 +646,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.23 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.25 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -655,6 +658,9 @@ fi
 clean_directory="$inst_directory/$clean_directory"  # set on command line
 
 # --------------------------------------------- main
+
+echo "# $0 3.25 ..."    # always print internal SID, makes debugging simpler
+                       # do not use $SID, which is too noisy for make targets
 
 # no echo_info() used for empty mode or mode=expected
 
