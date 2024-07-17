@@ -262,14 +262,14 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.49 24/05/28 01:04:22
+#?       @(#) o-saft-docker 1.50 24/07/17 02:02:18
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID="1.49"
+SID="1.50"
 VERSION="${OSAFT_VERSION:-19.01.19}"
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
 registry=${o_saft_docker_name}; registry=${registry:-owasp/o-saft}
@@ -281,6 +281,7 @@ entry__cmd='CMD ["--norc", "--help=docker"]':               # default CMD
 try=
 exe=o-saft.pl
 dockerfile="https://github.com/OWASP/O-Saft/raw/master/Dockerfile"
+docker=$(\command -v docker)
 
 check_image_name () {
 	#? check if image with configured registry:tag exists; exit otherwise
@@ -585,6 +586,9 @@ case "$1" in
 	    ;;
 esac
 
+# avoid other errors if docker program missing
+[ -z "$docker" ] && echo "**ERROR: 'docker' not found; exit" && exit 2
+
 # some modes do not need to check existing images
 case "$1" in
   'build')  ;;
@@ -618,9 +622,8 @@ while [ $# -gt 0 ]; do
           *)               break; ;;
 	esac
 done
-set -- "$mode" $@ ; # 1st argument has no special meaning, pass to o-saft.pl
 
-if [ $# -lt 1 ]; then
+if [ -z "$mode" ]; then
 	# did not get any argument, print own usage
 	my_help
 	echo
@@ -629,6 +632,6 @@ if [ $# -lt 1 ]; then
 	exit 2
 fi
 
-docker_osaft $@
+docker_osaft "$mode" $@
 
 exit
