@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 3.8 24/07/16 14:58:01
+#?      @(#) Makefile.cipher 3.9 24/07/18 22:10:48
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-O-SID.cipher       := 3.8
+O-SID.cipher       := 3.9
 O-SELF.cipher      := t/Makefile.cipher
 ALL.includes       += $(O-SELF.cipher)
 ALL.inc.type       += cipher
@@ -125,8 +125,12 @@ testcmd-cipher-+cipher-%:           TEST.init   = --trace-CLI --header
 testcmd-cipher-+cipher--%:          TEST.init   = --trace-CLI --header +cipher
 testcmd-cipher-+cipher_%:           TEST.args  +=
 testcmd-cipher-+cipher---trace-%:   TEST.init  += --cipher=AES128-SHA
-testcmd-cipher-+cipher---nossltls_%: TEST.args  += --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13
+testcmd-cipher-+cipher---nossltls_%: TEST.args += --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13
     #    simulates a server not responding to ciphers
+testarg-cipher-+cipher---test-missing_%:    TEST.init  = --trace-CLI --header +cipher
+testarg-cipher-+cipher---test-missing_%:    TEST.args  = --notcp --noudp --range=AES256-GCM --test-missing=0x0300C030
+    #    simulates a non-existing cipher # TODO: needs to be implemented in o-saft.pl
+ALL.testcipher += testarg-cipher-+cipher---test-missing_
 ALL.testcipher += testcmd-cipher-+cipher--nossltls_
 
 # some more individual tests
