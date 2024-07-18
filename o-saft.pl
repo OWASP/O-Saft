@@ -69,7 +69,7 @@ use warnings;
 no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # "... used only once: possible typo ..." appears when OTrace.pm not included
 
-our $SID_main   = "@(#) o-saft.pl 3.84 24/07/17 11:24:27"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.85 24/07/18 21:54:21"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -418,7 +418,7 @@ our %check_http = %OData::check_http;
 our %check_size = %OData::check_size;
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.84"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.85"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -5518,6 +5518,9 @@ sub print_cipherline    {
         } else {
             $k = "    ";
         }
+        # for unknown cipher keys, set its name and security to UNDEF string
+        $cipher= "$key $STR{UNDEF}" if ($cipher =~ m/^\s*$/);
+        $sec   = $STR{UNDEF} if ($sec =~ m/^\s*$/);
         #printf("%s%-28s\t%s\t%s\n",     $k, $cipher, $yesno, $sec) if ($legacy eq 'full');
         printf("%s%-28s\t%s\n",         $k, $cipher, $sec        ) if ($legacy eq 'owasp');
         printf("%s%-28s\t(%s)\t%s\n",   $k, $cipher, $bits,  $sec) if ($legacy eq 'quick');
@@ -6106,7 +6109,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.84");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.85");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
