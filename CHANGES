@@ -1,5 +1,28 @@
 
-Version: 24.03.24
+Version: 24.??.24
+### NOTE
+### BUGFIX
+    * o-saft.pl: BF: print <<undef>> for unknown cipher suite found with +cipher
+    * o-saft.pl: BF: bare word after qr// removed (error in modern perl)
+    * lib/OMan.pm: BF: bare word after qr// removed (error in modern perl)
+    * t/Makefile.testssl: ET: target examples corrected
+### CHANGES
+    * o-saft.pl: EF: die() doesn't print line number; keep make targets *.log happy
+    * t/Makefile*: ED: _SID renamed to O-SID, _MYSELF* renamed to O-SELF*
+    * t/Makefile.inc: ET: make file simplified
+    * t/Makefile.docker: ET: variables and targets for mbedtls removed (now in Makefile.testssl*)
+    * t/Makefile.cipher: ET: new target testarg-cipher-+cipher---test-missing_  
+    * t/Makefile.cipher: ET: more targets for --cipher* options
+    * lib/OTrace.pm: EF: __trac() support data type "Regexp"
+    * doc/glossary.txt: ED: formal changes ; more acronyms added
+    * doc/rfc.txt: ED: more RFCs added
+    * usr/INSTALL-template.sh: EF: avoid error message if wish is missing
+    * o-saft.pl: EF: +version prints own unique SID
+    * o-saft-docker: EF: avoid errors if docker program missing
+### NEW
+    * lib/OCfg.pm: EF: cfg{cipherranges}{iana} added
+
+Version: 24.06.24
 ### NOTE
 ### BUGFIX
     * o-saft-docker: BF: wrong markup corrected (minor issue with -help only)
