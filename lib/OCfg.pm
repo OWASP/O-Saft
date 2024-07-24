@@ -24,7 +24,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_ocfg   =  "@(#) OCfg.pm 3.39 24/07/16 20:18:49";
+our $SID_ocfg   =  "@(#) OCfg.pm 3.40 24/07/24 16:25:35";
 $OCfg::VERSION  =  "24.06.24";  # official version number of this file
 
 #_____________________________________________________________________________
@@ -2349,6 +2349,7 @@ our %cfg = (    # main data structure for configuration
                        ],
     'need-checkssl' => [        # commands which need checkssl() # TODO: needs to be verified
                         qw(check beast crime time breach freak
+                         cipher_adh cipher_null
                          cipher_pfs cipher_pfsall cipher_cbc cipher_des
                          cipher_edh cipher_exp cipher_rc4 cipher_selected
                          ev+ ev- tr_02102+ tr_02102- tr_03116+ tr_03116-
@@ -3563,7 +3564,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.39"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.40"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3612,7 +3613,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.39 2024/07/16
+3.40 2024/07/24
 
 =head1 AUTHOR
 
