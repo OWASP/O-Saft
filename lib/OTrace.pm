@@ -5,6 +5,15 @@
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 package OTrace;
+use warnings;
+# use strict;
+no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
+   # must be herein, as most subroutines are already defined in main
+   # warnings pragma is local to this file!
+no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
+   # "... used only once: possible typo ..." appears when called as main only
+use utf8;
+use Data::Dumper qw(Dumper);
 
 # HACKER's INFO
 #       Following (internal) functions from o-saft.pl are used:
@@ -29,26 +38,17 @@ package OTrace;
 #       Severity 2 only; otherwise  "perlcritic -p t/.perlcriticrc"  reports
 #       effusive messages for that directive.
 
-use warnings;
-# use strict;
-
-no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
-   # must be herein, as most subroutines are already defined in main
-   # warnings pragma is local to this file!
-no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
-   # "... used only once: possible typo ..." appears when called as main only
-
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_trace      = "@(#) OTrace.pm 3.33 24/07/01 11:08:12";
+my  $SID_trace      = "@(#) OTrace.pm 3.34 24/07/26 16:08:57";
 our $VERSION        = "24.06.24";
 
-# public package variables
-our $trace          = 0;
-our $verbose        = 0;
 our $prefix_trace   = "#". __PACKAGE__ . ":";
 our $prefix_verbose = "#". __PACKAGE__ . ":";
+
+my  $trace          = 0;
+my  $verbose        = 0;
 
 use Exporter qw(import);
 
@@ -116,10 +116,10 @@ BEGIN { # mainly required for testing ...
 #o-saft.pl 01:00:01 printdata(simple, localhost, 443) {
 #-------------------------------------------------------------------------
 
-use Data::Dumper qw(Dumper);
 use OText        qw(%STR);
-use OCfg;   # sets %cfg
-# TODO: 01jan24: must use %::cmd, %::data, %::checks instead of %data; reason unknown
+use OCfg         qw(%cfg %dbx %data %prot);
+use OData        qw(%checks   %data %shorttexts);
+use Ciphers      qw(%ciphers %ciphers_desc %ciphers_notes $cipher_results);
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -184,7 +184,7 @@ sub __trac      {
         /ARRAY/ && do { $data .= ___K_V($key, ___ARR(@{$ref->{$key}})); last SWITCH; };
         /HASH/  && do { last SWITCH if (2 >= $ref->{'trace'});  # print hashes for full trace only
                         $data .= __TEXT("# - - - - HASH: $key= {\n");
-                        foreach my $k (sort keys %{$ref->{$key}}) {
+                        foreach my $k (sort(keys %{$ref->{$key}})) {
                             my $val = "";
                             if (defined ${$ref->{$key}}{$k}) {
                                if ('ARRAY' eq ref(${$ref->{$key}}{$k})) {
@@ -223,7 +223,7 @@ sub __data_data { return sprintf("%20s\t%s\t%s\t%s\t%s\t%s\t%s\t%s", @_); }
 # subs for formatted maps
 sub __prot_option       {
     my $data;
-    foreach my $key (sort keys %{$cfg{'openssl_option_map'}})  {
+    foreach my $key (sort(keys %{$cfg{'openssl_option_map'}}))  {
         $data .= __trac(\%{$cfg{'openssl_option_map'}}, $key) . "\n";
     }
     chomp  $data;   # remove last \n
@@ -232,7 +232,7 @@ sub __prot_option       {
 
 sub __prot_version      {
     my $data;
-    foreach my $key (sort keys %{$cfg{'openssl_version_map'}}) {
+    foreach my $key (sort(keys %{$cfg{'openssl_version_map'}})) {
         $data .= __TEXT(sprintf("%21s= ", $key) . sprintf("0x%04X 0x%08x",
                                  ${$cfg{'openssl_version_map'}}{$key},
                                  ${$cfg{'openssl_version_map'}}{$key})
@@ -310,14 +310,14 @@ EoT
     $old = "";
     foreach my $key
             (sort {uc($a) cmp uc($b)}
-                @{$cfg{'commands'}}, keys %::data, keys %::shorttexts, keys %::checks
+                @{$cfg{'commands'}}, keys %data, keys %OData::shorttexts, keys %checks
             )
             # we use sort case-insensitively, hence the BLOCK for comparsion
             # it also avoids the warning: sort (...) interpreted as function
     {
         next if ($key eq $old); # unique
         $old = $key;
-        if ((not defined $::checks{$key}) and (not defined $::data{$key})) {
+        if ((not defined $checks{$key}) and (not defined $data{$key})) {
             push(@yeast, $key); # probably internal command
             next;
         }
@@ -325,11 +325,11 @@ EoT
         $cmd = "-" if ($key =~ /$cfg{'regex'}->{'SSLprot'}/i);      # all SSL/TLS commands are for checks only
         print __data_data(  #__/--- check value -------\    true : false  # column
             $key, $cmd,
-            (defined $::data{$key})                ? __data( $key) : " ", # data
-            (defined $::checks{$key})                     ?   "*"  : " ", # checks
+            (defined $data{$key})           ? __data( $key) : " ", # data
+            (defined $checks{$key})                ?   "*"  : " ", # checks
             (_is_member($key, \@{$dbx{'cmd-check'}}) > 0) ?   "*"  : "!", # cmd-ch.
-            (defined $::shorttexts{$key})                 ?   "*"  : " ", # short
-            (_is_cfg_intern($key))                        ?   "I"  : " ", # intern
+            (defined $OData::shorttexts{$key})     ?   "*"  : " ", # short
+            (_is_cfg_intern($key))                 ?   "I"  : " ", # intern
             "",
 #           (defined $checks{$key}->{score}) ? $checks{$key}->{score} : ".",
 # score removed 23.12.23
@@ -381,7 +381,7 @@ EoT
     _ptext($line);
     _p_k_v("ARGV", ___ARR(@{$cfg{'ARGV'}}));
     _pline("%cfg{use} {");
-    foreach my $key (sort keys %{$cfg{'use'}}) {
+    foreach my $key (sort(keys %{$cfg{'use'}})) {
         _p_k_v($key, $cfg{'use'}{$key});
     }
     _pline("%cfg{use} }");
@@ -390,8 +390,8 @@ EoT
     _pline("%data {");
     _ptext("#                key | value (function code)");
     _ptext($line);
-    foreach my $key (sort keys %::data) { # ugly and slow code
-        my $code = Dumper($::data{$key}->{val});
+    foreach my $key (sort(keys %data)) {# ugly and slow code
+        my $code = Dumper($data{$key}->{val});
         # use Dumper() to get code, returns something like example 1:
         #     $VAR1 = sub {
         #                 package Data;
@@ -405,7 +405,7 @@ EoT
         #         'val' => sub {
         #             BEGIN {${^WARNING_BITS} = "\x55\x55\ ... x55"}
         #             use strict;
-        #             return $main::prot{$ssl}{'default'};
+        #             return $prot{$ssl}{'default'};
         #         }
         #     },
         # the line with "package" occours only if the data is in another namespace
@@ -426,8 +426,8 @@ EoT
     _pline("%checks {");
     _ptext("#                key | value");
     _ptext($line);
-    foreach my $key (sort keys %::checks) {
-        _p_k_v($key, $::checks{$key}->{val});
+    foreach my $key (sort(keys %checks)) {
+        _p_k_v($key, $checks{$key}->{val});
     }
     _ptext($line);
     _pline("%checks }");
@@ -468,7 +468,7 @@ EoT
     my $ssl = $cfg{'regex'}->{'SSLprot'};
     _pnull("\n");
     _pline("%cfg {");
-    foreach my $key (sort keys %cfg) {
+    foreach my $key (sort(keys %cfg)) {
         # targets= is array of arrays, prints ARRAY ref here only
         _ptype(\%cfg, $key) if ($key =~ m/$ssl/);
     }
@@ -479,16 +479,16 @@ EoT
     _pline("%cfg{openssl_version_map} {");
     print __prot_version();
     _pline("}");
-    # %check_conn and %check_dest are temporary and should be inside %checks
+    # %OData::check_conn and %check_dest are temporary and should be inside %checks
     _pline("%checks {");
-    foreach my $key (sort keys %checks) {
+    foreach my $key (sort(keys %checks)) {
         # $checks{$key}->{val} undefined at beginning
-        _ptext(sprintf("%14s= ", $key) . $checks{$key}->{txt}) if ($key =~ m/$ssl/);
+        _ptext(sprintf("%14s= ", $key) . $hecks{$key}->{txt}) if ($key =~ m/$ssl/);
     }
     _pline("}");
     _pline("%shorttexts {");
-    foreach my $key (sort keys %shorttexts) {
-        _ptext(sprintf("%14s= ",$key) . $shorttexts{$key}) if ($key =~ m/$ssl/);
+    foreach my $key (sort(keys %OData::shorttexts)) {
+        _ptext(sprintf("%14s= ",$key) . $OData::shorttexts{$key}) if ($key =~ m/$ssl/);
     }
     _pline("}");
     return;
@@ -506,7 +506,7 @@ sub _test_regex {
 EoT
     local $\ = "\n";
     _pline("%cfg{regex} {");
-    foreach my $key (sort keys %{$cfg{'regex'}}) {
+    foreach my $key (sort(keys %{$cfg{'regex'}})) {
 	_p_k_v($key, $cfg{'regex'}->{$key});
     }
     _pline("%cfg{regex} }");
@@ -614,33 +614,33 @@ sub _test_memory  {
 EoT
     my $line  = "=------+----------------";
     print "= Bytes variable\n$line";
-    foreach my $k (sort keys %cfg) {
+    foreach my $k (sort(keys %cfg)) {
         printf("%6s\t%s\n", Devel::Size::total_size(\$cfg{$k}),    "%cfg{$k}");
     }
-    foreach my $k (sort keys %::checks) {
+    foreach my $k (sort(keys %data)) {
+        printf("%6s\t%s\n", Devel::Size::total_size(\$data{$k}),   "%data{$k}");
+    }
+    foreach my $k (sort(keys %checks)) {
         printf("%6s\t%s\n", Devel::Size::total_size(\$checks{$k}), "%checks{$k}");
     }
-    foreach my $k (sort keys %dbx) {
+    foreach my $k (sort(keys %dbx)) {
         printf("%6s\t%s\n", Devel::Size::total_size(\$dbx{$k}),    "%dbx{$k}");
     }
-    #foreach my $k (sort keys %ciphers) {    # useless, as each entry is about 2k
-    #    printf("%6s\t%s\n", Devel::Size::total_size(\$ciphers{$k}), "%ciphers{$k}");
+    #foreach my $k (sort(keys %Ciphers::ciphers)) {  # useless, as each entry is about 2k
+    #    printf("%6s\t%s\n", Devel::Size::total_size(\$ciphers{$k}), "%Ciphers::ciphers{$k}");
     #}
-    #foreach my $k (sort keys %data) {       # most entries report 42k, which is wrong
+    #foreach my $k (sort(keys %data)) { # most entries report 42k, which is wrong
     #    printf("%6s\t%s\n", Devel::Size::total_size(\$data{$k}), "%data{$k}");
     #}
     print "$line\n";
     my $bytes = 0;
-    # get all global variables and grep for our ones
+    # get all global variables and grep for our ones, print only our ones
     # ugly code, but generic
-    foreach my $v (sort keys %main::) {
+    foreach my $v (sort(keys %main::)) {
         #print Dumper $v; # liefert den gesamten Hash
-        next if ("*{$main::{$v}}" !~ m/\*main::/);
-        next if ($main::{$v} =~ m/::$/);           # avoid "Segmentation fault"
         next if (not grep {/^(cfg|check|cipher|cmd|data|dbx|info|osaft|short|text)/} $v) ;
         next if (    grep {/^check(cipher|http)/} $v) ; # avoid "Segmentation fault"
-        # TODO: my $typ = ref($main::{$v}); # not yet working
-        #dbx print "K $v $main::{$v} => $t";
+        next if ("*{$main::{$v}}" !~ m/\*main::/);  # ignore CODE, Perl variables
         my $size = Devel::Size::total_size(\$main::{$v});
         $bytes += $size;
         printf("%7s\t%s\n", $size, "%$v");
@@ -651,9 +651,9 @@ EoT
     #print "%cfg    : ", Devel::Size::total_size(\%cfg);
     #print "%data   : ", Devel::Size::total_size(\%data);
     #print "%checks : ", Devel::Size::total_size(\%checks);
-    #print "%ciphers: ", Devel::Size::total_size(\%ciphers);
-    #print "\@results: ", Devel::Size::total_size(\@cipher_results);
-    #print "%text   : ", Devel::Size::total_size(\%text);
+    #print "%ciphers: ", Devel::Size::total_size(\%Ciphers::ciphers);
+    #print "\@results: ", Devel::Size::total_size(\@Ciphers::cipher_results);
+    #print "%text   : ", Devel::Size::total_size(\%OText::text);
     #print "%_SSLinfo   : ", Devel::Size::total_size(\%SSLinfo::_SSLinfo);
     return;
 } # _test_memory
@@ -853,7 +853,7 @@ sub init_show   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         _p_k_v("timeout",   $::cmd{'timeout'});
         _p_k_v("openssl",   $::cmd{'openssl'});
     } else {    # full information
-        foreach my $key (sort keys %::cmd) { _ptype(\%::cmd, $key); }
+        foreach my $key (sort(keys %::cmd)) { _ptype(\%::cmd, $key); }
     }
     _p_k_v("extopenssl",    $::cmd{'extopenssl'} . " (1= use openssl to check ciphers)");
     _p_k_v("extciphers",    $::cmd{'extciphers'} . " (1= use cipher from openssl)");
@@ -861,11 +861,11 @@ sub init_show   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
 
     if (1 < $cfg{'trace'}) {    # full information
         _pline("complete %cfg {");
-        foreach my $key (sort keys %cfg) {
+        foreach my $key (sort(keys %cfg)) {
             if ($key =~ m/(hints|openssl|ssleay|sslerror|sslhello|regex|^out|^use)$/) { # |data
                 # TODO: ugly data structures ... should be done by _p_k_v()
                 _ptext("# - - - - HASH: $key= {");
-                foreach my $k (sort keys %{$cfg{$key}}) {
+                foreach my $k (sort(keys %{$cfg{$key}})) {
                     if ($key =~ m/openssl/) {
                         _p_k_v($k, ___ARR(@{$cfg{$key}{$k}}));
                     } else {
@@ -939,7 +939,7 @@ sub exit_show   {
     _p_k_v("exit status", (($cfg{'use'}->{'exitcode'}==0) ? 0 : $checks{'cnt_checks_no'}->{val}));
     _ptext("internal administration ..");
     _pline('@cfg{done} {');
-    foreach my $key (sort keys %{$cfg{'done'}}) {
+    foreach my $key (sort(keys %{$cfg{'done'}})) {
         _ptype(\%{$cfg{'done'}}, $key);
     }
     _pline('@cfg{done} }');
@@ -1216,7 +1216,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.33 2024/07/01
+3.34 2024/07/26
 
 =head1 AUTHOR
 
