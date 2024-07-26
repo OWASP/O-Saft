@@ -5,21 +5,21 @@
 #!# This software is licensed under GPLv2.  Please see o-saft.pl for details.
 
 package ODoc;
+use strict;
+use warnings;
+use utf8;
 
 # for description of "no critic" pragmas, please see  t/.perlcriticrc  and
 # SEE Perl:perlcritic
 
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
 
-use strict;
-use warnings;
-
 # binmode(...); # inherited from parent, SEE Perl:binmode()
 
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.31 24/06/24 15:27:50";
+my  $SID_odoc   = "@(#) ODoc.pm 3.32 24/07/26 16:02:40";
 our $VERSION    = "24.06.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -31,14 +31,10 @@ BEGIN { # mainly required for testing ...
     }
     unshift(@INC, $_path)   if not (grep{/^$_path$/} @INC);
     unshift(@INC, "lib")    if not (grep{/^lib$/}    @INC);
-    # our @EXPORT_OK  = qw( .. );   # not used, should be used full qualified
 }
 
 use OText       qw(%STR);
-use OCfg        qw(%cfg);
-
-# OSAFT_STANDALONE my %cfg  = %OCfg::cfg; ## no critic qw(Variables::ProhibitPackageVars)
-#    # only $OCfg::cfg{dirs} used
+use OCfg;
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -304,10 +300,10 @@ sub _get_standalone {
     my $path = __FILE__;
        $path =~ s#/[^/\\]*$##;
     foreach my $f ("$file",   "$path/$file",      "$path/$name",
-                      "$path/$cfg{'dirs'}->{'doc'}/$name",
-                      "$path/$cfg{'dirs'}->{'lib'}/$name",
-                      "$path/$cfg{'dirs'}->{'lib'}/$file",
-                      "$path/../$cfg{'dirs'}->{'lib'}/$file"
+                      "$path/$OCfg::cfg{'dirs'}->{'doc'}/$name",
+                      "$path/$OCfg::cfg{'dirs'}->{'lib'}/$name",
+                      "$path/$OCfg::cfg{'dirs'}->{'lib'}/$file",
+                      "$path/../$OCfg::cfg{'dirs'}->{'lib'}/$file"
                      ) {
         return $f if -e $f;
     }
@@ -330,7 +326,7 @@ sub _get_filehandle {
         # file may be in same directory as caller, or in same as this module
         if (not -e $file) {
             my  $path = __FILE__;
-                $path =~ s#^/($cfg{'dirs'}->{'lib'}/.*)#$1#;# own module directory
+                $path =~ s#^/($OCfg::cfg{'dirs'}->{'lib'}/.*)#$1#;# own module directory
                 $path =~ s#/[^/\\]*$##;     # relative path of this file
                 # Dirty hack: some OS return an absolute path for  __FILE__ ;
                 # then $file would not be found because that path is wrong. If
@@ -338,7 +334,7 @@ sub _get_filehandle {
                 # NOTE: This behaviour (on older Mac OSX) is considered a bug
                 #       in Perl there.
             if (not -e "$path/$file") {
-                $path =  $cfg{'dirs'}->{'doc'}; # doc directory
+                $path =  $OCfg::cfg{'dirs'}->{'doc'}; # doc directory
             }
             $file = "$path/$file";
             # following line for gen_standalone.sh (used with make)
@@ -534,8 +530,8 @@ sub list    {
     #  sorted list simplifies tests ...
     my $dir = shift;
        $dir =~ s#[/\\][^/\\]*$##;
-       $dir .= "/$cfg{'dirs'}->{'doc'}" if $dir !~ m#$cfg{'dirs'}->{'doc'}/?$#;
-       $dir  =   $cfg{'dirs'}->{'doc'}  if not -d $dir; # last resort
+       $dir .= "/$OCfg::cfg{'dirs'}->{'doc'}" if $dir !~ m#$OCfg::cfg{'dirs'}->{'doc'}/?$#;
+       $dir  =   $OCfg::cfg{'dirs'}->{'doc'}  if not -d $dir; # last resort
     my @txt;
     opendir(my $dh, $dir) or return $!;
     while (my $file = readdir($dh)) {
@@ -612,7 +608,7 @@ lib/OText.pm
 
 =head1 VERSION
 
-3.31 2024/06/24
+3.32 2024/07/26
 
 
 =head1 AUTHOR
