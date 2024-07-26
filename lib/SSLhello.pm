@@ -55,7 +55,7 @@ package SSLhello;
 use strict;
 use warnings;
 
-my  $SID_sslhello = "@(#) SSLhello.pm 3.26 24/06/24 15:32:30";
+my  $SID_sslhello = "@(#) SSLhello.pm 3.27 24/07/26 14:19:57";
 our $VERSION    = "24.06.24";
 my  $SSLHELLO   = "SSLhello";
 
@@ -77,12 +77,10 @@ use Socket;     # constants and methods are used with full qualified name
 use IO::Socket::INET; #require IO::Select if ($SSLhello::trace > 1);
 use Carp;
 use OText         qw(%STR);
-use OCfg;   # main parameters, lists and functions that are used by o-saft and SSLhello
+use OCfg          qw(%cfg); # main parameters, lists and functions that are used by o-saft and SSLhello
 use error_handler qw(%OERR);
     # use internal error_handler, get all constants used for SSLHELLO, for subs
     # the full names will be used (includung error_handler-><sub>)
-# OSAFT_STANDALONE my  %OERR = %error_handler::OERR;
-    # in stand-alone mode %OERR must be used as %error_handler::OERR
 
 my %CST = (
     '_MY_SSL3_MAX_CIPHERS'                => 64, # Max nr of ciphers sent in a SSL3/TLS Client-Hello to test if they are supported by the server, e.g. 32, 48, 64, 128, ...
@@ -182,7 +180,7 @@ As it simulates only the first part of the SSL/TLS handshake, it is really fast.
 Export Functions:
 $socket = openTcpSSLconnection ($host; $port); # Open a TCP/IP connection to a host on a port (via proxy) and doing STARTTLS if requested
 @accepted = SSLhello::checkSSLciphers ($host, $port, $ssl, @testing); # Check a list if ciphers (@testing), output: @accepted ciphers (if the first 2 ciphers are equal the server has an order)
-SSLhello::printCipherStringArray ($cfg{'legacy'}, $host, $port, $ssl, $sni, @accepted); # print the list of ciphers (@accepted ciphers)
+SSLhello::printCipherStringArray ($OCfg::cfg{'legacy'}, $host, $port, $ssl, $sni, @accepted); # print the list of ciphers (@accepted ciphers)
 
 =head1 OPTIONS
 
@@ -224,7 +222,6 @@ our @EXPORT_OK  = qw(
 #_____________________________________________________________________________
 #___________________________________________________________ initialisation __|
 
-#our %main::cfg;    # provided by caller
 our $dtlsEpoch = 0; # for DTLS only (globally)
 our %_SSLhello;     # our internal data structure
 our %resultHash;    # Hash that collects results
