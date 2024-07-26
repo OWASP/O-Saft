@@ -66,10 +66,9 @@
 
 use strict;
 use warnings;
-no warnings 'once';     ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
-   # "... used only once: possible typo ..." appears when OTrace.pm not included
+use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.87 24/07/24 16:35:15"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.88 24/07/26 17:01:45"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -210,7 +209,7 @@ BEGIN {
         }
     }
     foreach my $arg (@perl_noinc) {
-        @INC = grep $_ !~ m#$arg#, @INC;
+        @INC = grep{$_ !~ m#$arg#} @INC;
     }
     _trace_info("BEGIN9  - end");
 } # BEGIN
@@ -230,13 +229,15 @@ $::osaft_standalone = 0;        # SEE Note:Stand-alone
 #| -------------------------------------
 # modueles always needed, it's ok to die if missing, hence not loaded with _load_modules()
 use OText       qw(%STR);
-use Ciphers     qw(%ciphers %ciphers_desc %ciphers_notes $cipher_results);
-use OCfg;       # defines %cfg, ...
-use OData;
+use OCfg        qw(%cfg %dbx %data_oid %prot);
+use OData       qw(%checks   %data %check_cert %check_conn %check_dest %check_http %check_size);
+                # (%check_cert %check_conn %check_dest %check_http %check_size );
+use Ciphers     qw(%ciphers  %ciphers_desc %ciphers_notes $cipher_results);
 
 printf("#$cfg{'me'} %s\n", join(" ", @ARGV)) if _is_argv('(?:--trace[_.-]?(?:CLI$)?)');
     # print complete command-line if any --trace-* was given, it's intended
     # that it works if unknown --trace-* was given, for example --trace-CLI
+
 
 #_____________________________________________________________________________
 #______________________________________ functions for trace, initialisation __|
@@ -348,7 +349,7 @@ sub _load_file      {
     my $fil = shift;
     my $txt = shift;
     my $err = "";
-    return $err if (grep{/$fil/} @{$OCfg::dbx{'files'}});   # avoid multiple loads
+    return $err if (grep{/$fil/} @{$dbx{'files'}}); # avoid multiple loads
     # need eval to catch "Can't locate ... in @INC ..."
     eval {require $fil;} or _warn("101: 'require $fil' failed");
     $err = $@;
@@ -359,7 +360,7 @@ sub _load_file      {
     } else {
         $txt = "$txt failed";
     }
-    push(@{$OCfg::dbx{'files'}}, $fil);
+    push(@{$dbx{'files'}}, $fil);
     _vprint_read($fil, $txt);
     return $err;
 } # _load_file
@@ -377,7 +378,7 @@ my $port    = "";       # the port currently used in main
 my $legacy  = "";       # the legacy mode used in main
 my $verbose = 0;        # verbose mode used in main; option --v
    # above host, port, legacy and verbose are just shortcuts for corresponding
-   # values in $OCfg::cfg{}, used for better human readability
+   # values in $cfg{}, used for better human readability
 my $test    = "";       # set to argument ist it bwgins with --test*
 my $info    = 0;        # set to 1 if +info
 my $check   = 0;        # set to 1 if +check was used
@@ -402,23 +403,8 @@ our %cmd = (
     'version'       => "",      # OpenSSL's version number, see OCfg::get_openssl_version
 ); # %cmd
 
-# simplify use of variables
-# SEE Note:Data Structures
-our %ciphers    = %Ciphers::ciphers;
-our %cfg        = %OCfg::cfg;
-our %checks     = %OData::checks;
-our %data       = %OData::data;
-our %data0      = %OData::data0;
-our %info       = %OData::info;
-our %shorttexts = %OData::shorttexts;
-our %check_cert = %OData::check_cert;
-our %check_conn = %OData::check_conn;
-our %check_dest = %OData::check_dest;
-our %check_http = %OData::check_http;
-our %check_size = %OData::check_size;
-
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.87"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.88"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -460,6 +446,7 @@ OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'
         'check_certchars' => 0,
 );
 
+# TODO: move %text to OCfg or OText
 our %text = (   # our instead of my required for --help=cfg-text --help=text
     'separator'     => ":",# separator character between label and value
     # texts may be redefined
@@ -619,7 +606,7 @@ if (0 >= _is_argv('(?:--no.?rc)')) {            # only if not inhibited
     # we do not use a function for following to avoid passing @argv, @rc_argv
     _hint("use  --trace  to see complete settings") if _is_argv('(?:--v(?:=[0-9]+)?)');
     if (open(my $rc, '<:encoding(UTF-8)', "$cfg{'RC-FILE'}")) {
-        push(@{$OCfg::dbx{'files'}}, $cfg{'RC-FILE'});
+        push(@{$dbx{'files'}}, $cfg{'RC-FILE'});
         _vprint_read("$cfg{'RC-FILE'}", "RC-FILE done");
         ## no critic qw(ControlStructures::ProhibitMutatingListFunctions)
         #  NOTE: the purpose here is to *change the source array"
@@ -662,7 +649,7 @@ if (0 >= _is_argv('(?:--no.?rc)')) {            # only if not inhibited
         _vprint_read("$cfg{'RC-FILE'}", "RC-FILE: $!") if _is_trace();
     }
 }
-$cfg{'RC-ARGV'} = [@rc_argv];
+@{$cfg{'RC-ARGV'}} = @rc_argv;
 $cfg{'done'}->{'rc_file'}++ if (0 < $#rc_argv);
 
 _trace_info("RCFILE9 - RC-FILE end");
@@ -710,7 +697,10 @@ if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {    # SEE Note:CGI mode
 }
 if (exists $INC{'lib/OTrace.pm'}) {
     # module was loaded; it does not auto-export its methods
-    no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
+    ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
+    no warnings 'redefine';
+    no warnings 'once';
+       # "... used only once: possible typo ..." appears when OTrace.pm not included
     *trace              = \&OTrace::trace;
     *trace_             = \&OTrace::trace_;
     *trace1             = \&OTrace::trace1;
@@ -755,19 +745,6 @@ OUsr::pre_init();
 
 #| initialise defaults
 #| -------------------------------------
-
-# more initialisation for %data
-# add keys from %OCfg::prot to %data,
-$data{'fallback_protocol'}->{'val'} = sub { return $OCfg::prot{'fallback'}->{val}  };
-foreach my $ssl (keys %OCfg::prot) {
-    my $key = lc($ssl); # keys in data are all lowercase (see: convert all +CMD)
-    $data{$key}->{val} = sub {    return $OCfg::prot{$ssl}->{'default'}; };
-    $data{$key}->{txt} = "Target default $OCfg::prot{$ssl}->{txt} cipher";
-}
-foreach my $ssl (keys %OCfg::prot) {
-    my $key = lc($ssl); # keys in data are all lowercase (see: convert all +CMD)
-    $shorttexts{$key} = "Default $OCfg::prot{$ssl}->{txt} cipher";
-}
 
 my %scores = (  # will be removed in future ...
     # keys starting with 'check_' are for total values
@@ -1057,7 +1034,7 @@ sub _set_cfg_from_file {
     #       the logic of "open() && do{}; warn();",  hence the code was changed
     #       to use an  if-condition
     if (open($fh, '<:encoding(UTF-8)', $fil)) { ## no critic qw(InputOutput::RequireBriefOpen)
-        push(@{$OCfg::dbx{'files'}}, $fil);
+        push(@{$dbx{'files'}}, $fil);
         _vprint_read("$fil", "USER-FILE configuration file") if (_is_cfg_out('header'));
         while ($line = <$fh>) {
             #
@@ -1726,12 +1703,12 @@ sub _check_openssl  {
         my $ssl;
         # NOTE: grep() uses %prot instead of %{$cfg{'openssl_option_map'}}
         #       for better human readability
-        if (grep{$ssl = $_ if $opt eq ($OCfg::prot{$_}{'opt'}||"");} keys %OCfg::prot) {
+        if (grep{$ssl = $_ if $opt eq ($prot{$_}{'opt'}||"");} keys %prot) {
             #_dbx "opt : $opt = $val # $ssl = $cfg{$ssl}";
             # simple one-liner to get key from %prot for which $opt matches
             # %prot maps our internal protocol string to the option used by
             # openssl; %cfg{$ssl} is set to 1 if ciphers should be scanned.
-            # if $opt exists in %prot,  in particula if  $OCfg::prot{$ssl}->{opt}
+            # if $opt exists in %prot,  in particula if  $prot{$ssl}->{opt}
             # equals $opt grep() sets $ssl to the key of %prot
             # ||""  avoids Perl warning "Use of uninitialized value ..."
             # nothing to do if protocol disabled by user
@@ -1913,56 +1890,9 @@ sub _init_checks_score  {
 } # _init_checks_score
 
 sub _init_checks_val    {
-    # set all default check values here
+    # set all default check values depending on other options
     trace("_init_checks_val() {");
     my $notxt = "";
-    #my $notxt = $text{'undef'}; # TODO: default should be 'undef'
-    $checks{$_}->{val}   = $notxt foreach (keys %checks);
-#### temporär, bis alle so gesetzt sind {
-   $checks{'heartbeat'}->{val}  = $text{'undef'};
-   foreach my $key (qw(krb5 psk_hint psk_identity srp session_ticket session_lifetime)) {
-       $checks{$key}->{val}     = $text{'undef'};
-   }
-#### temporär }
-    # initialise $check{...}-{val} with empty string, because they will be
-    # extended per $ssl (protocol)
-    foreach my $key (keys %checks) {
-        $checks{$key}->{val}    =  0 if ($key =~ m/$cfg{'regex'}->{'cmd-sizes'}/);
-        $checks{$key}->{val}    =  0 if ($key =~ m/$cfg{'regex'}->{'SSLprot'}/);
-    }
-    # some special values %checks{'sts_maxage*'}
-    $checks{'sts_maxage0d'}->{val}  =        1;
-    $checks{'sts_maxage1d'}->{val}  =    86400; # day
-    $checks{'sts_maxage1m'}->{val}  =  2592000; # month
-    $checks{'sts_maxage1y'}->{val}  = 31536000; # year
-    $checks{'sts_maxagexy'}->{val}  = 99999999;
-    $checks{'sts_maxage18'}->{val}  = 10886400; # 18 weeks
-    # if $data{'https_sts'}->{val}($host) is empty {
-        foreach my $key (qw(
-            sts_maxage sts_expired sts_preload sts_subdom
-            hsts_location hsts_refresh hsts_fqdn hsts_samehost hsts_sts
-        )) {
-            $checks{$key}->{val}        = $text{'na_STS'};
-        }
-        # following can not be set here, because they contain integers, see above
-        #foreach my $key (qw(sts_maxage00 sts_maxagexy sts_maxage18 sts_maxage0d)) {
-        #    $checks{$key}->{val}        = $text{'na_STS'};
-        #}
-        #foreach my $key (qw(sts_maxage1y sts_maxage1m sts_maxage1d)) {
-        #    $checks{$key}->{val}        = $text{'na_STS'};
-        #}
-    # }
-    foreach my $key (@{$cfg{'cmd-vulns'}}) {
-        $checks{$key}->{val}        = $text{'undef'};  # may be refined below
-    }
-    foreach my $key (qw(
-        cipher_null cipher_adh cipher_exp cipher_cbc cipher_des cipher_rc4
-        cipher_edh  cipher_pfs cipher_pfsall
-        beast breach freak logjam lucky13 rc4 robot sloth sweet32
-        ism pci fips tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525
-    )) {
-        $checks{$key}->{val}    = "";
-    }
     if (not _is_cfg_use('dns')) {
         $checks{'reversehost'}->{val}= $text{'na_dns'};
     }
@@ -1975,8 +1905,8 @@ sub _init_checks_val    {
     }
     if (not _is_cfg_use('cert')) {
         $cfg{'no_cert_txt'} = $notxt if ("" eq $cfg{'no_cert_txt'});
-        foreach my $key (keys %check_cert) {    # anything related to certs
-            $checks{$key}   ->{val} = $text{'na_cert'} if (_is_hashkey($key, \%check_cert));
+        foreach my $key (keys %OData::check_cert) { # anything related to certs
+            $checks{$key}   ->{val} = $text{'na_cert'} if (_is_hashkey($key, \%OData::check_cert));
         }
         foreach my $key (qw(hostname certfqdn tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_6125_names rfc_2818_names)) {
             $checks{$key}   ->{val} = $text{'na_cert'};
@@ -2015,7 +1945,6 @@ sub _init_all       {
     _tprint("_init_all() {") if _is_trace();    # trace() not yet available
     $cfg{'done'}->{'init_all'}++;
     _init_checks_score();
-    _init_checks_val();
     $cfg{'hints'}->{$_} = $text{'hints'}->{$_} foreach (keys %{$text{'hints'}});
     # _init_openssldir();
         # not done here because it needs openssl program, which may be set by
@@ -2023,7 +1952,6 @@ sub _init_all       {
     _tprint("_init_all() }") if _is_trace();
     return;
 } # _init_all
-_init_all();   # initialise defaults in %checks (score, val); parts be done again later
 
 sub _resetchecks    {
     # reset values
@@ -2363,7 +2291,7 @@ sub _is_tls12only   {
         # If $cfg{$ssl}=0, the check may be disabled, i.e. with --no-sslv3 .
         # If the protocol  is supported by the target,  at least  one cipher
         # must be accpted. So the amount of ciphers must be > 0.
-        if ($OCfg::prot{$ssl}->{'cnt'}  >  0) {
+        if ($prot{$ssl}->{'cnt'}  >  0) {
             push(@ret, $ssl);
         }
         if ($cfg{$ssl} == 0) {
@@ -2773,7 +2701,7 @@ sub _get_data0      {
     #  this function currently only returns data for:  cn_nosni, session_ticket
     my ($host, $port) = @_;
     trace("_get_data0($host, $port) {");
-    # check if SNI supported, also copy some data to %data0
+    # check if SNI supported, also copy some data to %OData::data0
         # to do this, we need a clean SSL connection with SNI disabled
         # see SSL_CTRL_SET_TLSEXT_HOSTNAME in NET::SSLinfo
         # finally we close the connection to be clean for all other tests
@@ -2786,13 +2714,13 @@ sub _get_data0      {
        ) {
         trace(" cn_nosni: method= $SSLinfo::method");
         $data{'cn_nosni'}->{val}        = $data{'cn'}->{val}($host, $port);
-        $data0{'session_ticket'}->{val} = $data{'session_ticket'}->{val}($host, $port);
+        $OData::data0{'session_ticket'}->{val} = $data{'session_ticket'}->{val}($host, $port);
 # TODO:  following needs to be improved, because there are multipe openssl
         # calls which may produce unexpected results (10/2015) {
         # 'sort' is used to make tests comparable
-        foreach my $key (sort keys %data) { # copy to %data0
+        foreach my $key (sort(keys %data)) { # copy to %OData::data0
             next if ($key =~ m/$cfg{'regex'}->{'commands_int'}/i);
-            $data0{$key}->{val} = $data{$key}->{val}($host, $port);
+            $OData::data0{$key}->{val} = $data{$key}->{val}($host, $port);
         }
 # }
     } else {
@@ -2973,15 +2901,15 @@ sub ciphers_default_openssl {
     trace("ciphers_default_openssl($host, $port) {");
     $cfg{'done'}->{'ssl_failed'} = 0;   # SEE Note:--ssl-error
     foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
-        next if not defined $OCfg::prot{$ssl}->{opt};
+        next if not defined $prot{$ssl}->{opt};
         my $anf = time();
         # no need to check for "valid" $ssl (like DTLSfamily), done by _get_cipher_default()
-        $OCfg::prot{$ssl}->{'cipher_strong'}  = _get_cipher_default($ssl, $host, $port, 'strong' );
-        $OCfg::prot{$ssl}->{'cipher_weak'}    = _get_cipher_default($ssl, $host, $port, 'weak'   );
-        $OCfg::prot{$ssl}->{'default'}        = _get_cipher_default($ssl, $host, $port, 'default');
+        $prot{$ssl}->{'cipher_strong'}  = _get_cipher_default($ssl, $host, $port, 'strong' );
+        $prot{$ssl}->{'cipher_weak'}    = _get_cipher_default($ssl, $host, $port, 'weak'   );
+        $prot{$ssl}->{'default'}        = _get_cipher_default($ssl, $host, $port, 'default');
         last if (0 < _is_ssl_error($anf, time(), "$ssl: abort getting preferred cipher"));
-        my $cipher  = $OCfg::prot{$ssl}->{'cipher_strong'};
-        $OCfg::prot{$ssl}->{'cipher_pfs'}     = $cipher if ("" ne _is_ssl_pfs($ssl, $cipher));
+        my $cipher  = $prot{$ssl}->{'cipher_strong'};
+        $prot{$ssl}->{'cipher_pfs'}     = $cipher if ("" ne _is_ssl_pfs($ssl, $cipher));
     }
     checkpreferred($host, $port);
     trace("ciphers_default_openssl() }");
@@ -3194,9 +3122,9 @@ sub ciphers_scan_intern {
         # get default/preferred/selected cipher
         if (exists $accepted{'0'}[1]) {
             my $cipher = Ciphers::get_name($accepted{'0'}[1]) || $STR{UNDEF}; # may return undef
-            $OCfg::prot{$ssl}->{'cipher_strong'}  = $cipher;
-            $OCfg::prot{$ssl}->{'default'}        = $cipher;
-            $OCfg::prot{$ssl}->{'cipher_pfs'}     = $cipher if ("" ne _is_ssl_pfs($ssl, $cipher));
+            $prot{$ssl}->{'cipher_strong'}  = $cipher;
+            $prot{$ssl}->{'default'}        = $cipher;
+            $prot{$ssl}->{'cipher_pfs'}     = $cipher if ("" ne _is_ssl_pfs($ssl, $cipher));
             trace(sprintf(" default cipher %7s: %s", $ssl, $cipher));
         }
 
@@ -3553,13 +3481,13 @@ sub checkalpn       {
     return if (1 < $cfg{'done'}->{'checkalpn'});
     # trace(" trace not necessary, output from check_nextproto() is sufficient");
     if ($cfg{'ssleay'}->{'get_alpn'} > 0) {
-        $info{'alpns'} = join(",", check_nextproto($host, $port, 'ALPN', 'single'));
-        $info{'alpn'}  = join(",", check_nextproto($host, $port, 'ALPN', 'all'));
+        $OData::info{'alpns'} = join(",", check_nextproto($host, $port, 'ALPN', 'single'));
+        $OData::info{'alpn'}  = join(",", check_nextproto($host, $port, 'ALPN', 'all'));
     }
     # else warning already printed
     if ($cfg{'ssleay'}->{'get_npn'} > 0) {
-        $info{'npns'}  = join(",", check_nextproto($host, $port, 'NPN',  'single'));
-        $info{'npn'}   = join(",", check_nextproto($host, $port, 'NPN',  'all'));
+        $OData::info{'npns'}  = join(",", check_nextproto($host, $port, 'NPN',  'single'));
+        $OData::info{'npn'}   = join(",", check_nextproto($host, $port, 'NPN',  'all'));
     }
     # else warning already printed
     # TODO: 'next_protocols' should be retrieved here too
@@ -3573,8 +3501,8 @@ sub checkpreferred  {
     return if (1 < $cfg{'done'}->{'checkpreferred'});
     trace("checkpreferred($host, $port) {");
     foreach my $ssl (@{$cfg{'version'}}) {      # check all SSL versions
-        my $strong = $OCfg::prot{$ssl}->{'cipher_strong'};
-        my $weak   = $OCfg::prot{$ssl}->{'cipher_weak'};
+        my $strong = $prot{$ssl}->{'cipher_strong'};
+        my $weak   = $prot{$ssl}->{'cipher_weak'};
         my $txt = ($weak ne $strong) ? _prot_cipher($ssl, "$strong,$weak") : "";
         $checks{'cipher_strong'}->{val} .= $txt;  # assumtion wrong if only one cipher accepted
         $checks{'cipher_order'}->{val}  .= $txt;  # NOT YET USED
@@ -3626,18 +3554,18 @@ sub checkcipher     {
     $checks{'sloth'}    ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_sloth($ssl, $c));
     $checks{'sweet32'}  ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_sweet($ssl, $c));
     # counters
-    $OCfg::prot{$ssl}->{'-?-'}++         if ($risk =~ /-\?-/);   # private marker
-    $OCfg::prot{$ssl}->{'WEAK'}++        if ($risk =~ /WEAK/i);
-    $OCfg::prot{$ssl}->{'LOW'}++         if ($risk =~ /LOW/i);
-    $OCfg::prot{$ssl}->{'MEDIUM'}++      if ($risk =~ /MEDIUM/i);
-    $OCfg::prot{$ssl}->{'HIGH'}++        if ($risk =~ /HIGH/i);
+    $prot{$ssl}->{'-?-'}++         if ($risk =~ /-\?-/);   # private marker
+    $prot{$ssl}->{'WEAK'}++        if ($risk =~ /WEAK/i);
+    $prot{$ssl}->{'LOW'}++         if ($risk =~ /LOW/i);
+    $prot{$ssl}->{'MEDIUM'}++      if ($risk =~ /MEDIUM/i);
+    $prot{$ssl}->{'HIGH'}++        if ($risk =~ /HIGH/i);
     $risk = OCfg::get_cipher_owasp($c);
-    $OCfg::prot{$ssl}->{'OWASP_miss'}++  if ($risk eq 'miss');
-    $OCfg::prot{$ssl}->{'OWASP_NA'}++    if ($risk eq '-?-');
-    $OCfg::prot{$ssl}->{'OWASP_D'}++     if ($risk eq 'D');
-    $OCfg::prot{$ssl}->{'OWASP_C'}++     if ($risk eq 'C');
-    $OCfg::prot{$ssl}->{'OWASP_B'}++     if ($risk eq 'B');
-    $OCfg::prot{$ssl}->{'OWASP_A'}++     if ($risk eq 'A');
+    $prot{$ssl}->{'OWASP_miss'}++  if ($risk eq 'miss');
+    $prot{$ssl}->{'OWASP_NA'}++    if ($risk eq '-?-');
+    $prot{$ssl}->{'OWASP_D'}++     if ($risk eq 'D');
+    $prot{$ssl}->{'OWASP_C'}++     if ($risk eq 'C');
+    $prot{$ssl}->{'OWASP_B'}++     if ($risk eq 'B');
+    $prot{$ssl}->{'OWASP_A'}++     if ($risk eq 'A');
     trace("checkcipher() }");
     return;
 } # checkcipher
@@ -3648,7 +3576,7 @@ sub checkciphers_pfs {
     my $cnt_pfs = shift;
     my $ssl     = shift; # session_protocol
     trace("checkciphers_pfs($cnt_all, $cnt_pfs, $ssl) {");
-    my $cipher  = $OCfg::prot{$ssl}->{'default'};
+    my $cipher  = $prot{$ssl}->{'default'};
     my @prots   = grep{/(^$ssl$)/i} @{$cfg{'versions'}};
     if (1 > $cnt_all) { # no protocol with ciphers found
         $checks{'cipher_pfs'}->{val}= $text{'miss_protocol'};
@@ -3658,7 +3586,7 @@ sub checkciphers_pfs {
         $checks{'cipher_pfs'}->{val}  = ("" eq _is_ssl_pfs($ssl, $cipher)) ? $cipher : "";
     } else {
         _warn("631: protocol '". join(';', @prots) . "' multiple protocols with selected cipher available");
-        $checks{'cipher_pfs'}->{val} .= "$ssl}:" . $OCfg::prot{$_}->{'default'} . " " foreach (@prots);
+        $checks{'cipher_pfs'}->{val} .= "$ssl}:" . $prot{$_}->{'default'} . " " foreach (@prots);
     }
     $checks{'cipher_pfsall'}->{val} = ($checks{'cnt_ciphers'}->{val} > $cnt_pfs) ? " " : "";
     $checks{'cipher_pfsall'}->{val} = $text{'na'} if (1 > $checks{'cnt_ciphers'}->{val});
@@ -3676,10 +3604,10 @@ sub checkciphers    {
 
     my $cnt_all = 0; # count ciphers
     my $cnt_pfs = 0;
-    $OCfg::prot{'cipher_selected'} = "";
+    $prot{'cipher_selected'} = "";
     foreach my $ssl (reverse(@{$cfg{'version'}})) { # all checked SSL versions
-        $cnt_all   += $OCfg::prot{$ssl}->{'cnt'};
-        $cnt_pfs   += scalar(@{$OCfg::prot{$ssl}->{'ciphers_pfs'}});
+        $cnt_all   += $prot{$ssl}->{'cnt'};
+        $cnt_pfs   += scalar(@{$prot{$ssl}->{'ciphers_pfs'}});
         if (not $results->{$ssl}) { # no ciphers found; avoid misleading values
             foreach my $key (@{$cfg{'need-cipher'}}) {
                 if ($key =~ m/(drown|poodle|has(?:ssl|tls))/) {
@@ -3688,22 +3616,22 @@ sub checkciphers    {
                 }
                 #$checks{$key}->{val} = _get_text('miss_cipher', ""); # ist so falsch
             }
-            @{$OCfg::prot{$ssl}->{'ciphers_pfs'}} = _get_text('miss_cipher', "");
+            @{$prot{$ssl}->{'ciphers_pfs'}} = _get_text('miss_cipher', "");
         }
         # collect selected ciphers, overwrites duplicates
         # reverse(@{$cfg{'version'}}) is sorted accordig strength of protocol,
-        # $OCfg::prot{'cipher_selected'}  is the list of ciphers  offered as default
+        # $prot{'cipher_selected'}  is the list of ciphers  offered as default
         # by the target, where each cipher is prefixed with the protocol;
         # the default cipher of each protocol is searched for in the list and
         # only added if it not exists
-        my $cipher = $OCfg::prot{$ssl}->{'default'};  # from ciphers_scan_*()
+        my $cipher = $prot{$ssl}->{'default'};  # from ciphers_scan_*()
         next if not $cipher;    # ignore empty ones
         next if ($STR{UNDEF} eq $cipher);
         $cipher = Ciphers::get_name($cipher) if _is_cipher_key($cipher);
-        if (not grep{/$cipher/} $OCfg::prot{'cipher_selected'}) {
-            $OCfg::prot{'cipher_selected'} .= " $ssl:$cipher";
+        if (not grep{/$cipher/} $prot{'cipher_selected'}) {
+            $prot{'cipher_selected'} .= " $ssl:$cipher";
         }
-        $OCfg::prot{'cipher_selected'} =~ s/^\s*//; # remove leading spaces
+        $prot{'cipher_selected'} =~ s/^\s*//; # remove leading spaces
     } # $ssl
 
     my %hasecdsa;   # ECDHE-ECDSA is mandatory for TR-02102-2, see 3.2.3
@@ -3723,13 +3651,13 @@ sub checkciphers    {
             next;
         }
         if ($yesno =~ m/yes/i) {    # cipher accepted
-            $OCfg::prot{$ssl}->{'cnt'}++;
+            $prot{$ssl}->{'cnt'}++;
             checkcipher($ssl, $key);
             $checks{'logjam'}->{val}   .= _prot_cipher_or_empty($ssl, _is_ssl_logjam($ssl, $cipher));
         }
         $hasrsa{$ssl}   = 1 if ($cipher =~ /$cfg{'regex'}->{'EC-RSA'}/);
         $hasecdsa{$ssl} = 1 if ($cipher =~ /$cfg{'regex'}->{'EC-DSA'}/);
-        push(@{$OCfg::prot{$ssl}->{'ciphers_pfs'}}, $cipher) if ("" ne _is_ssl_pfs($ssl, $cipher));  # add PFS cipher
+        push(@{$prot{$ssl}->{'ciphers_pfs'}}, $cipher) if ("" ne _is_ssl_pfs($ssl, $cipher));  # add PFS cipher
       }
     }
 
@@ -3739,18 +3667,18 @@ sub checkciphers    {
     $checks{'breach'}->{val} = "<<NOT YET IMPLEMENTED>>";
 
     foreach my $ssl (@{$cfg{'version'}}) { # check all SSL versions
-        $cnt_all   += $OCfg::prot{$ssl}->{'cnt'};
-        $cnt_pfs   += scalar(@{$OCfg::prot{$ssl}->{'ciphers_pfs'}});
+        $cnt_all   += $prot{$ssl}->{'cnt'};
+        $cnt_pfs   += scalar(@{$prot{$ssl}->{'ciphers_pfs'}});
         $hasrsa{$ssl}  = 0 if not defined $hasrsa{$ssl};    # keep Perl silent
         $hasecdsa{$ssl}= 0 if not defined $hasecdsa{$ssl};  #  -"-
         # TR-02102-2, see 3.2.3
-        if ($OCfg::prot{$ssl}->{'cnt'} > 0) { # checks do not make sense if there're no ciphers
+        if ($prot{$ssl}->{'cnt'} > 0) { # checks do not make sense if there're no ciphers
             $checks{'tr_02102+'}->{val} .= _prot_cipher($ssl, $text{'miss_RSA'})   if ($hasrsa{$ssl}   != 1);
             $checks{'tr_02102+'}->{val} .= _prot_cipher($ssl, $text{'miss_ECDSA'}) if ($hasecdsa{$ssl} != 1);
             $checks{'tr_03116+'}->{val} .= $checks{'tr_02102+'}->{val}; # same as TR-02102
             $checks{'tr_03116-'}->{val} .= $checks{'tr_02102-'}->{val}; # -"-
         }
-        $checks{'cnt_ciphers'}  ->{val} += $OCfg::prot{$ssl}->{'cnt'};    # need this with cnt_ prefix
+        $checks{'cnt_ciphers'}  ->{val} += $prot{$ssl}->{'cnt'};    # need this with cnt_ prefix
     }
     $checks{'cipher_edh'}->{val} = "" if ($checks{'cipher_edh'}->{val} ne "");  # good if we have them
 
@@ -4136,11 +4064,11 @@ sub check02102      {
     # use 'session_protocol' instead of 'sslversion' as its string matches the
     # TR-02102 requirements better; SEE Note:Selected Protocol
     $val  = ($data{'session_protocol'}->{val}($host, $port) !~ m/TLSv1.?2/) ? " <<not TLSv12>>" : "" ;
-    $val .= ($OCfg::prot{'SSLv2'}->{'cnt'}  > 0) ? _get_text('insecure', "protocol SSLv2") : "";
-    $val .= ($OCfg::prot{'SSLv3'}->{'cnt'}  > 0) ? _get_text('insecure', "protocol SSLv3") : "";
-    $val .= ($OCfg::prot{'TLSv1'}->{'cnt'}  > 0) ? _get_text('insecure', "protocol TLSv1") : "";
+    $val .= ($prot{'SSLv2'}->{'cnt'}  > 0) ? _get_text('insecure', "protocol SSLv2") : "";
+    $val .= ($prot{'SSLv3'}->{'cnt'}  > 0) ? _get_text('insecure', "protocol SSLv3") : "";
+    $val .= ($prot{'TLSv1'}->{'cnt'}  > 0) ? _get_text('insecure', "protocol TLSv1") : "";
     $checks{'tr_02102-'}->{val}.= $val;
-    $val .= ($OCfg::prot{'TLSv11'}->{'cnt'} > 0) ? _get_text('insecure', "protocol TLSv11") : "";
+    $val .= ($prot{'TLSv11'}->{'cnt'} > 0) ? _get_text('insecure', "protocol TLSv11") : "";
     $checks{'tr_02102+'}->{val}.= $val;
 
     #! TR-02102-2 3.3.1 Empfohlene Cipher Suites
@@ -4241,10 +4169,10 @@ sub check03116      {
     # use 'session_protocol' instead of 'sslversion' as its string matches the
     # TR-03116 requirements better; SEE Note:Selected Protocol
     $txt  = ($data{'session_protocol'}->{val}($host, $port) !~ m/TLSv1.?2/) ? " <<not TLSv12>>" : "" ;
-    $txt .= ($OCfg::prot{'SSLv2'}->{'cnt'}  > 0) ? _get_text('insecure', "protocol SSLv2") : "";
-    $txt .= ($OCfg::prot{'SSLv3'}->{'cnt'}  > 0) ? _get_text('insecure', "protocol SSLv3") : "";
-    $txt .= ($OCfg::prot{'TLSv1'}->{'cnt'}  > 0) ? _get_text('insecure', "protocol TLSv1") : "";
-    $txt .= ($OCfg::prot{'TLSv11'}->{'cnt'} > 0) ? _get_text('insecure', "protocol TLSv11") : "";
+    $txt .= ($prot{'SSLv2'}->{'cnt'}  > 0) ? _get_text('insecure', "protocol SSLv2") : "";
+    $txt .= ($prot{'SSLv3'}->{'cnt'}  > 0) ? _get_text('insecure', "protocol SSLv3") : "";
+    $txt .= ($prot{'TLSv1'}->{'cnt'}  > 0) ? _get_text('insecure', "protocol TLSv1") : "";
+    $txt .= ($prot{'TLSv11'}->{'cnt'} > 0) ? _get_text('insecure', "protocol TLSv11") : "";
     $checks{'tr_03116-'}->{val}.= $txt;
     $checks{'tr_03116+'}->{val}.= $txt;
 
@@ -4431,18 +4359,18 @@ sub check7525       {
     # use 'session_protocol' instead of 'sslversion' as its string matches the
     # RFC requirements better; SEE Note:Selected Protocol
     $val  = " <<not TLSv12>>" if ($data{'session_protocol'}->{val}($host, $port) !~ m/TLSv1.?2/);
-    $val .= " SSLv2"   if ( $OCfg::prot{'SSLv2'}->{'cnt'}   > 0);
-    $val .= " SSLv3"   if ( $OCfg::prot{'SSLv3'}->{'cnt'}   > 0);
-    $val .= " TLSv1"   if (($OCfg::prot{'TLSv11'}->{'cnt'} + $OCfg::prot{'TLSv12'}->{'cnt'}) > 0);
-    $val .= " TLSv11"  if (($OCfg::prot{'TLSv11'}->{'cnt'}  > 0) and ($OCfg::prot{'TLSv12'}->{'cnt'} > 0));
+    $val .= " SSLv2"   if ( $prot{'SSLv2'}->{'cnt'}   > 0);
+    $val .= " SSLv3"   if ( $prot{'SSLv3'}->{'cnt'}   > 0);
+    $val .= " TLSv1"   if (($prot{'TLSv11'}->{'cnt'} + $prot{'TLSv12'}->{'cnt'}) > 0);
+    $val .= " TLSv11"  if (($prot{'TLSv11'}->{'cnt'}  > 0) and ($prot{'TLSv12'}->{'cnt'} > 0));
 
     # 3.1.2.  DTLS Protocol Versions
     #    Implementations SHOULD NOT negotiate DTLS version 1.0 [RFC4347].
     #    Implementations MUST support and MUST prefer to negotiate DTLS
     #    version 1.2 [RFC6347].
 
-    $val .= " DTLSv1"  if ( $OCfg::prot{'DTLSv1'}->{'cnt'}  > 0);
-    $val .= " DTLSv11" if ( $OCfg::prot{'DTLSv11'}->{'cnt'} > 0);
+    $val .= " DTLSv1"  if ( $prot{'DTLSv1'}->{'cnt'}  > 0);
+    $val .= " DTLSv11" if ( $prot{'DTLSv11'}->{'cnt'} > 0);
     # TODO: we currently (5/2015) do not support DTLSv1x
 
     # 3.1.3.  Fallback to Lower Versions
@@ -4457,7 +4385,7 @@ sub check7525       {
 
     # FIXME: what to check for STARTTLS?
 
-    $val .= " DTLSv11" if ( $OCfg::prot{'DTLSv11'}->{'cnt'} > 0);
+    $val .= " DTLSv11" if ( $prot{'DTLSv11'}->{'cnt'} > 0);
     checkhttp($host, $port);    # need http_sts
     $val .= _get_text('missing', 'STS') if ($checks{'hsts_sts'} eq "");
     # TODO: strict TLS checks are for STARTTLS only, not necessary here
@@ -4773,57 +4701,58 @@ sub checkprot       {
     return if (1 < $cfg{'done'}->{'checkprot'});
     # remember: check is 'yes' for empty value ""
     trace("checkprot($host, $port) {");
+    my $notxt = "";
 
     # SSLv2 and SSLv3 are special:
     #   The protocol may supported by the target, but no ciphers offered. Only
     #   if at least one ciphers is supported, vulnerabilities may there, hence
     #   check if amount of ciphers > 0.
     if (_is_cfg_ssl('SSLv2')) {
-        my $notxt = (0 < $OCfg::prot{'SSLv2'}->{'cnt'}) ? " " : "";
+        $notxt = (0 < $prot{'SSLv2'}->{'cnt'}) ? " " : "";
         $checks{'hassslv2'} ->{val} = (_is_cfg_use('nullssl2')) ? $notxt : "";
             # SSLv2 enabled, but no ciphers is ok (aka 'yes') for --nullssl2
         $checks{'drown'}    ->{val} = $notxt;  # SSLv2 there, then potentially vulnerable to DROWN
     }
     if (_is_cfg_ssl('SSLv3')) {
-        my $notxt = (0 < $OCfg::prot{'SSLv3'}->{'cnt'}) ? " " : "";
+        $notxt = (0 < $prot{'SSLv3'}->{'cnt'}) ? " " : "";
         $checks{'hassslv3'} ->{val} = $notxt;
-        $checks{'poodle'}   ->{val} = (0 < $OCfg::prot{'SSLv3'}->{'cnt'}) ? "SSLv3" : "";  # POODLE if SSLv3 and ciphers
+        $checks{'poodle'}   ->{val} = (0 < $prot{'SSLv3'}->{'cnt'}) ? "SSLv3" : "";  # POODLE if SSLv3 and ciphers
         # FIXME: should uses $cfg{'regex'}->{'POODLE'}, hence check in checkcipher() would be better
         # FIXME: TLSv1 is vulnerable too, but not TLSv11
         # FIXME: doc/help.txt ok now, but needs to be fixed too
     }
     if (_is_cfg_ssl('TLSv1')) {
-        $checks{'hastls10_old'}->{val}  = " " if ($OCfg::prot{'TLSv1'}->{'cnt'}  <= 0);
+        $checks{'hastls10_old'}->{val}  = " " if ($prot{'TLSv1'}->{'cnt'}  <= 0);
     }
     if (_is_cfg_ssl('TLSv11')) {
-        $checks{'hastls11_old'}->{val}  = " " if ($OCfg::prot{'TLSv11'}->{'cnt'} <= 0);
+        $checks{'hastls11_old'}->{val}  = " " if ($prot{'TLSv11'}->{'cnt'} <= 0);
     }
     # old targets may not support TLSv13, then TLSv1 or TLSv11 may be ok
-    if (0 >= $OCfg::prot{'TLSv13'}->{'cnt'}) {
+    if (0 >= $prot{'TLSv13'}->{'cnt'}) {
         _hint("TLSv1.3 did not return ciphers, consider using '+hastls10_old' and '+hastls10_old'");
     }
     if (_is_cfg_ssl('TLSv1')) {
-        my $notxt = (0 < $OCfg::prot{'TLSv1'}->{'cnt'}) ? " " : "";
+        $notxt = (0 < $prot{'TLSv1'}->{'cnt'}) ? " " : "";
         $checks{'hastls10'} ->{val} = $notxt;
     }
     if (_is_cfg_ssl('TLSv11')) {
-        my $notxt = (0 < $OCfg::prot{'TLSv11'}->{'cnt'}) ? " " : "";
+        $notxt = (0 < $prot{'TLSv11'}->{'cnt'}) ? " " : "";
         $checks{'hastls11'} ->{val} = $notxt;
     }
     if (_is_cfg_ssl('TLSv12')) {
-        $checks{'hastls12'}->{val}  = " " if ($OCfg::prot{'TLSv12'}->{'cnt'} <= 0);
+        $checks{'hastls12'}->{val}  = " " if ($prot{'TLSv12'}->{'cnt'} <= 0);
     }
     if (_is_cfg_ssl('TLSv13')) {
-        $checks{'hastls13'}->{val}  = " " if ($OCfg::prot{'TLSv13'}->{'cnt'} <= 0);
+        $checks{'hastls13'}->{val}  = " " if ($prot{'TLSv13'}->{'cnt'} <= 0);
     }
     if (_is_cfg_ssl('DTLSv1')) {
-        $checks{'hasdtls1'}->{val}  = " " if ($OCfg::prot{'DTLSv1'}->{'cnt'} <= 0);
+        $checks{'hasdtls1'}->{val}  = " " if ($prot{'DTLSv1'}->{'cnt'} <= 0);
     }
     if (_is_cfg_ssl('DTLSv12')) {
-        $checks{'hasdtls12'}->{val} = " " if ($OCfg::prot{'DTLSv12'}->{'cnt'} <= 0);
+        $checks{'hasdtls12'}->{val} = " " if ($prot{'DTLSv12'}->{'cnt'} <= 0);
     }
     if (_is_cfg_ssl('DTLSv13')) {
-        $checks{'hasdtls13'}->{val} = " " if ($OCfg::prot{'DTLSv13'}->{'cnt'} <= 0);
+        $checks{'hasdtls13'}->{val} = " " if ($prot{'DTLSv13'}->{'cnt'} <= 0);
     }
 
     # check ALPN and NPN support
@@ -4863,12 +4792,12 @@ sub checkdest       {
     $ssl    =~ s/[ ._-]//g;     # convert TLS1.1, TLS 1.1, TLS-1_1, etc. to TLS11
 
     # PFS is scary if the TLS session ticket is not random
-    #  we should have different tickets in %data0 and %data
+    #  we should have different tickets in %OData::data0 and %data
     #  it's ok if both are empty 'cause then no tickets are used
     $key   = 'session_ticket';
     $value = $data{$key}->{val}($host, $port);
-    if (defined $data0{$key}->{val}) {  # avoid Perl warning "Use uninitialized value in string"
-        $checks{'session_random'}->{val} = $value if ($value eq $data0{$key}->{val});
+    if (defined $OData::data0{$key}->{val}) {# avoid Perl warning "Use uninitialized value in string"
+        $checks{'session_random'}->{val} = $value if ($value eq $OData::data0{$key}->{val});
     } else {
         $checks{'session_random'}->{val} = $text{'na'};
     }
@@ -4896,7 +4825,7 @@ sub checkdest       {
 
     # check target specials
     foreach my $key (qw(krb5 psk_hint psk_identity master_secret srp session_ticket session_lifetime)) {
-            # master_key session_id: see %check_dest above also
+            # master_key session_id: see %OData::check_dest above also
         next if ($checks{$key}->{val} !~ m/$text{'undef'}/);
         $value = $data{$key}->{val}($host);
         $checks{$key}->{val}    = ($value eq "") ? " " : "";
@@ -5112,7 +5041,7 @@ sub checkssl        {
         $cfg{'done'}->{'check2818'}++;  # "
         $cfg{'done'}->{'checkdv'}++;    # "
         $cfg{'done'}->{'checkev'}++;    # "
-        foreach my $key (sort keys %checks) {   # anything related to certs need special setting
+        foreach my $key (sort(keys %checks)) {   # anything related to certs need special setting
             $checks{$key}->{val} = $cfg{'no_cert_txt'} if (_is_member($key, \@{$cfg{'check_cert'}}));
         }
         $checks{'hostname'} ->{val} = $cfg{'no_cert_txt'};
@@ -5128,7 +5057,7 @@ sub checkssl        {
         checkhttp( $host, $port);
     } else {
         $cfg{'done'}->{'checkhttp'}++;
-        foreach my $key (sort keys %checks) {
+        foreach my $key (sort(keys %checks)) {
             $checks{$key}->{val} = $text{'na_http'} if (_is_member($key, \@{$cfg{'cmd-http'}}));
         }
     }
@@ -5173,17 +5102,17 @@ sub check_exitcode  {
         next if (0 == $cfg{$ssl});      # not requested, don't count
 # TODO: counts protocol even if no cipher was supported, is this insecure?
         $cnt_prot++ if (0 < $cfg{$ssl});
-        $cnt_pfs   = $OCfg::prot{$ssl}->{'cnt'} - $#{$OCfg::prot{$ssl}->{'ciphers_pfs'}};
-        $cnt_pfs   = 0 if (0 >= $OCfg::prot{$ssl}->{'cnt'});  # useless if there're no ciphers
+        $cnt_pfs   = $prot{$ssl}->{'cnt'} - $#{$prot{$ssl}->{'ciphers_pfs'}};
+        $cnt_pfs   = 0 if (0 >= $prot{$ssl}->{'cnt'});  # useless if there're no ciphers
         $exitcode += $cnt_pfs                if (_is_cfg_out('exitcode_pfs'));
         $cnt_ciph  = 0;
-        $cnt_ciph += $OCfg::prot{$ssl}->{'MEDIUM'} if (_is_cfg_out('exitcode_medium'));
-        $cnt_ciph += $OCfg::prot{$ssl}->{'WEAK'}   if (_is_cfg_out('exitcode_weak'));
-        $cnt_ciph += $OCfg::prot{$ssl}->{'LOW'}    if (_is_cfg_out('exitcode_low'));
+        $cnt_ciph += $prot{$ssl}->{'MEDIUM'} if (_is_cfg_out('exitcode_medium'));
+        $cnt_ciph += $prot{$ssl}->{'WEAK'}   if (_is_cfg_out('exitcode_weak'));
+        $cnt_ciph += $prot{$ssl}->{'LOW'}    if (_is_cfg_out('exitcode_low'));
         $exitcode += $cnt_ciph;
         _vprint(sprintf("%-12s\t%3s %3s %3s %3s %3s\t%s", $ssl,
-                $OCfg::prot{$ssl}->{'HIGH'}, $OCfg::prot{$ssl}->{'MEDIUM'},
-                $OCfg::prot{$ssl}->{'LOW'},  $OCfg::prot{$ssl}->{'WEAK'},
+                $prot{$ssl}->{'HIGH'}, $prot{$ssl}->{'MEDIUM'},
+                $prot{$ssl}->{'LOW'},  $prot{$ssl}->{'WEAK'},
                 $cnt_pfs, $cnt_ciph,
         ));
         $cnt_ciphs += $cnt_ciph;
@@ -5225,7 +5154,7 @@ sub scoring         {
     $scores{'check_http'}->{val}    = 100;
     $checks{'hsts_fqdn'}->{score}   = 0 if ($http_location eq "");
 
-    foreach my $key (sort keys %checks) {
+    foreach my $key (sort(keys %checks)) {
         next if ($key =~ m/^(ip|reversehost)/); # not scored
         next if ($key =~ m/^(sts_)/);           # needs special handlicg
         next if ($key =~ m/^(closure|fallback|cps|krb5|lzo|open_pgp|order|https_pins|psk_|rootcert|srp|zlib)/); ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
@@ -5234,7 +5163,7 @@ sub scoring         {
         $value = $checks{$key}->{val};
 # TBD: go through @cipher_results
 #        foreach my $sec (qw(LOW WEAK MEDIUM HIGH -?-)) {
-#            # keys in %OCfg::prot look like 'SSLv2->LOW', 'TLSv11->HIGH', etc.
+#            # keys in %prot look like 'SSLv2->LOW', 'TLSv11->HIGH', etc.
 #            $key = $ssl . '-' . $sec;
 #            if ($checks{$key}->{val} != 0) {    # if set, decrement score
 #                $scores{'check_ciph'}->{val} -= _getscore($key, 'egal', \%checks);
@@ -5284,12 +5213,12 @@ sub printdump       {
     #? just dumps internal database %data and %check_*
     my ($legacy, $host, $port) = @_;   # NOT IMPLEMENTED
     print '######################################################################### %data';
-    foreach my $key (keys %data) {
+    foreach my $key (sort(keys %data)) {
         next if (_is_cfg_intern($key) > 0);  # ignore aliases
         _printdump($data{$key}->{txt}, $data{$key}->{val}($host));
     }
     print '######################################################################## %check';
-    foreach my $key (keys %checks) { _printdump($checks{$key}->{txt}, $checks{$key}->{val}); }
+    foreach my $key (sort(keys %checks)) { _printdump($checks{$key}->{txt}, $checks{$key}->{val}); }
     return;
 } # printdump
 
@@ -5630,15 +5559,15 @@ sub print_ciphertotals  {
     trace("print_ciphertotals($legacy, $ssl, $host, $port) {");
     if ($legacy eq 'ssldiagnos') {
         print "\n-= SUMMARY =-\n";
-        printf("Weak:         %s\n", $OCfg::prot{$ssl}->{'WEAK'});
-        printf("Intermediate: %s\n", $OCfg::prot{$ssl}->{'MEDIUM'}); # MEDIUM
-        printf("Strong:       %s\n", $OCfg::prot{$ssl}->{'HIGH'});   # HIGH
+        printf("Weak:         %s\n", $prot{$ssl}->{'WEAK'});
+        printf("Intermediate: %s\n", $prot{$ssl}->{'MEDIUM'}); # MEDIUM
+        printf("Strong:       %s\n", $prot{$ssl}->{'HIGH'});   # HIGH
     }
     if ($legacy =~ /(compact|full|owasp|quick|simple)/) {
         print_header(_get_text('out_summary', $ssl), "", $cfg{'out'}->{'header'});
         foreach my $key (qw(LOW WEAK MEDIUM HIGH -?-)) {
-            print_line($legacy, $host, $port, "$ssl-$key", $OCfg::prot_txt{$key}, $OCfg::prot{$ssl}->{$key});
-            # NOTE: "$ssl-$key" does not exist in %checks or %OCfg::prot
+            print_line($legacy, $host, $port, "$ssl-$key", $OCfg::prot_txt{$key}, $prot{$ssl}->{$key});
+            # NOTE: "$ssl-$key" does not exist in %checks or %prot
         }
     }
     trace("print_ciphertotals() }");
@@ -5715,9 +5644,9 @@ sub printcipherpreferred {
         next if (($cfg{$ssl} == 0) and ($verbose <= 0));  # not requested with verbose only
         next if ($ssl =~ m/^SSLv2/);    # SSLv2 has no server selected cipher
         my $key = $ssl . $text{'separator'};
-           $key = sprintf("[0x%x]", $OCfg::prot{$ssl}->{hex}) if ($legacy eq 'key');
+           $key = sprintf("[0x%x]", $prot{$ssl}->{hex}) if ($legacy eq 'key');
         printf("%-7s\t%-31s\t%s\n", $key,
-                $OCfg::prot{$ssl}->{'cipher_strong'}, $OCfg::prot{$ssl}->{'cipher_weak'},
+                $prot{$ssl}->{'cipher_strong'}, $prot{$ssl}->{'cipher_weak'},
         );
     }
     if (_is_cfg_out('header')) {
@@ -5754,37 +5683,37 @@ sub printprotocols      {
     foreach my $ssl (@{$cfg{'versions'}}) { # SEE Note:%prot
         next if (($cfg{$ssl} == 0) and ($verbose <= 0));   # not requested with verbose only
         next if ($ssl =~ m/^SSLv2/);    # SSLv2 has no server selected cipher
-        my $cnt = scalar(@{$OCfg::prot{$ssl}->{'ciphers_pfs'}});
+        my $cnt = scalar(@{$prot{$ssl}->{'ciphers_pfs'}});
         my $key = $ssl . $text{'separator'};
-           $key = sprintf("[0x%x]", $OCfg::prot{$ssl}->{hex}) if ($legacy eq 'key');
-        my $cipher_strong = $OCfg::prot{$ssl}->{'cipher_strong'};
-        my $cipher_pfs    = $OCfg::prot{$ssl}->{'cipher_pfs'};
+           $key = sprintf("[0x%x]", $prot{$ssl}->{hex}) if ($legacy eq 'key');
+        my $cipher_strong = $prot{$ssl}->{'cipher_strong'};
+        my $cipher_pfs    = $prot{$ssl}->{'cipher_pfs'};
         if ($cfg{'trace'} <= 0) {
            # avoid internal strings, pretty print for humans
            $cipher_strong = "" if ($STR{UNDEF} eq $cipher_strong);
            $cipher_pfs    = "" if ($STR{UNDEF} eq $cipher_pfs);
         }
-        if ((@{$OCfg::prot{$ssl}->{'ciphers_pfs'}}) and
-            (${$OCfg::prot{$ssl}->{'ciphers_pfs'}}[0] =~ m/^\s*<</)) { # something went wrong
+        if ((@{$prot{$ssl}->{'ciphers_pfs'}}) and
+            (${$prot{$ssl}->{'ciphers_pfs'}}[0] =~ m/^\s*<</)) { # something went wrong
            #$cipher_pfs   # should be empty
-           $cipher_strong = ${$OCfg::prot{$ssl}->{'ciphers_pfs'}}[0];
+           $cipher_strong = ${$prot{$ssl}->{'ciphers_pfs'}}[0];
            $cnt = 0;
         }
         print_line('_cipher', $host, $port, $ssl, $ssl, ""); # just host:port:#[key]:
         if ('owasp' eq $legacy) {
             printf("%-7s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", $key,
-                    $OCfg::prot{$ssl}->{'OWASP_A'}, $OCfg::prot{$ssl}->{'OWASP_B'},
-                    $OCfg::prot{$ssl}->{'OWASP_C'}, $OCfg::prot{$ssl}->{'OWASP_D'},
-                    $cnt, $OCfg::prot{$ssl}->{'cnt'}, $cipher_strong, $cipher_pfs
+                    $prot{$ssl}->{'OWASP_A'}, $prot{$ssl}->{'OWASP_B'},
+                    $prot{$ssl}->{'OWASP_C'}, $prot{$ssl}->{'OWASP_D'},
+                    $cnt, $prot{$ssl}->{'cnt'}, $cipher_strong, $cipher_pfs
             );
         } else {
             printf("%-7s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", $key,
-                    $OCfg::prot{$ssl}->{'HIGH'}, $OCfg::prot{$ssl}->{'MEDIUM'},
-                    $OCfg::prot{$ssl}->{'LOW'},  $OCfg::prot{$ssl}->{'WEAK'},
-                    $cnt, $OCfg::prot{$ssl}->{'cnt'}, $cipher_strong, $cipher_pfs
+                    $prot{$ssl}->{'HIGH'}, $prot{$ssl}->{'MEDIUM'},
+                    $prot{$ssl}->{'LOW'},  $prot{$ssl}->{'WEAK'},
+                    $cnt, $prot{$ssl}->{'cnt'}, $cipher_strong, $cipher_pfs
             );
         }
-        # not yet printed: $OCfg::prot{$ssl}->{'cipher_weak'}, $OCfg::prot{$ssl}->{'default'}
+        # not yet printed: $prot{$ssl}->{'cipher_weak'}, $prot{$ssl}->{'default'}
     }
     if (_is_cfg_out('header')) {
         printf("=------%s%s\n", ('+---' x 6), '+-------------------------------+---------------');
@@ -5806,7 +5735,7 @@ sub printciphersummary  {
     }
     if (_is_cfg_ciphermode('openssl|ssleay')) {
         print_line($legacy, $host, $port, 'cipher_selected',
-                   $data{'cipher_selected'}->{txt}, $OCfg::prot{'cipher_selected'});
+                   $data{'cipher_selected'}->{txt}, $prot{'cipher_selected'});
     }
     if (_is_cfg_out('hint_ciphers')) {
         _hint("consider using '--cipheralpn=, --ciphernpn=,' also") if _is_cfg_verbose();
@@ -5891,7 +5820,7 @@ sub printciphers_intern {
     print_footer($legacy);
     #foreach my $key (keys(%{$results->{$ssl}})) {
     #    my $c = Ciphers::get_name($key);
-    #    push(@{$OCfg::prot{$ssl}->{'ciphers_pfs'}}, $c) if ("" ne _is_ssl_pfs($ssl, $c));  # add PFS cipher
+    #    push(@{$prot{$ssl}->{'ciphers_pfs'}}, $c) if ("" ne _is_ssl_pfs($ssl, $c));  # add PFS cipher
     #}
     trace("printciphers_intern() }");
     return;
@@ -5947,7 +5876,7 @@ sub printciphers        {
     return;
 } # printciphers
 
-sub printdata($$$)      {
+sub printdata           {
     #? print information stored in %data
     my ($legacy, $host, $port) = @_;
     trace("printdata($legacy, $host, $port) {");
@@ -5992,7 +5921,7 @@ sub printdata($$$)      {
     return;
 } # printdata
 
-sub printchecks($$$)    {
+sub printchecks         {
     #? print results stored in %checks
     my ($legacy, $host, $port) = @_;
     trace("printchecks($legacy, $host, $port) {");
@@ -6109,7 +6038,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.87");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.88");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6382,6 +6311,7 @@ OUsr::pre_args();
 
 #_____________________________________________________________________________
 #_____________________________________________________________________ main __|
+_init_all();   # initialise defaults in %checks (score, val); parts be done again later
 
 #| scan options and arguments
 #| -------------------------------------
@@ -6400,8 +6330,8 @@ push(@argv, "");# need one more argument otherwise last --KEY=VALUE will fail
 while ($#argv >= 0) {
     $arg = shift @argv;
     trace_arg("cli_arg= $arg");
-    push(@{$OCfg::dbx{argv}}, $arg) if (($arg !~ m/^--cfg[_-]/) && (($arg =~ m/^[+-]/) || ($typ ne "HOST")));
-    push(@{$OCfg::dbx{cfg}},  $arg) if  ($arg =~ m/^--cfg[_-]/);    # both aprox. match are sufficient for debugging
+    push(@{$dbx{argv}}, $arg) if (($arg !~ m/^--cfg[_-]/) && (($arg =~ m/^[+-]/) || ($typ ne "HOST")));
+    push(@{$dbx{cfg}},  $arg) if  ($arg =~ m/^--cfg[_-]/);    # both aprox. match are sufficient for debugging
 
     # First check for arguments of options.
     # Options are not case-sensitive.  Options may contain  .  and  -  and  _
@@ -6434,7 +6364,7 @@ while ($#argv >= 0) {
         # $type is set at end of  each matching if condition,  hence only the
         # first matching if condition is executed; sequence is important!
         trace_arg("argument? $arg, typ= $typ");
-        push(@{$OCfg::dbx{exe}}, join("=", $typ, $arg)) if ($typ =~ m/OPENSSL|ENV|EXE|LIB/);
+        push(@{$dbx{exe}}, join("=", $typ, $arg)) if ($typ =~ m/OPENSSL|ENV|EXE|LIB/);
         # programming: for better readability  "if($typ eq CONST)"  is used
         #              instead of recommended  "if(CONST eq $typ)"  below
         #  $typ = '????'; # expected next argument
@@ -7394,7 +7324,6 @@ while ($#argv >= 0) {
 
 # exit if ($#{$cfg{'do'}} < 0); # no exit here, as we want some --v output
 
-
 #| prepare %cfg according options
 #| -------------------------------------
 _vprint("check command-line arguments");
@@ -7561,7 +7490,7 @@ _trace_info("  LOAD0   - load modules start");
 
 #| import common and private modules
 #| -------------------------------------
-if (1 > (_need_netinfo()  + _need_checkssl()) and not $test) {
+if (1 > (_need_netinfo() + _need_checkssl()) and not $test) {
     # SEE Note:need SSLinfo
     $cfg{'need_netinfo'} = 0 if _is_cfg_ciphermode('intern');
     # TODO: following necessary for _get_data0(), if called as single command
@@ -7721,8 +7650,8 @@ $cfg{'trace'} = 1 if (0 < $cfg{'traceME'});
 $cfg{'trace'} = 0 if (0 > $cfg{'traceME'});
 
 if ($cfg{'label'} eq 'short') {     # reconfigure texts
-    foreach my $key (keys %data)   { $data{$key}  ->{'txt'} = $shorttexts{$key}; }
-    foreach my $key (keys %checks) { $checks{$key}->{'txt'} = $shorttexts{$key}; }
+    foreach my $key (keys %data)   { $data{$key}  ->{'txt'} = $OData::shorttexts{$key}; }
+    foreach my $key (keys %checks) { $checks{$key}->{'txt'} = $OData::shorttexts{$key}; }
 }
 
 _init_checks_val(); # initialise default values in %checks again depending on given options
@@ -7971,7 +7900,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             trace(" use socket ...")  if (0 == $cmd{'extciphers'});
             trace(" use openssl ...") if (1 == $cmd{'extciphers'});
             $cipher_results = ciphers_scan_openssl($host, $port);   # uses @{$cfg{'ciphers'}}
-            # TODO:  $OCfg::prot{$ssl}->{'default'} = $cipher;
+            # TODO:  $prot{$ssl}->{'default'} = $cipher;
             # SEE Note:+cipher-selected
             trace(" get default ...");
             _trace_time("need_default{");
@@ -8023,7 +7952,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         } else { # force openssl
             ($version, $supported, $dh) = _useopenssl('', $host, $port, '');
         }
-        $OCfg::prot{'fallback'}->{val} = $version;
+        $prot{'fallback'}->{val} = $version;
         trace(" fallback: $version $supported");
     }
 
@@ -8820,7 +8749,7 @@ Data structures with runtime data:
                   collected and checked length and count data
     %info       - like %data, but for data which could not be retrieved
                   from SSLinfo like HTTP vs. HTTPS checks
-    %prot       - collected data per protocol (from SSLinfo)
+    %prot       - collected data per protocol (mainly from SSLinfo)
     %cipher_results - collected results as:  SSL=>cipher=>["yes|no","DH"]
 
 NOTE: all keys in %data and %checks must be unique 'cause of %shorttexts.
