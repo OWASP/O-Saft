@@ -27,6 +27,8 @@
 #!#############################################################################
 
 package SSLinfo;
+use strict;
+use warnings;
 
 ## no critic qw(ErrorHandling::RequireCarping)
 #  
@@ -44,9 +46,10 @@ package SSLinfo;
 ## no critic qw(Variables::ProhibitPackageVars)
 #  using package variables are considered ok in this package, check in future again
 
-use strict;
-use warnings;
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.17 24/06/24 15:33:11";
+#_____________________________________________________________________________
+#___________________________________________________ package initialisation __|
+
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.18 24/07/26 14:12:56";
 our $VERSION        =  "24.06.24";  # official verion number of this file
 
 BEGIN {
@@ -63,16 +66,13 @@ use OText       qw(%STR);
 use Socket;
 use Net::SSLeay;
 
-my %CST = (
+my %SSLINFO = (
     'ME'        => 'SSLinfo',
     'ERROR'     => '#SSLinfo::errors:',
     'OPENSSL'   => '<<openssl>>',
     'UNDEF'     => '<<undefined>>',
     'NO_PEM'    => '<<N/A (no PEM)>>',
 );
-
-#_____________________________________________________________________________
-#___________________________________________________ package initialisation __|
 
 my $_protos = 'http/1.1,h2c,h2c-14,spdy/1,npn-spdy/2,spdy/2,spdy/3,spdy/3.1,spdy/4a2,spdy/4a4,h2-14,h2-15,http/2.0,h2';
     # NOTE: most weak protocol first, cause we check for vulnerabilities
@@ -127,8 +127,8 @@ $SSLinfo::ca_depth   = undef;# depth of peer certificate verification verificati
 $SSLinfo::trace         = 0; # 1=simple debugging SSLinfo
                              # 2=trace     including $Net::SSLeay::trace=2
                              # 3=dump data including $Net::SSLeay::trace=3
-$SSLinfo::prefix_trace  = "#$CST{'ME'}::"; # prefix string used in trace messages
-$SSLinfo::prefix_verbose= "#$CST{'ME'}::"; # prefix string used in trace messages
+$SSLinfo::prefix_trace  = "#$SSLINFO{'ME'}::";  # prefix string used in trace messages
+$SSLinfo::prefix_verbose= "#$SSLINFO{'ME'}::";  # prefix string used in trace messages
 $SSLinfo::user_agent    = '-'; # User-Agent for HTTP requests
 $SSLinfo::verbose       = 0; # 1: print some verbose messages
 $SSLinfo::linux_debug   = 0; # passed to Net::SSLeay::linux_debug
@@ -2112,7 +2112,7 @@ sub _openssl_MS     {
     _trace("_openssl_MS($mode, $host, $port)");
     if ('' eq $_openssl) {
         _trace("_openssl_MS($mode): WARNING: no openssl");
-        return $CST{'OPENSSL'};
+        return $SSLINFO{'OPENSSL'};
     }
     $host .= ':' if ($port ne '');
     $text = '""' if (not defined $text);
@@ -2160,7 +2160,7 @@ sub _openssl_x509   {
     _setcmd();
     if ($_openssl eq '') {
         _trace2("_openssl_x509($mode): WARNING: no openssl");
-        return $CST{'OPENSSL'};
+        return $SSLINFO{'OPENSSL'};
     }
     if ('' eq $pem) {
         # if PEM is empty, openssl may return an error like:
@@ -2316,7 +2316,7 @@ sub _OpenSSL_opt_get{
         # initialise %_OpenSSL_opt
         if (not defined s_client_check()) {
             _trace("_OpenSSL_opt_get('$key') undef");
-            return $CST{'OPENSSL'};
+            return $SSLINFO{'OPENSSL'};
         }
     }
     _trace("_OpenSSL_opt_get('$key')\t= " . ($_OpenSSL_opt{$key} || 0));
@@ -2490,7 +2490,7 @@ sub do_ssl_new      {   ## no critic qw(Subroutines::ProhibitManyArgs)
         } # TRY_PROTOCOL }
         if ('' eq $src) {
             # avoid printing empty line, hence "if -1 < $#"
-            _trace2(join("\n" . $CST{'ERROR'} . ' ', '', @{$_SSLtemp{'errors'}})) if (-1 < $#{$_SSLtemp{'errors'}});
+            _trace2(join("\n" . $SSLINFO{'ERROR'} . ' ', '', @{$_SSLtemp{'errors'}})) if (-1 < $#{$_SSLtemp{'errors'}});
             _trace2(" errors reseted.");
             @{$_SSLtemp{'errors'}} = ();        # messages no longer needed
             goto FIN;
@@ -2509,8 +2509,8 @@ sub do_ssl_new      {   ## no critic qw(Subroutines::ProhibitManyArgs)
     close($tmp_sock) if (defined $tmp_sock);
     push(@{$_SSLtemp{'errors'}}, "do_ssl_new() failed calling $src: $err");
     if (1 < $trace) {
-        Net::SSLeay::print_errs($CST{'ERROR'});
-        printf("%s%s\n", $CST{'ERROR'}, $_) foreach @{$_SSLtemp{'errors'}};
+        Net::SSLeay::print_errs($SSLINFO{'ERROR'});
+        printf("%s%s\n", $SSLINFO{'ERROR'}, $_) foreach @{$_SSLtemp{'errors'}};
     }
     _trace("do_ssl_new() failed }");
     return;
@@ -3299,8 +3299,8 @@ sub do_ssl_open($$$@) {
     #6. error handling
     push(@{$_SSLinfo{'errors'}}, "do_ssl_open TRY failed calling $src: $err");
     if (1 < $trace) {
-        Net::SSLeay::print_errs($CST{'ERROR'});
-        printf("%s%s\n", $CST{'ERROR'}, $_) foreach @{$_SSLtemp{'errors'}};
+        Net::SSLeay::print_errs($SSLINFO{'ERROR'});
+        printf("%s%s\n", $SSLINFO{'ERROR'}, $_) foreach @{$_SSLtemp{'errors'}};
     }
     _trace("do_ssl_open ()failed }");
     return;
@@ -3369,7 +3369,7 @@ sub do_openssl($$$$)  {
     _vprint("do_openssl $mode");
     if ('' eq $_openssl) {
         _trace("do_openssl($mode): WARNING: no openssl");
-        return $CST{'OPENSSL'};
+        return $SSLINFO{'OPENSSL'};
     }
     if ($mode =~ m/^-?s_client$/) {
         if ($SSLinfo::file_sclient !~ m/^\s*$/) {
@@ -3380,11 +3380,11 @@ sub do_openssl($$$$)  {
                 return $data;
             }
             _trace("do_openssl($mode): WARNING: cannot open $SSLinfo::file_sclient");
-            return $CST{'OPENSSL'};
+            return $SSLINFO{'OPENSSL'};
         }
         if (0 == $SSLinfo::use_sclient) {
             _trace2("do_openssl($mode): WARNING: no openssl s_client");
-            return $CST{'OPENSSL'};
+            return $SSLINFO{'OPENSSL'};
         }
 # TODO: Optionen hier entfernen, muss im Caller gemacht werden
         # pass -alpn option to validate 'protocols' support later
@@ -3478,7 +3478,7 @@ Returns empty string on success, errors otherwise.
 sub set_cipher_list {
     my $ssl    = shift;
     my $cipher = shift;
-    Net::SSLeay::set_cipher_list($ssl, $cipher) or return $CST{'ME'} . '::set_cipher_list(' . $cipher . ')';
+    Net::SSLeay::set_cipher_list($ssl, $cipher) or return $SSLINFO{'ME'} . '::set_cipher_list(' . $cipher . ')';
     $_SSLinfo{'cipherlist'} = $cipher;
     return '';
 }
