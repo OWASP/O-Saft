@@ -5,6 +5,9 @@
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 package OData;
+use strict;
+use warnings;
+use utf8;
 
 # for description of "no critic" pragmas, please see  t/.perlcriticrc  and
 # SEE Perl:perlcritic
@@ -12,14 +15,11 @@ package OData;
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
 ## no critic qw(Variables::ProhibitPackageVars)
 
-use strict;
-use warnings;
-
-my  $SID_odata  =  "@(#) OData.pm 3.21 24/06/24 15:27:24";
-our $VERSION    =  "24.06.24";
-
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
+
+my  $SID_odata  =  "@(#) OData.pm 3.23 24/07/26 15:59:25";
+our $VERSION    =  "24.06.24";
 
 use Exporter qw(import);
 
@@ -34,19 +34,22 @@ BEGIN {
     unshift(@INC, "lib")    if not (grep{/^lib$/}    @INC);
     our @EXPORT_OK  = qw(
         %checks
+        %data
+        %data0
+        %info
+        %shorttexts
         %check_cert
         %check_conn
         %check_dest
         %check_http
         %check_size
-        %data
-        %data0
-        %info
-        %shorttexts
     );
+    # not exported
 }
 
 use OText       qw(%STR);
+use OCfg        qw(%cfg %prot);
+        # 7/2024 ah: full qualified variable $OCfg:: needed; reason unknown
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -169,8 +172,8 @@ our %data   = (         # connection and certificate details
     'altname'           => {'val' => sub { SSLinfo::altname(           $_[0], $_[1])}, 'txt' => "Certificate Subject's Alternate Names"},
     'cipher_selected'   => {'val' => sub { SSLinfo::selected(          $_[0], $_[1])}, 'txt' => "Selected Cipher"},  # SEE Note:Selected Cipher
     'ciphers_local'     => {'val' => sub { SSLinfo::cipher_openssl()                }, 'txt' => "Local SSLlib Ciphers"},
-    'ciphers'           => {'val' => sub { join(" ",  SSLinfo::ciphers($_[0], $_[1]))}, 'txt' => "Client Ciphers"},
-    'dates'             => {'val' => sub { join(" .. ", SSLinfo::dates($_[0], $_[1]))}, 'txt' => "Certificate Validity (date)"},
+    'ciphers'           => {'val' => sub { return join(" ",  SSLinfo::ciphers($_[0], $_[1]))}, 'txt' => "Client Ciphers"},
+    'dates'             => {'val' => sub { return join(" .. ", SSLinfo::dates($_[0], $_[1]))}, 'txt' => "Certificate Validity (date)"},
     'before'            => {'val' => sub { SSLinfo::before(            $_[0], $_[1])}, 'txt' => "Certificate valid since"},
     'after'             => {'val' => sub { SSLinfo::after(             $_[0], $_[1])}, 'txt' => "Certificate valid until"},
     'aux'               => {'val' => sub { SSLinfo::aux(               $_[0], $_[1])}, 'txt' => "Certificate Trust Information"},
@@ -284,10 +287,10 @@ our %data   = (         # connection and certificate details
     'http_sts'          => {'val' => sub { SSLinfo::http_sts(              $_[0], $_[1])}, 'txt' => "HTTP STS header"},
     #----------------------+-------------------------------------------------------------+-----------------------------------
     'options'           => {'val' => sub { SSLinfo::options(               $_[0], $_[1])}, 'txt' => "internal used SSL options bitmask"},
-    'fallback_protocol' => {'val' => sub { print('$prot{fallback}->{val} in _init');},     'txt' => "Target's fallback SSL Protocol"},
+    'fallback_protocol' => {'val' => sub { print('$prot{fallback_protocol}->{val} in _init');},     'txt' => "Target's fallback SSL Protocol"},
     #----------------------+-------------------------------------------------------------+-----------------------------------
     # following not printed by default, but can be used as command
-#   'PROT'              => {'val' => sub { return $prot{'PROT'}->{'default'}           }, 'txt' => "Target default PROT     cipher"},
+#   'PROT'              => {'val' => sub { return $OCfg::prot{'PROT'}->{'default'}           }, 'txt' => "Target default PROT     cipher"},
     # all others will be added below
     #----------------------+-------------------------------------------------------------+-----------------------------------
     # following are used for checkdates() only, they must not be a command!
@@ -306,7 +309,7 @@ our %checks = (
     #
     # default for 'val' is "" (empty string), default for 'score' is 0
     # 'typ' is any of certificate, connection, destination, https, sizes
-    # both will be set in sub _init_all(), please see below
+    # both will be set in sub _init_checks_val(), please see below
 
     # the default "" value means "check = ok/yes", otherwise: "check =failed/no"
 
@@ -507,7 +510,7 @@ our %check_size = (  # length and count data
 ); # %check_size
 
 our %check_http = (  # HTTP vs. HTTPS data
-    # key must have prefix (hsts|sts); see $cfg{'regex'}->{'cmd-http'}
+    # key must have prefix (hsts|sts); see $OCfg::cfg{'regex'}->{'cmd-http'}
     #------------------+-----------------------------------------------------
     'sts_maxage0d'  => {'txt' => "STS max-age not reset"},           # max-age=0 is bad
     'sts_maxage1d'  => {'txt' => "STS max-age less than one day"},   # weak
@@ -819,13 +822,11 @@ our %shorttexts = (
 
 sub __SSLinfo   { ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? wrapper for SSLinfo::*() functions
-    # SSLinfo::*() return raw data, depending on $cfg{'format'}
+    # SSLinfo::*() return raw data, depending on $OCfg::cfg{'format'}
     # these values will be converted to o-saft's preferred format
     my ($cmd, $host, $port) = @_;
     my $val = "<<__SSLinfo: unknown command: '$cmd'>>";
     my $ext = "";
-    my %cfg = %OCfg::cfg;   # import from main, this method only called there
-    my %dum = %OCfg::cfg;   # avoid Perl warning "... used only once: possible typo ..."
     $val =  SSLinfo::fingerprint(      $host, $port) if ($cmd eq 'fingerprint');
     $val =  SSLinfo::fingerprint_hash( $host, $port) if ($cmd eq 'fingerprint_hash');
     $val =  SSLinfo::fingerprint_sha2( $host, $port) if ($cmd eq 'fingerprint_sha2');
@@ -1026,7 +1027,7 @@ sub __SSLinfo   { ## no critic qw(Subroutines::ProhibitExcessComplexity)
 # TODO: move code for formatting to print*()
     if ($cmd =~ /ext(?:ensions|debug|_)/) {
         # grrr, formatting extensions is special, take care for traps ...
-        if ($cfg{'format'} ne "raw") {
+        if ($OCfg::cfg{'format'} ne "raw") {
             $val =~ s/([0-9a-f]):([0-9a-f])/$1$2/ig; # remove : inside hex (quick&dirty)
             # it was quick&dirty, correct some failures
             $val =~ s/(keyid)/$1:/i;
@@ -1042,7 +1043,7 @@ sub __SSLinfo   { ## no critic qw(Subroutines::ProhibitExcessComplexity)
         return $val; # ready!
     }
 # TODO: move code for formatting to print*()
-    if ($cfg{'format'} ne "raw") {
+    if ($OCfg::cfg{'format'} ne "raw") {
         $val =  "" if not defined $val; # avoid warnings
         $val =~ s/^\s+//g;      # remove leading spaces
         $val =~ s/\n\s+//g;     # remove trailing spaces
@@ -1074,7 +1075,7 @@ sub show    {
     my $arg = shift;
     printf("= %%$arg\n");
     #if ('info' eq $arg)   { # not yet used
-    #printf("%21s -\t%s\n", $_, $info{$_}->{txt}) foreach (sort keys %info);
+    #printf("%21s -\t%s\n", $_, $info{$_}->{txt}) foreach (sort(keys %info));
     #}
     if ('data' eq $arg)   {
         printf("%21s -\t%s\n", $_, $data{$_}->{txt})       foreach (sort keys %data);
@@ -1112,6 +1113,53 @@ EoHelp
 #_____________________________________________________________________________
 #___________________________________________________ initialisation methods __|
 
+sub _init_checks_val    {
+    # set all default check values here
+    #trace("_init_checks_val() {");
+    my %_text = ( # same as %main::text
+        'undef'    => "<<undefined>>",
+        'na_STS'   => "<<N/A as STS not set>>",
+    );
+    foreach my $key (keys %checks)     { $checks{$key}->{val} = ""; }
+#### temporär, bis alle so gesetzt sind {
+    foreach my $key (qw(heartbeat krb5 psk_hint psk_identity srp session_ticket session_lifetime)) {
+        $checks{$key}->{val}    = $_text{'undef'};
+    }
+#### temporär }
+    foreach my $key (keys %checks) {
+        $checks{$key}->{val}    =  0 if ($key =~ m/$OCfg::cfg{'regex'}->{'cmd-sizes'}/);
+        $checks{$key}->{val}    =  0 if ($key =~ m/$OCfg::cfg{'regex'}->{'SSLprot'}/);
+    }
+    # some special values %checks{'sts_maxage*'}
+    $checks{'sts_maxage0d'}->{val}  =        1;
+    $checks{'sts_maxage1d'}->{val}  =    86400; # day
+    $checks{'sts_maxage1m'}->{val}  =  2592000; # month
+    $checks{'sts_maxage1y'}->{val}  = 31536000; # year
+    $checks{'sts_maxagexy'}->{val}  = 99999999;
+    $checks{'sts_maxage18'}->{val}  = 10886400; # 18 weeks
+    # if $data{'https_sts'}->{val}($host) is empty {
+        foreach my $key (qw(
+            sts_maxage sts_expired sts_preload sts_subdom
+            hsts_location hsts_refresh hsts_fqdn hsts_samehost hsts_sts
+        )) {
+            $checks{$key}->{val}    = $_text{'na_STS'};
+        }
+    # }
+    foreach my $key (@{$OCfg::cfg{'cmd-vulns'}}) {
+        $checks{$key}->{val}        = $_text{'undef'};  # may be refined below
+    }
+    foreach my $key (qw(
+        cipher_null cipher_adh cipher_exp cipher_cbc cipher_des cipher_rc4
+        cipher_edh  cipher_pfs cipher_pfsall
+        beast breach freak logjam lucky13 rc4 robot sloth sweet32
+        ism pci fips tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525
+    )) {
+        $checks{$key}->{val}        = "";
+    }
+    #trace("_init_checks_val() }");
+    return;
+} # _init_checks_val
+
 sub _init   {
     #? initialise variables
 
@@ -1121,16 +1169,18 @@ sub _init   {
     foreach my $key (keys %check_dest) { $checks{$key}->{txt} = $check_dest{$key}->{txt}; $checks{$key}->{typ} = 'destination'; }
     foreach my $key (keys %check_size) { $checks{$key}->{txt} = $check_size{$key}->{txt}; $checks{$key}->{typ} = 'sizes'; }
     foreach my $key (keys %check_http) { $checks{$key}->{txt} = $check_http{$key}->{txt}; $checks{$key}->{typ} = 'https'; }
-    foreach my $key (keys %checks)     { $checks{$key}->{val} = ""; }
+    _init_checks_val(); # initialise all checks{$key}->{val}
     # more data added to %checks after defining %cfg, see main
 
-    # TODO: must be done in main:
-    #$data{'fallback_protocol'}->{'val'} = sub { return $prot{'fallback'}->{val}  };
-    ## add keys from %prot to %shorttext,
-    #foreach my $ssl (keys %prot) {
-    #    my $key = lc($ssl); # keys in data are all lowercase (see: convert all +CMD)
-    #    $shorttexts{$key} = "Default $prot{$ssl}->{txt} cipher";
-    #}
+    # more initialisation for %data add keys from %prot to %data
+    # add keys from %prot to %shorttext also
+    $data{'fallback_protocol'}->{'val'} = sub { return $OCfg::prot{'fallback'}->{val}  };
+    foreach my $ssl (keys %OCfg::prot) {
+        my $key = lc($ssl); # keys in data are all lowercase (see: convert all +CMD)
+        $data{$key}->{val} = sub {    return $OCfg::prot{$ssl}->{'default'}; };
+        $data{$key}->{txt} = "Target default $OCfg::prot{$ssl}->{txt} cipher";
+        $shorttexts{$key}  =        "Default $OCfg::prot{$ssl}->{txt} cipher";
+    }
 
     return;
 } # _init
@@ -1189,7 +1239,7 @@ _init();
 
 =head1 VERSION
 
-3.21 2024/06/24
+3.23 2024/07/26
 
 
 =head1 AUTHOR
