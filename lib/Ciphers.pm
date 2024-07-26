@@ -5,6 +5,10 @@
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 package Ciphers;
+use strict;
+use warnings;
+use Carp;
+our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
 # for description of "no critic" pragmas, please see  t/.perlcriticrc  and
 # SEE Perl:perlcritic
@@ -20,16 +24,11 @@ package Ciphers;
 # 0.02  0.00  0:00.02 100%  0k  8804k  # 12/2023
 # 0.03  0.00  0:00.03 100%  0k 10176k  # 01/2024
 
-use strict;
-use warnings;
-use Carp;
-our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
-
-my  $SID_ciphers= "@(#) Ciphers.pm 3.43 24/07/16 20:47:55";
-our $VERSION    = "24.06.24";   # official verion number of this file
-
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
+
+my  $SID_ciphers= "@(#) Ciphers.pm 3.44 24/07/26 16:11:27";
+our $VERSION    = "24.06.24";   # official verion number of this file
 
 use Exporter qw(import);
 
@@ -306,6 +305,7 @@ our %ciphers_notes  = ( # list of notes and comments for ciphers
 ); # %ciphers_notes
 
 our %ciphers_cfg    = ( #  cipher-specific configurations
+   # not yet used
 ); # %ciphers_cfg
 
 #_____________________________________________________________________________
@@ -679,7 +679,7 @@ sub get_iana    {
     #? return "yes" if cipher suite is recommended by IANA, "no" otherwise
     my $key = shift;
        $key = text2key($key);       # normalize cipher key
-    return (grep{ /$key/i} $cfg{'cipherranges'}{'iana'}) ? "yes" : "no";
+    return (grep{ /$key/i} $OCfg::cfg{'cipherranges'}{'iana'}) ? "yes" : "no";
 } # get_iana
 
 sub get_pfs     {
@@ -1852,7 +1852,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.43 2024/07/16
+3.44 2024/07/26
 
 
 =head1 AUTHOR
