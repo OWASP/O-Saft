@@ -4,11 +4,13 @@
 #!# Copyright (c) 2024, Achim Hoffmann
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
-package OCfg;
-
-# TODO: implement
-#    require "o-saft-lib" "full";  # or "raw"
+# TODO: implement:  require "lib/OCfg" "full";  # or "raw"
 #       full: anything for o-saft.pl; raw partial for SSLhello.pm
+
+package OCfg;
+use strict;
+use warnings;
+use utf8;
 
 # for description of "no critic" pragmas, please see  t/.perlcriticrc  and
 # SEE Perl:perlcritic
@@ -20,15 +22,11 @@ package OCfg;
 ##    critic qw(ValuesAndExpressions::ProhibitMagicNumbers) # Severity: 2
 #       may print a lot of information, it's everity: 2 only
 
-use strict;
-use warnings;
-use utf8;
-
-our $SID_ocfg   =  "@(#) OCfg.pm 3.40 24/07/24 16:25:35";
-$OCfg::VERSION  =  "24.06.24";  # official version number of this file
-
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
+
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.41 24/07/26 16:17:10";
+our $VERSION    =  "24.06.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
     $cfg__me=~ s#^.*[/\\]##;    # of $cfg{'me'} which is used in %cfg itself
@@ -51,31 +49,17 @@ BEGIN { # mainly required for testing ...
 
     # See NOTES below also.
 
+    # not exported
+    #   %info
+    #   %prot_txt
+    #   %shorttexts
+
     our @EXPORT     = qw(
-        %ciphers
-        %prot
-        %prot_txt
-        %tls_compression_method
-        %tls_handshake_type
-        %tls_key_exchange_type
-        %tls_record_type
-        %tls_error_alerts
-        %TLS_EXTENSIONS
-        %TLS_EC_POINT_FORMATS
-        %TLS_MAX_FRAGMENT_LENGTH
-        %TLS_NAME_TYPE
-        %TLS_PROTOCOL_VERSION
-        %TLS_PSK_KEY_EXCHANGE_MODE
-        %TLS_SIGNATURE_SCHEME
-        %TLS_SUPPORTED_GROUPS
-        %TLS_ID_TO_EXTENSIONS
-        %ec_curve_types
-        %tls_curves
-        %target_desc
-        @target_defaults
-        %data_oid
-        %dbx
         %cfg
+        %dbx
+        %data
+        %data_oid
+        %prot
         get_ciphers_range
         get_cipher_owasp
         get_openssl_version
@@ -287,9 +271,6 @@ purpose of this module is defining variables. Hence we export them.
 #_____________________________________________________________________________
 #________________________________________________ public (export) variables __|
 
-#branch
-our %ciphers    = ();   # defined in lib/Ciphers.pm; need forward here
-
 our %prot       = (     # collected data for protocols and ciphers
     # NOTE: ssl must be same string as in %cfg, %ciphers[ssl] and Net::SSLinfo %_SSLmap
     # ssl           protocol  name        hex version value openssl  option     val LOW ...
@@ -313,6 +294,7 @@ our %prot       = (     # collected data for protocols and ciphers
     # see _prot_init_value() for following values in
     #   "protocol"=> {cnt, -?-, WEAK, LOW, MEDIUM, HIGH, protocol}
     #   "protocol"=> {cipher_pfs, ciphers_pfs, default, cipher_strong, cipher_weak}
+    #
     # Notes:
     #  TLS1FF   0x03FF  # last possible version of TLS1.x (not specified, used internal)
     #  DTLSv09: 0x0100  # DTLS, OpenSSL pre 0.9.8f, not finally standardised; some versions use 0xFEFF
@@ -320,7 +302,7 @@ our %prot       = (     # collected data for protocols and ciphers
     #  DTLSv1   0xFEFF  # DTLS1.0 (udp)
     #  DTLSv11  0xFEFE  # DTLS1.1: has never been used (udp)
     #  DTLSv12  0xFEFD  # DTLS1.2 (udp)
-    #  DTLSv13  0xFEFC  # DTLS1.3, NOT YET specified (udp)
+    #  DTLSv13  0xFEFC  # DTLS1.3 (udp)
     #  DTLSfamily       # DTLS1.FF, no defined PROTOCOL, for internal use only
     #  fallback         # no defined PROTOCOL, for internal use only
     #  TLS_FALLBACK_SCSV# 12/2023: not sure needed
@@ -2349,9 +2331,9 @@ our %cfg = (    # main data structure for configuration
                        ],
     'need-checkssl' => [        # commands which need checkssl() # TODO: needs to be verified
                         qw(check beast crime time breach freak
-                         cipher_adh cipher_null
-                         cipher_pfs cipher_pfsall cipher_cbc cipher_des
+                         cipher_adh cipher_cbc cipher_des cipher_null
                          cipher_edh cipher_exp cipher_rc4 cipher_selected
+                         cipher_pfs cipher_pfsall
                          ev+ ev- tr_02102+ tr_02102- tr_03116+ tr_03116-
                          ocsp_response ocsp_response_status ocsp_stapling
                          ocsp_uri ocsp_valid
@@ -2568,7 +2550,7 @@ our %cfg = (    # main data structure for configuration
         '-legacy_server_connect'    => [ 1, "<<NOT YET USED>>"      ],
         '-no_legacy_server_connect' => [ 1, "<<NOT YET USED>>"      ],
         #------------------+-------+-------------------------------------------
-	# openssl > 1.x disabled various protocols, default enabled
+        # openssl > 1.x disabled various protocols, default enabled
         #------------------+-------+-------------------------------------------
         '-ssl2'             => [ 1, "SSLv2 for +cipher disabled"    ],
         '-ssl3'             => [ 1, "SSLv3 for +cipher disabled"    ],
@@ -3421,7 +3403,7 @@ sub test_cipher_regex   {
             $o[0]   = "-";
         }
         printf("  %s\t%s\t%s\t%s\n", $is_pfs, get_cipher_owasp($cipher), join("", @o), $cipher);
-	$cnt++;
+        $cnt++;
     }
     print "= Please use  o-saft.pl --test-regex  for data." if (1 > $cnt);
         # TODO: may be fixed by loading lib/Ciphers.pm is here
@@ -3454,6 +3436,8 @@ sub test_cipher_sort    {
 
 sub _prot_init_value    {
     #? initialise default values in %prot
+    #  could be done in the static definition of %prot, but the values are the
+    #  same for all protocols, hence we use a function
     foreach my $ssl (keys %prot) {
         $prot{$ssl}->{'cnt'}            = 0;
         $prot{$ssl}->{'-?-'}            = 0;
@@ -3514,7 +3498,7 @@ sub _cfg_init   {
 
 sub _cmd_init   {
     #? initialise dynamic settings in %cfg for commands
-    foreach my $key (sort keys %cfg) {  # well-known "summary" commands
+    foreach my $key (sort(keys %cfg)) { # well-known "summary" commands
         push(@{$cfg{'commands_cmd'}}, $key) if ($key =~ m/^cmd-/);
     }
     # SEE Note:Testing, sort
@@ -3564,7 +3548,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.40"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.41"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3589,7 +3573,7 @@ sub _main       {
         if ($arg eq '--usage')           { OText::usage_show("", \%usage); exit 0; }
         # ----------------------------- commands
         if ($arg =~ /^version$/)         { print "$SID_ocfg\n"; next; }
-        if ($arg =~ /^[-+]?V(ERSION)?$/) { print "$OCfg::VERSION\n";   next; }
+        if ($arg =~ /^[-+]?V(ERSION)?$/) { print "$VERSION\n";  next; }
         $arg =~ s/^--test[_.-]?//;  # allow short option without prefix --test
         if ($arg eq 'regex')             { test_cipher_regex(); }
     }
@@ -3613,7 +3597,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.40 2024/07/24
+3.41 2024/07/26
 
 =head1 AUTHOR
 
