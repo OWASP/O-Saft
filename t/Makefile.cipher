@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 3.11 24/07/25 01:46:47
+#?      @(#) Makefile.cipher 3.12 24/07/26 10:20:02
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-O-SID.cipher       := 3.11
+O-SID.cipher       := 3.12
 O-SELF.cipher      := t/Makefile.cipher
 ALL.includes       += $(O-SELF.cipher)
 ALL.inc.type       += cipher
@@ -160,7 +160,7 @@ testcmd-cipher-+cipher---notls-dtlsv12_%:   TEST.args  += --no-tls --dtlsv12
 testcmd-cipher-+cipher---nodtls-tlsv12_%:   TEST.args  += --no-dtls --tlsv12
 testcmd-cipher-+cipher---trace-host_%:      TEST.args  += +cipher --showhost --trace-KEY
 testcmd-cipher-+cipher---openssl-local_%:   TEST.args  += --ciphermode=openssl --openssl=$(TEST.openssl) --openssl-cnf=$(TEST.openssl-cnf)
-testcmd-cipher-+ciphercheck_%:      TEST.args  += +ciphercheck --trace-CLI --header
+testcmd-cipher-+ciphercheck_%:      TEST.args  += +ciphercheck
 
 # not yet implemented # TODO: hence missing in ALL.testciphermisc below
 testcmd-cipher-+cipher-order_%:     TEST.args  += +cipher-order
