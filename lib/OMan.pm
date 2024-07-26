@@ -5,6 +5,9 @@
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 package OMan;
+use strict;
+use warnings;
+use utf8;
 
 # for description of "no critic" pragmas, please see  t/.perlcriticrc  and
 # SEE Perl:perlcritic
@@ -29,16 +32,11 @@ package OMan;
 ## no critic qw(Variables::ProhibitPackageVars)
 #       Many variables from ::main are used here, that's ok.
 
-use strict;
-use warnings;
-use utf8;
-use vars qw(%checks %data);
-
-my  $SID_oman   = "@(#) OMan.pm 3.48 24/06/24 15:28:46";
-our $VERSION    = "24.06.24";
-
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
+
+my  $SID_oman   = "@(#) OMan.pm 3.50 24/07/26 16:06:41";
+our $VERSION    = "24.06.24";
 
 use Exporter qw(import);
 BEGIN {     # SEE Perl:BEGIN perlcritic
@@ -53,11 +51,10 @@ BEGIN {     # SEE Perl:BEGIN perlcritic
 }
 
 use OText    qw(%STR);
-use OCfg;
+use OData    qw(%checks %data);
 use ODoc;
-use Ciphers;    # required if called stand-alone only
-
-# OSAFT_STANDALONE my %cfg  = %OCfg::cfg;
+use OCfg     qw(%cfg);
+use Ciphers  qw(%ciphers %ciphers_desc);
 
 # SEE Note:Stand-alone
 $::osaft_standalone = 0 if not defined $::osaft_standalone;
@@ -76,8 +73,8 @@ my  $cfg_header = 0;                    # we may be called from within parents B
     $cfg_header = 1       if (0 < (grep{/^--header/} @ARGV));
 my  $mytool = qr/(?:$parent|o-saft.tcl|o-saft|checkAllCiphers.pl)/;# regex for our tool names
 my  @help   = ODoc::get_markup("help.txt", $parent, $version);
-my  $trace  = 0;  # >1: option --trace, --trace=N, but not --traceCMD
-    $trace++ if (0 < (grep{/^--trace(?:=\d+)?$/} @ARGV));    # if called via o-saft.pl
+my  $_trace = 0;# >1: option --trace, --trace=N, but not --traceCMD
+    $_trace++ if (0 < (grep{/^--trace(?:=\d+)?$/} @ARGV));  # if called via o-saft.pl
 local $\    = "";
 
 #_____________________________________________________________________________
@@ -736,9 +733,7 @@ sub _man_dbx        {   # similar to _trace()
         $anf = "<!-- "; $end = " -->";
         # TODO: need to sanitise @txt : remove <!-- and/or -->
     }
-    if (0 < $trace) {
-        print $anf . "#" . $ich . ": " . join(' ', @txt) . "$end\n";
-    }
+    print $anf . "#" . $ich . ": " . join(' ', @txt) . "$end\n" if (0 < $_trace);
     return;
 } # _man_dbx
 
@@ -811,7 +806,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.48'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.50'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1525,7 +1520,7 @@ sub _man_ciphers_get     {
     # SEE Cipher:text  for detaiiled description and generated data format
     _man_dbx("_man_ciphers_get() ..");
     my $ciphers = "";
-    foreach my $key (sort keys %ciphers) {
+    foreach my $key (sort(keys %ciphers)) {
         my $name  = Ciphers::get_name ($key);
         next if not $name;              # defensive programming
         next if $name =~ m/^\s*$/;      # defensive programming
@@ -1640,7 +1635,7 @@ sub _man_ciphers_html_ul {
         }
         my ($key, $val) = split(/\t/, $line);
         my  $txt =  $key;
-        $txt =~ s/$key/$Ciphers::ciphers_desc{$key}/; # convert internal key to human readable text
+        $txt =~ s/$key/$ciphers_desc{$key}/;# convert internal key to human readable text
         $sec =  "";
         $sec =  "sec='$val'" if ("openssl" eq $key);# OpenSSL STRENGTH should also be marked
         $sec =  "sec='$val'" if ("sec"     eq $key);
@@ -1671,23 +1666,23 @@ sub _man_ciphers_html_tb {
     # build table header; cannot use "keys %ciphers_desc" because it's random
     # and we also want mixed rowspan and colspan
     # take care for sequence!
-    $tab .= "      <th rowspan=2>$Ciphers::ciphers_desc{'hex'}</th>\n";
-    $tab .= "      <th rowspan=2>$Ciphers::ciphers_desc{'sec'}</th>\n";
+    $tab .= "      <th rowspan=2>$ciphers_desc{'hex'}</th>\n";
+    $tab .= "      <th rowspan=2>$ciphers_desc{'sec'}</th>\n";
     $tab .= "      <th colspan=3>Names</th>\n";
-    $tab .= "      <th rowspan=2>$Ciphers::ciphers_desc{'openssl'}</th>\n";
-    $tab .= "      <th rowspan=2>$Ciphers::ciphers_desc{'ssl'}</th>\n";
-    $tab .= "      <th rowspan=2>$Ciphers::ciphers_desc{'keyx'}</th>\n";
-    $tab .= "      <th rowspan=2>Authen-tication</th>\n";   # $Ciphers::ciphers_desc{'auth'};
-    $tab .= "      <th colspan=3>Encryption</th>\n";        # $Ciphers::ciphers_desc{'enc'}
+    $tab .= "      <th rowspan=2>$ciphers_desc{'openssl'}</th>\n";
+    $tab .= "      <th rowspan=2>$ciphers_desc{'ssl'}</th>\n";
+    $tab .= "      <th rowspan=2>$ciphers_desc{'keyx'}</th>\n";
+    $tab .= "      <th rowspan=2>Authen-tication</th>\n";   # $ciphers_desc{'auth'};
+    $tab .= "      <th colspan=3>Encryption</th>\n";        # $ciphers_desc{'enc'}
     $tab .= "      <th colspan=1>MAC</th>\n";
-    $tab .= "      <th rowspan=2>$Ciphers::ciphers_desc{'pfs'}</th>\n";
-    $tab .= "      <th rowspan=2>RFC(s)&#xa0;URL</th>\n";   # $Ciphers::ciphers_desc{'rfc'};
-    $tab .= "      <th rowspan=2>$Ciphers::ciphers_desc{'notes'}</th>\n";
+    $tab .= "      <th rowspan=2>$ciphers_desc{'pfs'}</th>\n";
+    $tab .= "      <th rowspan=2>RFC(s)&#xa0;URL</th>\n";   # $ciphers_desc{'rfc'};
+    $tab .= "      <th rowspan=2>$ciphers_desc{'notes'}</th>\n";
     $tab .= "    </tr>\n";
     $tab .= "\n    <tr>\n";
     # second header line (for those with colpan= above
     foreach my $key (qw(suite names const enc bits enc_size mac)) {
-        my $txt =  $Ciphers::ciphers_desc{$key};
+        my $txt =  $ciphers_desc{$key};
            $txt =~ s|^Encryption ||;
            $txt =~ s|MAC\s*/\s*HASH||i;
         $tab .= "      <th>$txt</th>\n";
@@ -1958,19 +1953,19 @@ sub man_ciphers_text{
     my $txt = shift;
     my $keys= "";
     _man_dbx("man_ciphers_text() ..");
-    if (0 < $trace) {
-        foreach my $key (keys %Ciphers::ciphers_desc) {
+    if (0 < $_trace) {
+        foreach my $key (keys %ciphers_desc) {
             next if "additional_notes" eq $key;
-            $keys .= "#\t$key\t$Ciphers::ciphers_desc{$key}\n";
+            $keys .= "#\t$key\t$ciphers_desc{$key}\n";
         }
     }
     # _man_head() and _man_food() doesn't make sense here
-    foreach my $key (keys %Ciphers::ciphers_desc) {
+    foreach my $key (keys %ciphers_desc) {
         # convert internal keys to human readable text
 	# $key must be followed by whitespace character
-        $txt =~ s/\n$key\s/\n\t$Ciphers::ciphers_desc{$key}\t/g;
+        $txt =~ s/\n$key\s/\n\t$ciphers_desc{$key}\t/g;
     }
-    my $note= $Ciphers::ciphers_desc{'additional_notes'};
+    my $note= $ciphers_desc{'additional_notes'};
        $note=~ s/\n/\n= /g;    # add text for note with usual = prefix
        # see also %ciphers_desc in lib/Ciphers.pm;
     return "$keys$txt$note\n";
@@ -2441,7 +2436,7 @@ sub man_printhelp   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     if ($hlp =~ m/^(devel|developer|development)$/i) { # print developer description
         $txt = join("", ODoc::get_custom("devel.txt", $parent, $version));
     }
-    $txt = man_src_grep(qr/\s*_trace_(exit|info|next)\(/n, "--exit=") if ($hlp =~ /^exit$/);
+    $txt = man_src_grep(qr/\s*_trace_(exit|info|next)\(/, "--exit=") if ($hlp =~ /^exit$/);
         # NOTE: searching for functions named _trace_* in o-saft.pl,
         # while they are originaly named OTrace::*_show
     # anything below requires data defined in parent (usually o-saft.pl)
@@ -2504,7 +2499,7 @@ sub _main   {
         if ($arg =~ m/--?h(?:elp)?$/x)   { OText::print_pod($0, __FILE__, $SID_oman); exit 0; }
         if ($arg eq '--usage')           { OText::usage_show("", \%usage); exit 0; }
         # ----------------------------- options
-        if ($arg =~ m/^--(?:v|trace.?CMD)/i) { $trace++; next; }  # allow --v
+        if ($arg =~ m/^--(?:v|trace.?CMD)/i) { $_trace++; next; } # allow --v
         # ----------------------------- commands
         if ($arg =~ /^version$/)         { print "$SID_oman\n"; next; }
         if ($arg =~ /^[-+]?V(ERSION)?$/) { print "$VERSION\n";  next; }
@@ -2740,7 +2735,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.48 2024/06/24
+3.50 2024/07/26
 
 
 =head1 AUTHOR
