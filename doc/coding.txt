@@ -1,5 +1,5 @@
 
-# SID   @(#) coding.txt 3.6 24/05/26 00:55:38
+# SID   @(#) coding.txt 3.7 24/07/27 15:07:29
 
 # Description about Program Code and Documentation
 # It is not shown with +help but can be retrieved with: $0 --help=ProgramCode
@@ -72,7 +72,7 @@ HACKER's INFO
         Angle, curly and square brackets are mainly unambiguous in Perl.
 
         Round brackets are unambiguous if used for grouping.  Parameters  for
-        function calls are also a group. Hence they are most like used there,
+        function calls are also a group. Hence they're most likely used there
         even Perl does not require them.  This avoids unambiguous, unexpected
         use of parameters, for example when a function's return value is used
         as parameter for another function (in-line code).
@@ -89,6 +89,12 @@ HACKER's INFO
 
           * LHS condition
           * built-in functions, like: keys, print, sort, scalar
+
+        However, if multiple functions are nested,  round brackets are use to
+        avoid unexpected behaviour. For example:
+            reverse(sort(keys %hash));
+        instead of perlisch:
+            reverse sort keys %hash;
 
       Code style
 
@@ -107,7 +113,7 @@ HACKER's INFO
 
         if-constructs are used to deal with exceptions of the  normal control
         flow. The flow will continue behind the loop  or exit the loop or sub
-        using: break, continue, last, return.
+        using: break, continue, last, next, return.
 
         As described before, "early breaks" (next, last in loops; return from
         function) are prefered, rather than complicated or nested conditions.
@@ -364,6 +370,11 @@ HACKER's INFO
         is not provided.  It's recommended to use perl's  -d  option for full
         debugging.
 
+        Just an example how to use Perl's debugging:
+
+          env PERLDB_OPTS="NonStop frame=2 LineInfo=debug.out" \
+          perl -d ./$0 +version
+
       Abstract program flow
 
           check special options and command (+exec, +cgi, --envlibvar)
@@ -498,7 +509,7 @@ HACKER's INFO
             filename ID_in_repository date_of_last_change time_of_last_change
           example:     filename 1.42 18/10/23 23:42:23
           If this is assigned to a variable, it may look like:
-            my $SID = "coding.txt 3.6 24/05/26 00:55:38";
+            my $SID = "coding.txt 3.7 24/07/27 15:07:29";
           (Note beside: previous example of $SID is the SID of this file)
 
           Exceptions: some files for documentation only miss the SID string.
