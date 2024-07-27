@@ -303,7 +303,7 @@
 # -----------------------------------------------------------------------------
 
 # --------------------------------------------- internal variables; defaults
-SID="@(#) ê∫	π–U 3.25 24/07/17 11:13:09"
+SID="@(#) INSTALL-template.sh 3.26 24/07/27 22:23:14"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -325,6 +325,8 @@ mode="";                # "", cgi, check, clean-up, install, openssl
 alias echo=/bin/echo    # need special echo which has -n option;
 	                # TODO: check path for each platform
 tab="	"               # need a real TAB (0x09) for /bin/echo
+
+unset OSAFT_OPTIONS     # may be set by make, distorts some strings here
 
 text_miss="missing, try installing from/with";
 text_old="ancient module found, try installing newer version, at least "
@@ -646,7 +648,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.25 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.26 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -659,7 +661,7 @@ clean_directory="$inst_directory/$clean_directory"  # set on command line
 
 # --------------------------------------------- main
 
-echo "# $0 3.25 ..."    # always print internal SID, makes debugging simpler
+echo "# $0 3.26 ..."    # always print internal SID, makes debugging simpler
                        # do not use $SID, which is too noisy for make targets
 
 # no echo_info() used for empty mode or mode=expected
