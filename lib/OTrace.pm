@@ -41,7 +41,7 @@ use Data::Dumper qw(Dumper);
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_trace      = "@(#) OTrace.pm 3.35 24/07/27 14:40:01";
+my  $SID_trace      = "@(#) OTrace.pm 3.36 24/07/28 00:55:26";
 our $VERSION        = "24.06.24";
 
 our $prefix_trace   = "#". __PACKAGE__ . ":";
@@ -805,6 +805,15 @@ sub init_show   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _ptext("!!Hint: use --trace=3  to see full %cfg")           if (3 > $cfg{'trace'});
     _pnull();
     _ptext("#") if (3 > $cfg{'trace'});
+    _pline("%ENV {");
+    _p_k_v("PATH",          __undef($ENV{'PATH'}));
+    _p_k_v("PERL5LIB",      __undef($ENV{'PERL5LIB'}));
+    _p_k_v("PERLDB_OPTS",   __undef($ENV{'PERLDB_OPTS'}));
+    _p_k_v("PERL_HASH_SEED",__undef($ENV{'PERL_HASH_SEED'}));
+    _p_k_v("OSAFT_CONFIG",  __undef($ENV{'OSAFT_CONFIG'}));
+    _p_k_v("OSAFT_OPTIONS", __undef($ENV{'OSAFT_OPTIONS'}));
+    _p_k_v("OSAFT_MAKE",    __undef($ENV{'OSAFT_MAKE'}));
+    _pline("%ENV }");
     _pline("");
     #_p_k_v("init_show::SID", $SID_trace) if (2 < $cfg{'trace'}); # 24.01.24 removed
     _p_k_v("$0", main::_VERSION()); ## no critic qw(Subroutines::ProtectPrivateSubs)
@@ -1213,7 +1222,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.35 2024/07/27
+3.36 2024/07/28
 
 =head1 AUTHOR
 
