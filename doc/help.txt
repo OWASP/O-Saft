@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.23 24/06/18 16:27:02
+# SID   @(#) help.txt 3.24 24/07/27 10:50:49
 
 NAME
 
@@ -505,6 +505,7 @@ COMMANDS
       +pfs
 
           Check if servers offers ciphers with prefect forward secrecy (PFS).
+          Same as: +cipher-pfs +cipher-pfsall +session_random
 
       +protocols
 
@@ -620,6 +621,7 @@ COMMANDS
 
           Check if target accepts DES ciphers.
 
+      +rc4
       +cipher-rc4
 
           Check if target accepts RC4 ciphers.
