@@ -88,7 +88,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 3.11 24/07/01 16:29:09
+@(#) Makefile.pod 3.12 24/07/27 19:46:22
 
 =head1 AUTHOR
 
@@ -1380,8 +1380,12 @@ SEE L</Make:OSAFT_MAKE>, L</Make:--ignore-output>, L</GNU Make:Dragons> also.
 =head2 EXE.pl:--trace-CLI
 
 Most calls of  o-saft.pl  are done with the  --trace-CLI  option, which is
-configured in  TEST.init  variable.  This enforces printing of the command
-line at beginning of output.
+configured in with the  OSAFT_OPTIONS environment variable.  This enforces
+printing of the command line at beginning of output.
+Because this option is part of  all calls, it is not passed as argument by
+the (make-)variables used by the targets, but the environment variable set
+in Makefile. This way, it does not disturb the Makefile* and it's also not
+printed in the comaqnd line (which itself is enforced by  --trace-CLI ).
 
 For some generated output, this additional 1st line may break its intended
 usage. This applies only if the output is written to a file for later use.
