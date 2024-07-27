@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.90 24/07/27 17:04:14"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.91 24/07/27 17:37:14"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -180,9 +180,16 @@ sub _version_exit   { print _VERSION() . "\n"; exit 0; }
 BEGIN {
     # SEE Perl:BEGIN
     # SEE Perl:BEGIN perlcritic
-    _trace_info("BEGIN0  - start");
+    my $rex = qr/(?:^--trace)/i;
+    if (_is_argv($rex) or (defined $ENV{'OSAFT_OPTIONS'} and grep{/$rex/} $ENV{'OSAFT_OPTIONS'}) ) {
+        # print complete command-line if any --trace-* was given, it's intended
+        # that it works if unknown --trace-* was given, for example --trace-CLI
+        # use $0 instead of $cfg{'me'}, shows PATH  which is nice for debugging
+        printf("#$0 %s\n", join(" ", @ARGV));
+    }
     sub _VERSION { return "24.06.24"; } # <== our official version number
         # get official version (used for --help=* and in private modules)
+    _trace_info("BEGIN0  - start");
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##;
     my $_pwd  = $ENV{PWD} || ".";   # . as fallback if $ENV{PWD} not defined
     # SEE Perl:@INC
@@ -231,14 +238,6 @@ use OCfg        qw(%cfg %dbx %data_oid %prot);
 use OData       qw(%checks   %data %check_cert %check_conn %check_dest %check_http %check_size);
                 # (%check_cert %check_conn %check_dest %check_http %check_size );
 use Ciphers     qw(%ciphers  %ciphers_desc %ciphers_notes $cipher_results);
-
-my $rex = qr/(?:^--trace)/i;
-if (_is_argv($rex) or (defined $ENV{'OSAFT_OPTIONS'} and grep{/$rex/} $ENV{'OSAFT_OPTIONS'}) ) {
-    # print complete command-line if any --trace-* was given, it's intended
-    # that it works if unknown --trace-* was given, for example --trace-CLI
-    # use $0 instead of $cfg{'me'}, shows the path which is nice for debugging
-    printf("#$0 %s\n", join(" ", @ARGV));
-}
 
 
 #_____________________________________________________________________________
@@ -406,7 +405,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.90"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.91"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6040,7 +6039,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.90");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.91");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
