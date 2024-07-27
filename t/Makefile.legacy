@@ -6,7 +6,7 @@
 #?      make help.test.legacy
 #?
 #? VERSION
-#?      @(#) Makefile.legacy 3.3 24/07/01 16:29:05
+#?      @(#) Makefile.legacy 3.4 24/07/27 19:47:34
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.legacy = targets for testing '$(SRC.pl)' +cipher --legacy=* commands
 
-O-SID.legacy       := 3.3
+O-SID.legacy       := 3.4
 O-SELF.legacy      := t/Makefile.legacy
 ALL.includes       += $(O-SELF.legacy)
 ALL.inc.type       += legacy
@@ -73,7 +73,7 @@ LIST.legacy        := \
 # SEE Make:target name prefix
 
 testarg-legacy-+cipher%:    EXE.pl      = ../$(SRC.pl)
-testarg-legacy-+cipher%:    TEST.init   = --trace-CLI --header --enabled +cipher $(TEST.legacy.hosts)
+testarg-legacy-+cipher%:    TEST.init   = --header --enabled +cipher $(TEST.legacy.hosts)
 
 ifndef legacy-macros-generated
     # GEN.targets cannot be used, because it would generate duplicate targets
