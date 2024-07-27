@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -CADSio
 ## PACKAGE {
 
 #!# Copyright (c) 2024, Achim Hoffmann
@@ -41,7 +41,7 @@ use Data::Dumper qw(Dumper);
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_trace      = "@(#) OTrace.pm 3.34 24/07/26 16:08:57";
+my  $SID_trace      = "@(#) OTrace.pm 3.35 24/07/27 14:40:01";
 our $VERSION        = "24.06.24";
 
 our $prefix_trace   = "#". __PACKAGE__ . ":";
@@ -1038,9 +1038,6 @@ sub _main       {
         # SEE Make:OSAFT_MAKE (in Makefile.pod)
         # dirty hack here which asumes that _main() is called to print
         # information only and does not need time0
-    #  SEE Perl:binmode()
-    binmode(STDOUT, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
-    binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     my %usage = (
       '# commands to print data' => {'--test-regex'=>'show %cfg{regex}'},
     );
@@ -1216,7 +1213,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.34 2024/07/26
+3.35 2024/07/27
 
 =head1 AUTHOR
 
