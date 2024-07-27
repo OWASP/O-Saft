@@ -12,7 +12,7 @@
 #?          <info id="42" label="Common Name" value="*exacmle.tld" />
 #?
 #? VERSION
-#?      @(#) XML-attribute.awk 1.2 16/09/25 13:42:31
+#?      @(#) XML-attribute.awk 1.3 24/07/27 22:56:48
 #?
 #? AUTHOR
 #?      06. June 2016 Achim Hoffmann
@@ -29,10 +29,10 @@ BEGIN { FS="\t";
 	gsub(/>/,"\\&gt;");
 }
 /^\s*$/{ next; }
-($1~/^[#=]/) {print "<! "$0" -->";next}
+($1~/^[#=]/) {gsub(/--/,"-\\-"); print "<!-- "$0" -->";next}
 {
 	i++;
 	printf(" <info id=\"%s\" label=\"%s\" value=\"%s\" />\n",i,$1,$2);
 }
-END { print "</info>" }
+END { print "</infos>" }
 
