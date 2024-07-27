@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 3.13 24/07/27 18:16:27
+#?      @(#) Makefile 3.14 24/07/27 19:52:10
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-O-SID.test         := 3.13
+O-SID.test         := 3.14
 O-SELF.test        := t/Makefile
 ALL.includes       += $(O-SELF.test)
 ALL.inc.type       += test
@@ -67,6 +67,9 @@ export LANG        := C
 export LC_CTYPE    := C.UTF-8
     # LANG ensures same messages and sorting everywhere  
     # LC_CTYPE should ensures that all characters are proper encoded
+export PATH        := .:..:./usr:../usr:$(PATH)
+    # ensure that our tools are found in our directories first
+    # then use given PATH as we don't know where to find common tools
 export OSAFT_MAKE  := avoid writing random data (like date and time string)
 export OSAFT_OPTIONS  ?= --trace-CLI
     # OSAFT_OPTIONS=--trace-CLI because the command line should be printed
@@ -116,10 +119,6 @@ ifndef TEST.remove-environment-variables
     $(eval undefine _env)
     TEST.remove-environment-variables = done
 endif
-
-ttt:
-	@echo "OSAFT_MAKE=$(OSAFT_MAKE)"
-	@echo "OSAFT_OPTIONS=$(OSAFT_OPTIONS)"
 
 # store -n (dry-run) option in own variable
 TEST.make-n    := $(if $(findstring n,$(firstword -$(MAKEFLAGS))),-n)
