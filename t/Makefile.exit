@@ -6,7 +6,7 @@
 #?      make help.test.exit
 #?
 #? VERSION
-#?      @(#) Makefile.exit 3.3 24/07/01 16:28:58
+#?      @(#) Makefile.exit 3.4 24/07/27 19:34:10
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.exit = targets for testing '$(SRC.pl)' --exit= option
 
-O-SID.exit         := 3.3
+O-SID.exit         := 3.4
 O-SELF.exit        := t/Makefile.exit
 ALL.includes       += $(O-SELF.exit)
 ALL.inc.type       += exit
@@ -49,7 +49,7 @@ HELP.test.exit.all  = # no special documentation yet
 # SEE Make:target name prefix
 
 # get current list of available --exit=* options with:
-#    $(EXE.pl) --header --no-rc --trace-CLI --help=exit | awk '/^--exit/{print $1}'
+#    $(EXE.pl) --header --no-rc --help=exit | awk '/^--exit/{print $1}'
 LIST.o-saft.pl--exit := \
 	--exit=invalid_label_to_show_failed-status \
 	--exit=BEGIN0   --exit=BEGIN9   --exit=INIT0    --exit=INIT --exit=INIT9 \
@@ -64,8 +64,8 @@ LIST.o-saft.pl--exit := \
 # all targets are generated, see Makefile.gen; only one program: SRC.pl
 
 testarg-exit-o-saft.pl_%:   EXE.pl      = ../$(SRC.pl)
-testarg-exit-o-saft.pl_%:   TEST.init   = --trace-CLI +cn $(TEST.host)
-#testarg-exit-o-saft.pl_--exit-HOST0:   TEST.init   = --trace-CLI +cn $(TEST.host)
+testarg-exit-o-saft.pl_%:   TEST.init   = +cn $(TEST.host)
+#testarg-exit-o-saft.pl_--exit-HOST0:   TEST.init   = +cn $(TEST.host)
 
 ifndef exit-macros-generated
     # must use GEN.targets instead of GEN.targets-args to avoid setting TEST.init
