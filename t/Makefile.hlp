@@ -10,7 +10,7 @@
 #       Makefile.hlp .
 #
 #? VERSION
-#?      @(#) Makefile.hlp 3.6 24/07/01 16:29:03
+#?      @(#) Makefile.hlp 3.7 24/07/27 19:39:29
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -19,7 +19,7 @@
 
 HELP-help.test.hlp  = targets for testing '$(SRC.pl)' --help options
 
-O-SID.hlp          := 3.6
+O-SID.hlp          := 3.7
 O-SELF.hlp         := t/Makefile.hlp
 ALL.includes       += $(O-SELF.hlp)
 ALL.inc.type       += hlp
@@ -51,10 +51,8 @@ testarg-hlp-%:                  EXE.pl      = ../$(SRC.pl)
 testarg-hlp-%:                  TEST.init   = --header --no-rc
     # --no-rc ensures that a local RC-file does not change the results
 
-# all other commands with --trace-CLI
-testarg-hlp-o-saft.pl_--legacy-%:   TEST.init  += --trace-CLI +list
-testarg-hlp-o-saft.pl_+ciphers--%:  TEST.init  += --trace-CLI +ciphers
-testarg-hlp-o-saft.pl_--help%:      TEST.init  += --trace-CLI
+testarg-hlp-o-saft.pl_--legacy-%:   TEST.init  += +list
+testarg-hlp-o-saft.pl_+ciphers--%:  TEST.init  += +ciphers
 
 # these are kind of help, but do not use --help
 LIST.hlp.help-like := \
