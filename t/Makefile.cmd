@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 3.6 24/07/01 16:28:53
+#?      @(#) Makefile.cmd 3.7 24/07/27 19:37:38
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-O-SID.cmd          := 3.6
+O-SID.cmd          := 3.7
 O-SELF.cmd         := t/Makefile.cmd
 ALL.includes       += $(O-SELF.cmd)
 ALL.inc.type       += cmd
@@ -119,7 +119,7 @@ endif
 #           testcmd-cmd-+info_localhost testcmd-cmd-+info--noout_localhost
 
 testcmd-cmd-%:                      EXE.pl      = ../$(SRC.pl)
-testcmd-cmd-%:                      TEST.init   = --trace-CLI --header
+testcmd-cmd-%:                      TEST.init   = --header
 
 testcmd-cmd-+ignored-keys_%:        TEST.args  += $(LIST.ignore.cmd)
 testcmd-cmd-+ignored-keys_%.log:    EXE.log-filtercmd = cat
@@ -188,7 +188,7 @@ ALL.test.cmd.log   += $(ALL.test.cmd:%=%.log)
 
 # testrun target to allow something like:  testrun-+my-fancy-command
 testrun-%:  EXE.pl      = ../$(SRC.pl)
-testrun-%:  TEST.init   = --trace-CLI
+testrun-%:  TEST.init   =
 testrun-%:  TEST.args  += $(TEST.cmd.hosts)
 testrun-%:
 	@$(O-TRACE.target)
