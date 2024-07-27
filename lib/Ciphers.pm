@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -CADSio
 ## PACKAGE {
 
 #!# Copyright (c) 2024, Achim Hoffmann
@@ -7,6 +7,7 @@
 package Ciphers;
 use strict;
 use warnings;
+use utf8;
 use Carp;
 our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 
@@ -27,7 +28,7 @@ our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.44 24/07/26 16:11:27";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.46 24/07/27 12:03:31";
 our $VERSION    = "24.06.24";   # official verion number of this file
 
 use Exporter qw(import);
@@ -629,8 +630,8 @@ sub get_key     {
         last TRY if defined $ciphers{$key}; # cipher's hex key itself
         $typ = 'names';
         # Perl dragon: foreach's variable is localized to the loop, hence $_
-        foreach $_ (keys %ciphers) { ## no critic qw(Variables::RequireLexicalLoopIterators)
-            $key = $_;
+        foreach my $k (keys %ciphers) {
+            $key = $k;
             my @names = get_names($key);    # returns aliases too
             last TRY if (0 < (grep{/^$txt$/i} @names));
                 # TODO above grep my return "Use of uninitialized value $_"
@@ -640,8 +641,8 @@ sub get_key     {
         $typ = 'const';
         $txt =~ s/^(?:SSL[23]?|TLS1?)_//;   # strip any prefix: CK_NULL_WITH_MD5 
         $txt =~ s/^(?:CK|TXT)_//;           # strip any prefix: NULL_WITH_MD5
-        foreach $_ (keys %ciphers) { ## no critic qw(Variables::RequireLexicalLoopIterators)
-            $key = $_;
+        foreach my $k (keys %ciphers) {
+            $key = $k;
             my @names = get_consts($key);
             last TRY if (0 < (grep{/^$txt$/i} @names));
         }
@@ -1678,9 +1679,6 @@ sub _main   {
     #? print own documentation or special required one
     my @argv = @_;
     push(@argv, "--help") if (0 > $#argv);
-    #  SEE Perl:binmode()
-    binmode(STDOUT, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
-    binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     my %usage = (
         '# commands to show internal cipher tables' => {
             'alias'     => '',
@@ -1852,7 +1850,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.44 2024/07/26
+3.46 2024/07/27
 
 
 =head1 AUTHOR
