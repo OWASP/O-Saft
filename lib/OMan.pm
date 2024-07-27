@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -CADSio
 ## PACKAGE {
 
 #!# Copyright (c) 2024, Achim Hoffmann
@@ -35,7 +35,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_oman   = "@(#) OMan.pm 3.50 24/07/26 16:06:41";
+my  $SID_oman   = "@(#) OMan.pm 3.51 24/07/27 14:36:12";
 our $VERSION    = "24.06.24";
 
 use Exporter qw(import);
@@ -806,7 +806,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.50'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.51'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2485,9 +2485,6 @@ sub man_printhelp   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
 sub _main   {
     #? print own documentation or special required one
     push(@ARGV, "--help") if 0 > $#ARGV;
-    #  SEE Perl:binmode()
-    binmode(STDOUT, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
-    binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     my $file;
     my %usage = (
         '# commands to show help text in various formats' => {
@@ -2735,7 +2732,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.50 2024/07/26
+3.51 2024/07/27
 
 
 =head1 AUTHOR
