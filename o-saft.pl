@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -CADSio
 
 #!#############################################################################
 #!#             Copyright (c) 2024, Achim Hoffmann
@@ -37,9 +37,6 @@
 #       included as needed. This keeps away noisy messages and allows to be run
 #       and print some information even if installed incompletely.
 
-## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
-#  NOTE: SEE Perl:binmode()
-
 ## no critic qw(Variables::RequireLocalizedPunctuationVars)
 #  NOTE: Perl::Critic seems to be buggy as it does not honor the  allow  option
 #        for this policy (see  t/.perlcriticrc also). It even doesn't honor the
@@ -68,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.88 24/07/26 17:01:45"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.89 24/07/27 15:10:51"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -92,6 +89,7 @@ my  @perl_incorig;  # save orginial @INC
 sub _set_binmode    {
     # set discipline for I/O operations (STDOUT, STDERR)
     # SEE Perl:binmode()
+    ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     my $layer = shift;
     binmode(STDOUT, $layer);
     binmode(STDERR, $layer);
@@ -404,7 +402,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.88"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.89"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6038,7 +6036,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.88");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.89");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -8651,14 +8649,39 @@ The tool here roughly destingushes two types of I/O:
     2. writing and reading to network sockets, which is done underneath.
 
 We assume that the  I/O socket (2. above)  is handled properly by the used
-modules. This leaves STDOUT and STDERR (1. above) to be set properly like:
+modules. This leaves STDOUT and STDERR (1. above) to be set properly.
+
+With VERSION > 24.06.24 Perl's more modern handling of UTF-8 is used. This
+is done in 2 steps:
+
+    1. option -CADSio in shebang line (yes, -CADS should be sufficient;-)
+    2. 'use utf8;' in the code
+
+Now all processing of data  (the code itself, STDIN, STDOUT, STDERR)  uses
+(Unicode) characters instead of bytes. 
+As most --nearly all-- data on STDOUT and STDERR is supposed to be read by
+humans, only these channels need to handled.  It is assumed that all texts
+consist of printable characters only, probably in various languages. Hence
+UTF-8 is used as default character set.
+
+This avoids special handling of I/O layers elsewhere.
+
+The only exception (beside other Perl modules, see above) is  SSLhello.pm
+which reads data from sockets directly and handles the encoding itself.
+
+Please see the perlunitut, perluniintro and perlunicode man pages for more
+details.
+
+=head3 Old Versions of Perl
+
+To work with older versions of Perl (< 5.8.0),  the code probably needs to
+be changed as used until VERSION 24.06.24. This was:
+
+    # no shebang option -CADSio
 
     binmode(STDOUT, ":unix:utf8");
     binmode(STDERR, ":unix:utf8");
 
-As most --nearly all-- data on STDOUT and STDERR is supposed to be read by
-humans, only these channels are handled explicitly.  The idea is, that all
-texts consist of printable characters only, probably in various languages.
 Hence UTF-8 is used as default character set.  The channels are configured
 to expect UTF-8 characters.
 Perl destingushes between `:utf8' and `:encoding(UTF-8)' layer,  where the
@@ -8672,7 +8695,28 @@ Unfortunately  Perl::Critic  complains that  `:encoding(UTF-8)'  should be
 used, InputOutput::RequireEncodingWithUTF8Layer  must be disabled there.
 
 Note that we use STDOUT and STDERR  and not the pseudo layer `:std' or the
--S flag/option, because they also include STDIN.
+-CS flag/option, because they also include STDIN.
+
+If UTF-8 or Unicode is really needed, please see also  "Unicode::String",
+"Unicode::Map8", and "Unicode::Map".
+
+=head3 Trouble Shooting Unicode
+
+If characters are not displayed properly or as expected,  first check your
+your shell's (terminal's) environment variables:
+
+    LANG  and any of  LC_*  (see "man locale")
+
+They should be set to a valid  *.UTF-8  (or alilke).
+
+If the environment is set properly, you may try  to run the tools with the
+additional environment variable
+
+    PERL_UNICODE=0
+
+which should reset all local setting in the code to its defaults.
+
+For other values of PERL_UNICODE, see the -C option in "man perlrun".
 
 
 =head2 Perl:map()
