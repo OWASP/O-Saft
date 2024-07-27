@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.89 24/07/27 15:10:51"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.90 24/07/27 17:04:14"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -225,16 +225,20 @@ $::osaft_standalone = 0;        # SEE Note:Stand-alone
 
 #| definitions: include configuration
 #| -------------------------------------
-# modueles always needed, it's ok to die if missing, hence not loaded with _load_modules()
+# modules always needed, it's ok to die if missing, hence not loaded with _load_modules()
 use OText       qw(%STR);
 use OCfg        qw(%cfg %dbx %data_oid %prot);
 use OData       qw(%checks   %data %check_cert %check_conn %check_dest %check_http %check_size);
                 # (%check_cert %check_conn %check_dest %check_http %check_size );
 use Ciphers     qw(%ciphers  %ciphers_desc %ciphers_notes $cipher_results);
 
-printf("#$cfg{'me'} %s\n", join(" ", @ARGV)) if _is_argv('(?:--trace[_.-]?(?:CLI$)?)');
+my $rex = qr/(?:^--trace)/i;
+if (_is_argv($rex) or (defined $ENV{'OSAFT_OPTIONS'} and grep{/$rex/} $ENV{'OSAFT_OPTIONS'}) ) {
     # print complete command-line if any --trace-* was given, it's intended
     # that it works if unknown --trace-* was given, for example --trace-CLI
+    # use $0 instead of $cfg{'me'}, shows the path which is nice for debugging
+    printf("#$0 %s\n", join(" ", @ARGV));
+}
 
 
 #_____________________________________________________________________________
@@ -402,7 +406,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.89"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.90"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6036,7 +6040,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.89");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.90");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6666,7 +6670,7 @@ while ($#argv >= 0) {
     #!#           argument to check       what to do             what to do next
     #!#--------+------------------------+--------------------------+------------
     if ($arg eq  '--trace--')         { _set_cfg_out('traceARG',1); next; } # for backward compatibility
-    if ($arg =~ /^--trace.?CLI$/)       {                           next; } # ignore, already handled
+    if ($arg =~ /^--trace.?CLI$/i)      {                           next; } # ignore, already handled
     if ($arg =~ /^--v(?:erbose)?$/)     { $cfg{'verbose'}++;        next; } # --v and --v=X allowed
     if ($arg =~ /^--?starttls$/i)       { $cfg{'starttls'} ="SMTP"; next; } # shortcut for  --starttls=SMTP
     if ($arg =~ /^--cgi.?(?:exec|trace)/){$cgi = 1;                 next; } # SEE Note:CGI mode
