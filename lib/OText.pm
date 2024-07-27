@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -CADSio
 ## PACKAGE {
 
 #!# Copyright (c) 2024, Achim Hoffmann
@@ -8,8 +8,9 @@ package OText;
 
 use strict;
 use warnings;
+use utf8;
 
-my  $SID_otext  =  "@(#) OText.pm 3.15 24/06/24 15:29:26";
+my  $SID_otext  =  "@(#) OText.pm 3.16 24/07/27 14:37:46";
 our $VERSION    =  "24.06.24";
 
 #_____________________________________________________________________________
@@ -129,7 +130,7 @@ Print data from given hash (used for --usage option).
 
 =head1 VERSION
 
-3.15 2024/06/24
+3.16 2024/07/27
 
 
 =head1 AUTHOR
@@ -221,9 +222,6 @@ EoT
 sub _main   {
     my @argv = @_;
     push(@argv, "--help") if (0 > $#argv);
-    # SEE Perl:binmode()
-    binmode(STDOUT, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
-    binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     my %usage = ( '# commands to show data' => { '--test-text' => 'show %STR' } );
     # got arguments, do something special
     while (my $arg = shift @argv) {
