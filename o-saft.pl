@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.91 24/07/27 17:37:14"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.92 24/07/27 18:15:32"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -82,9 +82,13 @@ our $time0  = time();   # must be set very early, cannot be done in OCfg.pm
 our @perl_inc   ;   # add to @INC
 our @perl_noinc ;   # remove from @INC
 my  @perl_incorig;  # save orginial @INC
+    # all these variables are not available in BEGIN{}, but can be set there
 
 #_____________________________________________________________________________
 #______________________________________________ functions needed in BEGIN{} __|
+
+sub _VERSION { return "24.06.24"; } # <== our official version number
+    # get official version (used for --help=* and in private modules)
 
 sub _set_binmode    {
     # set discipline for I/O operations (STDOUT, STDERR)
@@ -106,6 +110,16 @@ sub _is_v_trace     { my $rex = shift; return (grep{/--(?:v|trace(?:=\d*)?$)/} @
 
 our $make_text = "(OSAFT_MAKE exists)";
 our $time_text = $make_text;
+
+sub _vprint         {
+    #? print information when --v is given
+    my @txt = @_;
+    return if (0 >= _is_ARGV('(?:--v$)'));
+    my %STR;    # dummy declaration to keep Perl's compile phase quiet
+    printf("%s%s\n", $STR{'INFO'}||'**INFO: ', join(" ", @txt));
+        # hardcoded '**INFO: ' is necessary in standalone mode only
+    return;
+} # _vprint
 sub _trace_time     {
     # print timestamp if --trace-time was given; similar to trace_time
     # time0 does not exist in early calls in BEGIN{} and until arguments are
@@ -187,8 +201,7 @@ BEGIN {
         # use $0 instead of $cfg{'me'}, shows PATH  which is nice for debugging
         printf("#$0 %s\n", join(" ", @ARGV));
     }
-    sub _VERSION { return "24.06.24"; } # <== our official version number
-        # get official version (used for --help=* and in private modules)
+
     _trace_info("BEGIN0  - start");
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##;
     my $_pwd  = $ENV{PWD} || ".";   # . as fallback if $ENV{PWD} not defined
@@ -296,15 +309,6 @@ sub _warn_nosni     {
     return;
 } # _warn_nosni
 
-sub _vprint         {
-    #? print information when --v is given
-    my @txt = @_;
-    return if (0 >= _is_ARGV('(?:--v$)'));
-    printf("%s%s\n", $STR{'INFO'}||'**INFO: ', join(" ", @txt));
-        # hardcoded '**INFO: ' is necessary in standalone mode only
-    return;
-} # _vprint
-
 sub _vprint2        {
     #? print information when --v --v is given
     my @txt = @_;
@@ -405,7 +409,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.91"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.92"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6039,7 +6043,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.91");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.92");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
