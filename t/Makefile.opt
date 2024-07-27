@@ -8,7 +8,7 @@
 #?      make help.test.opt
 #?
 #? VERSION
-#?      @(#) Makefile.opt 3.4 24/07/01 16:29:09
+#?      @(#) Makefile.opt 3.5 24/07/27 19:36:35
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -17,7 +17,7 @@
 
 HELP-help.test.opt  = targets for testing '$(SRC.pl)' options
 
-O-SID.opt          := 3.4
+O-SID.opt          := 3.5
 O-SELF.opt         := t/Makefile.opt
 ALL.includes       += $(O-SELF.opt)
 ALL.inc.type       += opt
@@ -56,7 +56,7 @@ HELP.test.opt.all   = # no special documentation yet
 # SEE EXE.pl:--trace-CLI 
 
 testarg-opt-alias-%:            EXE.pl      = ../$(SRC.pl)
-testarg-opt-alias-%:            TEST.init   = --trace-CLI --traceARG --v +quit
+testarg-opt-alias-%:            TEST.init   = --traceARG --v +quit
 testarg-opt-alias-enabled..1:   TEST.args  += --exit=MAIN  -b
 #testarg-opt-alias-enabled..2:   TEST.args  += --exit=MAIN  -b
 testarg-opt-alias-ca_path..x:   TEST.args  += --exit=MAIN  -c x
@@ -64,14 +64,14 @@ testarg-opt-alias-ca_path..x:   TEST.args  += --exit=MAIN  -c x
 testarg-opt-alias---test-ciphers-list:  TEST.args += --test-ciphers-list
 
 # folgende noch in passende Makefile verschieben
-testarg-opt-alias-HOST0%:       TEST.init   = --trace-CLI --exit=HOST0 +cn
+testarg-opt-alias-HOST0%:       TEST.init   = --exit=HOST0 +cn
 testarg-opt-alias-HOST0-ipv6:   TEST.args  += ::1 ::244
 testarg-opt-alias-HOST0-many:   TEST.args  += demo demo:42 egal --port 23 localhost
 
 # yeast.pl --exit=HOST0 +cn demo demo:42 egal --port 23 localhost ::1/erkannt_aber_falsch "[::266]" --port=22 "[::244]:32/egal" ::1:333/x/ambigious_port_falsch
 
 testarg-opt-stdformat-%:    EXE.pl      = ../$(SRC.pl)
-testarg-opt-stdformat-%:    TEST.init   = --trace-CLI --no-rc --help=pod
+testarg-opt-stdformat-%:    TEST.init   = --no-rc --help=pod
 testarg-opt-stdformat-crlf: TEST.args  += --std-format=crlf
 testarg-opt-stdformat-raw:  TEST.args  += --std-format=raw
 testarg-opt-stdformat-unix: TEST.args  += --std-format=unix
