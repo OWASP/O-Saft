@@ -1,4 +1,5 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl -w -CAS
+# not -CADSio because sockets are special here
 ## PACKAGE {
 # Filename : SSLhello.pm
 #!#############################################################################
@@ -34,6 +35,9 @@
 #!# Doc/coding.txt
 
 package SSLhello;
+use strict;
+use warnings;
+use utf8;
 
 # TODO:  TLSv13: Decrypt and parse also the encrypted extensions.
 
@@ -52,10 +56,7 @@ package SSLhello;
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
 #  because we use /x as needed for human readability
 
-use strict;
-use warnings;
-
-my  $SID_sslhello = "@(#) SSLhello.pm 3.27 24/07/26 14:19:57";
+my  $SID_sslhello = "@(#) SSLhello.pm 3.28 24/07/27 14:52:21";
 our $VERSION    = "24.06.24";
 my  $SSLHELLO   = "SSLhello";
 
@@ -6306,10 +6307,6 @@ sub _main_help  {
 
 sub _main       {
     my @argv = @_;
-    ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
-    #  SEE Perl:binmode()
-    binmode(STDOUT, ":unix:utf8");
-    binmode(STDERR, ":unix:utf8");
     if ($#argv < 0) { _main_help(); exit 0; }
     # got arguments, do something special; any -option or +command exits
     while (my $arg = shift @argv) {
