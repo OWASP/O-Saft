@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -CADSio
 ## PACKAGE {
 
 #!# Copyright (c) 2024, Achim Hoffmann
@@ -18,7 +18,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odata  =  "@(#) OData.pm 3.23 24/07/26 15:59:25";
+my  $SID_odata  =  "@(#) OData.pm 3.24 24/07/27 14:31:22";
 our $VERSION    =  "24.06.24";
 
 use Exporter qw(import);
@@ -1191,9 +1191,6 @@ sub _init   {
 sub _main   {
     my @argv = @_;
     push(@argv, "--help") if (0 > $#argv);
-    #  SEE Perl:binmode()
-    binmode(STDOUT, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
-    binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     my %usage = (
         '# commands to show internal data' => {
             'info'       => 'show %data',
@@ -1239,7 +1236,7 @@ _init();
 
 =head1 VERSION
 
-3.23 2024/07/26
+3.24 2024/07/27
 
 
 =head1 AUTHOR
