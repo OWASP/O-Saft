@@ -1,24 +1,25 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -CADSio
 ## PACKAGE {
 
 #!# Copyright (c) 2024, Achim Hoffmann
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 package OUsr;
+use strict;
+use warnings;
+use utf8;
 
 # for description of "no critic" pragmas, please see  t/.perlcriticrc  and
 # SEE Perl:perlcritic
 
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
 
-use strict;
-use warnings;
-
-my  $SID_ousr       = "@(#) OUsr.pm 3.17 24/06/24 15:30:50";
-our $VERSION        = "24.06.24";   # changed only if fucntionality changed!
-
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
+
+my  $SID_ousr       = "@(#) OUsr.pm 3.18 24/07/27 14:42:17";
+our $VERSION        = "24.06.24";   # changed only if fucntionality changed!
+
 
 no warnings 'redefine'; ## no critic qw(TestingAndDebugging::ProhibitNoWarnings)
    # must be herein, as most subroutines are already defined in main
@@ -282,9 +283,6 @@ sub pre_exit    {
 
 sub _main       {
     my $arg = shift || "--help";    # without argument print own help
-    # SEE Perl:binmode()
-    binmode(STDOUT, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
-    binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     OText::print_pod($0, __FILE__, $SID_ousr) if ($arg =~ m/--?h(elp)?$/x);
     # no other options implemented yet
     print "$SID_ousr\n"     if ($arg =~ /^version$/);
@@ -301,7 +299,7 @@ sub done    {}; # dummy to check successful include
 
 =head1 VERSION
 
-3.17 2024/06/24
+3.18 2024/07/27
 
 =head1 AUTHOR
 
