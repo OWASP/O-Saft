@@ -1,11 +1,8 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -CADSio
 ## PACKAGE {
 
 #!# Copyright (c) 2024, Achim Hoffmann
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
-
-# TODO: implement:  require "lib/OCfg" "full";  # or "raw"
-#       full: anything for o-saft.pl; raw partial for SSLhello.pm
 
 package OCfg;
 use strict;
@@ -25,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.41 24/07/26 16:17:10";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.42 24/07/27 14:29:26";
 our $VERSION    =  "24.06.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -3548,7 +3545,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.41"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.42"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3559,9 +3556,6 @@ sub _main       {
     #? print own documentation or special required one
     my @argv = @_;
     push(@argv, "--help") if (0 > $#argv);
-    # SEE Perl:binmode()
-    binmode(STDOUT, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
-    binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     my %usage = (
         '# commands to show internal configuration data' => {
             'regex' => 'show %cfg{regex}',
@@ -3597,7 +3591,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.41 2024/07/26
+3.42 2024/07/27
 
 =head1 AUTHOR
 
