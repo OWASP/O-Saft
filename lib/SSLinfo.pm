@@ -1,4 +1,4 @@
-#! /usr/bin/perl
+#! /usr/bin/perl -CADSio
 ## PACKAGE {
 
 #!#############################################################################
@@ -49,7 +49,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.18 24/07/26 14:12:56";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.19 24/07/27 14:44:43";
 our $VERSION        =  "24.06.24";  # official verion number of this file
 
 BEGIN {
@@ -4186,8 +4186,6 @@ sub _main           {
     #  see t/.perlcriticrc for detailed description of "no critic"
     my @argv = @_;
     push(@argv, "--help") if (0 > $#argv);
-    binmode(STDOUT, ":unix:utf8");
-    binmode(STDERR, ":unix:utf8");
     my %usage = (
       '# commands to show internal data' => {
           'sclient' => "show available options for 'openssl s_client'",
