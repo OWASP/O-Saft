@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.24 24/07/27 10:50:49
+# SID   @(#) help.txt 3.25 24/07/27 14:58:14
 
 NAME
 
@@ -1959,9 +1959,9 @@ OPTIONS
 
           * 'raw'
           * 'unix'      - Print raw data, binary in bytes without conversion.
-            Note:  binary here just means characters (as all output is text).
+            Note:  binary here means that each byte is a character.
 
-          * 'utf8'      - Convert all characters to UTF-8.
+          * 'utf8'      - Convert detected bytes to UTF-8 characters.
           * 'crlf'      - Use CR LF as end of line.
 
           * 'CHARSET'   - can be any of the local installed  character sets,
@@ -1974,11 +1974,13 @@ OPTIONS
           additionally.
           Note:  'utf8' just defines the format of the characters, it does no
           further checks on the converted characters. In contrast, 'UTF-8' is
-          used as real encoding and does some checks.
+          used as real encoding and does some checks. However, the difference
+          is importand on STDIN only.
 
           For more details, please see  "perldoc -f binmode" .
+          For the tools default behaviour, please SEE Perl:binmode()
 
-          Currently (Jan. 2018), these options must be used before any --help
+          Currently (in 2024), these options must be used before any   --help
           option.
 
       --win-CR
@@ -3514,6 +3516,44 @@ KNOWN PROBLEMS
         modern servers not supporting SSLv2, SSLv3.
 
         Other options to test are  --timeout=SEC  or  --connect-delay=SEC .
+
+    Old, deprecated cipher suites
+
+        Unfortunately, some cipher suites are known with different hex keys.
+        This happend for ciphers used in draft RFCs, or in proprietary imple-
+        mentations. Most often such duplicates are no longer in use in modern
+        specifications (like RFCs). However, a tested target may provide them
+        with the outdated key.
+
+        The hex key may be different, but the  cipher suite name and the name
+        of the constant is the same. Modern description often use a different
+        name, most likely with the suffix "-OLD".
+
+        The problem then is, that the constant name is still the same.  Known
+        such ciphers are:
+
+            0x0300CC13 ECDHE-RSA-CHACHA20-POLY1305-SHA256-OLD
+            0x0300CCA8 ECDHE-RSA-CHACHA20-POLY1305-SHA256
+            
+            0x0300CC14 ECDHE-ECDSA-CHACHA20-POLY1305-SHA256-OLD
+            0x0300CCA9 ECDHE-ECDSA-CHACHA20-POLY1305-SHA256
+
+            0x0300CC15 DHE-RSA-CHACHA20-POLY1305-SHA256-OLD
+            0x0300CCAA DHE-RSA-CHACHA20-POLY1305-SHA256
+
+        As the option  --cipher=  allows to selcet ciphers based on  constant
+        names, for example:
+
+            --cipher=ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+
+        which may result in checking only one of the effected ciphers.
+        Unfortunately this behaviour is random.
+
+        This beahvaiour may be checked with calling multiple time:
+
+            lib/Ciphers.pm find_name=ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+
+        Workaround: do not use constant names for the  --cipher=  option.
 
     Segmentation fault
 
