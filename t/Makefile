@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 3.14 24/07/27 19:52:10
+#?      @(#) Makefile 3.15 24/07/28 00:32:36
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-O-SID.test         := 3.14
+O-SID.test         := 3.15
 O-SELF.test        := t/Makefile
 ALL.includes       += $(O-SELF.test)
 ALL.inc.type       += test
@@ -74,6 +74,8 @@ export OSAFT_MAKE  := avoid writing random data (like date and time string)
 export OSAFT_OPTIONS  ?= --trace-CLI
     # OSAFT_OPTIONS=--trace-CLI because the command line should be printed
     # always in each EXE.pl call; may be redifened on make's command line
+test%VERSION:         OSAFT_OPTIONS=
+    # these targets should not print command line
 
 first-test-target-is-default: help.test
 
