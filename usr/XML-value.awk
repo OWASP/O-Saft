@@ -12,7 +12,7 @@
 #?          <info><label>Common Name</label><value>*exacmle.tld</value></info>
 #?
 #? VERSION
-#?      @(#) XML-value.awk 1.2 16/09/25 13:40:43
+#?      @(#) XML-value.awk 1.3 24/07/27 22:59:19
 #?
 #? AUTHOR
 #?      06. June 2016 Achim Hoffmann
@@ -28,7 +28,7 @@ BEGIN { FS="\t";
 	gsub(/>/,"\\&gt;");
 }
 /^\s*$/{ next; }
-($1~/^[#=]/) { print "<! "$0" -->"; next; }
+($1~/^[#=]/) { gsub(/--/,"-\\-"); print "<!-- "$0" -->"; next; }
 {	printf(" <info><label>%s</label><value>%s</value></info>\n", $1, $2); }
-END {	print "</info>"; }
+END {	print "</infos>"; }
 
