@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -CADSio
 ## PACKAGE {
 
 #!# Copyright (c) 2024, Achim Hoffmann
@@ -14,12 +14,10 @@ use utf8;
 
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
 
-# binmode(...); # inherited from parent, SEE Perl:binmode()
-
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.32 24/07/26 16:02:40";
+my  $SID_odoc   = "@(#) ODoc.pm 3.33 24/07/27 14:33:42";
 our $VERSION    = "24.06.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -560,9 +558,6 @@ sub _main   {
     #? print own documentation or that from specified file
     my @argv = @_;
     push(@argv, "--help") if (0 > $#argv);
-    #  SEE Perl:binmode()
-    binmode(STDOUT, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
-    binmode(STDERR, ":unix:utf8"); ## no critic qw(InputOutput::RequireEncodingWithUTF8Layer)
     my %usage = (
       '# internal commands' => {
           'list'        =>'list available files',
@@ -608,7 +603,7 @@ lib/OText.pm
 
 =head1 VERSION
 
-3.32 2024/07/26
+3.33 2024/07/27
 
 
 =head1 AUTHOR
