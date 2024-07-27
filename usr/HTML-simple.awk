@@ -12,7 +12,7 @@
 #?          <tr><th>Common Name</th><td>example.tld</td></tr>
 #?
 #? VERSION
-#?      @(#) HTML-simple.awk 1.2 16/09/25 09:39:49
+#?      @(#) HTML-simple.awk 1.3 24/07/27 23:01:24
 #?
 #? AUTHOR
 #?      06. June 2016 Achim Hoffmann
@@ -27,7 +27,7 @@ BEGIN {	FS="\t"; print "<html><body><table>"; }
 	gsub(/>/,"\\&gt;");
 }
 /^\s*$/{ next; }
-($1~/^[#=]/) {print "<! "$0" -->";next}
+($1~/^[#=]/) {gsub(/--/,"-\\-");print "<!-- "$0" -->";next}
 {	printf(" <tr><th>%s</th><td>%s</td></tr>\n", $1, $2); }
 END {	print "</table></body></html>" }
 
