@@ -43,7 +43,7 @@
 #       reason unknown (03/2023).
 #?
 #? VERSION
-#?      @(#) HTML-table.awk 1.12 23/04/15 22:43:31
+#?      @(#) HTML-table.awk 1.13 24/07/27 23:03:41
 #?
 #? AUTHOR
 #?      06. June 2016 Achim Hoffmann
@@ -67,7 +67,7 @@ BEGIN {	FS="\t";
 	class = "";
 	idx   = 1;
 	print "<!DOCTYPE html>";
-	print "<!-- converted to HTML"html" by HTML-table.awk 1.12 -->";
+	print "<!-- converted to HTML"html" by HTML-table.awk 1.13 -->";
 	print "<html><head><meta charset=\"utf-8\">";
 	print "<meta name=\"viewport\" content=\"width=device-width,initial-scale=0.5\">";
 	print "<style>";
@@ -112,7 +112,7 @@ BEGIN {	FS="\t";
 ($1~/^=/ && $0 ~/ipher/ && $0~/supported/)  { # some header lines in cipher list are special
         split($0,a,/[ 	]*/);printf("   <tr><th>%s</th><td>%s</td><td>%s</td></tr>\n", a[2], a[3], a[4]); next; }
 ($1~/^=/ && $0!~/----/)   { gsub(/^ *=/,""); printf("   <tr><th>%s</th><th>%s</th></tr>\n", $1, $2); next; }
-($1~/^[#=]/) { print "<!-- "$0" -->"; next; }
+($1~/^[#=]/) { gsub(/--/,"-\\-"); print "<!-- "$0" -->"; next; }
 (NF == 2)    { printf("   <tr><th>%s</th><td>%s</td></tr>\n", $1, $2); next; }
 (NF == 3)    { printf("   <tr><th>%s</th><td>%s</td><td>%s</td></tr>\n", $1, $2, $3); next; }
 {	print; }
