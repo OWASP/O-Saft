@@ -303,7 +303,7 @@
 # -----------------------------------------------------------------------------
 
 # --------------------------------------------- internal variables; defaults
-SID="@(#) INSTALL-template.sh 3.26 24/07/27 22:23:14"
+SID="@(#) INSTALL-template.sh 3.27 24/07/27 22:27:17"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -648,7 +648,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.26 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.27 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -661,7 +661,7 @@ clean_directory="$inst_directory/$clean_directory"  # set on command line
 
 # --------------------------------------------- main
 
-echo "# $0 3.26 ..."    # always print internal SID, makes debugging simpler
+echo "# $0 3.27 ..."    # always print internal SID, makes debugging simpler
                        # do not use $SID, which is too noisy for make targets
 
 # no echo_info() used for empty mode or mode=expected
@@ -947,6 +947,7 @@ fi
 
 cnt=0
 gui=0
+echo "# PATH$tab$PATH"
 echo_head "# check for O-Saft programs found via environment variable PATH"
 for p in `echo $PATH|tr ':' ' '` ; do
 	for o in $all_exe wish ; do
