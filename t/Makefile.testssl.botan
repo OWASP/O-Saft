@@ -12,7 +12,7 @@
 #?      include Makefile.testssl.botan
 #?
 #? VERSION
-#?      @(#) ÙIˆd 1.9 24/07/01 16:29:12
+#?      @(#) Makefile.testssl.botan 1.9 24/07/01 16:29:12
 #?
 #? AUTHOR
 #?      04-jun-24 Achim Hoffmann
@@ -25,7 +25,7 @@ O-SID.testssl.botan := 1.9
 #_____________________________________________________________________________
 #_____________________________________ global variables for image and build __|
 
-botan-%:        TESTSSL.vm.version      = ÙIˆd 1.9
+botan-%:        TESTSSL.vm.version      = Makefile.testssl.botan 1.9
 botan-%:        TESTSSL.vm.type         = botan
 botan-%:        TESTSSL.vm.port         = 3443
 botan-%:        TESTSSL.vm.client       = botan tls_client
