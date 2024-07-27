@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 3.11 24/07/01 16:28:48
+#?      @(#) Makefile 3.13 24/07/27 18:16:27
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,17 +57,20 @@
 
 HELP-help.test.test = general testing targets
 
-O-SID.test         := 3.11
+O-SID.test         := 3.13
 O-SELF.test        := t/Makefile
 ALL.includes       += $(O-SELF.test)
 ALL.inc.type       += test
 ALL.help.tests     += help.test
 
-export OSAFT_MAKE  := avoid writing random data (like date and time string)
 export LANG        := C
 export LC_CTYPE    := C.UTF-8
     # LANG ensures same messages and sorting everywhere  
     # LC_CTYPE should ensures that all characters are proper encoded
+export OSAFT_MAKE  := avoid writing random data (like date and time string)
+export OSAFT_OPTIONS  ?= --trace-CLI
+    # OSAFT_OPTIONS=--trace-CLI because the command line should be printed
+    # always in each EXE.pl call; may be redifened on make's command line
 
 first-test-target-is-default: help.test
 
@@ -96,7 +99,8 @@ ifndef TEST.remove-environment-variables
     # first define list of required variables, then get list of existing
     # environment variables and remove all except the required ones
     # PERL5LIB and PERL_HASH_SEED are removed also because used internal
-    $(eval _keep = OSAFT_MAKE   LANG    LC_CTYPE \
+    # OSAFT_MAKE and OSAFT_OPTIONS need not be removed 'cause set herein
+    $(eval _keep =      LANG    LC_ALL  LC_CTYPE OSAFT_CONFIG \
         DISPLAY HOME    PATH    PWD     SHELL   TERM    USER    NLSPATH \
         DT_RUNPATH      DT_RPATH DT_NEEDED \
         DYLD_LIBRARY_PATH   DYLD_FALLBACK_LIBRARY_PATH \
@@ -112,6 +116,10 @@ ifndef TEST.remove-environment-variables
     $(eval undefine _env)
     TEST.remove-environment-variables = done
 endif
+
+ttt:
+	@echo "OSAFT_MAKE=$(OSAFT_MAKE)"
+	@echo "OSAFT_OPTIONS=$(OSAFT_OPTIONS)"
 
 # store -n (dry-run) option in own variable
 TEST.make-n    := $(if $(findstring n,$(firstword -$(MAKEFLAGS))),-n)
@@ -650,19 +658,6 @@ testarg-%:
 	@$(O-TRACE.target)
 	-cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args)
 
-# SEE Make:--dry-run
-# following pattern rule should be unified with testcmd-%.log
-testarg-%.log: $(TEST.logdir) _FORCE
-	@$(O-TRACE.target)
-	@$(O-TRACE.target.log)
-	@$(eval _target  := $(basename     $@) )   # remove .log in name
-	@$(eval _OLD.log := $(TEST.logdir)/$@)
-	@$(eval _NEW.log := $(TEST.logdir)/$@-$(TEST.today))
-	@$(call EXE.log-make_or_print,$(_target),EXE.log-filterarg) > $(_NEW.log)
-	@-test -f $(_OLD.log)  || cp $(_NEW.log) $(_OLD.log)
-	@-diff    $(_NEW.log) $(_OLD.log) 2>/dev/null   && rm $(_NEW.log)
-	@-ls -l   $(_OLD.log)*
-
 # The goal for test targets is to perform (test) all commands with all hosts.
 # The hostnames are provided in a simple list: $(TEST.hosts) .
 # The commands could not be provided in a make variable all together,  because
@@ -727,20 +722,37 @@ testarg-%.log: $(TEST.logdir) _FORCE
 
 testcmd-%:
 	@$(O-O-TRACE.target)
-	-cd $(TEST.dir) && $(EXE.pl) $(shell echo "$*" | awk -F_ '{print $$NF}') $(TEST.init) $(TEST.args)
+	-cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args) $(shell echo "$*" | awk -F_ '{print $$NF}')
 # TODO: need verbose for executed command
-# TODO: need to add --no-dns if hostname is an IP
+# TODO: should add --no-dns if hostname is an IP
 
+# testarg-%.log and testcmd-%.log:
 # Target should create a new logfile, then compare it with the current one. If
 # diff  returns nothing, delete newly created logfile,  otherwise rename newly
 # created logfile to name which contains the current date.
 # If current logfile is/was missing, use newly created one.
 # diff's STDERR is discarded (may return: "file does not exist").
-# The target's command output is piped to  $(EXE.log-filtercmd),  which is cat
-# by default. This filter can be redefined as needed.  SEE Make:OSAFT_MAKE
+# The target's command output is piped to  $(EXE.log-filter),  which is cat by
+# default. This filter can be redefined as needed.  SEE Make:OSAFT_MAKE
 # NOTE: all target commands are prefixed with -  this avoids that make reports
 # errors if the command fails (as failture is intended, somehow).
 # NOTE: testcmd-%.log  called from within t/ may return:  is up to date.
+# Due to GNU Make limitations,  the more specific pattern rules  testarg-%.log
+# and  testcmd-%.log  are used instead of a simple  test%.log even the targets
+# are identical, except the used filter variable.
+testarg-%.log:  EXE.log-filter  = $(EXE.log-filterarg)
+testcmd-%.log:  EXE.log-filter  = $(EXE.log-filtercmd)
+
+testarg-%.log: $(TEST.logdir) _FORCE
+	@$(O-TRACE.target)
+	@$(O-TRACE.target.log)
+	@$(eval _target  := $(basename     $@) )   # remove .log in name
+	@$(eval _OLD.log := $(TEST.logdir)/$@)
+	@$(eval _NEW.log := $(TEST.logdir)/$@-$(TEST.today))
+	@$(call EXE.log-make_or_print,$(_target),EXE.log-filter) > $(_NEW.log)
+	@-test -f $(_OLD.log)  || cp $(_NEW.log) $(_OLD.log)
+	@-diff    $(_NEW.log) $(_OLD.log) 2>/dev/null  && rm $(_NEW.log)
+	@-ls   -l $(_OLD.log)*
 
 testcmd-%.log: $(TEST.logdir) _FORCE
 	@$(O-TRACE.target)
@@ -748,10 +760,10 @@ testcmd-%.log: $(TEST.logdir) _FORCE
 	@$(eval _target  := $(basename     $@) )   # remove .log in name
 	@$(eval _OLD.log := $(TEST.logdir)/$@)
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(TEST.today))
-	@$(call EXE.log-make_or_print,$(_target),EXE.log-filtercmd) > $(_NEW.log)
+	@$(call EXE.log-make_or_print,$(_target),EXE.log-filter) > $(_NEW.log)
 	@-test -f $(_OLD.log)  || cp $(_NEW.log) $(_OLD.log)
-	@-diff    $(_NEW.log) $(_OLD.log) 2>/dev/null   && rm $(_NEW.log)
-	@-ls -l   $(_OLD.log)*
+	@-diff    $(_NEW.log) $(_OLD.log) 2>/dev/null  && rm $(_NEW.log)
+	@-ls   -l $(_OLD.log)*
 
 # The pattern rule  testcmd-%  executes an individual target, for example:
 # testcmd-c001_localhost . The following pattern executes all matching targets
