@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 3.15 24/07/28 00:32:36
+#?      @(#) Makefile 3.16 24/07/28 11:14:44
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-O-SID.test         := 3.15
+O-SID.test         := 3.16
 O-SELF.test        := t/Makefile
 ALL.includes       += $(O-SELF.test)
 ALL.inc.type       += test
@@ -127,9 +127,11 @@ TEST.make-n    := $(if $(findstring n,$(firstword -$(MAKEFLAGS))),-n)
 
 # internal variables
 TEST.dir       := t
-TEST.logdir     = $(TEST.dir)/log
+TEST.logdir    ?= $(TEST.dir)/log
 TEST.logtxt    := <<random value replaced by make>>
 TEST.symlinks  := ../usr ../lib ../.o-saft.pl ../docs
+TEST.tmpdir    ?= /tmp/$(O-Project)
+TEST.tmp.rc    ?= $(TEST.tmpdir)/.rc
 
 # following may be redefined in any included t/Makefile*
 #TEST.init      := --header
@@ -576,18 +578,13 @@ _no-hosts:
 
 .PHONY: _no-hosts
 
+_FORCE:
 
+# = message-% =
 # Testing for messages or other strings (i.e **WARNING) works as follows:
 #   call $(EXE.pl) with command and/or options in question
 #   then search (grep) output for message (string)
-# For some behaviours of $(EXE.pl) a RC-file is required.
-# Different target rules can be mapped to the pattern rule message-%. It gets
-# the message string  from the automatic variable  $* , and all arguments for
-# $(EXE.pl) with following Makefile variables:
-#   $(TEST.init)    - command, options to be passed to $(EXE.pl)
-#   $(TEST.args)    - command, options and hostname to be passed to $(EXE.pl)
-#   $(TEST.rc)      - content of RC-file to be used by $(EXE.pl)
-# These variables can be set conditinally for each target, see example below.
+#
 # Some tests are not yet implemented, or difficult to implement. In this case
 # $(TEST.args) contains a string starting with "TODO:". The  message-% target
 # tests the variable for this string and then simply prints it. Otherwise the
@@ -601,13 +598,17 @@ _no-hosts:
 # succeeds also, as the pattern is found in the output. Example:
 #       make message-unintended TEST.args="host-unintended +cn"
 #
-# NOTE: even  TEST.tmp.rc  is generated  for each call,  it will only be used
-# when requested with the  --rc=some.rc  option.
+# For some behaviours of $(EXE.pl) a RC-file is required.
+# NOTE: even  TEST.tmp.rc  may be generated for some targets, it will only be
+# used when requested with the  --rc=$(TEST.tmp.rc)  option.
 #
-# NOTE: if  TEST.args  contains special characters,  syntax errors may occour
-# when used in the shell. Quoting  TEST.args  is not possible because then it
-# becomes a single argument instead of discrete arguments. At least following
-# special characters should not be used:  ; & | # < > ` [ ]
+# Different target rules can be mapped to the pattern rule message-%. It gets
+# the message string  from the automatic variable  $* , and all arguments for
+# $(EXE.pl) with following Makefile variables:
+#   $(TEST.init)    - command, options to be passed to $(EXE.pl)
+#   $(TEST.args)    - command, options and hostname to be passed to $(EXE.pl)
+#   $(TEST.rc)      - content of RC-file to be used by $(EXE.pl)
+# These variables can be set conditinally for each target, see example below.
 #
 # Example of Usage
 #       pattern rule:   warning-%
@@ -627,8 +628,11 @@ _no-hosts:
 #       ../o-saft.pl --init-option +unknown_command +quit 2>&1 | grep 049
 #                     +quit  command or  other command and hostname is needed
 #                     for testing the warning message
-
-_FORCE:
+#
+# NOTE: if  TEST.args  contains special characters,  syntax errors may occour
+# when used in the shell. Quoting  TEST.args  is not possible because then it
+# becomes a single argument instead of discrete arguments. At least following
+# special characters should not be used:  ; & | # < > ` [ ]
 
 # target succeeds if message is there
 message-%:
@@ -654,11 +658,13 @@ no.message-%:
 	cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args) 2>&1 | awk '/ $*/{exit 1}'
 	@rm -f $(TEST.tmp.rc)
 
+# = testarg-% =
 # Simple target to calL: $(EXE.pl) $(TEST.init) $(TEST.args)
 testarg-%:
 	@$(O-TRACE.target)
 	-cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args)
 
+# = testcmd-% =
 # The goal for test targets is to perform (test) all commands with all hosts.
 # The hostnames are provided in a simple list: $(TEST.hosts) .
 # The commands could not be provided in a make variable all together,  because
@@ -727,7 +733,7 @@ testcmd-%:
 # TODO: need verbose for executed command
 # TODO: should add --no-dns if hostname is an IP
 
-# testarg-%.log and testcmd-%.log:
+# = testarg-%.log and testcmd-%.log =
 # Target should create a new logfile, then compare it with the current one. If
 # diff  returns nothing, delete newly created logfile,  otherwise rename newly
 # created logfile to name which contains the current date.
@@ -907,6 +913,7 @@ HELP-tests.quick.log  = like tests.log, but less targets (for development)
 HELP-help.test.all  = print available individual targets for testing
 HELP-test.log.ls    = list files in '$(TEST.logdir)/' generated by test.log
 HELP-test.%.log.ls  = list files in '$(TEST.logdir)/' generated by test.EXT.log
+HELP-test.log.ls.today  = list files in '$(TEST.logdir)/' with suffix '$(TEST.today)'
 HELP-test.pattern-% = only execute targets matching '%'
 
 tests: O-TRACE.target = echo "\\012\#\# $@: $(EXE.pl) $(TEST.args)"
@@ -961,11 +968,15 @@ test.log:   tests.log
 
 test.log.ls:
 	@$(O-TRACE.target)
-	@-ls $(TEST.logdir)/test.*log
+	@-ls $(TEST.logdir)/test*.log
 
 test.%.log.ls:
 	@$(O-TRACE.target)
-	@-ls -l $(TEST.logdir)/test*-$(*)*log
+	@-ls -l $(TEST.logdir)/test*-$(*)*.log
+
+test.log.ls.today:
+	@$(O-TRACE.target)
+	@-ls $(TEST.logdir)/test*.log-$(TEST.today)
 
 
 # collect targets in this file, should not be added to ALL.tests
