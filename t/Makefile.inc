@@ -12,14 +12,14 @@
 #?      Defines general variables used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 3.9 24/07/01 16:29:03
+#?      @(#) Makefile.inc 3.10 24/07/28 10:43:26
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-O-SID.inc          := 3.9
+O-SID.inc          := 3.10
 O-SELF.inc         := t/Makefile.inc
 ALL.includes       += $(O-SELF.inc)
 ALL.inc.type       += inc
@@ -42,12 +42,15 @@ LC_CTYPE       := C.UTF-8
 
 O-Project      ?= o-saft
 O-ProjectName  ?= O-Saft
+O-TMP.dir       = /tmp/$(O-Project)
 TEST.host      ?= localhost
 TEST.init      ?= --header
 TEST.dir       ?= t
 TEST.logdir     = $(TEST.dir)/log
 TEST.logtxt     = <<random value replaced by make>>
-O-TMP.dir       = /tmp/$(O-Project)
+TEST.tmpdir    ?= $(O-TMP.dir)
+TEST.tmp.rc    ?= $(TEST.tmpdir)/.rc
+
 SRC.sh         ?= o-saft
 SRC.pl         ?= o-saft.pl
 SRC.cgi        ?= o-saft.cgi
