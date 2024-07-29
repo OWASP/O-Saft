@@ -6,7 +6,7 @@
 #?      make help.test.init
 #?
 #? VERSION
-#?      @(#) Makefile.init 3.3 24/07/01 16:29:04
+#?      @(#) Makefile.init 3.4 24/07/29 14:12:42
 #?
 #? AUTHOR
 #?      19-dez-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.init = targets for testing initialisations of o-saft.pl
 
-O-SID.init         := 3.3
+O-SID.init         := 3.4
 O-SELF.init        := t/Makefile.init
 ALL.includes       += $(O-SELF.init)
 ALL.inc.type       += init
@@ -57,6 +57,8 @@ LIST.init.opts     := opt0 opt1 opt2 opt3 opt4 opt5 opt6 opt7
 
 # TODO: options to be tested: --no-openssl --no-tcp
 
+TEST.rc.opts       := --trace-CLI --header +cn +quit demo
+
 #_____________________________________________________________________________
 #______________________________________________________ targets for testing __|
 
@@ -76,6 +78,12 @@ ifndef init-macros-generated
     undefine _opt
 endif
 
+$(TEST.tmpdir)::
+	@mkdir $@
+
+$(TEST.tmp.rc): $(TEST.tmpdir)
+	@echo "$(TEST.rc.opts)" | tr ' ' '\012' > $@
+
 testarg-init-%:         EXE.pl      := ../$(SRC.pl)
 testarg-init-%:         TEST.init   :=  any-host --no-rc --test-init
 
@@ -85,6 +93,22 @@ testarg-init-+ext-opt902:   TEST.args := +extensions +tlsextensions +tlsextdebug
 testarg-init-+heart-opt903: TEST.args := +heartbeat  +heartbleed
 testarg-init-+heart-opt904: TEST.args := +heartbeat  +heartbleed                 --no-tlsextdebug
 
+# using environment variables for EXE.pl, no other arguments needed
+# but --v must be given on command line, otherwise it would no be used eraly
+# (see EXE.pl _trace_info() )
+testarg-init-OSAFT_%:       TEST.init := --v
+testarg-init-OSAFT_%:       TEST.args :=
+testarg-init-OSAFT_OPTIONS: OSAFT_OPTIONS := $(TEST.rc.opts)
+testarg-init-OSAFT_CONFIG:: OSAFT_CONFIG  := $(TEST.tmp.rc)
+    # testarg-init-OSAFT_CONFIG must be double-colon rule
+    # other wise the pattern rule testcmd-% would be called also
+testarg-init-OSAFT_CONFIG:: $(TEST.tmp.rc)
+	@echo testarg-init-OSAFT_CONFIG:: $(OSAFT_CONFIG) ::
+	@cd    $(TEST.dir) && pwd && env OSAFT_CONFIG=$(OSAFT_CONFIG) $(EXE.pl) --v
+	@rm    $(TEST.tmp.rc)
+	@rmdir $(TEST.tmpdir)
+
+ALL.test.init  += testarg-init-OSAFT_OPTIONS testarg-init-OSAFT_CONFIG
 ALL.test.init  += testarg-init-+ext-opt901   testarg-init-+ext-opt902
 ALL.test.init  += testarg-init-+heart-opt903 testarg-init-+heart-opt904
 
