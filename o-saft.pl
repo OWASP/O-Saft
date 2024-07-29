@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.94 24/07/29 14:14:03"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.95 24/07/29 14:26:09"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -409,7 +409,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.94"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.95"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6047,7 +6047,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.94");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.95");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7765,7 +7765,7 @@ _trace_info("TARGETS0 - start");
 
 OUsr::pre_host();
 
-_vprint("check all targets ...");
+_vprint("check all targets with commands +" . join(' +', @{$cfg{'do'}}));
 
 # run the appropriate SSL tests for each host (ugly code down here):
 $sniname  = $cfg{'sni_name'};           # safe value;  NOTE: may be undef!
