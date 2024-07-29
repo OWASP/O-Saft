@@ -41,7 +41,7 @@ use Data::Dumper qw(Dumper);
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_trace      = "@(#) OTrace.pm 3.36 24/07/28 00:55:26";
+my  $SID_trace      = "@(#) OTrace.pm 3.37 24/07/29 16:36:30";
 our $VERSION        = "24.06.24";
 
 our $prefix_trace   = "#". __PACKAGE__ . ":";
@@ -412,8 +412,8 @@ EoT
         # we only want the code line, hence remove the others
         #dbx# print "##CODE= $code";
         $code =~ s/^\$VAR.*//;                  # ex 1, 2
-        $code =~ s/(}[;,])?\s*$//gn;            # ex 1, 2
-        $code =~ s/use\s*(strict|warnings);//gn;# ex 1, 2
+        $code =~ s/(?:}[;,])?\s*$//g;           # ex 1, 2
+        $code =~ s/use\s*(?:strict|warnings);//g;# ex 1, 2
         $code =~ s/package\s*.*;//g;            # ex 1
         $code =~ s/BEGIN\s*.*//g;               # ex 2
         $code =~ s/return\s*//g;                # ex 2
@@ -1222,7 +1222,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.36 2024/07/28
+3.37 2024/07/29
 
 =head1 AUTHOR
 
