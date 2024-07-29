@@ -49,7 +49,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.19 24/07/27 14:44:43";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.20 24/07/29 17:42:16";
 our $VERSION        =  "24.06.24";  # official verion number of this file
 
 BEGIN {
@@ -841,7 +841,7 @@ sub _traceset   {
 
 sub _trace_value_or_text {
     # return given $val if --trace > 1; text otherwise
-    my $val = shift;
+    my $val = shift || "undef";
     return (1 < $trace) ? $val : "<<use --trace=2 to print pointer>>";
 } # _trace_value_or_text
 
@@ -1793,7 +1793,6 @@ sub _ssleay_ctx_new {
     #? get SSLeay CTX object; returns ctx object or undef
     my $method  = shift;# CTX method to be used for creating object
     my $ctx     = undef;# CTX object to be created
-    my $ssl     = undef;
     my $src     = '';   # function (name) where something failed
     my $err     = '';
     my $old     = '';
@@ -1938,11 +1937,11 @@ sub _ssleay_ctx_new {
 } # _ssleay_ctx_new
 
 sub _ssleay_ctx_ca  {
-    #? set certificate verify options (client mode); returns undef on failure
+    #? set certificate verify options (client mode); returns 0 on failure
     #  uses settings from $SSLinfo::ca*
     my $ctx     = shift;
     my $ssl     = undef;
-    my $ret     = undef;
+    my $ret     = 0;
     my $src     = '';   # function (name) where something failed
     my $err     = '';
     my $cafile  = '';
