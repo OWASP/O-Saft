@@ -28,7 +28,7 @@ our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.47 24/07/30 19:13:45";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.48 24/07/30 19:20:06";
 our $VERSION    = "24.06.24";   # official verion number of this file
 
 use Exporter qw(import);
@@ -1056,11 +1056,27 @@ sub sort_results    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
 
 =pod
 
+=head3 is_adh($name-or-key)
+
+Returns cipher suite name if given key, name or constant is a ADH/DHA cipher.
+
 =head3 is_cbc($name-or-key)
 
 Returns cipher suite name if given key, name or constant is a CBC cipher.
 
 =cut
+
+sub is_adh      {
+    #? return cipher suite name if it is a ADH cipher, empty string otherwise
+    #  checks names and constants; returns primary name even if key was given
+    my $key     = shift;# can be key, name or constant; pattern not supported
+    my $cipher  = "";
+    if (not is_valid_key($key)) {
+       $key = get_key($key); # is_valid_key() printed warning, if invalid key
+    }
+    $cipher = get_name($key) if (grep{/$cfg{'regex'}->{'ADHorDHA'}/} get_consts($key), get_names($key));
+    return $cipher;
+} # is_adh
 
 sub is_cbc      {
     #? return cipher suite name if it is a CBC cipher, empty string otherwise
@@ -1871,7 +1887,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.47 2024/07/30
+3.48 2024/07/30
 
 
 =head1 AUTHOR
