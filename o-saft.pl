@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.97 24/07/30 17:03:50"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.99 24/07/31 00:07:37"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -409,7 +409,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.97"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.99"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -2340,7 +2340,7 @@ sub _is_tr03116_strict  {
     # return given cipher if it is not TR-03116 compliant, empty string otherwise
     my ($ssl, $cipher) = @_;
     return $cipher if ($ssl    ne "TLSv12");
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'EXPORT'}/);
+    return $cipher if Ciphers::is_exp($cipher);
     return $cipher if ($cipher =~ /$cfg{'regex'}->{'notTR-03116'}/);
     return $cipher if ($cipher !~ /$cfg{'regex'}->{'TR-03116+'}/);
     return "";
@@ -2349,7 +2349,7 @@ sub _is_tr03116_lazy    {
     # return given cipher if it is not TR-03116 compliant, empty string otherwise
     my ($ssl, $cipher) = @_;
     return $cipher if ($ssl    ne "TLSv12");
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'EXPORT'}/);
+    return $cipher if Ciphers::is_exp($cipher);
     return $cipher if ($cipher !~ /$cfg{'regex'}->{'TR-03116-'}/);
     return "";
 } # _is_tr03116_lazy
@@ -2360,8 +2360,8 @@ sub _is_rfc7525         {
     return $cipher if ($cipher !~ /$cfg{'regex'}->{'RFC7525'}/);
    # /notRFC7525/;
     return $cipher if ($cipher =~ /NULL/);
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'EXPORT'}/);
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'RC4orARC4'}/);
+    return $cipher if Ciphers::is_exp($cipher);
+    return $cipher if Ciphers::is_rc4($cipher);
     return ""      if ($bit =~ m/^\s*$/);   # avoid Perl warnings if $bit empty
     return $cipher if ($bit < 128);
     return "";
@@ -3214,10 +3214,10 @@ sub check_dh        {
         checkciphers($host, $port, $cipher_results); # need EXPORT ciphers for logjam
         # TODO: calling checkciphers() is bad, it may even not contain ciphers
         my $exp = $checks{'logjam'}->{val};
-        $checks{'logjam'}->{val}   .=  $txt;
-        $checks{'logjam'}->{val}   .=  "; but has WEAK ciphers: $exp" if ($exp ne "");
-        $checks{'dh_512'}->{val}    =  $txt;
-        $checks{'dh_2048'}->{val}   =  $txt;
+        $checks{'logjam'}  ->{val} .=  $txt;
+        $checks{'logjam'}  ->{val} .=  "; but has WEAK ciphers: $exp" if ($exp ne "");
+        $checks{'dh_512'}  ->{val}  =  $txt;
+        $checks{'dh_2048'} ->{val} =  $txt;
         $checks{'ecdh_256'}->{val}  =  $txt;
         $checks{'ecdh_512'}->{val}  =  $txt;
         goto FIN; # no more checks possible
@@ -3535,26 +3535,22 @@ sub checkcipher     {
     trace("checkcipher($host, $port) {");
     # check weak ciphers
     $checks{'cipher_null'}->{val}  .= _prot_cipher($ssl, $c) if ($c =~ /NULL/);
-    $checks{'cipher_adh'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'ADHorDHA'}/);
-    $checks{'cipher_exp'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'EXPORT'}/);
-    $checks{'cipher_cbc'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /CBC/);
-    $checks{'cipher_des'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /DES/);
-    $checks{'cipher_rc4'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'RC4orARC4'}/);
-    $checks{'cipher_edh'}->{val}   .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'DHEorEDH'}/);
-    $checks{'cipher_adh'}->{val}   .= _prot_cipher($ssl, $c) if (grep{/$cfg{'regex'}->{'ADHorDHA'}/} @const);
-    $checks{'cipher_cbc'}->{val}   .= _prot_cipher($ssl, $c) if (grep{/CBC/} @const);
-    $checks{'cipher_edh'}->{val}   .= _prot_cipher($ssl, $c) if (grep{/$cfg{'regex'}->{'DHEorEDH'}/} @const);
-        # TODO: remove duplicates from 'cipher_cbc' and 'cipher_edh'
+    $checks{'cipher_adh'} ->{val}  .= _prot_cipher($ssl, $c) if Ciphers::is_adh($c);
+    $checks{'cipher_exp'} ->{val}  .= _prot_cipher($ssl, $c) if Ciphers::is_exp($c);
+    $checks{'cipher_cbc'} ->{val}  .= _prot_cipher($ssl, $c) if Ciphers::is_cbc($c);
+    $checks{'cipher_des'} ->{val}  .= _prot_cipher($ssl, $c) if Ciphers::is_des($c);
+    $checks{'cipher_rc4'} ->{val}  .= _prot_cipher($ssl, $c) if Ciphers::is_rc4($c);
+    $checks{'cipher_edh'} ->{val}  .= _prot_cipher($ssl, $c) if Ciphers::is_edh($c);
 # TODO: lesen: http://www.golem.de/news/mindeststandards-bsi-haelt-sich-nicht-an-eigene-empfehlung-1310-102042.html
     # check compliance
-    $checks{'ism'}      ->{val}    .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'notISM'}/);
-    $checks{'pci'}      ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_pci(  $ssl, $c));
-    $checks{'fips'}     ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_fips( $ssl, $c));
-    $checks{'rfc_7525'} ->{val}    .= _prot_cipher_or_empty($ssl, _is_rfc7525(  $ssl, $c));
-    $checks{'tr_02102+'}->{val}    .= _prot_cipher_or_empty($ssl, _is_tr02102_strict($ssl, $c));
-    $checks{'tr_02102-'}->{val}    .= _prot_cipher_or_empty($ssl, _is_tr02102_lazy(  $ssl, $c));
-    $checks{'tr_03116+'}->{val}    .= _prot_cipher_or_empty($ssl, _is_tr03116_strict($ssl, $c));
-    $checks{'tr_03116-'}->{val}    .= _prot_cipher_or_empty($ssl, _is_tr03116_lazy(  $ssl, $c));
+    $checks{'ism'}        ->{val}  .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'notISM'}/);
+    $checks{'pci'}        ->{val}  .= _prot_cipher_or_empty($ssl, _is_ssl_pci(  $ssl, $c));
+    $checks{'fips'}       ->{val}  .= _prot_cipher_or_empty($ssl, _is_ssl_fips( $ssl, $c));
+    $checks{'rfc_7525'}   ->{val}  .= _prot_cipher_or_empty($ssl, _is_rfc7525(  $ssl, $c));
+    $checks{'tr_02102+'}  ->{val}  .= _prot_cipher_or_empty($ssl, _is_tr02102_strict($ssl, $c));
+    $checks{'tr_02102-'}  ->{val}  .= _prot_cipher_or_empty($ssl, _is_tr02102_lazy(  $ssl, $c));
+    $checks{'tr_03116+'}  ->{val}  .= _prot_cipher_or_empty($ssl, _is_tr03116_strict($ssl, $c));
+    $checks{'tr_03116-'}  ->{val}  .= _prot_cipher_or_empty($ssl, _is_tr03116_lazy(  $ssl, $c));
     # check attacks
     # NOTE: if no ciphers for a protocol $ssl were found,  this function is not
     #       called at all for this protocol, hence the target is not vulnerable
@@ -6052,7 +6048,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.97");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.99");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
