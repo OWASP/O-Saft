@@ -6,7 +6,7 @@
 #?      make help.test.mod
 #?
 #? VERSION
-#?      @(#) Makefile.mod 3.13 24/07/16 13:07:44
+#?      @(#) Makefile.mod 3.14 24/07/30 19:16:16
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.mod  = targets for testing module functionality
 
-O-SID.mod          := 3.13
+O-SID.mod          := 3.14
 O-SELF.mod         := t/Makefile.mod
 ALL.includes       += $(O-SELF.mod)
 ALL.inc.type       += mod
@@ -70,6 +70,9 @@ LIST.lib-Ciphers.pm    := \
 	get_const=0x03001301 \
 	text2key=0x1301   text2key=0x13,0x01    key2text=0x03001301 \
 	is_valid_key=0x1  is_valid_key=03001301 is_valid_key=0x03001301 \
+	is_cbc=0x03000012 is_cbc=EDH-DSS-CBC-SHA is_cbc=EDH-DSS-DES-CBC-SHA \
+	is_cbc=EDH_DSS_DES_64_CBC_SHA is_cbc=DHE_DSS_WITH_DES_CBC_SHA \
+	is_cbc=invalid \
 	find_consts=AES_128_GCM_SHA256 \
 	find_name=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256 \
 	find_names=DHE-PSK-AES128 find_keys=DHE-PSK-AES128
