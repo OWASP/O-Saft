@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.95 24/07/29 14:26:09"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.96 24/07/30 12:01:20"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -409,7 +409,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.95"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.96"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1846,7 +1846,7 @@ sub _init_openssl_ca    {
     }
     FIN:
     trace("_init_openssl_ca()\t= $ca }");
-    return $ca
+    return $ca;
 } # _init_openssl_ca
 
 sub _init_openssl       {
@@ -6047,7 +6047,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.95");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.96");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6056,7 +6056,7 @@ sub printversion        {
         #   our $SID_ocfg   =  "@(#) OCfg.pm 3.42 24/07/42 23:42:42";
         #   my  $SID_tool   =  "@(#) Tool.pm 3.42 24/07/42 23:42:42";
         my $cmd = '/ *\$SID_[a-z]* /{ printf("    %-21s%s\n",FILENAME,$2); }';
-	system('awk', '-F"', "$cmd", glob('lib/*.pm'));
+        system('awk', '-F"', "$cmd", glob('lib/*.pm'));
         # TODO: 2024: glob() not yet tested with old perl versions and other platforms
     }
     print( "= perl " . $] . " =");  # SEE Perl:version
@@ -6197,8 +6197,16 @@ sub printversion        {
             # require, for example with: `$0 version --v'
             $v = qx(lib/$m.pm +VERSION);        # get version from module directly if not loaded
                # qx() is safe here because `$m' contains our well known names
-            chomp $v;
-            $v = " " if ($v =~ m/^\s*$/);
+            if (defined $v) {
+                chomp $v;
+                $v = " " if ($v =~ m/^\s*$/);
+            } else {
+                # NOTE: may happen if file is missing or has no execute permission
+                # qx() above printed error message already
+                $v = "<<err>>";
+                _hint("try 'chmod +x lib/$m.pm'");
+                # TODO: if file exists, try to "grep" for VERSION's value
+            }
         }
         printf("    %-22s %-9s%s\n", $m, $v, ($INC{$d} || $INC{"lib/$d"} || "<<not loaded>>"));
             # our own modues are in lib/ which is not part of the module name
