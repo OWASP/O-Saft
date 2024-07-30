@@ -28,7 +28,7 @@ our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.51 24/07/30 19:32:43";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.52 24/07/30 23:50:41";
 our $VERSION    = "24.06.24";   # official verion number of this file
 
 use Exporter qw(import);
@@ -1064,6 +1064,10 @@ Returns cipher suite name if given key, name or constant is a ADH/DHA cipher.
 
 Returns cipher suite name if given key, name or constant is a CBC cipher.
 
+=head3 is_des($name-or-key)
+
+Returns cipher suite name if given key, name or constant is a DES cipher.
+
 =head3 is_edh($name-or-key)
 
 Returns cipher suite name if given key, name or constant is a EDH/DHE cipher.
@@ -1101,6 +1105,18 @@ sub is_cbc      {
     $cipher = get_name($key) if (grep{/CBC/} get_consts($key), get_names($key));
     return $cipher;
 } # is_cbc
+
+sub is_des      {
+    #? return cipher suite name if it is a CBC cipher, empty string otherwise
+    #  checks names and constants; returns primary name even if key was given
+    my $key     = shift;# can be key, name or constant; pattern not supported
+    my $cipher  = "";
+    if (not is_valid_key($key)) {
+       $key = get_key($key); # is_valid_key() printed warning, if invalid key
+    }
+    $cipher = get_name($key) if (grep{/DES/} get_consts($key), get_names($key));
+    return $cipher;
+} # is_des
 
 sub is_edh      {
     #? return cipher suite name if it is a EDH cipher, empty string otherwise
@@ -1665,6 +1681,7 @@ sub show            {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     show_getter($1)         if ($arg =~ m/^getter=?(.*)/        );
     print is_adh($1)        if ($arg =~ m/^is.?adh=(.*)/        );
     print is_cbc($1)        if ($arg =~ m/^is.?cbc=(.*)/        );
+    print is_des($1)        if ($arg =~ m/^is.?des=(.*)/        );
     print is_edh($1)        if ($arg =~ m/^is.?edh=(.*)/        );
     print is_exp($1)        if ($arg =~ m/^is.?exp=(.*)/        );
     print is_rc4($1)        if ($arg =~ m/^is.?rc4=(.*)/        );
@@ -1939,7 +1956,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.51 2024/07/30
+3.52 2024/07/30
 
 
 =head1 AUTHOR
