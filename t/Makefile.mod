@@ -6,7 +6,7 @@
 #?      make help.test.mod
 #?
 #? VERSION
-#?      @(#) Makefile.mod 3.15 24/07/30 21:33:45
+#?      @(#) Makefile.mod 3.16 24/07/30 23:49:49
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.mod  = targets for testing module functionality
 
-O-SID.mod          := 3.15
+O-SID.mod          := 3.16
 O-SELF.mod         := t/Makefile.mod
 ALL.includes       += $(O-SELF.mod)
 ALL.inc.type       += mod
@@ -77,6 +77,8 @@ LIST.lib-Ciphers.pm    := \
 	is_adh=DH_anon_WITH_RC4_128_MD5 \
 	is_cbc=0x03000012 is_cbc=EDH-DSS-CBC-SHA is_cbc=EDH-DSS-DES-CBC-SHA \
 	is_cbc=EDH_DSS_DES_64_CBC_SHA is_cbc=DHE_DSS_WITH_DES_CBC_SHA \
+	is_des=0x03000012 is_des=EDH-DSS-CBC-SHA is_des=EDH-DSS-DES-CBC-SHA \
+	is_des=EDH_DSS_DES_64_CBC_SHA is_des=DHE_DSS_WITH_DES_CBC_SHA \
 	is_edh=0x03000032 is_edh=DHE-DSS-AES128-SHA is_edh=EDH-DSS-AES128-SHA \
 	is_edh=DHE_DSS_WITH_AES_128_CBC_SHA     is_edh=DHE_DSS_WITH_AES_128_SHA \
 	is_exp=0x03000062 is_exp=EXP-DES-56-SHA is_exp=EXP1024-DES-CBC-SHA \
