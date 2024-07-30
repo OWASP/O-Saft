@@ -28,7 +28,7 @@ our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.46 24/07/27 12:03:31";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.47 24/07/30 19:13:45";
 our $VERSION    = "24.06.24";   # official verion number of this file
 
 use Exporter qw(import);
@@ -840,14 +840,14 @@ sub find_name       {
 
 =head3 sort_names(@ciphers)
 
-Sort ciphers according their strength. Returns list with most strongest first. 
+Sort ciphers according their strength. Returns list with most strongest first.
 
 C<@ciphers> is a list of cipher suite names. These names should be those used by
 openssl(1)  .
 
 =head3 sort_results(%unsorted)
 
-Sort ciphers according their strength. Returns list with most strongest first. 
+Sort ciphers according their strength. Returns list with most strongest first.
 
 C<%unsorted> is a reference to a hash) of cipher suite hex keys.
 =cut
@@ -1053,6 +1053,26 @@ sub sort_results    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     }
     return @sorted;
 } # sort_results
+
+=pod
+
+=head3 is_cbc($name-or-key)
+
+Returns cipher suite name if given key, name or constant is a CBC cipher.
+
+=cut
+
+sub is_cbc      {
+    #? return cipher suite name if it is a CBC cipher, empty string otherwise
+    #  checks names and constants; returns primary name even if key was given
+    my $key     = shift;# can be key, name or constant; pattern not supported
+    my $cipher  = "";
+    if (not is_valid_key($key)) {
+       $key = get_key($key); # is_valid_key() printed warning, if invalid key
+    }
+    $cipher = get_name($key) if (grep{/CBC/} get_consts($key), get_names($key));
+    return $cipher;
+} # is_cbc
 
 
 #_____________________________________________________________________________
@@ -1579,6 +1599,7 @@ sub show            {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     show_ciphers($1)        if ($arg =~ m/^(show|simple)$/      );
     show_ciphers($1)        if ($arg =~ m/^(dump|full|osaft|openssl(?:-[vV])?)$/);
     show_getter($1)         if ($arg =~ m/^getter=?(.*)/        );
+    print is_cbc($1)        if ($arg =~ m/^is.?cbc=(.*)/        );
     print is_valid_key($1)  if ($arg =~ m/^is.?valid.?key=(.*)/ );
     print text2key($1)      if ($arg =~ m/^text2key=(.*)/       );
     print key2text($1)      if ($arg =~ m/^key2text=(.*)/       );
@@ -1850,7 +1871,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.46 2024/07/27
+3.47 2024/07/30
 
 
 =head1 AUTHOR
