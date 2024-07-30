@@ -28,7 +28,7 @@ our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.48 24/07/30 19:20:06";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.49 24/07/30 19:25:05";
 our $VERSION    = "24.06.24";   # official verion number of this file
 
 use Exporter qw(import);
@@ -1064,6 +1064,10 @@ Returns cipher suite name if given key, name or constant is a ADH/DHA cipher.
 
 Returns cipher suite name if given key, name or constant is a CBC cipher.
 
+=head3 is_edh($name-or-key)
+
+Returns cipher suite name if given key, name or constant is a EDH/DHE cipher.
+
 =cut
 
 sub is_adh      {
@@ -1074,7 +1078,7 @@ sub is_adh      {
     if (not is_valid_key($key)) {
        $key = get_key($key); # is_valid_key() printed warning, if invalid key
     }
-    $cipher = get_name($key) if (grep{/$cfg{'regex'}->{'ADHorDHA'}/} get_consts($key), get_names($key));
+    $cipher = get_name($key) if (grep{/$OCfg::cfg{'regex'}->{'ADHorDHA'}/} get_consts($key), get_names($key));
     return $cipher;
 } # is_adh
 
@@ -1089,6 +1093,18 @@ sub is_cbc      {
     $cipher = get_name($key) if (grep{/CBC/} get_consts($key), get_names($key));
     return $cipher;
 } # is_cbc
+
+sub is_edh      {
+    #? return cipher suite name if it is a EDH cipher, empty string otherwise
+    #  checks names and constants; returns primary name even if key was given
+    my $key     = shift;# can be key, name or constant; pattern not supported
+    my $cipher  = "";
+    if (not is_valid_key($key)) {
+       $key = get_key($key); # is_valid_key() printed warning, if invalid key
+    }
+    $cipher = get_name($key) if (grep{/$OCfg::cfg{'regex'}->{'DHEorEDH'}/} get_consts($key), get_names($key));
+    return $cipher;
+} # is_edh
 
 
 #_____________________________________________________________________________
@@ -1615,7 +1631,9 @@ sub show            {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     show_ciphers($1)        if ($arg =~ m/^(show|simple)$/      );
     show_ciphers($1)        if ($arg =~ m/^(dump|full|osaft|openssl(?:-[vV])?)$/);
     show_getter($1)         if ($arg =~ m/^getter=?(.*)/        );
+    print is_adh($1)        if ($arg =~ m/^is.?adh=(.*)/        );
     print is_cbc($1)        if ($arg =~ m/^is.?cbc=(.*)/        );
+    print is_edh($1)        if ($arg =~ m/^is.?edh=(.*)/        );
     print is_valid_key($1)  if ($arg =~ m/^is.?valid.?key=(.*)/ );
     print text2key($1)      if ($arg =~ m/^text2key=(.*)/       );
     print key2text($1)      if ($arg =~ m/^key2text=(.*)/       );
@@ -1887,7 +1905,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.48 2024/07/30
+3.49 2024/07/30
 
 
 =head1 AUTHOR
