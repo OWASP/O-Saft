@@ -24,11 +24,12 @@ our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 # 0.02  0.00  0:00.03 100%  0k  9924k  # 11/2022
 # 0.02  0.00  0:00.02 100%  0k  8804k  # 12/2023
 # 0.03  0.00  0:00.03 100%  0k 10176k  # 01/2024
+# 0.04  0.00  0:00.05 100%  0k 10024k  # 07/2024
 
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.53 24/07/31 08:41:59";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.54 24/07/31 13:59:19";
 our $VERSION    = "24.06.24";   # official verion number of this file
 
 use Exporter qw(import);
@@ -1068,13 +1069,11 @@ any of following constants:
 
 =item * "ADH"   - uses "$cfg{'regex'}->{'ADHorDHA'}"
 
-=item * "CBC"   - uses /CBC/
-
-=item * "DES"   - uses /DES/
-
 =item * "EDH"   - uses "$cfg{'regex'}->{'DHEorEDH'}"
 
 =item * "EXP"   - uses "$cfg{'regex'}->{'EXPORT'}"
+
+=item * "FRZ"   - uses "$cfg{'regex'}->{'FRZorFZA'}"
 
 =item * "RC4"   - uses "$cfg{'regex'}->{'RC4orARC4'}"
 
@@ -1099,6 +1098,7 @@ sub is_typ      {
         if ('ADH' eq $rex) { $rex = $OCfg::cfg{'regex'}->{'ADHorDHA'};  last; }
         if ('EDH' eq $rex) { $rex = $OCfg::cfg{'regex'}->{'DHEorEDH'};  last; }
         if ('EXP' eq $rex) { $rex = $OCfg::cfg{'regex'}->{'EXPORT'};    last; }
+        if ('FRZ' eq $rex) { $rex = $OCfg::cfg{'regex'}->{'FRZorFZA'};  last; }
         if ('RC4' eq $rex) { $rex = $OCfg::cfg{'regex'}->{'RC4orARC4'}; last; }
         # DEFAULT: build RegEx from string
         $rex = qr($rex);
@@ -1109,7 +1109,7 @@ sub is_typ      {
     }
     $cipher = get_name($key) if (grep{/$rex/} get_consts($key), get_names($key));
     return $cipher;
-} # is_rc4
+} # is_typ
 
 
 #_____________________________________________________________________________
@@ -1641,8 +1641,9 @@ sub show            {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     print is_typ('DES',$1)  if ($arg =~ m/^is.?des=(.*)/        );
     print is_typ('EDH',$1)  if ($arg =~ m/^is.?edh=(.*)/        );
     print is_typ('EXP',$1)  if ($arg =~ m/^is.?exp=(.*)/        );
+    print is_typ('FRZ',$1)  if ($arg =~ m/^is.?frz=(.*)/        );
     print is_typ('RC4',$1)  if ($arg =~ m/^is.?rc4=(.*)/        );
-    print "** please use any of: is_adh, is_cbc, is_des, is_edh, is_exp, is_rc4"
+    print "** please use any of: is_adh, is_cbc, is_des, is_edh, is_exp, is_frz, is_rc4"
                             if ($arg =~ m/^is.?typ=(.*)/        );
     print is_valid_key($1)  if ($arg =~ m/^is.?valid.?key=(.*)/ );
     print text2key($1)      if ($arg =~ m/^text2key=(.*)/       );
@@ -1928,7 +1929,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.53 2024/07/31
+3.54 2024/07/31
 
 
 =head1 AUTHOR
