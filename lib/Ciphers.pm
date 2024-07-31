@@ -28,7 +28,7 @@ our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.52 24/07/30 23:50:41";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.53 24/07/31 08:41:59";
 our $VERSION    = "24.06.24";   # official verion number of this file
 
 use Exporter qw(import);
@@ -1056,101 +1056,58 @@ sub sort_results    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
 
 =pod
 
-=head3 is_adh($name-or-key)
+=head3 is_typ($type, $key)
 
-Returns cipher suite name if given key, name or constant is a ADH/DHA cipher.
+Returns cipher's suite name for cipher of given key if any of the cipher suite
+names or constant names matches the specified type.
+Key can be the  cipher's hex key, suite name or constant name.
+Type can be a Perl regular expression, any key defined in  "$cfg{'regex'}", or
+any of following constants:
 
-=head3 is_cbc($name-or-key)
+=over
 
-Returns cipher suite name if given key, name or constant is a CBC cipher.
+=item * "ADH"   - uses "$cfg{'regex'}->{'ADHorDHA'}"
 
-=head3 is_des($name-or-key)
+=item * "CBC"   - uses /CBC/
 
-Returns cipher suite name if given key, name or constant is a DES cipher.
+=item * "DES"   - uses /DES/
 
-=head3 is_edh($name-or-key)
+=item * "EDH"   - uses "$cfg{'regex'}->{'DHEorEDH'}"
 
-Returns cipher suite name if given key, name or constant is a EDH/DHE cipher.
+=item * "EXP"   - uses "$cfg{'regex'}->{'EXPORT'}"
 
-=head3 is_exp($name-or-key)
+=item * "RC4"   - uses "$cfg{'regex'}->{'RC4orARC4'}"
 
-Returns cipher suite name if given key, name or constant is a EXPORT cipher.
-
-=head3 is_rc4($name-or-key)
-
-Returns cipher suite name if given key, name or constant is a RC4 cipher.
+=back
 
 =cut
 
-sub is_adh      {
-    #? return cipher suite name if it is a ADH cipher, empty string otherwise
-    #  checks names and constants; returns primary name even if key was given
+sub is_typ      {
+    #? return cipher suite name if $cipher is of $typ, empty string otherwise
+    #? checks names and constants; returns primary name even if key was given
+    my $rex     = shift;# can be RegEx or string constant
     my $key     = shift;# can be key, name or constant; pattern not supported
     my $cipher  = "";
+    SWITCH: {
+        last if (ref($rex) =~ /^Regexp/i);  # nothing to do
+        if (defined $OCfg::cfg{'regex'}->{$rex}) {
+             # known RegEx
+             $rex = $OCfg::cfg{'regex'}->{$rex};
+             last;
+        }
+        # constants which are an alias for known RegEx
+        if ('ADH' eq $rex) { $rex = $OCfg::cfg{'regex'}->{'ADHorDHA'};  last; }
+        if ('EDH' eq $rex) { $rex = $OCfg::cfg{'regex'}->{'DHEorEDH'};  last; }
+        if ('EXP' eq $rex) { $rex = $OCfg::cfg{'regex'}->{'EXPORT'};    last; }
+        if ('RC4' eq $rex) { $rex = $OCfg::cfg{'regex'}->{'RC4orARC4'}; last; }
+        # DEFAULT: build RegEx from string
+        $rex = qr($rex);
+    } # SWITCH:
+    #_dbx "typ=$typ -> rex=$rex";
     if (not is_valid_key($key)) {
        $key = get_key($key); # is_valid_key() printed warning, if invalid key
     }
-    $cipher = get_name($key) if (grep{/$OCfg::cfg{'regex'}->{'ADHorDHA'}/} get_consts($key), get_names($key));
-    return $cipher;
-} # is_adh
-
-sub is_cbc      {
-    #? return cipher suite name if it is a CBC cipher, empty string otherwise
-    #  checks names and constants; returns primary name even if key was given
-    my $key     = shift;# can be key, name or constant; pattern not supported
-    my $cipher  = "";
-    if (not is_valid_key($key)) {
-       $key = get_key($key); # is_valid_key() printed warning, if invalid key
-    }
-    $cipher = get_name($key) if (grep{/CBC/} get_consts($key), get_names($key));
-    return $cipher;
-} # is_cbc
-
-sub is_des      {
-    #? return cipher suite name if it is a CBC cipher, empty string otherwise
-    #  checks names and constants; returns primary name even if key was given
-    my $key     = shift;# can be key, name or constant; pattern not supported
-    my $cipher  = "";
-    if (not is_valid_key($key)) {
-       $key = get_key($key); # is_valid_key() printed warning, if invalid key
-    }
-    $cipher = get_name($key) if (grep{/DES/} get_consts($key), get_names($key));
-    return $cipher;
-} # is_des
-
-sub is_edh      {
-    #? return cipher suite name if it is a EDH cipher, empty string otherwise
-    #  checks names and constants; returns primary name even if key was given
-    my $key     = shift;# can be key, name or constant; pattern not supported
-    my $cipher  = "";
-    if (not is_valid_key($key)) {
-       $key = get_key($key); # is_valid_key() printed warning, if invalid key
-    }
-    $cipher = get_name($key) if (grep{/$OCfg::cfg{'regex'}->{'DHEorEDH'}/} get_consts($key), get_names($key));
-    return $cipher;
-} # is_edh
-
-sub is_exp      {
-    #? return cipher suite name if it is a EXPORT cipher, empty string otherwise
-    #  checks names and constants; returns primary name even if key was given
-    my $key     = shift;# can be key, name or constant; pattern not supported
-    my $cipher  = "";
-    if (not is_valid_key($key)) {
-       $key = get_key($key); # is_valid_key() printed warning, if invalid key
-    }
-    $cipher = get_name($key) if (grep{/$OCfg::cfg{'regex'}->{'EXPORT'}/} get_consts($key), get_names($key));
-    return $cipher;
-} # is_exp
-
-sub is_rc4      {
-    #? return cipher suite name if it is a EXPORT cipher, empty string otherwise
-    #  checks names and constants; returns primary name even if key was given
-    my $key     = shift;# can be key, name or constant; pattern not supported
-    my $cipher  = "";
-    if (not is_valid_key($key)) {
-       $key = get_key($key); # is_valid_key() printed warning, if invalid key
-    }
-    $cipher = get_name($key) if (grep{/$OCfg::cfg{'regex'}->{'RC4orARC4'}/} get_consts($key), get_names($key));
+    $cipher = get_name($key) if (grep{/$rex/} get_consts($key), get_names($key));
     return $cipher;
 } # is_rc4
 
@@ -1679,12 +1636,14 @@ sub show            {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     show_ciphers($1)        if ($arg =~ m/^(show|simple)$/      );
     show_ciphers($1)        if ($arg =~ m/^(dump|full|osaft|openssl(?:-[vV])?)$/);
     show_getter($1)         if ($arg =~ m/^getter=?(.*)/        );
-    print is_adh($1)        if ($arg =~ m/^is.?adh=(.*)/        );
-    print is_cbc($1)        if ($arg =~ m/^is.?cbc=(.*)/        );
-    print is_des($1)        if ($arg =~ m/^is.?des=(.*)/        );
-    print is_edh($1)        if ($arg =~ m/^is.?edh=(.*)/        );
-    print is_exp($1)        if ($arg =~ m/^is.?exp=(.*)/        );
-    print is_rc4($1)        if ($arg =~ m/^is.?rc4=(.*)/        );
+    print is_typ('ADH',$1)  if ($arg =~ m/^is.?adh=(.*)/        );
+    print is_typ('CBC',$1)  if ($arg =~ m/^is.?cbc=(.*)/        );
+    print is_typ('DES',$1)  if ($arg =~ m/^is.?des=(.*)/        );
+    print is_typ('EDH',$1)  if ($arg =~ m/^is.?edh=(.*)/        );
+    print is_typ('EXP',$1)  if ($arg =~ m/^is.?exp=(.*)/        );
+    print is_typ('RC4',$1)  if ($arg =~ m/^is.?rc4=(.*)/        );
+    print "** please use any of: is_adh, is_cbc, is_des, is_edh, is_exp, is_rc4"
+                            if ($arg =~ m/^is.?typ=(.*)/        );
     print is_valid_key($1)  if ($arg =~ m/^is.?valid.?key=(.*)/ );
     print text2key($1)      if ($arg =~ m/^text2key=(.*)/       );
     print key2text($1)      if ($arg =~ m/^key2text=(.*)/       );
@@ -1798,6 +1757,15 @@ sub _main   {
             'ssltest'  => '',
             'overview' => '',
         },
+        # use alias to pass first argument to 'is_typ()'; for testing only
+        "# commands to check cipher type\n# (all following call 'is_typ(TYP,KEY)')" => {
+            'is_adh=KEY'  => 'check if cipher is ADH',
+            'is_cbc=KEY'  => 'check if cipher is CBC',
+            'is_des=KEY'  => 'check if cipher is DES',
+            'is_edh=KEY'  => 'check if cipher is EDH',
+            'is_exp=KEY'  => 'check if cipher is EXPORT',
+            'is_rc4=KEY'  => 'check if cipher is RC4',
+        },
         '# commands to show cipher data' => {
             'getter=KEY'        => 'show example for get_*() functions',
             'key=CIPHER-NAME  ' => 'show (internal) cipher key if it is known',
@@ -1823,7 +1791,7 @@ sub _main   {
         if ($arg =~ /^version$/)        { print "$SID_ciphers\n";  next; }
         if ($arg =~ /^[-+]?V(ERSION)?$/){ print "$VERSION\n";      next; }
         if ($arg =~ /^--test.?ciphers.?version/i) { print "$VERSION\n"; next; }
-            # round brackets because print is not a sub but an operator
+        $arg =~ s/^[+]//;   # allow leading + prefix
         $arg =~ s/^--test.?ciphers[_.-]?//; # allow short option without prefix --test-ciphers
         show("--test-ciphers$arg");
     }
@@ -1901,6 +1869,10 @@ this modules provides following commands:
 
 - print example for all getter functions for specified cipher key
 
+=item is_typ
+
+- print cipher suite name if specified cipher is of special typ
+
 =back
 
 All commands can be used with or without '+' prefix, for example 'dump' is same
@@ -1956,7 +1928,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.52 2024/07/30
+3.53 2024/07/31
 
 
 =head1 AUTHOR
