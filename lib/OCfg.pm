@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.42 24/07/27 14:29:26";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.43 24/07/31 11:18:10";
 our $VERSION    =  "24.06.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -2844,6 +2844,7 @@ our %cfg = (    # main data structure for configuration
         'help=warnings' => "consider building the file using: 'make warnings-info'",
         'renegotiation' => "checks only if renegotiation is implemented server-side according RFC 5746 ",
         'drown'     => "checks only if the target server itself is vulnerable to DROWN ",
+        'lucky13'   => "checks only if the target offers ciphers vulnerable to Lucky13 ",
         'robot'     => "checks only if the target offers ciphers vulnerable to ROBOT ",
         'cipherall' => "+cipherall : functionality changed, please see '$cfg__me --help=TECHNIC'",
         'cipherraw' => "+cipherraw : functionality changed, please see '$cfg__me --help=TECHNIC'",
@@ -3545,7 +3546,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.42"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.43"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3591,7 +3592,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.42 2024/07/27
+3.43 2024/07/31
 
 =head1 AUTHOR
 
