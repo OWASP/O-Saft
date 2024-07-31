@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.43 24/07/31 11:18:10";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.44 24/07/31 12:25:50";
 our $VERSION    =  "24.06.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -2772,7 +2772,7 @@ our %cfg = (    # main data structure for configuration
         'notROBOT'  => '(?:(?:EC)?DHE[_-])',                    # match against cipher
                        # ROBOT are all TLS_RCA except those with DHE or ECDHE
         'SLOTH'     => '(?:(EXP(?:ORT)?|NULL).*MD5$|EC(?:DHE|EDH)[_-]ECDSA[_-].*(?:MD5|SHA)$)',
-        'Sweet32'   => '(?:[_-](?:CBC||CBC3|3DES|DES|192)[_-])',# match against cipher
+        'Sweet32'   => '(?:[_-](?:CBC3|3DES|DES|192)[_-])',     # match against cipher
         'notSweet32'=> '(?:[_-]AES[_-])',                       # match against cipher
         # The following RegEx define what is "not vulnerable":
         'PFS'       => '^(?:(?:SSLv?3|TLSv?1(?:[12])?|PCT1?)[_-])?((?:EC)?DHE|EDH)[_-]',
@@ -3546,7 +3546,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.43"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.44"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3592,7 +3592,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.43 2024/07/31
+3.44 2024/07/31
 
 =head1 AUTHOR
 
