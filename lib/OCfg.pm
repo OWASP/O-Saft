@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.45 24/08/03 09:27:10";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.46 24/08/03 13:18:54";
 our $VERSION    =  "24.06.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -2776,15 +2776,15 @@ our %cfg = (    # main data structure for configuration
         'notSweet32'=> '(?:[_-]AES[_-])',                       # match against cipher
         # The following RegEx define what is "not vulnerable":
         'PFS'       => '^(?:(?:SSLv?3|TLSv?1(?:[12])?|PCT1?)[_-])?((?:EC)?DHE|EDH)[_-]',
-        'TR-02102'  => '(?:DHE|EDH)[_-](?:PSK[_-])?(?:(?:EC)?[DR]S[AS])[_-]',
+        'TR-02102'  => '(?:DHE|EDH)[_-](?:PSK[_-])?(?:(?:EC)?DSS|RSA)[_-]',
                        # ECDHE_ECDSA | ECDHE_RSA | DHE_DSS | DHE_RSA PSK_ECDSS
                        # ECDHE_ECRSA, ECDHE_ECDSS or DHE_DSA does not exist, hence lazy RegEx above
         'notTR-02102'     => '[_-]SHA$',
                        # ciphers with SHA1 hash are not allowed
-        'TR-02102-noPFS'  => '(?:EC)?DH)[_-](?:EC)?(?:[DR]S[AS])[_-]',
+        'TR-02102-noPFS'  => '(?:EC)?DH)[_-](?:EC)?(?:DSS|RSA)[_-]',
                        # if PFS not possible, see TR-02102-2_2016 3.3.1
-        'TR-03116+' => 'EC(?:DHE|EDH)[_-](?:PSK|(?:EC)?(?:[DR]S[AS]))[_-]AES128[_-](?:GCM[_-])?SHA256',
-        'TR-03116-' => 'EC(?:DHE|EDH)[_-](?:PSK|(?:EC)?(?:[DR]S[AS]))[_-]AES(?:128|256)[_-](?:GCM[_-])?SHA(?:256|384)',
+        'TR-03116+' => 'EC(?:DHE|EDH)[_-](?:PSK|(?:EC)?(?:DSS|RSA))[_-]AES128[_-](?:GCM[_-])?SHA256',
+        'TR-03116-' => 'EC(?:DHE|EDH)[_-](?:PSK|(?:EC)?(?:DSS|RSA))[_-]AES(?:128|256)[_-](?:GCM[_-])?SHA(?:256|384)',
                        # in strict mode only:
                        #  ECDHE-ECDSA-AES128.*SHA256 ECDHE-RSA-AES128.*SHA256 RSA-PSK-AES128-SHA256 ECDHE-PSK-AES128-SHA256
                        # in lazy mode (for curiosity) we also allow:
@@ -2792,7 +2792,7 @@ our %cfg = (    # main data structure for configuration
                        #  ECDHE-ECDSA-AES256.*SHA384 ECDHE-RSA-AES256.*SHA384
         'notTR-03116'     => '(?:PSK[_-]AES256|[_-]SHA$)',
                        # NOTE: for curiosity again, notTR-03116 is for strict mode only
-        'RFC7525'   => 'EC(?:DHE|EDH)[_-](?:PSK|(?:EC)?(?:[DR]S[AS]))[_-]AES128[_-](?:GCM[_-])?SHA256',
+        'RFC7525'   => 'EC(?:DHE|EDH)[_-](?:PSK|(?:EC)?(?:DSS|RSA))[_-]AES128[_-](?:GCM[_-])?SHA256',
         '1.3.6.1.5.5.7.1.1'  =>  '(?:1\.3\.6\.1\.5\.5\.7\.1\.1|authorityInfoAccess)',
         'NSA-B'     =>'(?:ECD(?:H|SA).*?AES.*?GCM.*?SHA(?:256|384|512))',
 
@@ -3546,7 +3546,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.45"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.46"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3592,7 +3592,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.45 2024/08/03
+3.46 2024/08/03
 
 =head1 AUTHOR
 
