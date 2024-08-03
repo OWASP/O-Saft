@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.107 24/08/03 13:19:40"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.108 24/08/03 18:51:14"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -409,7 +409,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.107"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.108"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -2943,7 +2943,9 @@ sub ciphers_default_openssl {
         $prot{$ssl}->{'default'}        = _get_cipher_default($ssl, $host, $port, 'default');
         last if (0 < _is_ssl_error($anf, time(), "$ssl: abort getting preferred cipher"));
         my $cipher  = $prot{$ssl}->{'cipher_strong'};
-        $prot{$ssl}->{'cipher_pfs'}     = $cipher if _is_compliant($ssl, $cipher, 'PFS');
+        if ("" ne $cipher) {    # if there is a strong cipher check for PFS too
+            $prot{$ssl}->{'cipher_pfs'} = $cipher if _is_compliant($ssl, $cipher, 'PFS');
+        }
     }
     checkpreferred($host, $port);
     trace("ciphers_default_openssl() }");
@@ -6071,7 +6073,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.107");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.108");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
