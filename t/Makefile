@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 3.16 24/07/28 11:14:44
+#?      @(#) Makefile 3.17 24/08/03 14:18:39
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-O-SID.test         := 3.16
+O-SID.test         := 3.17
 O-SELF.test        := t/Makefile
 ALL.includes       += $(O-SELF.test)
 ALL.inc.type       += test
@@ -758,7 +758,7 @@ testarg-%.log: $(TEST.logdir) _FORCE
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(TEST.today))
 	@$(call EXE.log-make_or_print,$(_target),EXE.log-filter) > $(_NEW.log)
 	@-test -f $(_OLD.log)  || cp $(_NEW.log) $(_OLD.log)
-	@-diff    $(_NEW.log) $(_OLD.log) 2>/dev/null  && rm $(_NEW.log)
+	@-diff    $(_OLD.log) $(_NEW.log) 2>/dev/null  && rm $(_NEW.log)
 	@-ls   -l $(_OLD.log)*
 
 testcmd-%.log: $(TEST.logdir) _FORCE
@@ -769,7 +769,7 @@ testcmd-%.log: $(TEST.logdir) _FORCE
 	@$(eval _NEW.log := $(TEST.logdir)/$@-$(TEST.today))
 	@$(call EXE.log-make_or_print,$(_target),EXE.log-filter) > $(_NEW.log)
 	@-test -f $(_OLD.log)  || cp $(_NEW.log) $(_OLD.log)
-	@-diff    $(_NEW.log) $(_OLD.log) 2>/dev/null  && rm $(_NEW.log)
+	@-diff    $(_OLD.log) $(_NEW.log) 2>/dev/null  && rm $(_NEW.log)
 	@-ls   -l $(_OLD.log)*
 
 # The pattern rule  testcmd-%  executes an individual target, for example:
