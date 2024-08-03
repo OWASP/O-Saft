@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.106 24/08/02 23:53:32"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.107 24/08/03 13:19:40"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -409,7 +409,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.106"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.107"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1974,15 +1974,6 @@ sub _resetchecks    {
     return;
 } # _resetchecks
 
-sub _prot_cipher    {
-    # return string consisting of given parameters separated by : and prefixed with a space
-    # returns "" if any parameter is empty
-    my $p1 = shift || "";
-    my $p2 = shift || "";
-    return ""   if (("" eq $p1) or ("" eq $p2));
-    return " $p1:$p2";
-} # _prot_cipher
-
 sub _getscore       {
     # return score value from given hash; 0 if given value is empty, otherwise score to given key
     my $key     = shift;
@@ -2386,12 +2377,23 @@ sub _check_prot_cipher  {
     }
     if ('PFS'     eq $typ) {
         # return given cipher if it supports forward secret connections (PFS)
-        return $cipher if ("$ssl-$cipher" !~ /$cfg{'regex'}->{'PFS'}/);
+        return $cipher if ($ssl eq "TLSv13");
+        return $cipher if ("$ssl-$cipher" =~ /$cfg{'regex'}->{'PFS'}/);
         return "";
     }
 
     return "";
 } # _check_prot_cipher
+
+sub _prot_cipher    {
+    # return string consisting of given parameters separated by : and prefixed with a space
+    # returns "" if any parameter is empty
+    # mainly used to build prot:cipher
+    my $p1 = shift || "";
+    my $p2 = shift || "";
+    return ""   if (("" eq $p1) or ("" eq $p2));
+    return " $p1:$p2";
+} # _prot_cipher
 
 sub _is_compliant   {
     #? return prot:cipher if combination of protocol and cipher is compliant
@@ -3690,8 +3692,9 @@ sub checkciphers    {
         }
         $hasrsa{$ssl}   = 1 if Ciphers::is_typ('EC-RSA', $cipher);
         $hasecdsa{$ssl} = 1 if Ciphers::is_typ('EC-DSA', $cipher);
-        push(@{$prot{$ssl}->{'ciphers_pfs'}}, $cipher) if ("" eq _is_compliant($ssl, $cipher, 'PFS')); # add PFS cipher
+        push(@{$prot{$ssl}->{'ciphers_pfs'}}, $cipher) if _is_compliant($ssl, $cipher, 'PFS'); # add PFS cipher
       }
+      trace("checkciphers:  {$ssl}->{ciphers_pfs}=@{$prot{$ssl}->{'ciphers_pfs'}}")
     }
 
     # additional BEAST check: checks for vulnerable protocols are disabled?
@@ -5727,8 +5730,9 @@ sub printprotocols      {
            $cipher_pfs    = "" if ($STR{UNDEF} eq $cipher_pfs);
         }
         if ((@{$prot{$ssl}->{'ciphers_pfs'}}) and
-            (${$prot{$ssl}->{'ciphers_pfs'}}[0] =~ m/^\s*<</)) { # something went wrong
-           #$cipher_pfs   # should be empty
+            (${$prot{$ssl}->{'ciphers_pfs'}}[0] =~ m/^\s*<</)) {
+           # if protocol not supported, or if something went wrong
+           # then $cipher_pfs   # should be empty
            $cipher_strong = ${$prot{$ssl}->{'ciphers_pfs'}}[0];
            $cnt = 0;
         }
@@ -5851,10 +5855,6 @@ sub printciphers_intern {
     }
     print_cipherruler() if ($legacy =~ /(?:owasp|simple)/);
     print_footer($legacy);
-    #foreach my $key (keys(%{$results->{$ssl}})) {
-    #    my $c = Ciphers::get_name($key);
-    #    push(@{$prot{$ssl}->{'ciphers_pfs'}}, $c) if _is_compliant($ssl, $c, 'PFS'); # add PFS cipher
-    #}
     trace("printciphers_intern() }");
     return;
 } # printciphers_intern
@@ -6071,7 +6071,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.106");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.107");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
