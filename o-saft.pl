@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.100 24/07/31 08:46:30"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.106 24/08/02 23:53:32"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -409,7 +409,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.100"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.106"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1974,17 +1974,14 @@ sub _resetchecks    {
     return;
 } # _resetchecks
 
-sub _prot_cipher    { my @txt = @_; return " " . join(":", @txt); }
-    # return string consisting of given parameters separated by : and prefixed with a space
-
-sub _prot_cipher_or_empty {
+sub _prot_cipher    {
     # return string consisting of given parameters separated by : and prefixed with a space
     # returns "" if any parameter is empty
-    my $p1 = shift;
-    my $p2 = shift;
-    return "" if (("" eq $p1) or ("" eq $p2));
-    return _prot_cipher($p1, $p2);
-} # _prot_cipher_or_empty
+    my $p1 = shift || "";
+    my $p2 = shift || "";
+    return ""   if (("" eq $p1) or ("" eq $p2));
+    return " $p1:$p2";
+} # _prot_cipher
 
 sub _getscore       {
     # return score value from given hash; 0 if given value is empty, otherwise score to given key
@@ -2125,27 +2122,6 @@ sub _is_ssl_bleed   {
     trace("_is_ssl_bleed()\t= $ret }");
     return $ret;
 } # _is_ssl_bleed
-sub _is_ssl_beast   {
-    # return given cipher if vulnerable to BEAST attack, empty string otherwise
-    my ($ssl, $cipher) = @_;
-    return ""      if ($ssl    !~ /(?:SSL|TLSv1$)/); # TLSv11 or later are not vulnerable to BEAST
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'BEAST'}/);
-    return "";
-} # _is_ssl_beast
-### _is_ssl_breach($)        { return "NOT YET IMPLEMEMNTED"; }
-sub _is_ssl_breach  {
-    # return 'yes' if vulnerable to BREACH
-    return "";
-# TODO: checks
-    # To be vulnerable, a web application must:
-    #      Be served from a server that uses HTTP-level compression
-    #      Reflect user-input in HTTP response bodies
-    #      Reflect a secret (such as a CSRF token) in HTTP response bodies
-    #      *  agnostic to the version of TLS/SSL
-    #      *  does not require TLS-layer compression
-    #      *  works against any cipher suite
-    #      *  can be executed in under a minute
-} # _is_ssl_breach
 sub _is_ssl_ccs     {
     #? return "ccs" if target is vulnerable to CCS Injection, empty string otherwise
     # parameter $ssl must be provided as binary value: 0x00, 0x01, 0x02, 0x03 or 0x04
@@ -2220,75 +2196,6 @@ sub _is_ssl_ccs     {
     close($cl);
     return $ret;
 } # _is_ssl_ccs
-sub _is_ssl_crime   {
-    # return compression or SPDY/3 if available, empty string otherwise
-    # $val is usually $data{'compression'}->{val}
-    my ($val, $protocols) = @_;
-    my $ret  = ($val =~ /$cfg{'regex'}->{'nocompression'}/) ? ""  : $val . " ";
-       $ret .= ($protocols =~ /$cfg{'regex'}->{'isSPDY3'}/) ? "SPDY/3 " : "";
-    #  http://zoompf.com/2012/09/explaining-the-crime-weakness-in-spdy-and-ssl
-    return $ret;
-} # _is_ssl_crime
-sub _is_ssl_fips    {
-    # return given cipher if it is not FIPS-140 compliant, empty string otherwise
-    my ($ssl, $cipher) = @_;
-    return $cipher if ($ssl    ne "TLSv1");
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'notFIPS-140'}/);
-    return $cipher if ($cipher !~ /$cfg{'regex'}->{'FIPS-140'}/);
-    return "";
-} # _is_ssl_fips
-sub _is_ssl_freak   {
-    # return given cipher if vulnerable to FREAK attack, empty string otherwise
-    my ($ssl, $cipher) = @_;
-    return ""      if ($ssl    !~ /(?:SSLv3)/); # TODO: probably only SSLv3 is vulnerable
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'FREAK'}/);
-    return "";
-} # _is_ssl_freak
-sub _is_ssl_logjam  {
-    # return given cipher if vulnerable to logjam attack, empty string otherwise
-    my ($ssl, $cipher) = @_;
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'Logjam'}/);
-    return "";
-} # _is_ssl_logjam
-sub _is_ssl_lucky   { my $val=shift; return ($val =~ /$cfg{'regex'}->{'Lucky13'}/) ? $val : ""; }
-    # return given cipher if vulnerable to Lucky 13 attack, empty string otherwise
-sub _is_ssl_nsab    {
-# TODO: # return given cipher if it is not NSA Suite B compliant, empty string otherwise
-} # _is_ssl_nsab
-sub _is_ssl_pci     {
-    # return given cipher if it is not PCI compliant, empty string otherwise
-# TODO: DH 1024+ is PCI compliant
-    my ($ssl, $cipher) = @_;
-    return $cipher if ($ssl    eq "SSLv2"); # SSLv2 is not PCI compliant
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'notPCI'}/);
-    return "";
-} # _is_ssl_pci
-sub _is_ssl_pfs     { my ($ssl,$c)=@_; return ("$ssl-$c" =~ /$cfg{'regex'}->{'PFS'}/)  ?  $c  : ""; }
-    # return given cipher if it supports forward secret connections (PFS)
-sub _is_ssl_rc4     { my $val=shift; return ($val =~ /$cfg{'regex'}->{'RC4'}/)  ? $val . " "  : ""; }
-    # return given cipher if it is RC4
-sub _is_ssl_robot   {
-    # return given cipher if vulnerable to ROBOT attack, empty string otherwise
-    my ($ssl, $cipher) = @_;
-   #return ""      if ($cipher =~ /$cfg{'regex'}->{'notROBOT'}/);
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'ROBOT'}/);
-    return "";
-} # _is_ssl_robot
-sub _is_ssl_sloth   {
-    # return given cipher if vulnerable to SLOTH attack, empty string otherwise
-    my ($ssl, $cipher) = @_;
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'SLOTH'}/);
-    return "";
-} # _is_ssl_sloth
-sub _is_ssl_sweet   {
-    # return given cipher if vulnerable to Sweet32 attack, empty string otherwise
-    my ($ssl, $cipher) = @_;
-    return ""      if ($cipher =~ /$cfg{'regex'}->{'notSweet32'}/);
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'Sweet32'}/);
-    return "";
-} # _is_ssl_sweet
-sub _is_ssl_time    { return 0; } # TODO: checks; good: AES-GCM or AES-CCM
-    # return given cipher if vulnerable to TIME attack, empty string otherwise
 
 sub _is_tls12only   {
 # NOTE: _is_tls12only not yet used
@@ -2315,57 +2222,42 @@ sub _is_tr02102     {
     # return given cipher if it is not TR-02102 compliant, empty string otherwise
     # this is valid vor TR-02102 2013 and 2016
     my ($ssl, $cipher) = @_;
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'EXPORT'}/);
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'notTR-02102'}/);
-    return $cipher if ($cipher !~ /$cfg{'regex'}->{'TR-02102'}/);
+    return $cipher if Ciphers::is_typ('EXP', $cipher);
+    return $cipher if Ciphers::is_typ('notTR-02102',  $cipher);
+    return $cipher if not Ciphers::is_typ('TR-02102', $cipher);
     return "";
 } # _is_tr02102
 sub _is_tr02102_strict  {
     # return given cipher if it is not TR-02102 compliant, empty string otherwise
     my ($ssl, $cipher) = @_;
     my $val = _is_tr02102($ssl, $cipher);
-    if ($val eq "") {   # strict allows AES*-GCM only and no SHA-1
-        return $cipher if ($cipher !~ /$cfg{'regex'}->{'AES-GCM'}/);
-        return $cipher if ($cipher =~ /$cfg{'regex'}->{'notTR-02102'}/);
-    }
-    return $val;
+    return $val    if ("" ne $val);
+    # strict allows AES*-GCM only and no SHA-1
+    return $cipher if not Ciphers::is_typ('AES-GCM', $cipher);
+    return $cipher if Ciphers::is_typ('notTR-02102', $cipher);
 } # _is_tr02102_strict
 sub _is_tr02102_lazy    {
     # return given cipher if it is not TR-02102 compliant, empty string otherwise
     my ($ssl, $cipher) = @_;
-    my $val = _is_tr02102($ssl, $cipher);
-    return $val;
+    return _is_tr02102($ssl, $cipher);
 } # _is_tr02102_lazy
 sub _is_tr03116_strict  {
     # return given cipher if it is not TR-03116 compliant, empty string otherwise
     my ($ssl, $cipher) = @_;
-    return $cipher if ($ssl    ne "TLSv12");
-    return $cipher if Ciphers::is_typ('EXP',$cipher);
-    return $cipher if ($cipher =~ /$cfg{'regex'}->{'notTR-03116'}/);
-    return $cipher if ($cipher !~ /$cfg{'regex'}->{'TR-03116+'}/);
+    return $cipher if ("TLSv12" ne $ssl);
+    return $cipher if Ciphers::is_typ('EXP', $cipher);
+    return $cipher if Ciphers::is_typ('notTR-03116',   $cipher);
+    return $cipher if not Ciphers::is_typ('TR-03116+', $cipher);
     return "";
 } # _is_tr03116_strict
 sub _is_tr03116_lazy    {
     # return given cipher if it is not TR-03116 compliant, empty string otherwise
     my ($ssl, $cipher) = @_;
-    return $cipher if ($ssl    ne "TLSv12");
+    return $cipher if ("TLSv12" ne $ssl);
     return $cipher if Ciphers::is_typ('EXP',$cipher);
-    return $cipher if ($cipher !~ /$cfg{'regex'}->{'TR-03116-'}/);
+    return $cipher if not Ciphers::is_typ('TR-03116-', $cipher);
     return "";
 } # _is_tr03116_lazy
-sub _is_rfc7525         {
-    # return given cipher if it is not RFC 7525 compliant, empty string otherwise
-    my ($ssl, $cipher) = @_;
-    my $bit = Ciphers::get_bits(Ciphers::get_key($cipher));
-    return $cipher if ($cipher !~ /$cfg{'regex'}->{'RFC7525'}/);
-   # /notRFC7525/;
-    return $cipher if ($cipher =~ /NULL/);
-    return $cipher if Ciphers::is_typ('EXP',$cipher);
-    return $cipher if Ciphers::is_typ('RC4',$cipher);
-    return ""      if ($bit =~ m/^\s*$/);   # avoid Perl warnings if $bit empty
-    return $cipher if ($bit < 128);
-    return "";
-} # _is_rfc7525
 
 sub _is_beast_skipped   {
     #? returns protocol names if they are vulnerable to BEAST but the check has been skipped,
@@ -2381,7 +2273,7 @@ sub _is_beast_skipped   {
     return join(" ", @ret);
 } # _is_beast_skipped
 
-sub _is_ssl_error   {
+sub _is_ssl_error       {
     # returns 1 if probably a SSL connection error occoured; 0 otherwise
     # increments counters in $cfg{'done'}
     my ($anf, $end, $txt) = @_;
@@ -2401,6 +2293,137 @@ sub _is_ssl_error   {
     }
     return 0;
 } # _is_ssl_error
+
+sub _check_prot_cipher  {
+    #? returns cipher suite name if vulnerable to specified vulnerability
+    #  see description _is_compliant(), _is_vulnerable()
+    # Usage: _check_prot_cipher($ssl, $key, $type)
+    my $ssl     = shift;# SSL/TLS protocol (optional for some types)
+    my $key     = shift;# can be key, name or constant; pattern not supported
+    my $typ     = shift;# must be constant as used in %cfg{'regex'}
+    my $rex;
+
+    ## CRIME is special here (other values for $ssl and $key); returns protocols
+    if ('CRIME'   eq $typ) {
+        my $protocols = $ssl;   # variables just for documentation ...
+        my $compress  = ($key =~ /$cfg{'regex'}->{'nocompression'}/) ? ""  : $key . " ";
+           $compress .= "SPDY/3 " if ($protocols =~ /$cfg{'regex'}->{'isSPDY3'}/);
+        #  http://zoompf.com/2012/09/explaining-the-crime-weakness-in-spdy-and-ssl
+        return $compress;
+    }
+    $key = Ciphers::get_key($key) if not Ciphers::is_valid_key($key);
+         # is_valid_key() printed warning 521 if invalid key
+    if (defined $OCfg::cfg{'regex'}->{$typ}) {
+         # known RegEx
+         $rex = $OCfg::cfg{'regex'}->{$typ};
+    }
+
+    ## check vulnerabilities; returns cipher
+    if ('BREACH'  eq $typ) {
+        return ""; # TODO: BREACH not implemented
+        # To be vulnerable, a web application must:
+        #      Be served from a server that uses HTTP-level compression
+        #      Reflect user-input in HTTP response bodies
+        #      Reflect a secret (such as a CSRF token) in HTTP response bodies
+        #      *  agnostic to the version of TLS/SSL
+        #      *  does not require TLS-layer compression
+        #      *  works against any cipher suite
+        #      *  can be executed in under a minute
+    }
+    if ('BEAST'   eq $typ) {
+        return "" if ($ssl !~ /(?:SSL|TLSv1$)/);
+        return Ciphers::is_typ('BEAST',   $key);
+    }
+    if ('FREAK'   eq $typ) {
+        return "" if ($ssl !~ /(?:SSLv3)/);
+        return Ciphers::is_typ('FREAK',   $key);
+    }
+    if ('Sweet32' eq $typ) {
+        return "" if Ciphers::is_typ('notSweet32', $key);
+        return Ciphers::is_typ('Sweet32', $key);
+    }
+    if ('Logjam'  eq $typ) { return Ciphers::is_typ('Logjam',  $key); }
+    if ('Lucky13' eq $typ) { return Ciphers::is_typ('Lucky13', $key); }
+    if ('RC4'     eq $typ) { return Ciphers::is_typ('RC4',     $key); }
+    if ('ROBOT'   eq $typ) { return Ciphers::is_typ('ROBOT',   $key); }
+    if ('SLOTH'   eq $typ) { return Ciphers::is_typ('SLOTH',   $key); }
+    if ('TIME'    eq $typ) { return ""; } # TODO: checks; good: AES-GCM or AES-CCM
+
+    ## check compliance; returns cipher
+    # note: Ciphers::is_typ() can be called with hex key or cipher name
+    my $cipher  = Ciphers::get_name($key);
+        # gets primary name, even if called with alias name ot constant name
+        # NOTE: this name may differ from the name passed as $key parameter
+    if ('FIPS-140' eq $typ) {
+        # return given cipher if it is not FIPS-140 compliant
+        return $cipher if ($ssl ne "TLSv1");
+        return $cipher if Ciphers::is_typ('notFIPS-140', $key);
+        return $cipher if Ciphers::is_typ('FIPS-140',    $key);
+        return "";
+    }
+    if ('NSA-B'   eq $typ) {
+# TODO: # return given cipher if it is not NSA Suite B compliant
+        return "";
+    }
+    if ('PCI'     eq $typ) {
+        # return given cipher if it is not PCI compliant
+# TODO: DH 1024+ is PCI compliant
+        return $cipher if ($ssl eq "SSLv2"); # SSLv2 is not PCI compliant
+        return $cipher if Ciphers::is_typ('notPCI',      $key);
+        return "";
+    }
+    if ('RFC7525' eq $typ) {
+        # return given cipher if it is not RFC 7525 compliant
+        my $bit = Ciphers::get_bits(Ciphers::get_key($cipher));
+        return $cipher if not Ciphers::is_typ('RFC7525', $key);
+        # /notRFC7525/;
+        return $cipher if Ciphers::is_typ('NULL',        $key);
+        return $cipher if Ciphers::is_typ('EXP',         $key);
+        return $cipher if Ciphers::is_typ('RC4',         $key);
+        return ""      if ($bit =~ m/^\s*$/);   # avoid Perl warnings if $bit empty
+        return $cipher if ($bit < 128);
+        return "";
+    }
+    if ('PFS'     eq $typ) {
+        # return given cipher if it supports forward secret connections (PFS)
+        return $cipher if ("$ssl-$cipher" !~ /$cfg{'regex'}->{'PFS'}/);
+        return "";
+    }
+
+    return "";
+} # _check_prot_cipher
+
+sub _is_compliant   {
+    #? return prot:cipher if combination of protocol and cipher is compliant
+    #? to specified type of compliance; returns empty string otherwise
+    #  checks cipher names and constants; returns primary cipher suite name
+    #  even if key was given
+    #  key can be the  cipher's hex key, suite name or constant name
+    #  type can be any known constant used for vulnerabilities, for example:
+    #    FIPS-140, NSA-B, PCI, PFS, RFC7525
+    # Usage: _is_compliant($ssl, $key, $type)
+    #
+    my ($ssl, $cipher, $typ) = @_;
+    return _prot_cipher($ssl, _check_prot_cipher($ssl, $cipher, $typ));
+} # _is_compliant
+
+sub _is_vulnerable  {
+    #? return prot:cipher if combination of protocol and cipher is vulnerable
+    #? to specified type of vulnerability; returns empty string otherwise
+    #  checks cipher names and constants; returns primary cipher suite name
+    #  even if key was given
+    #  key can be the  cipher's hex key, suite name or constant name
+    #  type can be any known constant used for vulnerabilities, for example:
+    #    BEAST, FREAK, Lucky13, Logjam, POODLE, ROBOT, SLOTH, Sweet32, TIME
+    # TODO: not yet implemented: BREACH, CSS, heartbleed, 
+    # Usage: _is_vulnerable($ssl, $key, $type)
+    #
+    my ($ssl, $cipher, $typ) = @_;
+    if ('CRIME' eq $typ) {  # returns compression and protocols
+        return _check_prot_cipher($data{'next_protocols'}->{val}($host), $cipher, $typ);
+    }
+    return _prot_cipher($ssl, _check_prot_cipher($ssl, $cipher, $typ));
+} # _is_vulnerable
 
 sub _checkwildcard  {
     # compute usage of wildcard in CN and subjectAltname
@@ -2918,7 +2941,7 @@ sub ciphers_default_openssl {
         $prot{$ssl}->{'default'}        = _get_cipher_default($ssl, $host, $port, 'default');
         last if (0 < _is_ssl_error($anf, time(), "$ssl: abort getting preferred cipher"));
         my $cipher  = $prot{$ssl}->{'cipher_strong'};
-        $prot{$ssl}->{'cipher_pfs'}     = $cipher if ("" ne _is_ssl_pfs($ssl, $cipher));
+        $prot{$ssl}->{'cipher_pfs'}     = $cipher if _is_compliant($ssl, $cipher, 'PFS');
     }
     checkpreferred($host, $port);
     trace("ciphers_default_openssl() }");
@@ -3133,7 +3156,7 @@ sub ciphers_scan_intern {
             my $cipher = Ciphers::get_name($accepted{'0'}[1]) || $STR{UNDEF}; # may return undef
             $prot{$ssl}->{'cipher_strong'}  = $cipher;
             $prot{$ssl}->{'default'}        = $cipher;
-            $prot{$ssl}->{'cipher_pfs'}     = $cipher if ("" ne _is_ssl_pfs($ssl, $cipher));
+            $prot{$ssl}->{'cipher_pfs'}     = $cipher if _is_compliant($ssl, $cipher, 'PFS');
             trace(sprintf(" default cipher %7s: %s", $ssl, $cipher));
         }
 
@@ -3534,7 +3557,7 @@ sub checkcipher     {
     my @const= Ciphers::get_consts($key); # get constant names
     trace("checkcipher($host, $port) {");
     # check weak ciphers
-    $checks{'cipher_null'}->{val}  .= _prot_cipher($ssl, $c) if ($c =~ /NULL/);
+    $checks{'cipher_null'}->{val}  .= _prot_cipher($ssl, $c) if Ciphers::is_typ('NULL',$c);
     $checks{'cipher_adh'} ->{val}  .= _prot_cipher($ssl, $c) if Ciphers::is_typ('ADH',$c);
     $checks{'cipher_exp'} ->{val}  .= _prot_cipher($ssl, $c) if Ciphers::is_typ('EXP',$c);
     $checks{'cipher_cbc'} ->{val}  .= _prot_cipher($ssl, $c) if Ciphers::is_typ('CBC',$c);
@@ -3543,26 +3566,26 @@ sub checkcipher     {
     $checks{'cipher_edh'} ->{val}  .= _prot_cipher($ssl, $c) if Ciphers::is_typ('EDH',$c);
 # TODO: lesen: http://www.golem.de/news/mindeststandards-bsi-haelt-sich-nicht-an-eigene-empfehlung-1310-102042.html
     # check compliance
-    $checks{'ism'}        ->{val}  .= _prot_cipher($ssl, $c) if ($c =~ /$cfg{'regex'}->{'notISM'}/);
-    $checks{'pci'}        ->{val}  .= _prot_cipher_or_empty($ssl, _is_ssl_pci(  $ssl, $c));
-    $checks{'fips'}       ->{val}  .= _prot_cipher_or_empty($ssl, _is_ssl_fips( $ssl, $c));
-    $checks{'rfc_7525'}   ->{val}  .= _prot_cipher_or_empty($ssl, _is_rfc7525(  $ssl, $c));
-    $checks{'tr_02102+'}  ->{val}  .= _prot_cipher_or_empty($ssl, _is_tr02102_strict($ssl, $c));
-    $checks{'tr_02102-'}  ->{val}  .= _prot_cipher_or_empty($ssl, _is_tr02102_lazy(  $ssl, $c));
-    $checks{'tr_03116+'}  ->{val}  .= _prot_cipher_or_empty($ssl, _is_tr03116_strict($ssl, $c));
-    $checks{'tr_03116-'}  ->{val}  .= _prot_cipher_or_empty($ssl, _is_tr03116_lazy(  $ssl, $c));
+    $checks{'ism'}        ->{val}  .= _prot_cipher($ssl, $c) if Ciphers::is_typ('notISM',$c);
+    $checks{'pci'}        ->{val}  .= _is_compliant($ssl, $c, 'PCI'     );
+    $checks{'fips'}       ->{val}  .= _is_compliant($ssl, $c, 'FIPS-140');
+    $checks{'rfc_7525'}   ->{val}  .= _is_compliant($ssl, $c, 'RFC7525' );
+    $checks{'tr_02102+'}  ->{val}  .= _prot_cipher($ssl, _is_tr02102_strict($ssl, $c));
+    $checks{'tr_02102-'}  ->{val}  .= _prot_cipher($ssl, _is_tr02102_lazy(  $ssl, $c));
+    $checks{'tr_03116+'}  ->{val}  .= _prot_cipher($ssl, _is_tr03116_strict($ssl, $c));
+    $checks{'tr_03116-'}  ->{val}  .= _prot_cipher($ssl, _is_tr03116_lazy(  $ssl, $c));
     # check attacks
     # NOTE: if no ciphers for a protocol $ssl were found,  this function is not
     #       called at all for this protocol, hence the target is not vulnerable
     #       for this protocol, that's what we expect
     $checks{'rc4'}      ->{val}     = $checks{'cipher_rc4'}->{val}; # these are the same checks
-    $checks{'beast'}    ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_beast($ssl, $c));
-    $checks{'breach'}   ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_breach($c));
-    $checks{'freak'}    ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_freak($ssl, $c));
-    $checks{'lucky13'}  ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_lucky($c));
-    $checks{'robot'}    ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_robot($ssl, $c));
-    $checks{'sloth'}    ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_sloth($ssl, $c));
-    $checks{'sweet32'}  ->{val}    .= _prot_cipher_or_empty($ssl, _is_ssl_sweet($ssl, $c));
+    $checks{'beast'}    ->{val}    .= _is_vulnerable($ssl, $c, 'BEAST'  );
+    $checks{'breach'}   ->{val}    .= _is_vulnerable($ssl, $c, 'BREACH' );
+    $checks{'freak'}    ->{val}    .= _is_vulnerable($ssl, $c, 'FREAK'  );
+    $checks{'lucky13'}  ->{val}    .= _is_vulnerable($ssl, $c, 'Lucky13');
+    $checks{'robot'}    ->{val}    .= _is_vulnerable($ssl, $c, 'ROBOT'  );
+    $checks{'sloth'}    ->{val}    .= _is_vulnerable($ssl, $c, 'SLOTH'  );
+    $checks{'sweet32'}  ->{val}    .= _is_vulnerable($ssl, $c, 'Sweet32');
     # counters
     $prot{$ssl}->{'-?-'}++         if ($risk =~ /-\?-/);   # private marker
     $prot{$ssl}->{'WEAK'}++        if ($risk =~ /WEAK/i);
@@ -3593,10 +3616,10 @@ sub checkciphers_pfs {
         goto FIN;
     }
     if (1 > $#prots) {  # found exactly one matching protocol
-        $checks{'cipher_pfs'}->{val}  = ("" eq _is_ssl_pfs($ssl, $cipher)) ? $cipher : "";
+        $checks{'cipher_pfs'}->{val}  = ("" eq _is_compliant($ssl, $cipher, 'PFS')) ? $cipher : "";
     } else {
         _warn("631: protocol '". join(';', @prots) . "' multiple protocols with selected cipher available");
-        $checks{'cipher_pfs'}->{val} .= "$ssl}:" . $prot{$_}->{'default'} . " " foreach (@prots);
+        $checks{'cipher_pfs'}->{val} .= "$ssl:" . $prot{$_}->{'default'} . " " foreach (@prots);
     }
     $checks{'cipher_pfsall'}->{val} = ($checks{'cnt_ciphers'}->{val} > $cnt_pfs) ? " " : "";
     $checks{'cipher_pfsall'}->{val} = $text{'na'} if (1 > $checks{'cnt_ciphers'}->{val});
@@ -3663,11 +3686,11 @@ sub checkciphers    {
         if ($yesno =~ m/yes/i) {    # cipher accepted
             $prot{$ssl}->{'cnt'}++;
             checkcipher($ssl, $key);
-            $checks{'logjam'}->{val}   .= _prot_cipher_or_empty($ssl, _is_ssl_logjam($ssl, $cipher));
+            $checks{'logjam'}->{val}   .= _is_vulnerable($ssl, $cipher, 'Logjam');
         }
-        $hasrsa{$ssl}   = 1 if ($cipher =~ /$cfg{'regex'}->{'EC-RSA'}/);
-        $hasecdsa{$ssl} = 1 if ($cipher =~ /$cfg{'regex'}->{'EC-DSA'}/);
-        push(@{$prot{$ssl}->{'ciphers_pfs'}}, $cipher) if ("" ne _is_ssl_pfs($ssl, $cipher));  # add PFS cipher
+        $hasrsa{$ssl}   = 1 if Ciphers::is_typ('EC-RSA', $cipher);
+        $hasecdsa{$ssl} = 1 if Ciphers::is_typ('EC-DSA', $cipher);
+        push(@{$prot{$ssl}->{'ciphers_pfs'}}, $cipher) if ("" eq _is_compliant($ssl, $cipher, 'PFS')); # add PFS cipher
       }
     }
 
@@ -4458,7 +4481,7 @@ sub check7525       {
     #    TLS_DHE_RSA_WITH_AES_128_GCM_SHA256, TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     #    TLS_DHE_RSA_WITH_AES_256_GCM_SHA384, TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
 
-    #  ==> done in checkcipher() with _is_rfc7525
+    #  ==> done in checkcipher() with _is_compliant()
 
     # 4.3.  Public Key Length
     #    ... DH key lengths of at least 2048 bits are RECOMMENDED.
@@ -4512,8 +4535,8 @@ sub check7525       {
     $val .= _get_text('missing', 'CRL in certificate') if ($checks{'crl'}->{val} ne "");
     $val .= $checks{'crl_valid'}->{val};
 
-    # All checks for ciphers were done in _is_rfc7525() and already stored in
-    # $checks{'rfc_7525'}. Because it may be a huge list, it is appended.
+    # All checks for ciphers were done in _is_compliant() and already stored
+    # in $checks{'rfc_7525'}. Because it may be a huge list, it is appended.
     $checks{'rfc_7525'}->{val} = $val . " " . $checks{'rfc_7525'}->{val};
 
     return;
@@ -4727,7 +4750,7 @@ sub checkprot       {
         $notxt = (0 < $prot{'SSLv3'}->{'cnt'}) ? " " : "";
         $checks{'hassslv3'} ->{val} = $notxt;
         $checks{'poodle'}   ->{val} = (0 < $prot{'SSLv3'}->{'cnt'}) ? "SSLv3" : "";  # POODLE if SSLv3 and ciphers
-        # FIXME: should uses $cfg{'regex'}->{'POODLE'}, hence check in checkcipher() would be better
+        # FIXME: should uses cfg{regex}->{'POODLE'}, hence check in checkcipher() would be better
         # FIXME: TLSv1 is vulnerable too, but not TLSv11
         # FIXME: doc/help.txt ok now, but needs to be fixed too
     }
@@ -4821,7 +4844,7 @@ sub checkdest       {
     $key    = 'compression';
     $value  = $data{$key}->{val}($host);
     $checks{$key}->{val}        = ($value =~ m/$cfg{'regex'}->{'nocompression'}/) ? "" : $value;
-    $checks{'crime'}->{val}     = _is_ssl_crime($value, $data{'next_protocols'}->{val}($host));
+    $checks{'crime'}->{val}     = _is_vulnerable($data{'next_protocols'}->{val}($host), $value, 'CRIME');
     foreach my $key (qw(resumption renegotiation)) {
         next if ($checks{$key}->{val} !~ m/$text{'undef'}/);
         $value = $data{$key}->{val}($host);
@@ -5615,7 +5638,7 @@ sub printciphers_dh_openssl {
         print_title($legacy, $ssl, $host, $port, $cfg{'out'}->{'header'});
         print_cipherhead( 'cipher_dh');
         foreach my $c (@{$cfg{'ciphers'}}) {
-            #next if ($c !~ /$cfg{'regex'}->{'EC'}/);
+            #next if Ciphers::is_typ('EC', $c);
             my ($version, $supported, $dh) = _useopenssl($ssl, $host, $port, $c);
             next if ($supported =~ /^\s*$/);
             # TODO: use print_cipherline();
@@ -5830,7 +5853,7 @@ sub printciphers_intern {
     print_footer($legacy);
     #foreach my $key (keys(%{$results->{$ssl}})) {
     #    my $c = Ciphers::get_name($key);
-    #    push(@{$prot{$ssl}->{'ciphers_pfs'}}, $c) if ("" ne _is_ssl_pfs($ssl, $c));  # add PFS cipher
+    #    push(@{$prot{$ssl}->{'ciphers_pfs'}}, $c) if _is_compliant($ssl, $c, 'PFS'); # add PFS cipher
     #}
     trace("printciphers_intern() }");
     return;
@@ -6048,7 +6071,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.100");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.106");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
