@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.44 24/07/31 12:25:50";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.45 24/08/03 09:27:10";
 our $VERSION    =  "24.06.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -108,7 +108,7 @@ use OText       qw(%STR);
 
 # HACKER's INFO
 #       Following (internal) functions from o-saft.pl are used:
-#       _is_ssl_pfs()
+#       _is_vulnerable()
 
 =pod
 
@@ -3387,7 +3387,7 @@ sub test_cipher_regex   {
     foreach my $key (sort (_get_keys_list())) {
         my $ssl    = Ciphers::get_ssl( $key);
         my $cipher = Ciphers::get_name($key);
-        my $is_pfs = (::_is_ssl_pfs($ssl, $cipher) eq "") ? "no" : "yes";
+        my $is_pfs = (::_is_vulnerable($ssl, $cipher, 'PFS') eq "") ? "yes" : "no";
         my @o = ('', '', '', '', '');
         # following sequence of check should be the same as in get_cipher_owasp()
         $o[4] = "-?-" if ($cipher =~ /$cfg{'regex'}->{'OWASP_NA'}/);
@@ -3546,7 +3546,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.44"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.45"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3592,7 +3592,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.44 2024/07/31
+3.45 2024/08/03
 
 =head1 AUTHOR
 
