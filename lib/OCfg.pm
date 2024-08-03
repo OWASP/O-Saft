@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.46 24/08/03 13:18:54";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.47 24/08/03 14:25:15";
 our $VERSION    =  "24.06.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -3387,7 +3387,7 @@ sub test_cipher_regex   {
     foreach my $key (sort (_get_keys_list())) {
         my $ssl    = Ciphers::get_ssl( $key);
         my $cipher = Ciphers::get_name($key);
-        my $is_pfs = (::_is_vulnerable($ssl, $cipher, 'PFS') eq "") ? "yes" : "no";
+        my $is_pfs = (::_is_vulnerable($ssl, $cipher, 'PFS') eq "") ? "no" : "yes";
         my @o = ('', '', '', '', '');
         # following sequence of check should be the same as in get_cipher_owasp()
         $o[4] = "-?-" if ($cipher =~ /$cfg{'regex'}->{'OWASP_NA'}/);
@@ -3546,7 +3546,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.46"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.47"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3592,7 +3592,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.46 2024/08/03
+3.47 2024/08/03
 
 =head1 AUTHOR
 
