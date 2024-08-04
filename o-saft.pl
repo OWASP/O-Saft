@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.114 24/08/05 00:21:23"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.115 24/08/05 00:54:40"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -409,7 +409,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.114"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.115"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -2188,6 +2188,28 @@ sub _is_ssl_ccs     {
     return $ret;
 } # _is_ssl_ccs
 
+sub _is_vuln_breach     {
+    #? return gzip or deflate if server is vulnerable to breach; empty string otherwise
+    my ($host, $port) = @_;
+    # gzip or deflate may be returned in Content-Encoding and/or Transfer-Encoding
+    my $val = $data{'https_content_enc'}->{'val'}($host, $port);
+    return $val if ($val =~ /$cfg{'regex'}->{'BREACH'}/);
+       $val = $data{'https_transfer_enc'}->{'val'}($host, $port);
+    return $val if ($val =~ /$cfg{'regex'}->{'BREACH'}/);
+    return "";
+    # To be vulnerable, a web application must:
+    #   Be served from a server that uses HTTP-level compression which is
+    #   identified with HTTP header Content-Encoding or Transfer-Encoding
+    #   Reflect user-input in HTTP response bodies
+    #   Reflect a secret (such as a CSRF token) in HTTP response bodies
+    #   *  agnostic to the version of TLS/SSL
+    #   *  does not require TLS-layer compression
+    #   *  works against any cipher suite
+    #   *  can be executed in under a minute
+    # only check for Content-Encoding:gzip,deflate, that's sufficient for
+    # being potential vulnerable
+} # _is_vuln_breach
+
 sub _is_tls12only   {
 # NOTE: _is_tls12only not yet used
     #? returns empty string if TLS 1.2 is the only protocol used,
@@ -2243,28 +2265,6 @@ sub _is_ssl_error       {
     }
     return 0;
 } # _is_ssl_error
-
-sub _is_breach          {
-    #? return gzip or deflate if server is vulnerable to breach; empty string otherwise
-    my ($host, $port) = @_;
-    # gzip or deflate may be returned in Content-Encoding and/or Transfer-Encoding
-    my $val = $data{'https_content_enc'}->{'val'}($host, $port);
-    return $val if ($val =~ /$cfg{'regex'}->{'BREACH'}/);
-       $val = $data{'https_transfer_enc'}->{'val'}($host, $port);
-    return $val if ($val =~ /$cfg{'regex'}->{'BREACH'}/);
-    return "";
-    # To be vulnerable, a web application must:
-    #   Be served from a server that uses HTTP-level compression which is
-    #   identified with HTTP header Content-Encoding or Transfer-Encoding
-    #   Reflect user-input in HTTP response bodies
-    #   Reflect a secret (such as a CSRF token) in HTTP response bodies
-    #   *  agnostic to the version of TLS/SSL
-    #   *  does not require TLS-layer compression
-    #   *  works against any cipher suite
-    #   *  can be executed in under a minute
-    # only check for Content-Encoding:gzip,deflate, that's sufficient for
-    # being potential vulnerable
-} # _is_breach
 
 sub _check_prot_cipher  {
     #? returns cipher suite name if $typ is of specified compliance or vulnerability
@@ -3721,7 +3721,6 @@ sub checkciphers    {
     # additional BEAST check: checks for vulnerable protocols are disabled?
     my $beastskipped = _is_beast_skipped($host, $port);
     $checks{'beast'}->{val} .= " " . ${beastskipped} if "" ne $beastskipped;
-    $checks{'breach'}->{val} = _is_breach($host, $port);
 
     foreach my $ssl (@{$cfg{'version'}}) { # check all SSL versions
         $cnt_all   += $prot{$ssl}->{'cnt'};
@@ -4938,6 +4937,7 @@ sub checkhttp       {
         _hint("consider using '--proto-alpn=,' also")   if ($https_body =~ /bad client magic byte string/);
     }
 
+    $checks{'breach'}       ->{val} = _is_vuln_breach($host, $port);
     $checks{'hsts_is301'}   ->{val} = $data{'http_status'}->{val}($host) if ($data{'http_status'}->{val}($host) !~ /301/); # RFC 6797 requirement
     $checks{'hsts_is30x'}   ->{val} = $data{'http_status'}->{val}($host) if ($data{'http_status'}->{val}($host) =~ /30[0235678]/); # not 301 or 304
     # perform checks
@@ -6093,7 +6093,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.114");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.115");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
