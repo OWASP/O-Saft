@@ -49,7 +49,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.20 24/07/29 17:42:16";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.22 24/08/05 00:20:09";
 our $VERSION        =  "24.06.24";  # official verion number of this file
 
 BEGIN {
@@ -742,6 +742,8 @@ our @EXPORT = qw(
         https_location
         https_refresh
         https_pins
+        https_content_enc
+        https_transfer_enc
         http_protocols
         http_svc
         http_status
@@ -957,6 +959,8 @@ sub _traceSSLbitmasks   {
             $bit = sprintf("0x%08x %s", $opt, $bit);
         } else {
             $bit = sprintf("<<$@>>");   # error string from Net::SSLeay instead <<undef>>
+                # error may contain for example:
+                #   Can't locate auto/Net/SSLeay/OP_NO_TLSv1.al in @INC (@INC contains: ...
         }
         _trace(sprintf("%s: %-30s %s", $txt, $op, $bit));
     }
@@ -1244,6 +1248,8 @@ my %_SSLinfo= ( # our internal data structure
     'https_location'    => "",  # HTTPS Location header send by server
     'https_refresh'     => "",  # HTTPS Refresh header send by server
     'https_pins'        => "",  # HTTPS Public Key Pins header
+    'https_content_enc' => "",  # HTTPS Content-Encoding header
+    'https_transfer_enc'=> "",  # HTTPS Transfer-Encoding header
     'http_protocols'    => "",  # HTTP Alternate-Protocol header
     'http_svc'          => "",  # HTTP Alt-Svc, X-Firefox-Spdy header
     'http_status'       => "",  # HTTP response (aka status) line
@@ -2741,13 +2747,14 @@ sub do_ssl_open($$$@) {
             my $response = '';
             my $request  = "GET $SSLinfo::target_url HTTP/1.1\r\n";
                $request .= "Host:$host\r\nConnection:close\r\n";
+               $request .= "Accept-Encoding:gzip,deflate\r\n";
                $request .= "User-Agent:$SSLinfo::user_agent\r\n\r\n";
+               # Accept-Encoding to get response header Content-Encoding
 # $t1 = time();
 #           ($ctx = Net::SSLeay::CTX_v23_new()) or do {$src = 'Net::SSLeay::CTX_v23_new()'} and last;
             # FIXME: need to find proper method instead hardcoded CTX_v23_new(); see _ssleay_ctx_new
             #dbx# $Net::SSLeay::trace     = 2;
             $src = 'Net::SSLeay::write()';
-#print "#dbx $request\n";
             Net::SSLeay::write($ssl, $request) or {$err = $!} and last;
             $src = 'Net::SSLeay::ssl_read_all()';
             # use ::ssl_read_all() instead of ::read() to get HTTP body also
@@ -2788,7 +2795,10 @@ sub do_ssl_open($$$@) {
             $_SSLinfo{'https_protocols'}=  _header_get('Alternate-Protocol', $response);
             $_SSLinfo{'https_svc'}      =  _header_get('Alt-Svc',  $response);
             $_SSLinfo{'https_svc'}      .= _header_get('X-Firefox-Spdy',     $response);
+            $_SSLinfo{'https_svc'}      .= _header_get('Spdy',     $response);
             $_SSLinfo{'https_sts'}      =  _header_get('Strict-Transport-Security', $response);
+            $_SSLinfo{'https_content_enc'}  = _header_get('Content-Encoding', $response);
+            $_SSLinfo{'https_transfer_enc'} = _header_get('Transfer-Encoding',$response);
             $_SSLinfo{'hsts_httpequiv'} =  $_SSLinfo{'https_body'};
             $_SSLinfo{'hsts_httpequiv'} =~ s/.*?(http-equiv=["']?Strict-Transport-Security[^>]*).*/$1/ims;
             $_SSLinfo{'hsts_httpequiv'} = '' if ($_SSLinfo{'hsts_httpequiv'} eq $_SSLinfo{'https_body'});
@@ -2822,7 +2832,7 @@ sub do_ssl_open($$$@) {
                 );
             # NOTE that get_http() returns all keys in %headers capitalised
             my $headers = "";   # for trace only
-            foreach my $h (sort keys %headers) { $headers .= "$h: $headers{$h}\n"; }
+            foreach my $h (sort(keys %headers)) { $headers .= "$h: $headers{$h}\n"; }
             _trace("do_ssl_open: request $host:$port");
             if (1 == $trace) {
                 _trace("do_ssl_open: request  #{<<use --trace=2 to print data>>#}");
@@ -3930,6 +3940,14 @@ Get HTTPS Location header.
 
 Get HTTPS Refresh header.
 
+=head3 https_content_enc( )
+
+Get HTTPS Content-Encoding header.
+
+=head3 https_transfer_enc( )
+
+Get HTTPS Transfer-Encoding header.
+
 =head3 http_protocols( )
 
 Get HTTP Alterenate-Protocol header.
@@ -4088,6 +4106,8 @@ sub https_alerts    { return _SSLinfo_get('https_alerts',     $_[0], $_[1]); }
 sub https_location  { return _SSLinfo_get('https_location',   $_[0], $_[1]); }
 sub https_refresh   { return _SSLinfo_get('https_refresh',    $_[0], $_[1]); }
 sub https_pins      { return _SSLinfo_get('https_pins',       $_[0], $_[1]); }
+sub https_content_enc   { return _SSLinfo_get('https_content_enc',  $_[0], $_[1]); }
+sub https_transfer_enc  { return _SSLinfo_get('https_transfer_enc', $_[0], $_[1]); }
 sub http_protocols  { return _SSLinfo_get('http_protocols',   $_[0], $_[1]); }
 sub http_svc        { return _SSLinfo_get('http_svc',         $_[0], $_[1]); }
 sub http_status     { return _SSLinfo_get('http_status',      $_[0], $_[1]); }
