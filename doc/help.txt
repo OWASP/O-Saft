@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.26 24/08/04 11:10:43
+# SID   @(#) help.txt 3.27 24/08/04 12:43:51
 
 NAME
 
@@ -2485,6 +2485,7 @@ CHECKS
 
         Connection is vulnerable if target supports SSL-level compression, or
         supports SPDY/3 (because SPDY/3 uses compression).
+        See CVE-2012-4929.
         See http://zoompf.com/2012/09/explaining-the-crime-weakness-in-spdy-and-ssl
 
         Note: SPDY/3 is only possible if the client explicitely asks for this
@@ -2493,6 +2494,7 @@ CHECKS
       DROWN
 
         Connection is vulnerable if target supports SSLv2.
+        See CVE-2016-0800.
 
       FREAK
 
@@ -2532,13 +2534,9 @@ CHECKS
         ciphers. But they are also subject to attacks (see below).  Hence the
         check is only for CBC ciphers.
 
-      RC4
+      NoMore
 
-        Check if RC4 ciphers are supported.
-        They are assumed to be broken.
-        Note that  +rc4  reports the vulnerabilitiy to the  RC4 Attack, while
-        +cipher-rc4  simply reports if  RC4 ciphers are offered.  However the
-        check, and hence the result, is the same.
+        See RC4 .
 
       PFS
 
@@ -2550,6 +2548,7 @@ CHECKS
 
         Check if target is vulnerable to  POODLE attack (just check if  SSLv3
         or TLSv1 is enabled).
+        See CVE-2014-3566
 
       Practical Invalid Curve Attack
 
@@ -2560,6 +2559,28 @@ CHECKS
         This check will not send multiple invalid points,  but only checks if
         the server closes the connection or responds with no matching cipher.
 
+        Not implemented.
+
+      RC4
+
+        Check if RC4 ciphers are supported.
+        They are assumed to be broken.
+        Note that  +rc4  reports the vulnerabilitiy to the  RC4 Attack, while
+        +cipher-rc4  simply reports if  RC4 ciphers are offered.  However the
+        check, and hence the result, is the same.
+        See CVE-2015-2808.
+
+      Raccoon
+
+        Raccoon is a timing vulnerability in the TLS specification.
+
+        The attack is possible if the server reuses public DH keys in the TLS
+        handshake, for example when configured to use static TLS-DH cipher or
+        if the server reuses ephemeral keys TLS-DHE for multiple connections. 
+
+        Not implemented.
+        https://raccoon-attack.com/
+
       ROBOT
 
         Bleichebacher's Oracle attack against SSL/TLS ciphers.
@@ -2567,20 +2588,32 @@ CHECKS
         Not implemented.
         https://robotattack.org/
 
-#      SKIP
-#
+      SHAttered
+
+        See CVE-2005-4900.
+        Not implemented.
+
+      SKIP
+
+       Message Skipping Attacks on TLS. Attack to force  server or client  to
+       skip messages in handshake protocol,
+       Only implementations of  "CyaSSL < 3.3.0" and some Java JSSE are knwon
+       to be vulnerable.
 #       Check if target is vulnerable to  SKIP  attack.
-#       Message Skipping Attacks on TLS. Attack to force  server or client  to
-#       skip messages in handshake protocol,
 
       SLOTH
 
         Currently (2016) we check for ciphers with  ECDSA, RSA-MD5.
         Checking the TLS extension 'tls-unique' is not yet implemented.
 
+      SMACK
+
+        Attack against SSL/TLS protocol downgrade.
+
       Sweet32
 
         Currently (2016) we check for ciphers with CBC or CBC3 or DES or 3DES.
+        See CVE 2016-2183.
 
       Ticketbleed
 
@@ -2588,6 +2621,14 @@ CHECKS
         Check if target is vulnerable to ticketbleed, means that it returns
         up to 31 random bytes from memory as Session Ticket, see CVE-2016-9244
         and https://filippo.io/Ticketbleed/ .
+
+      Tripple Handshake
+
+        RSA and DHE key exchanges  have vulnerabilities that allow an attacker
+        to create two different sessions with different identities sharing the
+        same master secret.
+        See CVE-2016-6112.
+        Not implemented.
 
     Target (server) configuration and support
 
