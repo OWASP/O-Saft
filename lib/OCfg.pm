@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.50 24/08/04 10:26:19";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.51 24/08/05 00:23:10";
 our $VERSION    =  "24.06.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -2760,6 +2760,7 @@ our %cfg = (    # main data structure for configuration
             #       yet used in the checks,  but its optional in the RegEx here
             #       note also that internal strings are like SSLv2, TLSv11, etc
             #       which would not match the protocol prefix in the RegEx here
+        'BREACH'    => '(?:gzip|defalte)',      # must any of them
         'BEAST'     => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?.*?[_-]CBC',# borrowed from 'Lucky13'. There may be another better RegEx.
 #       'BREACH'    => '^(?:SSL[23]?|TLS[12]|PCT1?[_-])?',
         'FREAK'     => '^(?:SSL[23]?)?(?:EXP(?:ORT)?(?:40|56|1024)?[_-])',
@@ -3554,7 +3555,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.50"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.51"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3600,7 +3601,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.50 2024/08/04
+3.51 2024/08/05
 
 =head1 AUTHOR
 
