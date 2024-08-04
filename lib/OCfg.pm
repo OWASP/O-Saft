@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.48 24/08/04 08:54:00";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.49 24/08/04 10:18:28";
 our $VERSION    =  "24.06.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -2778,6 +2778,9 @@ our %cfg = (    # main data structure for configuration
         'notSweet32'=> '(?:[_-]AES[_-])',                       # match against cipher
         # The following RegEx define what is "not vulnerable":
         'PFS'       => '^(?:(?:SSLv?3|TLSv?1(?:[12])?|PCT1?)[_-])?((?:EC)?DHE|EDH)[_-]',
+        'notPFS'    => '^(?:WDM|SHA).*?[_-]SHA(?:256|384)',
+                       # not protocol prefix, as  all TLSv13 must support PFS
+                       # WDM-NULL-SHA256, SHA256-SHA256, SHA384-SHA384
         'TR-02102'  => '(?:DHE|EDH)[_-](?:PSK[_-])?(?:(?:EC)?DSS|RSA)[_-]',
                        # ECDHE_ECDSA | ECDHE_RSA | DHE_DSS | DHE_RSA PSK_ECDSS
                        # ECDHE_ECRSA, ECDHE_ECDSS or DHE_DSA does not exist, hence lazy RegEx above
@@ -3387,9 +3390,11 @@ sub test_cipher_regex   {
     print _regex_line();
     my $cnt = 0;
     foreach my $key (sort (_get_keys_list())) {
+        # NOTE: the used protocol (SSLv* or TLSv*) is used as specified in the
+        # cipher definition (see Ciphers.pm).
         my $ssl    = Ciphers::get_ssl( $key);
         my $cipher = Ciphers::get_name($key);
-        my $is_pfs = (::_is_vulnerable($ssl, $cipher, 'PFS') eq "") ? "no" : "yes";
+        my $is_pfs = (::_is_compliant($ssl, $cipher, 'PFS') eq "") ? "no" : "yes";
         my @o = ('', '', '', '', '');
         # following sequence of check should be the same as in get_cipher_owasp()
         $o[4] = "-?-" if ($cipher =~ /$cfg{'regex'}->{'OWASP_NA'}/);
@@ -3548,7 +3553,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.48"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.49"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3594,7 +3599,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.48 2024/08/04
+3.49 2024/08/04
 
 =head1 AUTHOR
 
