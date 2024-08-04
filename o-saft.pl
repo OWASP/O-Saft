@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.110 24/08/04 10:19:56"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.111 24/08/04 10:50:04"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -409,7 +409,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.110"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.111"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -2245,7 +2245,7 @@ sub _is_ssl_error       {
 } # _is_ssl_error
 
 sub _check_prot_cipher  {
-    #? returns cipher suite name if vulnerable to specified vulnerability
+    #? returns cipher suite name if $typ is of specified compliance or vulnerability
     #  see description _is_compliant(), _is_vulnerable()
     # Usage: _check_prot_cipher($ssl, $key, $type)
     my $ssl     = shift;# SSL/TLS protocol (optional for some types)
@@ -2345,9 +2345,9 @@ sub _check_prot_cipher  {
         return "";
     }
     if ($typ =~ m/^TR02102/) {
-        return $cipher if Ciphers::is_typ('EXP', $cipher);
-        return $cipher if Ciphers::is_typ('notTR-02102',  $cipher);
-        return $cipher if not Ciphers::is_typ('TR-02102', $cipher);
+        return $cipher if Ciphers::is_typ('EXP',         $key);
+        return $cipher if Ciphers::is_typ('notTR-02102', $key);
+        return $cipher if not Ciphers::is_typ('TR-02102',$key);
         if ("TR02102-lazy"   eq $typ) {
             # return given cipher if it is not TR-02102 compliant, empty string otherwise
             # this is valid vor TR-02102 2013 and 2016
@@ -2356,20 +2356,20 @@ sub _check_prot_cipher  {
         if ("TR02102-strict" eq $typ) {
             # return given cipher if it is not TR-02102 compliant, empty string otherwise
             # strict allows AES*-GCM only and no SHA-1
-            return $cipher if not Ciphers::is_typ('AES-GCM', $cipher);
+            return $cipher if not Ciphers::is_typ('AES-GCM', $key);
         }
         return "";
     }
     if ($typ =~ m/^TR03116/) {
         # return given cipher if it is not TR-03116 compliant, empty string otherwise
         return $cipher if ($ssl !~ /^TLSv1[2]/);
-        return $cipher if Ciphers::is_typ('EXP',$cipher);
+        return $cipher if Ciphers::is_typ('EXP',         $key);
         if ("TR03116-lazy"   eq $typ) {
-            return $cipher if not Ciphers::is_typ('TR-03116-', $cipher);
+            return $cipher if not Ciphers::is_typ('TR-03116-', $key);
         }
         if ("TR03116-strict" eq $typ) {
-            return $cipher if Ciphers::is_typ('notTR-03116',   $cipher);
-            return $cipher if not Ciphers::is_typ('TR-03116+', $cipher);
+            return $cipher if Ciphers::is_typ('notTR-03116',   $key);
+            return $cipher if not Ciphers::is_typ('TR-03116+', $key);
         }
         return "";
     }
@@ -2394,7 +2394,7 @@ sub _is_compliant   {
     #  even if key was given
     #  key can be the  cipher's hex key, suite name or constant name
     #  type can be any known constant used for vulnerabilities, for example:
-    #    FIPS-140, NSA-B, PCI, PFS, RFC7525
+    #    FIPS-140, NSA-B, PCI, PFS, RFC7525, TR02102, TR03116
     # Usage: _is_compliant($ssl, $key, $type)
     #
     my ($ssl, $cipher, $typ) = @_;
@@ -3125,7 +3125,7 @@ sub ciphers_scan_intern {
             next;           # ensure warning for all protocols
         }
         %accepted = SSLhello::getSSLciphersWithParam($host, $port, $ssl, @all);
-        #dbx# print Dumper(\%accepted);
+        #dbx# print Dumper(\%accepted) if ($ssl eq "TLSv12");
         Dumper(%accepted);
             # FIXME: FIXME: dirty hack, Dumper result ignored
             # Dumper used to aboid that a hash with only 2 keys is counted wrong
@@ -3158,7 +3158,7 @@ sub ciphers_scan_intern {
 
         # now build line in %results
         my $last_a  = "";   # avoid duplicates
-        foreach my $_i (sort keys %accepted) {
+        foreach my $_i (sort(keys(%accepted))) {
             next if ('0' eq $_i);       # item {0} is array of all keys
             my $key = $accepted{$_i}[0];
             next if ($last_a eq $key);  # ignore duplicates; should be the first 'selected' one only
@@ -3168,7 +3168,7 @@ sub ciphers_scan_intern {
 
     } # $ssl
     if (1 < $cfg{'trace'}) { # avoid huge verbosity in simple cases
-        trace("ciphers_scan_intern()\t= " . join(" ", sort keys(%{$results})) . " }");
+        trace("ciphers_scan_intern()\t= " . join(" ", sort(keys(%{$results}))) . " }");
     } else {
         trace("ciphers_scan_intern()\t= <<result prined with --trace=2>> }");
     }
@@ -3665,10 +3665,10 @@ sub checkciphers    {
 
     my %hasecdsa;   # ECDHE-ECDSA is mandatory for TR-02102-2, see 3.2.3
     my %hasrsa  ;   # ECDHE-RSA   is mandatory for TR-02102-2, see 3.2.3
-    foreach my $ssl (keys %$results) {      # all checked SSL versions with ciphers
+    foreach my $ssl (sort(keys %$results)) {# all checked SSL versions with ciphers
       next if '_admin' eq $ssl;
       next if not $results->{$ssl};         # defensive programming .. (unknown how this can happen)
-      foreach my $key (keys %{$results->{$ssl}}) { # check all accepted
+      foreach my $key (sort(keys %{$results->{$ssl}})) {   # check all accepted
         # SEE Note:Testing, sort
         next if ($key =~ m/^\s*$/);         # defensive programming (key missing in %ciphers)
         next if not $results->{$ssl}{$key}; # defensive programming ..
@@ -3688,7 +3688,8 @@ sub checkciphers    {
         $hasecdsa{$ssl} = 1 if Ciphers::is_typ('EC-DSA', $cipher);
         push(@{$prot{$ssl}->{'ciphers_pfs'}}, $cipher) if _is_compliant($ssl, $cipher, 'PFS'); # add PFS cipher
       }
-      trace("checkciphers:  {$ssl}->{ciphers_pfs}=@{$prot{$ssl}->{'ciphers_pfs'}}")
+      trace("checkciphers:  {$ssl}->{ciphers_pfs}=" . sort(@{$prot{$ssl}->{'ciphers_pfs'}}));
+          # sort contribution to compare results with diff
     }
 
     # additional BEAST check: checks for vulnerable protocols are disabled?
@@ -5613,7 +5614,7 @@ sub printciphers_dh     {
         print_title($legacy, $ssl, $host, $port, $cfg{'out'}->{'header'});
         print_cipherhead( 'cipher_dh');
         if (exists $result->{$ssl}) {
-            foreach my $c (sort keys %{$result->{$ssl}}) {  # sort is contribution for comparing results
+            foreach my $c (sort(keys %{$result->{$ssl}})) { # sort is contribution for comparing results
                 print_line($legacy, $host, $port, $c, Ciphers::get_name($c), ${$result->{$ssl}{$c}}[1]);
             }
         }
@@ -5842,7 +5843,7 @@ sub printciphers_intern {
     trace("printciphers_intern($legacy, $ssl, $host, $port, $printtitle, ...) {");
     print_cipherhead( $legacy) if (0 == ($legacy eq "sslscan")?($printtitle):0);
     my $last_r  = "";       # avoid duplicates (may be added by checkSSLciphers())
-    foreach my $key (sort keys %{$results->{$ssl}}) {
+    foreach my $key (sort(keys %{$results->{$ssl}})) {
         next if ($last_r eq $key);
         print_cipherline($legacy, $ssl, $host, $port, $key, "yes");
         $last_r = $key;
@@ -5873,7 +5874,7 @@ sub printciphers        {
             if (_is_cfg_do('cipher_intern')) {
                 printciphers_intern($legacy, $ssl, $host, $port, $_printtitle, $results);
             } else {
-                SSLhello::printCipherStringArray('compact', $host, $port, $ssl, $SSLhello::usesni, sort keys(%{$results->{$ssl}}));
+                SSLhello::printCipherStringArray('compact', $host, $port, $ssl, $SSLhello::usesni, sort(keys(%{$results->{$ssl}})));
             }
         }
         if (_is_cfg_ciphermode('openssl|ssleay')) {
@@ -6066,7 +6067,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.110");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.111");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6236,7 +6237,7 @@ sub printversion        {
         print "\n= Loaded Modules =";
         printf("=   %-22s %s\n", "module name", "found in");
         printf("=   %s+%s\n",    "-"x22,        "-"x51);
-        foreach my $m (sort keys %INC) {
+        foreach my $m (sort(keys %INC)) {
             $d = $INC{$m} || $STR{UNDEF};   # defensive progamming; sometimes undefined, reason unknown
             printf("    %-22s %6s\n", $m, $d);
             $d =~ s#$m$##; $p{$d} = 1;
@@ -6244,7 +6245,7 @@ sub printversion        {
         print "\n= Loaded Module Versions =";
         no strict 'refs';   ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
             # avoid: Can't use string ("AutoLoader::") as a HASH ref while "strict refs" in use
-        foreach my $m (sort keys %main:: ) {
+        foreach my $m (sort(keys %main:: )) {
             next if $m !~ /::/;
             $d = "?";       # beat the "Use of uninitialized value" dragon
             $d = ${$$m{'VERSION'}} if defined ${$$m{'VERSION'}};
@@ -6255,7 +6256,7 @@ sub printversion        {
     if ($cfg{'verbose'} > 1) {
         print "\n= Used Shared Objects =";
         # quick&dirty, don't want to use ::Find module
-        foreach my $d (sort keys %p) {
+        foreach my $d (sort(keys %p)) {
              next if ($d =~ m/^\s*$/);
              next if not -e $d;
              print "# find '$d' -name SSLeay.so\\* -o -name libssl.so\\* -o -name libcrypto.so\\*";
@@ -6305,7 +6306,7 @@ sub printscores         {
             + $scores{'check_size'}->{val}
             ) / 5 ) + 0.5);
     print_header($text{'out_scoring'}."\n", $text{'desc_score'}, "", $cfg{'out'}->{'header'});
-    foreach my $key (sort keys %scores) {
+    foreach my $key (sort(keys %scores)) {
         next if ($key !~ m/^check_/);   # print totals only
         print_line($legacy, $host, $port, $key, $scores{$key}->{txt}, $scores{$key}->{val});
     }
