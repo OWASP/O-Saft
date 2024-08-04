@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.111 24/08/04 10:50:04"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.112 24/08/04 11:38:35"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -409,7 +409,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.111"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.112"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -2271,6 +2271,18 @@ sub _check_prot_cipher  {
          $rex = $OCfg::cfg{'regex'}->{$typ};
     }
 
+    ## DROWN and POODLE not used, just for completeness here
+    if ('DROWN'   eq $typ) {
+        return "" if ($ssl eq "SSLv2");
+        return Ciphers::get_name($key);
+           # lazy check: vulnerable only if protocol supports at least one cipher
+    }
+    if ('POODLE'  eq $typ) {
+        return "" if ($ssl !~ /(?:SSL|TLSv1$)/);
+        return Ciphers::get_name($key);
+           # lazy check: vulnerable only if protocol supports at least one cipher
+    }
+
     ## check vulnerabilities; returns cipher
     if ('BREACH'  eq $typ) {
         return ""; # TODO: BREACH not implemented
@@ -2408,7 +2420,8 @@ sub _is_vulnerable  {
     #  even if key was given
     #  key can be the  cipher's hex key, suite name or constant name
     #  type can be any known constant used for vulnerabilities, for example:
-    #    BEAST, FREAK, Lucky13, Logjam, POODLE, ROBOT, SLOTH, Sweet32, TIME
+    #    BEAST, FREAK, Lucky13, Logjam, ROBOT, SLOTH, Sweet32, TIME
+    #  only partially implemented: DROWN, POODLE
     # TODO: not yet implemented: BREACH, CSS, heartbleed, 
     # Usage: _is_vulnerable($ssl, $key, $type)
     #
@@ -3688,8 +3701,9 @@ sub checkciphers    {
         $hasecdsa{$ssl} = 1 if Ciphers::is_typ('EC-DSA', $cipher);
         push(@{$prot{$ssl}->{'ciphers_pfs'}}, $cipher) if _is_compliant($ssl, $cipher, 'PFS'); # add PFS cipher
       }
-      trace("checkciphers:  {$ssl}->{ciphers_pfs}=" . sort(@{$prot{$ssl}->{'ciphers_pfs'}}));
+      my @_pfs = sort(@{$prot{$ssl}->{'ciphers_pfs'}});
           # sort contribution to compare results with diff
+      trace("checkciphers:  {$ssl}->{ciphers_pfs}=@_pfs");
     }
 
     # additional BEAST check: checks for vulnerable protocols are disabled?
@@ -4739,6 +4753,8 @@ sub checkprot       {
     #   The protocol may supported by the target, but no ciphers offered. Only
     #   if at least one ciphers is supported, vulnerabilities may there, hence
     #   check if amount of ciphers > 0.
+    #   Therfore  _is_vulnerable(.. 'DROWN')  and  _is_vulnerable(.. 'POODLE')
+    #   are not used, because they miss the count of accepted ciphers.
     if (_is_cfg_ssl('SSLv2')) {
         $notxt = (0 < $prot{'SSLv2'}->{'cnt'}) ? " " : "";
         $checks{'hassslv2'} ->{val} = (_is_cfg_use('nullssl2')) ? $notxt : "";
@@ -4749,12 +4765,10 @@ sub checkprot       {
         $notxt = (0 < $prot{'SSLv3'}->{'cnt'}) ? " " : "";
         $checks{'hassslv3'} ->{val} = $notxt;
         $checks{'poodle'}   ->{val} = (0 < $prot{'SSLv3'}->{'cnt'}) ? "SSLv3" : "";  # POODLE if SSLv3 and ciphers
-        # FIXME: should uses cfg{regex}->{'POODLE'}, hence check in checkcipher() would be better
-        # FIXME: TLSv1 is vulnerable too, but not TLSv11
-        # FIXME: doc/help.txt ok now, but needs to be fixed too
     }
     if (_is_cfg_ssl('TLSv1')) {
         $checks{'hastls10_old'}->{val}  = " " if ($prot{'TLSv1'}->{'cnt'}  <= 0);
+        $checks{'poodle'}   ->{val} = (0 < $prot{'TLSv1'}->{'cnt'}) ? "TLSv1" : "";  # POODLE if TLSv1 and ciphers
     }
     if (_is_cfg_ssl('TLSv11')) {
         $checks{'hastls11_old'}->{val}  = " " if ($prot{'TLSv11'}->{'cnt'} <= 0);
@@ -6067,7 +6081,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.111");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.112");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
