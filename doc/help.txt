@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.25 24/07/27 14:58:14
+# SID   @(#) help.txt 3.26 24/08/04 11:10:43
 
 NAME
 
@@ -2436,7 +2436,7 @@ CHECKS
 
       poodle
 
-        Check if target is vulnerable to POODLE attack (SSLv3 enabled).
+        Check if target is vulnerable to POODLE attack (SSLv3, TLSv1 enabled).
 
       robot
 
@@ -2549,7 +2549,7 @@ CHECKS
       POODLE
 
         Check if target is vulnerable to  POODLE attack (just check if  SSLv3
-        is enabled).
+        or TLSv1 is enabled).
 
       Practical Invalid Curve Attack
 
@@ -2592,7 +2592,7 @@ CHECKS
     Target (server) configuration and support
 
       BEAST, BREACH, CRIME, DROWN, FREAK, Logjam, Lucky13, POODLE, RC4, ROBOT,
-      SLOTH, Sweet32
+      SLOTH, Sweet32, TIME
 
         See above.
 
