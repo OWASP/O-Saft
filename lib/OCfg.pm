@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.51 24/08/05 00:23:10";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.52 24/08/05 00:52:36";
 our $VERSION    =  "24.06.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -2311,7 +2311,7 @@ our %cfg = (    # main data structure for configuration
                          cipher_dump cipher_intern cipher_ssleay cipher_openssl
                          cipher_null cipher_adh cipher_cbc cipher_des cipher_edh
                          cipher_exp  cipher_rc4 cipher_pfs cipher_pfsall
-                         beast crime time breach drown freak logjam
+                         beast crime time drown freak logjam
                          lucky13 poodle rc4 robot sloth sweet32
                          tr_02102+ tr_02102- tr_03116+ tr_03116- rfc_7525
                          hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13
@@ -2349,7 +2349,8 @@ our %cfg = (    # main data structure for configuration
                          krb5 psk_hint psk_identity srp heartbeat ocsp_stapling
                          cipher_selected cipher_pfs ccs compression crime
                        )],
-    'need-checkhttp'=> [qw(https_pins)],# commands which need checkhttp(); more will be added in _init
+    'need-checkhttp'=> [        # commands which need checkhttp(); more will be added in _init
+                        qw(breach https_pins)],
     'need-checkprot'=> [        # commands which need checkprot(), should be same as in 'cmd-prots'
                         qw(
                          sslversion
@@ -3555,7 +3556,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.51"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.52"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3601,7 +3602,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.51 2024/08/05
+3.52 2024/08/05
 
 =head1 AUTHOR
 
