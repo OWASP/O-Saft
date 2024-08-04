@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.108 24/08/03 18:51:14"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.110 24/08/04 10:19:56"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -409,7 +409,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.108"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.110"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -2209,47 +2209,6 @@ sub _is_tls12only   {
     return join(" ", @ret);
 } # _is_tls12only
 
-sub _is_tr02102     {
-    # return given cipher if it is not TR-02102 compliant, empty string otherwise
-    # this is valid vor TR-02102 2013 and 2016
-    my ($ssl, $cipher) = @_;
-    return $cipher if Ciphers::is_typ('EXP', $cipher);
-    return $cipher if Ciphers::is_typ('notTR-02102',  $cipher);
-    return $cipher if not Ciphers::is_typ('TR-02102', $cipher);
-    return "";
-} # _is_tr02102
-sub _is_tr02102_strict  {
-    # return given cipher if it is not TR-02102 compliant, empty string otherwise
-    my ($ssl, $cipher) = @_;
-    my $val = _is_tr02102($ssl, $cipher);
-    return $val    if ("" ne $val);
-    # strict allows AES*-GCM only and no SHA-1
-    return $cipher if not Ciphers::is_typ('AES-GCM', $cipher);
-    return $cipher if Ciphers::is_typ('notTR-02102', $cipher);
-} # _is_tr02102_strict
-sub _is_tr02102_lazy    {
-    # return given cipher if it is not TR-02102 compliant, empty string otherwise
-    my ($ssl, $cipher) = @_;
-    return _is_tr02102($ssl, $cipher);
-} # _is_tr02102_lazy
-sub _is_tr03116_strict  {
-    # return given cipher if it is not TR-03116 compliant, empty string otherwise
-    my ($ssl, $cipher) = @_;
-    return $cipher if ("TLSv12" ne $ssl);
-    return $cipher if Ciphers::is_typ('EXP', $cipher);
-    return $cipher if Ciphers::is_typ('notTR-03116',   $cipher);
-    return $cipher if not Ciphers::is_typ('TR-03116+', $cipher);
-    return "";
-} # _is_tr03116_strict
-sub _is_tr03116_lazy    {
-    # return given cipher if it is not TR-03116 compliant, empty string otherwise
-    my ($ssl, $cipher) = @_;
-    return $cipher if ("TLSv12" ne $ssl);
-    return $cipher if Ciphers::is_typ('EXP',$cipher);
-    return $cipher if not Ciphers::is_typ('TR-03116-', $cipher);
-    return "";
-} # _is_tr03116_lazy
-
 sub _is_beast_skipped   {
     #? returns protocol names if they are vulnerable to BEAST but the check has been skipped,
     #? returns empty string otherwise.
@@ -2293,6 +2252,9 @@ sub _check_prot_cipher  {
     my $key     = shift;# can be key, name or constant; pattern not supported
     my $typ     = shift;# must be constant as used in %cfg{'regex'}
     my $rex;
+
+# TODO: for performance reasons it's probably better to pass $cipher instead
+#       of $key to Ciphers::is_typ(); need to check
 
     ## CRIME is special here (other values for $ssl and $key); returns protocols
     if ('CRIME'   eq $typ) {
@@ -2377,8 +2339,38 @@ sub _check_prot_cipher  {
     }
     if ('PFS'     eq $typ) {
         # return given cipher if it supports forward secret connections (PFS)
+        return ""      if Ciphers::is_typ('notPFS',      $key);
         return $cipher if ($ssl eq "TLSv13");
         return $cipher if ("$ssl-$cipher" =~ /$cfg{'regex'}->{'PFS'}/);
+        return "";
+    }
+    if ($typ =~ m/^TR02102/) {
+        return $cipher if Ciphers::is_typ('EXP', $cipher);
+        return $cipher if Ciphers::is_typ('notTR-02102',  $cipher);
+        return $cipher if not Ciphers::is_typ('TR-02102', $cipher);
+        if ("TR02102-lazy"   eq $typ) {
+            # return given cipher if it is not TR-02102 compliant, empty string otherwise
+            # this is valid vor TR-02102 2013 and 2016
+            return "";
+        }
+        if ("TR02102-strict" eq $typ) {
+            # return given cipher if it is not TR-02102 compliant, empty string otherwise
+            # strict allows AES*-GCM only and no SHA-1
+            return $cipher if not Ciphers::is_typ('AES-GCM', $cipher);
+        }
+        return "";
+    }
+    if ($typ =~ m/^TR03116/) {
+        # return given cipher if it is not TR-03116 compliant, empty string otherwise
+        return $cipher if ($ssl !~ /^TLSv1[2]/);
+        return $cipher if Ciphers::is_typ('EXP',$cipher);
+        if ("TR03116-lazy"   eq $typ) {
+            return $cipher if not Ciphers::is_typ('TR-03116-', $cipher);
+        }
+        if ("TR03116-strict" eq $typ) {
+            return $cipher if Ciphers::is_typ('notTR-03116',   $cipher);
+            return $cipher if not Ciphers::is_typ('TR-03116+', $cipher);
+        }
         return "";
     }
 
@@ -3574,10 +3566,10 @@ sub checkcipher     {
     $checks{'pci'}        ->{val}  .= _is_compliant($ssl, $c, 'PCI'     );
     $checks{'fips'}       ->{val}  .= _is_compliant($ssl, $c, 'FIPS-140');
     $checks{'rfc_7525'}   ->{val}  .= _is_compliant($ssl, $c, 'RFC7525' );
-    $checks{'tr_02102+'}  ->{val}  .= _prot_cipher($ssl, _is_tr02102_strict($ssl, $c));
-    $checks{'tr_02102-'}  ->{val}  .= _prot_cipher($ssl, _is_tr02102_lazy(  $ssl, $c));
-    $checks{'tr_03116+'}  ->{val}  .= _prot_cipher($ssl, _is_tr03116_strict($ssl, $c));
-    $checks{'tr_03116-'}  ->{val}  .= _prot_cipher($ssl, _is_tr03116_lazy(  $ssl, $c));
+    $checks{'tr_02102+'}  ->{val}  .= _is_compliant($ssl, $c, 'TR02102-strict');
+    $checks{'tr_02102-'}  ->{val}  .= _is_compliant($ssl, $c, 'TR02102-lazy'  );
+    $checks{'tr_03116+'}  ->{val}  .= _is_compliant($ssl, $c, 'TR03116-strict');
+    $checks{'tr_03116-'}  ->{val}  .= _is_compliant($ssl, $c, 'TR03116-lazy'  );
     # check attacks
     # NOTE: if no ciphers for a protocol $ssl were found,  this function is not
     #       called at all for this protocol, hence the target is not vulnerable
@@ -4125,9 +4117,10 @@ sub check02102      {
     $checks{'tr_02102+'}->{val}.= $val;
     $checks{'tr_02102-'}->{val}.= $val;
 
-    #! TR-02102-2 3.4.3 TLS-Kopression und CRIME
-    $checks{'tr_02102+'}->{val}.= $checks{'crime'}->{val};
-    $checks{'tr_02102-'}->{val}.= $checks{'crime'}->{val};
+    #! TR-02102-2 3.4.3 TLS-Kompression und CRIME
+    $val = ($checks{'crime'}->{val} =~ m/<<undefined/) ? "" : $checks{'crime'}->{val};
+    $checks{'tr_02102+'}->{val}.= $val;
+    $checks{'tr_02102-'}->{val}.= $val;
 
     #! TR-02102-2 3.4.4 Der Lucky 13-Angriff
     $val = $checks{'lucky13'}->{val};
@@ -6073,7 +6066,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.108");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.110");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
