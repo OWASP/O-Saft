@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.47 24/08/03 14:25:15";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.48 24/08/04 08:54:00";
 our $VERSION    =  "24.06.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -2688,6 +2688,8 @@ our %cfg = (    # main data structure for configuration
                            # unsure about FORTEZZA_KEA
         'SHA2'          => 'sha(?:2|224|256|384|512)',
                            # any SHA2, just sha2 is too lazy
+        'AES-CCM'       => 'AES(?:128|256)[_-]CCM[_-]?8?$',
+                           # any AES128-CCM, AES256-CCM, AES128-CCM8 or AES256-CCM8
         'AES-GCM'       => 'AES(?:128|256)[_-]GCM[_-]SHA(?:256|384|512)',
                            # any AES128-GCM or AES256-GCM
         'SSLorTLS'      => '^(?:SSL[23]?|TLS[12]?|PCT1?)[_-]',
@@ -3546,7 +3548,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.47"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.48"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3592,7 +3594,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.47 2024/08/03
+3.48 2024/08/04
 
 =head1 AUTHOR
 
