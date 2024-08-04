@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.112 24/08/04 11:38:35"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.113 24/08/04 12:54:20"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -409,7 +409,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.112"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.113"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -2294,6 +2294,7 @@ sub _check_prot_cipher  {
         #      *  does not require TLS-layer compression
         #      *  works against any cipher suite
         #      *  can be executed in under a minute
+        # check for echo "Accept-Encoding:gzip,deflate"
     }
     if ('BEAST'   eq $typ) {
         return "" if ($ssl !~ /(?:SSL|TLSv1$)/);
@@ -2420,9 +2421,10 @@ sub _is_vulnerable  {
     #  even if key was given
     #  key can be the  cipher's hex key, suite name or constant name
     #  type can be any known constant used for vulnerabilities, for example:
-    #    BEAST, FREAK, Lucky13, Logjam, ROBOT, SLOTH, Sweet32, TIME
+    #    BEAST, CRIME, FREAK, Lucky13, Logjam, RC4, ROBOT, SLOTH, Sweet32
     #  only partially implemented: DROWN, POODLE
-    # TODO: not yet implemented: BREACH, CSS, heartbleed, 
+    # TODO: not yet implemented: BREACH, CSS, heartbleed, SMACK, SHAttered,
+    #    Raccoon, Tripple Handshake, TIME
     # Usage: _is_vulnerable($ssl, $key, $type)
     #
     my ($ssl, $cipher, $typ) = @_;
@@ -3702,7 +3704,7 @@ sub checkciphers    {
         push(@{$prot{$ssl}->{'ciphers_pfs'}}, $cipher) if _is_compliant($ssl, $cipher, 'PFS'); # add PFS cipher
       }
       my @_pfs = sort(@{$prot{$ssl}->{'ciphers_pfs'}});
-          # sort contribution to compare results with diff
+          # sort is just contribution to compare results with diff
       trace("checkciphers:  {$ssl}->{ciphers_pfs}=@_pfs");
     }
 
@@ -6081,7 +6083,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.112");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.113");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
