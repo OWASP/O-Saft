@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.115 24/08/05 00:54:40"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.116 24/08/05 10:56:07"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -409,7 +409,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.115"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.116"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -683,7 +683,7 @@ if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {    # SEE Note:CGI mode
     $arg =  "lib/OTrace.pm";
     $arg =  $dbx[0] if ($dbx[0] =~ m#/#);
     $arg =~ s#[^=]+=##; # --trace=./myfile.pl
-    $err = _load_file($arg, "trace file");
+    $err = _load_file($arg, "trace module");
     if ($err ne "") {
         die $STR{ERROR}, "012: $err\n" unless (-e $arg);
         # no need to continue if file with debug functions does not exist
@@ -727,7 +727,7 @@ if (exists $INC{'lib/OTrace.pm'}) {
 #| read USER-FILE, if any (source with user-specified code)
 #| -------------------------------------
 if ((grep{/--(?:use?r)/} @argv) > 0) {  # must have any --usr option
-    $err = _load_file("lib/OUsr.pm", "user file");
+    $err = _load_file("lib/OUsr.pm", "user module");
     if ($err ne "") {
         # continue without warning, it's already printed in "read ... " line
         # OSAFT_STANDALONE no warnings 'redefine'; # avoid: "Subroutine ... redefined"
@@ -880,7 +880,6 @@ foreach my $key (sort {uc($a) cmp uc($b)} keys %data, keys %checks, @{$cfg{'comm
 }
 
 push(@{$cfg{'cmd-check'}}, $_) foreach (keys %checks);
-push(@{$cfg{'cmd-info--v'}}, 'dump');   # more information
 foreach my $key (keys %data) {
     push(@{$cfg{'cmd-info--v'}}, $key);
     next if (_is_cfg_intern($key));     # ignore aliases
@@ -1222,7 +1221,7 @@ sub _load_modules   {
     trace("_load_modules() {");
     my $_err = "";
     if (1 > 0) { # TODO: experimental code
-        $_err = _load_file("IO/Socket/SSL.pm", "IO SSL module");
+        $_err = _load_file("IO/Socket/SSL.pm", "IO-SSL module");
         warn $STR{ERROR}, "005: $_err" if ("" ne $_err);
         # cannot load IO::Socket::INET delayed because we use AF_INET,
         # otherwise we get at startup:
@@ -1231,7 +1230,7 @@ sub _load_modules   {
         #warn $STR{ERROR}, "006: $_err" if ("" ne $_err);
     }
     if (0 < $cfg{'need_netdns'}) {
-        $_err = _load_file("Net/DNS.pm", "Net module'");
+        $_err = _load_file("Net/DNS.pm", "Net::DNS module'");
         if ("" ne $_err) {
             warn $STR{ERROR}, "007: $_err";
             _warn("111: option '--mx disabled");
@@ -1239,7 +1238,7 @@ sub _load_modules   {
         }
     }
     if (0 < $cfg{'need_timelocal'}) {
-        $_err = _load_file("Time/Local.pm", "Time module");
+        $_err = _load_file("Time/Local.pm", "Time::Local module");
         if ("" ne $_err) {
             warn $STR{ERROR}, "008: $_err";
             _warn("112: value for '+sts_expired' not applicable");
@@ -1251,7 +1250,7 @@ sub _load_modules   {
         warn $STR{ERROR}, "008: $_err";
     }
 
-    $_err = _load_file("lib/SSLhello.pm", "O-Saft module"); # must be found with @INC
+    $_err = _load_file("lib/SSLhello.pm", "SSLhello module"); # must be found with @INC
     if ("" ne $_err) {
         die  $STR{ERROR}, "010: $_err\n"  if (not _is_cfg_do('version'));
         warn $STR{ERROR}, "010: $_err"; # no reason to die for +version
@@ -1261,7 +1260,7 @@ sub _load_modules   {
         # TODO: not (yet) supported for proxy
     }
     goto FIN if (1 > $cfg{'need_netinfo'});
-    $_err = _load_file("lib/SSLinfo.pm", "O-Saft module");  # must be found with @INC
+    $_err = _load_file("lib/SSLinfo.pm", "SSLinfo module");  # must be found with @INC
     if ("" ne $_err) {
         die  $STR{ERROR}, "011: $_err\n"  if (not _is_cfg_do('version'));
         warn $STR{ERROR}, "011: $_err"; # no reason to die for +version
@@ -1988,6 +1987,48 @@ sub _getscore       {
 
 #| definitions: check SSL functions
 #| -------------------------------------
+sub _is_tls12only   {
+# NOTE: _is_tls12only not yet used
+    #? returns empty string if TLS 1.2 is the only protocol used,
+    #? returns all used protocols otherwise
+    my ($host, $port) = @_;
+    my @ret;
+    foreach my $ssl (qw(SSLv2 SSLv3 TLSv1 TLSv11)) {
+        # If $cfg{$ssl}=0, the check may be disabled, i.e. with --no-sslv3 .
+        # If the protocol  is supported by the target,  at least  one cipher
+        # must be accpted. So the amount of ciphers must be > 0.
+        if ($prot{$ssl}->{'cnt'}  >  0) {
+            push(@ret, $ssl);
+        }
+        if ($cfg{$ssl} == 0) {
+            # this condition is never true if ciphers have been detected
+            push(@ret, _get_text('disabled', "--no-$ssl"));
+        }
+    }
+    return join(" ", @ret);
+} # _is_tls12only
+
+sub _is_ssl_error   {
+    # returns 1 if probably a SSL connection error occoured; 0 otherwise
+    # increments counters in $cfg{'done'}
+    my ($anf, $end, $txt) = @_;
+    return 0 if (($end - $anf) <= $cfg{'sslerror'}->{'timeout'});
+    $cfg{'done'}->{'ssl_errors'}++;     # total counter
+    $cfg{'done'}->{'ssl_failed'}++;     # local counter
+    return 0 if (not _is_cfg_use('ssl_error'));# no action required
+    if ($cfg{'done'}->{'ssl_errors'} > $cfg{'sslerror'}->{'total'}) {
+        _warn("301: $txt after $cfg{'sslerror'}->{'total'} total errors");
+        _hint("use '--no-ssl-error' or '--ssl-error-max=' to continue connecting");
+        return 1;
+    }
+    if ($cfg{'done'}->{'ssl_failed'} > $cfg{'sslerror'}->{'max'}) {
+        _warn("302: $txt after $cfg{'sslerror'}->{'max'} max errors");
+        _hint("use '--no-ssl-error' or '--ssl-error-max=' to continue connecting");
+        return 1;
+    }
+    return 0;
+} # _is_ssl_error
+
 sub __readframe     {
     # from https://github.com/noxxi/p5-scripts/blob/master/check-ssl-heartbleed.pl
     my $cl  = shift;
@@ -2016,12 +2057,12 @@ sub __readframe     {
     return ($type,$ver,@msg);
 } # __readframe
 
-sub _is_ssl_bleed   {
+sub _is_vuln_bleed  {
     #? return "heartbleed" if target supports TLS extension 15 (heartbeat), empty string otherwise
     # SEE Note:heartbleed
     my ($host, $port) = @_;
     my $heartbeats    = 1;
-    trace("_is_ssl_bleed($host, $port) {");
+    trace("_is_vuln_bleed($host, $port) {");
     my $cl  = undef; # TODO: =$SSLinfo::socket;
     my $ret = "";       # empty string as required in %checks
     my ($type,$ver,$buf,@msg) = ("", "", "", ());
@@ -2033,18 +2074,18 @@ sub _is_ssl_bleed   {
     unless (($cfg{'starttls'}) || (($cfg{'proxyhost'})&&($cfg{'proxyport'}))) {
         # no proxy and not starttls
         $cl = IO::Socket::INET->new(PeerAddr=>"$host:$port", Timeout=>$cfg{'timeout'}) or do {
-            _warn("321: _is_ssl_bleed: failed to connect: '$!'");
-            trace("_is_ssl_bleed: fatal exit in IO::Socket::INET->new");
+            _warn("321: _is_vuln_bleed: failed to connect: '$!'");
+            trace("_is_vuln_bleed: fatal exit in IO::Socket::INET->new");
             return "failed to connect";
         };
     } else {
         # proxy or starttls
-        trace("_is_ssl_bleed: using 'SSLhello'");
+        trace("_is_vuln_bleed: using 'SSLhello'");
         $cl = SSLhello::openTcpSSLconnection($host, $port);
         if ((not defined $cl) || ($@)) { # No SSL Connection
             local $@ = " Did not get a valid SSL-Socket from Function openTcpSSLconnection -> Fatal Exit of openTcpSSLconnection" unless ($@);
-            _warn ("322: _is_ssl_bleed (with openTcpSSLconnection): $@\n");
-            trace("_is_ssl_bleed: fatal exit in _doCheckSSLciphers");
+            _warn ("322: _is_vuln_bleed (with openTcpSSLconnection): $@\n");
+            trace("_is_vuln_bleed: fatal exit in _doCheckSSLciphers");
             return("failed to connect");
         }
         # NO SSL upgrade needed -> NO else
@@ -2110,10 +2151,10 @@ sub _is_ssl_bleed   {
         _vprint2("  no reply - probably not vulnerable");
     }
     close($cl);
-    trace("_is_ssl_bleed()\t= $ret }");
+    trace("_is_vuln_bleed()\t= $ret }");
     return $ret;
-} # _is_ssl_bleed
-sub _is_ssl_ccs     {
+} # _is_vuln_bleed
+sub _is_vuln_css    {
     #? return "ccs" if target is vulnerable to CCS Injection, empty string otherwise
     # parameter $ssl must be provided as binary value: 0x00, 0x01, 0x02, 0x03 or 0x04
     # http://ccsinjection.lepidum.co.jp/
@@ -2128,11 +2169,11 @@ sub _is_ssl_ccs     {
         # open our own connection and close it at end
 # TODO: does not work with socket from SSLinfo.pm
     $cl = IO::Socket::INET->new(PeerAddr => "$host:$port", Timeout => $cfg{'timeout'}) or  do {
-        _warn("331: _is_ssl_ccs: failed to connect: '$!'");
+        _warn("331: _is_vuln_css: failed to connect: '$!'");
         return "failed to connect";
     };
 #################
-# $ccs = _is_ssl_ccs($host, $port, $ssl);
+# $ccs = _is_vuln_css($host, $port, $ssl);
 #    'openssl_version_map' => {  # map our internal option to OpenSSL version (hex value)
 #        'SSLv2'=> 0x0002, 'SSLv3'=> 0x0300, 'TLSv1'=> 0x0301, 'TLSv11'=> 0x0302, 'TLSv12'=> 0x0303, 'TLSv13'=> 0x0304,  }
 #################
@@ -2158,7 +2199,7 @@ sub _is_ssl_ccs     {
     )));
     while (1) {
         ($type,$ver,@msg) = __readframe($cl) or do {
-            _warn("332: _is_ssl_ccs: no reply: '$!'");
+            _warn("332: _is_vuln_css: no reply: '$!'");
             return "no reply";
         };
         last if $type == 22 and grep { $_->[0] == 0x0e } @msg; # server hello done
@@ -2186,9 +2227,9 @@ sub _is_ssl_ccs     {
     }
     close($cl);
     return $ret;
-} # _is_ssl_ccs
+} # _is_vuln_css
 
-sub _is_vuln_breach     {
+sub _is_vuln_breach {
     #? return gzip or deflate if server is vulnerable to breach; empty string otherwise
     my ($host, $port) = @_;
     # gzip or deflate may be returned in Content-Encoding and/or Transfer-Encoding
@@ -2210,27 +2251,6 @@ sub _is_vuln_breach     {
     # being potential vulnerable
 } # _is_vuln_breach
 
-sub _is_tls12only   {
-# NOTE: _is_tls12only not yet used
-    #? returns empty string if TLS 1.2 is the only protocol used,
-    #? returns all used protocols otherwise
-    my ($host, $port) = @_;
-    my @ret;
-    foreach my $ssl (qw(SSLv2 SSLv3 TLSv1 TLSv11)) {
-        # If $cfg{$ssl}=0, the check may be disabled, i.e. with --no-sslv3 .
-        # If the protocol  is supported by the target,  at least  one cipher
-        # must be accpted. So the amount of ciphers must be > 0.
-        if ($prot{$ssl}->{'cnt'}  >  0) {
-            push(@ret, $ssl);
-        }
-        if ($cfg{$ssl} == 0) {
-            # this condition is never true if ciphers have been detected
-            push(@ret, _get_text('disabled', "--no-$ssl"));
-        }
-    }
-    return join(" ", @ret);
-} # _is_tls12only
-
 sub _is_beast_skipped   {
     #? returns protocol names if they are vulnerable to BEAST but the check has been skipped,
     #? returns empty string otherwise.
@@ -2244,27 +2264,6 @@ sub _is_beast_skipped   {
     }
     return join(" ", @ret);
 } # _is_beast_skipped
-
-sub _is_ssl_error       {
-    # returns 1 if probably a SSL connection error occoured; 0 otherwise
-    # increments counters in $cfg{'done'}
-    my ($anf, $end, $txt) = @_;
-    return 0 if (($end - $anf) <= $cfg{'sslerror'}->{'timeout'});
-    $cfg{'done'}->{'ssl_errors'}++;     # total counter
-    $cfg{'done'}->{'ssl_failed'}++;     # local counter
-    return 0 if (not _is_cfg_use('ssl_error'));# no action required
-    if ($cfg{'done'}->{'ssl_errors'} > $cfg{'sslerror'}->{'total'}) {
-        _warn("301: $txt after $cfg{'sslerror'}->{'total'} total errors");
-        _hint("use '--no-ssl-error' or '--ssl-error-max=' to continue connecting");
-        return 1;
-    }
-    if ($cfg{'done'}->{'ssl_failed'} > $cfg{'sslerror'}->{'max'}) {
-        _warn("302: $txt after $cfg{'sslerror'}->{'max'} max errors");
-        _hint("use '--no-ssl-error' or '--ssl-error-max=' to continue connecting");
-        return 1;
-    }
-    return 0;
-} # _is_ssl_error
 
 sub _check_prot_cipher  {
     #? returns cipher suite name if $typ is of specified compliance or vulnerability
@@ -2841,6 +2840,7 @@ sub _get_cipherslist    {
         if (_is_cfg_ciphermode('intern|dump')) {
             # find names, aliases and constants
             foreach my $name (split(":", $pattern)) {
+                trace(" get list pattern  = $pattern");
                 push(@ciphers, Ciphers::find_names_any($name));
             }
         } else { # _is_cfg_ciphermode('openssl')
@@ -2877,20 +2877,22 @@ sub _get_cipherslist    {
                 # die $STR{ERROR}, "016: no ciphers found; invalid --cipher= or --cipher-range=\n"
             }
     } # --cipher-range=
-    @ciphers    = sort grep{!/^\s*$/} @ciphers;   # remove empty names
+    @ciphers    = sort(grep{!/^\s*$/} @ciphers); # remove empty names
     if ('names' eq $mode) {  # convert to cipher names
+        trace(" get list names    = 0..$#ciphers");
         for my $i (0 .. $#ciphers) {
             my $c = $ciphers[$i];
             $ciphers[$i] = Ciphers::get_name($c)||"" if _is_cipher_key($c);
         }
     }
     if ('keys'  eq $mode) {   # convert to cipher hex keys
+        trace(" get list keys     = 0..$#ciphers");
         for my $i (0 .. $#ciphers) {
             my $c = $ciphers[$i];
             $ciphers[$i] = Ciphers::get_key( $c)||"" if not _is_cipher_key($c); ## no critic qw(ValuesAndExpressions::ProhibitMixedBooleanOperators) # because Perl::Critic is too stupid for this
         }
     }
-    @ciphers    = sort grep{!/^\s*$/} @ciphers;   # remove empty names probably added for unknown keys above
+    @ciphers    = sort(grep{!/^\s*$/} @ciphers); # remove empty names probably added for unknown keys above
     trace("_get_cipherslist\t= [ @ciphers ] }");
     return @ciphers;
 } # _get_cipherslist
@@ -3062,7 +3064,7 @@ sub ciphers_scan_openssl {
         my $usesni  = $cfg{'use'}->{'sni'};
         _vprint("  test $cnt ciphers for $ssl ... ($__openssl) ");
         trace( "  test $cnt ciphers for $ssl ... ($__openssl) ");
-        trace( " using cipherpattern=[ @{$cfg{'cipher'}} ], cipherrange=$cfg{'cipherrange'}");
+        trace( "  using cipherpattern=[ @{$cfg{'cipher'}} ], cipherrange=$cfg{'cipherrange'}");
         if ($ssl =~ m/^SSLv[23]/) {
             # SSLv2 has no SNI; SSLv3 has originally no SNI
             if (_is_cfg_do('cipher') or _is_cfg_verbose()) {
@@ -3145,7 +3147,7 @@ sub ciphers_scan_intern {
         $total += scalar(@all);
         _vprint("  test " . scalar(@all) . " ciphers for $ssl ... (SSLhello)");
         trace( "  test " . scalar(@all) . " ciphers for $ssl ... (SSLhello)");
-        trace( " using cipherpattern=[ @{$cfg{'cipher'}} ], cipherrange=$cfg{'cipherrange'}");
+        trace( "  using cipherpattern=[ @{$cfg{'cipher'}} ], cipherrange=$cfg{'cipherrange'}");
         if ("@all" =~ /^\s*$/) {
             _warn("407: no valid ciphers specified; no check done for '$ssl'");
             next;           # ensure warning for all protocols
@@ -3754,7 +3756,7 @@ sub checkbleed      {
     my ($host, $port) = @_;
     $cfg{'done'}->{'checkbleed'}++;
     return if (1 < $cfg{'done'}->{'checkbleed'});
-    my $bleed = _is_ssl_bleed($host, $port);
+    my $bleed = _is_vuln_bleed($host, $port);
     if ($cfg{'ignorenoreply'} > 0) {
         return if ($bleed =~ m/no reply/);
     }
@@ -6093,7 +6095,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.115");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.116");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6703,7 +6705,7 @@ while ($#argv >= 0) {
             $arg = $1 if ($1 !~ /^\s*$/);   # pass bare word, if it was --help=*
         }
         trace_arg("handle --help= ...");
-        my $_err = _load_file('lib/OMan.pm', "help file");
+        my $_err = _load_file('lib/OMan.pm', "help module");
         warn $STR{ERROR}, "009: $_err" if ("" ne $_err);
         OMan::man_printhelp($arg);  # handles also OMan::man_docs_write("--help=gen-docs")
         exit 0;
@@ -7962,6 +7964,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         if (_is_cfg_ciphermode('openssl|ssleay')) {
             trace(" use socket ...")  if (0 == $cmd{'extciphers'});
             trace(" use openssl ...") if (1 == $cmd{'extciphers'});
+            # FIXME: on tiny systems following may cause "Out of memory!"
             $cipher_results = ciphers_scan_openssl($host, $port);   # uses @{$cfg{'ciphers'}}
             # TODO:  $prot{$ssl}->{'default'} = $cipher;
             # SEE Note:+cipher-selected
