@@ -35,7 +35,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_oman   = "@(#) OMan.pm 3.52 24/08/05 18:10:49";
+my  $SID_oman   = "@(#) OMan.pm 3.53 24/08/05 18:55:16";
 our $VERSION    = "24.06.24";
 
 use Exporter qw(import);
@@ -806,7 +806,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.52'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.53'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1990,7 +1990,6 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     my $typ = shift;# NOTE: lazy matches against $typ below, take care with future changes
        $typ =~ s/^cipher(pattern|range)/$1/;# normalise: cipherrange and range are possible
     my $pod =  "";
-    printf("#%s:\n", (caller(0))[3]);
     _man_dbx("man_table($typ) ..");
     my %types = (
         # typ        header left    separator  header right
@@ -2757,7 +2756,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.52 2024/08/05
+3.53 2024/08/05
 
 
 =head1 AUTHOR
