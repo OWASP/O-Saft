@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.116 24/08/05 10:56:07"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.117 24/08/05 11:17:55"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -409,7 +409,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.116"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.117"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6095,7 +6095,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.116");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.117");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6523,7 +6523,9 @@ while ($#argv >= 0) {
             } else {    # anything else,
                 if ($arg !~ m/^[XxA-Z0-9_-]+$/) { # must be upper case; _ in constant names
                      # x in RegEx to allow hex keys of ciphers like 0x0300C014
-                    _warn("062: given pattern '$arg' for cipher unknown; setting ignored");
+                    _warn("062: given pattern '$arg' for cipher unknown");
+                    printusage_exit("--cipher=valid-key-or-name\n");
+                        # abort to avoid useless testing with --cipher-range=intern
                     $arg = "";
                 }
             }
