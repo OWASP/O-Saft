@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.117 24/08/05 11:17:55"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.118 24/08/05 16:05:12"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -409,7 +409,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.117"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.118"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -880,6 +880,7 @@ foreach my $key (sort {uc($a) cmp uc($b)} keys %data, keys %checks, @{$cfg{'comm
 }
 
 push(@{$cfg{'cmd-check'}}, $_) foreach (keys %checks);
+push(@{$cfg{'cmd-info--v'}}, 'dump');   # more information
 foreach my $key (keys %data) {
     push(@{$cfg{'cmd-info--v'}}, $key);
     next if (_is_cfg_intern($key));     # ignore aliases
@@ -6095,7 +6096,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.117");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.118");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
