@@ -35,7 +35,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_oman   = "@(#) OMan.pm 3.51 24/07/27 14:36:12";
+my  $SID_oman   = "@(#) OMan.pm 3.52 24/08/05 18:10:49";
 our $VERSION    = "24.06.24";
 
 use Exporter qw(import);
@@ -806,7 +806,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.51'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.52'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1990,6 +1990,7 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     my $typ = shift;# NOTE: lazy matches against $typ below, take care with future changes
        $typ =~ s/^cipher(pattern|range)/$1/;# normalise: cipherrange and range are possible
     my $pod =  "";
+    printf("#%s:\n", (caller(0))[3]);
     _man_dbx("man_table($typ) ..");
     my %types = (
         # typ        header left    separator  header right
@@ -2123,6 +2124,30 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         last;
     }
     } # TABLE
+    if ($typ =~ m/range/) {
+        # compute sizes here insted of initialisation of %cfg, this avoids
+        # huge memory consumtion due to use of necessary eval(); the sizes
+        # are not needed for normal use, just for documentation here
+        my %sizes = (
+            'full' => 0xffffff,
+            'safe' => 0x2fffff,
+            'long' => 0xffff,
+            'huge' => 0xffff,
+            #'rfc'  => 2051,
+        ); # %sizes
+        foreach my $key (sort(keys(%{$cfg{'cipherranges'}}))) {
+            next if ($key =~ m/(full|huge|long|safe)/i);
+            my @list = eval($cfg{'cipherranges'}->{$key});
+            $sizes{$key} = scalar(@list); 
+        }
+        $pod .= _man_foot(16);
+        $pod .=  <<"EoHelp";
+= Number of ciphers per range =
+EoHelp
+        foreach my $key (sort(keys(%sizes))) {
+            $pod .= sprintf("%16s - %s\n", $key, $sizes{$key});
+        }
+    }
     if ($typ !~ m/cfg/) {
         $pod .= _man_foot(16);
     } else {
@@ -2732,7 +2757,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.51 2024/07/27
+3.52 2024/08/05
 
 
 =head1 AUTHOR
