@@ -18,7 +18,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odata  =  "@(#) OData.pm 3.25 24/08/05 00:25:15";
+my  $SID_odata  =  "@(#) OData.pm 3.26 24/08/05 09:36:34";
 our $VERSION    =  "24.06.24";
 
 use Exporter qw(import);
@@ -266,8 +266,8 @@ our %data   = (         # connection and certificate details
     'verify_altname'    => {'val' => sub { SSLinfo::verify_altname(        $_[0], $_[1])}, 'txt' => "Validity Alternate Names"},
     'verify_hostname'   => {'val' => sub { SSLinfo::verify_hostname(       $_[0], $_[1])}, 'txt' => "Validity Hostname"},
     'https_protocols'   => {'val' => sub { SSLinfo::https_protocols(       $_[0], $_[1])}, 'txt' => "HTTPS Alternate-Protocol"},
-    'https_content_enc' => {'val' => sub { SSLinfo::https_content_enc(     $_[0], $_[1])}, 'txt' => "HTTPS Content-Encoding"},
-    'https_transfer_enc'=> {'val' => sub { SSLinfo::https_transfer_enc(    $_[0], $_[1])}, 'txt' => "HTTPS Transfer-Encoding"},
+    'https_content_enc' => {'val' => sub { SSLinfo::https_content_enc(     $_[0], $_[1])}, 'txt' => "HTTPS Content-Encoding header"},
+    'https_transfer_enc'=> {'val' => sub { SSLinfo::https_transfer_enc(    $_[0], $_[1])}, 'txt' => "HTTPS Transfer-Encoding header"},
     'https_svc'         => {'val' => sub { SSLinfo::https_svc(             $_[0], $_[1])}, 'txt' => "HTTPS Alt-Svc header"},
     'https_status'      => {'val' => sub { SSLinfo::https_status(          $_[0], $_[1])}, 'txt' => "HTTPS Status line"},
     'https_server'      => {'val' => sub { SSLinfo::https_server(          $_[0], $_[1])}, 'txt' => "HTTPS Server banner"},
@@ -1238,7 +1238,7 @@ _init();
 
 =head1 VERSION
 
-3.25 2024/08/05
+3.26 2024/08/05
 
 
 =head1 AUTHOR
