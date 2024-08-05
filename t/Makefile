@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 3.17 24/08/03 14:18:39
+#?      @(#) Makefile 3.18 24/08/05 21:26:32
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-O-SID.test         := 3.17
+O-SID.test         := 3.18
 O-SELF.test        := t/Makefile
 ALL.includes       += $(O-SELF.test)
 ALL.inc.type       += test
@@ -67,15 +67,18 @@ export LANG        := C
 export LC_CTYPE    := C.UTF-8
     # LANG ensures same messages and sorting everywhere  
     # LC_CTYPE should ensures that all characters are proper encoded
-export PATH        := .:..:./usr:../usr:$(PATH)
+ifeq ($(MAKELEVEL),0)
+    export PATH    := .:..:./usr:../usr:$(PATH)
     # ensure that our tools are found in our directories first
     # then use given PATH as we don't know where to find common tools
+    # only set i top-most make to avoid duplicate paths
+endif
 export OSAFT_MAKE  := avoid writing random data (like date and time string)
 export OSAFT_OPTIONS  ?= --trace-CLI
     # OSAFT_OPTIONS=--trace-CLI because the command line should be printed
     # always in each EXE.pl call; may be redifened on make's command line
-test%VERSION:         OSAFT_OPTIONS=
-    # these targets should not print command line
+test%VERSION:   OSAFT_OPTIONS=
+    # these targets should not print command line with --trace-CLI
 
 first-test-target-is-default: help.test
 
@@ -104,8 +107,8 @@ ifndef TEST.remove-environment-variables
     # first define list of required variables, then get list of existing
     # environment variables and remove all except the required ones
     # PERL5LIB and PERL_HASH_SEED are removed also because used internal
-    # OSAFT_MAKE and OSAFT_OPTIONS need not be removed 'cause set herein
-    $(eval _keep =      LANG    LC_ALL  LC_CTYPE OSAFT_CONFIG \
+    $(eval _keep =      LANG    LC_ALL  LC_CTYPE \
+	OSAFT_CONFIG    OSAFT_MAKE      OSAFT_OPTIONS \
         DISPLAY HOME    PATH    PWD     SHELL   TERM    USER    NLSPATH \
         DT_RUNPATH      DT_RPATH DT_NEEDED \
         DYLD_LIBRARY_PATH   DYLD_FALLBACK_LIBRARY_PATH \
