@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.52 24/08/05 00:52:36";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.53 24/08/05 10:12:28";
 our $VERSION    =  "24.06.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -2857,7 +2857,7 @@ our %cfg = (    # main data structure for configuration
         'cipherall' => "+cipherall : functionality changed, please see '$cfg__me --help=TECHNIC'",
         'cipherraw' => "+cipherraw : functionality changed, please see '$cfg__me --help=TECHNIC'",
         'openssl3'  => "OpenSSL 3.x changed some functionality, please see '$cfg__me --help=TECHNIC'",
-        'openssl3c' => "+cipher fow OpenSSL 3.x may result in many warnings, consider using '--no-warning'",
+        'openssl3c' => "+cipher for OpenSSL 3.x may result in many warnings, consider using '--no-warning'",
        #--------------+--------------------------------------------------------
     }, # hints
    #------------------+--------------------------------------------------------
@@ -3018,13 +3018,6 @@ our %dbx = (    # save hardcoded settings (command lists, texts), and debugging 
 *_trace1  = sub { _trace(@_) if (1 < $cfg{'trace'});        return; } if not defined &_trace1;
 *_trace2  = sub { _trace(@_) if (2 < $cfg{'trace'});        return; } if not defined &_trace2;
 *_trace3  = sub { _trace(@_) if (3 < $cfg{'trace'});        return; } if not defined &_trace3;
-
-sub _get_keys_list {
-    # workaround to avoid "Undefined subroutine ... " if called stand-alone
-    # only used in test_cipher_regex()
-    return Ciphers::get_keys_list() if (defined(&Ciphers::get_keys_list));
-    return ();
-} # _get_keys_list
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -3365,34 +3358,37 @@ sub _regex_line     { return "=------+-------+-------+--------------------------
 sub test_cipher_regex   {
     #? check regex if cipher supports PFS, uses internal sub and not regex directly
     local $\ = "\n";
+    printf("#%s:\n", (caller(0))[3]);
     print "
 === internal data structure: various RegEx to check cipher properties ===
 =
 = Check RegEx to detect ciphers, which support PFS using the internal function
-= ::_is_ssl_pfs() .
-    \$cfg{'regex'}->{'PFS'}:      # match ciphers supporting PFS
-      $cfg{'regex'}->{'PFS'}
+= ::_is_compliant(.., 'PFS') .
+=   \$cfg{'regex'}->{'PFS'}:      # match ciphers supporting PFS
+=     $cfg{'regex'}->{'PFS'}
+=   \$cfg{'regex'}->{'notPFS'}:   # match ciphers not supporting PFS
+=     $cfg{'regex'}->{'notPFS'}
 =
 = Check to which RegEx for OWASP scoring a given cipher matches.
 =
-    \$cfg{'regex'}->{'OWASP_NA'}: # unrated in OWASP TLS Cipher Cheat Sheet (2018)
-      $cfg{'regex'}->{'OWASP_NA'}
-    \$cfg{'regex'}->{'OWASP_C'}:  # 1st legacy
-      $cfg{'regex'}->{'OWASP_C'}
-    \$cfg{'regex'}->{'OWASP_B'}:  # 2nd broad compatibility
-      $cfg{'regex'}->{'OWASP_B'}
-    \$cfg{'regex'}->{'OWASP_A'}:  # 3rd best practice
-      $cfg{'regex'}->{'OWASP_A'}
-    \$cfg{'regex'}->{'OWASP_D'}:  # finally brocken ciphers, overwrite previous
-      $cfg{'regex'}->{'OWASP_D'}
-    \$cfg{'regex'}->{'OWASP_AA'}: # last secure TLSv1.3
-      $cfg{'regex'}->{'OWASP_AA'}
+=   \$cfg{'regex'}->{'OWASP_NA'}: # unrated in OWASP TLS Cipher Cheat Sheet (2018)
+=     $cfg{'regex'}->{'OWASP_NA'}
+=   \$cfg{'regex'}->{'OWASP_C'}:  # 1st legacy
+=     $cfg{'regex'}->{'OWASP_C'}
+=   \$cfg{'regex'}->{'OWASP_B'}:  # 2nd broad compatibility
+=     $cfg{'regex'}->{'OWASP_B'}
+=   \$cfg{'regex'}->{'OWASP_A'}:  # 3rd best practice
+=     $cfg{'regex'}->{'OWASP_A'}
+=   \$cfg{'regex'}->{'OWASP_D'}:  # finally brocken ciphers, overwrite previous
+=     $cfg{'regex'}->{'OWASP_D'}
+=   \$cfg{'regex'}->{'OWASP_AA'}: # last secure TLSv1.3
+=     $cfg{'regex'}->{'OWASP_AA'}
 =
 ";
     print _regex_head();
     print _regex_line();
     my $cnt = 0;
-    foreach my $key (sort (_get_keys_list())) {
+    foreach my $key (sort (Ciphers::get_keys_list())) {
         # NOTE: the used protocol (SSLv* or TLSv*) is used as specified in the
         # cipher definition (see Ciphers.pm).
         my $ssl    = Ciphers::get_ssl( $key);
@@ -3556,7 +3552,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.52"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.53"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3602,7 +3598,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.52 2024/08/05
+3.53 2024/08/05
 
 =head1 AUTHOR
 
