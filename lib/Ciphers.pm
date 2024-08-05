@@ -29,7 +29,7 @@ our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.54 24/07/31 13:59:19";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.55 24/08/05 10:13:42";
 our $VERSION    = "24.06.24";   # official verion number of this file
 
 use Exporter qw(import);
@@ -353,9 +353,10 @@ Set value for 'security' in for specified cipher key.
 
 sub is_valid_key {
     #? return normalised key if m/^(0x)?[0-9A-F]{8}$/; empty string otherwise
+    #  some keys for internal use have the extension -c or -bug
     my $key = uc(shift);
        $key =~ s/^0X//g;
-    return "" if $key !~ m/^[0-9A-F]{8}$/;
+    return "" if $key !~ m/^[0-9A-F]{8}(?:-BUG|-C)?$/;  # BUG|C because of uc()
     return "0x$key";
 } # is_valid_key
 
@@ -1929,7 +1930,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.54 2024/07/31
+3.55 2024/08/05
 
 
 =head1 AUTHOR
