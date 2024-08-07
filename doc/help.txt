@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.28 24/08/07 10:58:27
+# SID   @(#) help.txt 3.29 24/08/07 18:54:39
 
 NAME
 
@@ -1626,7 +1626,7 @@ OPTIONS
           Specify range of cipher constants to be tested with  +cipher  .
           Following 'RANGE's are supported:
           * 'rfc'             - all ciphers defined in various RFCs including
-                                the reserverd constants;   default range
+                                all reserverd and some unassigned constants
           * 'shifted'         - 'rfc' + some constants shifted by 64 bytes to
                                 the right
           * 'intern'          - 'rfc' + 'shifted'
