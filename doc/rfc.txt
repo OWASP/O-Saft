@@ -1,11 +1,12 @@
 
-# SID	@(#) rfc.txt 1.20 24/07/16 20:43:38
+# SID	@(#) rfc.txt 1.21 24/08/07 22:34:29
 
 # number| title / description
 #------+----------------------------------------------------------------------+
 # url	base URL for RFC descriptions
 #	http://tools.ietf.org/html/rfcXXXX
 #	http://tools.ietf.org/rfc/rfcXXXX.txt
+# SSLv2	https://www-archive.mozilla.org/projects/security/pki/nss/ssl/draft02.html
 url	http://tools.ietf.org/
 6101	SSL Version 3.0
 6601	SSL Version 3.0
