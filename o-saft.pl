@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.118 24/08/05 16:05:12"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.119 24/08/07 11:20:53"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -409,7 +409,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.118"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.119"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -460,6 +460,7 @@ our %text = (   # our instead of my required for --help=cfg-text --help=text
     'protocol'      => "<<protocol probably supported, but no ciphers accepted>>",
     'need_cipher'   => "<<check possible in conjunction with +cipher only>>",
     'na'            => "<<N/A>>",
+    'na_SSLv2'      => "<<N/A as SSLv2 has no server selected cipher>>",
     'na_STS'        => "<<N/A as STS not set>>",
     'na_sni'        => "<<N/A as --no-sni in use>>",
     'na_dns'        => "<<N/A as --no-dns in use>>",
@@ -5743,12 +5744,12 @@ sub printprotocols      {
     #   'PROT-LOW'      => {'txt' => "Supported ciphers with security LOW"},
     foreach my $ssl (@{$cfg{'versions'}}) { # SEE Note:%prot
         next if (($cfg{$ssl} == 0) and ($verbose <= 0));   # not requested with verbose only
-        next if ($ssl =~ m/^SSLv2/);    # SSLv2 has no server selected cipher
         my $cnt = scalar(@{$prot{$ssl}->{'ciphers_pfs'}});
         my $key = $ssl . $text{'separator'};
            $key = sprintf("[0x%x]", $prot{$ssl}->{hex}) if ($legacy eq 'key');
         my $cipher_strong = $prot{$ssl}->{'cipher_strong'};
         my $cipher_pfs    = $prot{$ssl}->{'cipher_pfs'};
+           $cipher_pfs    = $text{'na_SSLv2'} if ($ssl =~ m/^SSLv2/);
         if ($cfg{'trace'} <= 0) {
            # avoid internal strings, pretty print for humans
            $cipher_strong = "" if ($STR{UNDEF} eq $cipher_strong);
@@ -5761,6 +5762,7 @@ sub printprotocols      {
            $cipher_strong = ${$prot{$ssl}->{'ciphers_pfs'}}[0];
            $cnt = 0;
         }
+        $cipher_strong    = $text{'na_SSLv2'} if ($ssl =~ m/^SSLv2/);
         print_line('_cipher', $host, $port, $ssl, $ssl, ""); # just host:port:#[key]:
         if ('owasp' eq $legacy) {
             printf("%-7s\t%3s %3s %3s %3s %3s %3s %-31s %s\n", $key,
@@ -6096,7 +6098,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.118");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.119");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
