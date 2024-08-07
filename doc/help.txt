@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.27 24/08/04 12:43:51
+# SID   @(#) help.txt 3.28 24/08/07 10:58:27
 
 NAME
 
@@ -1625,26 +1625,33 @@ OPTIONS
 
           Specify range of cipher constants to be tested with  +cipher  .
           Following 'RANGE's are supported:
-          * 'rfc'             - all ciphers defined in various RFCs; default
-          * 'shifted'         - 'rfc' + some shifted by 64 bytes to the right
+          * 'rfc'             - all ciphers defined in various RFCs including
+                                the reserverd constants;   default range
+          * 'shifted'         - 'rfc' + some constants shifted by 64 bytes to
+                                the right
           * 'intern'          - 'rfc' + 'shifted'
           * 'long'            - like 'rfc' but more lazy list of constants
           * 'huge'            - all constants  0x03000000 .. 0x0300FFFF
           * 'safe'            - all constants  0x03000000 .. 0x032FFFFF
           * 'full'            - all constants  0x03000000 .. 0x03FFFFFF
-          * 'SSLv2'           - all ciphers according RFC for SSLv2
+          * 'SSLv2'           - all ciphers according RFC for SSLv2, see [v2]
           * 'SSLv2_long'      - more lazy list of constants for SSLv2
           * 'SSLv3'           - all ciphers according RFC for SSLv3
           * 'SSLv3_SSLv2'     - all ciphers for SSLv3 with SSLv2
+          * 'TLSv10'          - empty list (see [v1] below)
+          * 'TLSv11'          - empty list (see [v1] below)
           * 'TLSv12'          - all ciphers according RFC for TLSv12
           * 'TLSv13'          - all ciphers according RFC for TLSv13
           * 'GREASE'          - all GREASE ciphers according RFC
+          * 'IANA'            - all ciphers recommended by IANA, see
+                                https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml
           * 'c0xx'            - ECC ciphers, constants 0x0300C000 .. 0x0300C0FF
           * 'ccxx'            - ECC ciphers, constants 0x0300CC00 .. 0x0300CCFF
           * 'ecc'             - all constants for ciphers using ECC
 
-          Note: 'SSLv2' is the internal list used for testing SSLv2 ciphers.
+          [v2]:  'SSLv2' is the internal list used for testing SSLv2 ciphers.
           It does not make sense to use it for other protocols; however ...
+          [v1]:  There are no ciphers officially assignd to TLSv10 or TLSv11.
 
           For the full list and details about the ranges, please see:
 
