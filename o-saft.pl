@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.120 24/08/07 11:41:42"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.121 24/08/07 13:00:16"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -409,7 +409,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.120"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.121"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6090,6 +6090,7 @@ sub printversionmismatch {
 #  NOTE: yes, it is high complexity, but that's the nature of printing all information
 sub printversion        {
     #? print program and module versions
+    #  all printed texts are hardcoded, no translation or user texts expected
     trace("printversion() {");
     local $\ = "\n";
     if (defined $ENV{PWD}) {
@@ -6101,7 +6102,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.120");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.121");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6262,7 +6263,7 @@ sub printversion        {
                 # TODO: if file exists, try to "grep" for VERSION's value
             }
         }
-        printf("    %-22s %-9s%s\n", $m, $v, ($INC{$d} || $INC{"lib/$d"} || "<<not loaded>>"));
+        printf("    %-22s %-9s%s\n", $m, $v, ($INC{$d} || $INC{"lib/$d"} || "<<not needed, hence not loaded>>"));
             # our own modues are in lib/ which is not part of the module name
             # (see list in foreach above), hence the additional `|| $INC{"lib/$d"}`
     }
