@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.121 24/08/07 13:00:16"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.122 24/08/08 00:20:16"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -409,7 +409,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.121"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.122"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -2122,6 +2122,7 @@ sub _is_vuln_bleed  {
             #ORIG die "no reply";
             _warn("323: heartbleed: no reply: '$!'");
             _hint("server does not respond, this does not indicate that it is not vulnerable!");
+                # 7/2024 ah: modern servers (OpenSSL 3.x) may return this also
             return "no reply";
         };
         last if $type == 22 and grep { $_->[0] == 0x0e } @msg; # server hello done
@@ -3759,7 +3760,8 @@ sub checkbleed      {
     $cfg{'done'}->{'checkbleed'}++;
     return if (1 < $cfg{'done'}->{'checkbleed'});
     my $bleed = _is_vuln_bleed($host, $port);
-    if ($cfg{'ignorenoreply'} > 0) {
+    if (0 < $cfg{'ignorenoreply'}) {        # description see help.txt
+        $checks{'heartbleed'}->{val}  = ""; # hint already printed in _is_vuln_bleed()
         return if ($bleed =~ m/no reply/);
     }
     $checks{'heartbleed'}->{val}  = $bleed;
@@ -6102,7 +6104,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.121");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.122");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
