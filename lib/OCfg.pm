@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.53 24/08/05 10:12:28";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.56 24/08/08 22:47:35";
 our $VERSION    =  "24.06.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -2084,6 +2084,11 @@ our %cfg = (    # main data structure for configuration
                     # range is needed:  eval($cfg{cipherranges}->{rfc})
                     # Each string must be syntax for perl's range definition.
         'rfc'       =>          # constants for ciphers defined in various RFC
+                    # following include reserved and some unassigned constants
+                    # (lazy definition, but should contain all valid ciphers)
+                    # 0x03005600 (TLS_FALLBACK_SCSV) not added, because some
+                    # servers return error, like:
+                    #   Description: inappropriate_fallback [RFC5246_update-Draft-2014-05-31] (86)
                        "0x03000000 .. 0x030000FF, 0x03001300 .. 0x030013FF,
                         0x0300C000 .. 0x0300C1FF, 0x0300CC00 .. 0x0300CCFF,
                         0x0300D000 .. 0x0300D0FF,
@@ -2294,7 +2299,7 @@ our %cfg = (    # main data structure for configuration
     'cmd-prots'     => [        # commands for checking protocols
                         qw(hassslv2 hassslv3 hastls10 hastls11 hastls12 hastls13 hasdtls1 hasdtls12 hasdtls13 hasalpn hasnpn session_protocol fallback_protocol alpn alpns npn npns next_protocols https_protocols http_protocols https_svc http_svc)
                        ],
-    'cmd-NL'        => [        # commands which need NL when printed
+    'need-NL'       => [        # commands which need NL when printed
                                 # they should be available with +info --v only
                         qw(certificate extensions pem pubkey sigdump text
                          chain chain_verify ocsp_response_data)
@@ -3552,7 +3557,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.53"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.56"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3598,7 +3603,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.53 2024/08/05
+3.56 2024/08/08
 
 =head1 AUTHOR
 
