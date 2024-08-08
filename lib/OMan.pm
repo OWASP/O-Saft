@@ -35,7 +35,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_oman   = "@(#) OMan.pm 3.54 24/08/06 01:02:07";
+my  $SID_oman   = "@(#) OMan.pm 3.55 24/08/08 22:22:15";
 our $VERSION    = "24.06.24";
 
 use Exporter qw(import);
@@ -806,7 +806,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.54'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.55'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1488,8 +1488,7 @@ sub _man_cmd_from_source {
 sub _man_cmd_from_rcfile {
     #? return all command RC-FILE
     my $txt  = "\n                  Commands locally defined in $cfg{'RC-FILE'}\n";
-    my $val  = "";
-    my $skip = 1;
+    my $val  = "<<description missing>>";
     my $fh   = undef;
     _man_dbx("_man_cmd_from_rcfile: reading $cfg{'RC-FILE'}");
     if (open($fh, '<:encoding(UTF-8)', $cfg{'RC-FILE'})) {
@@ -1497,15 +1496,12 @@ sub _man_cmd_from_rcfile {
         #       wrong when this file was called directly
         while(<$fh>) {
             if (m/^##[?]\s+([a-zA-Z].*)/) { # looks like:  ##? Some text here ...
-                $skip = 0;
                 $val  = $1;
                 next;
             }
             if (m/^--cfg_cmd=([^=]*)=/) {   # looks like:  --cfg_cmd=MyCommad=list items
-                next if (1 == $skip);   # continue only if previous match succedded
-                $skip = 1;
                 $txt .= sprintf("+%-17s%s\n", $1, $val);
-                $val  = "";
+                $val  = "<<description missing>>";
             }
         }
         close($fh);
@@ -2757,7 +2753,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.54 2024/08/06
+3.55 2024/08/08
 
 
 =head1 AUTHOR
