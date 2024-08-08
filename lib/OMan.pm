@@ -35,7 +35,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_oman   = "@(#) OMan.pm 3.55 24/08/08 22:22:15";
+my  $SID_oman   = "@(#) OMan.pm 3.56 24/08/08 22:44:41";
 our $VERSION    = "24.06.24";
 
 use Exporter qw(import);
@@ -806,7 +806,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.55'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.56'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1444,6 +1444,20 @@ Content of this wiki page generated with:
 EoHelp
 } # _man_wiki_foot
 
+sub _man_cmd_from_cfg    {
+    #? return all command from %data and %check_*
+    _man_dbx("_man_cmd_from_cfg() ...");
+    my $txt  = "\n                  Commands defined internal as summary commands\n";
+    foreach my $key (sort(keys %cfg)) {
+        next if ($key !~ m/^cmd-(.*)/);
+        $key = $1;
+        my $len = "%-17s";
+           $len = "%s " if (length($key) > 16); # ensure that there is at least one space
+        $txt .= sprintf("+$len%s\n", $1, "(see $0 --help=cmd)");
+    }
+    return $txt;
+} # _man_cmd_from_cfg
+
 sub _man_cmd_from_source {
     #? return all command from %data and %check_*
     _man_dbx("_man_cmd_from_source() ...");
@@ -1819,6 +1833,7 @@ sub man_commands    {
     my $txt = "\n" . _man_head(15, "Command", "Description");
     $txt .= _man_squeeze(18, $_commands);   # first print general commands, manually crafted here
     $txt .= _man_squeeze(18, _man_cmd_from_source());
+    $txt .= _man_squeeze(18, _man_cmd_from_cfg());
     $txt .= _man_squeeze(18, _man_cmd_from_rcfile());
     $txt .= _man_foot(15) . "\n";
     return $txt;
@@ -2753,7 +2768,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.55 2024/08/08
+3.56 2024/08/08
 
 
 =head1 AUTHOR
