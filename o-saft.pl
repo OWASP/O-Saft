@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.124 24/08/09 10:07:52"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.125 24/08/09 14:52:33"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -410,7 +410,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.124"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.125"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6106,7 +6106,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.124");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.125");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6708,9 +6708,10 @@ while ($#argv >= 0) {
     # all options starting with  --h or --help or +help  are not handled herein
     trace_arg("opt_--h? $arg");
     if ($arg =~ /^--h$/)                            { $arg = "--help=help_brief"; } # --h  is special
+    if ($arg =~ /^\+(help.*)/)                      { $arg = "--$1"; }   # +help* --> --help*
     if ($arg =~ /^(?:--|\+)help$/)                  { $arg = "--help=NAME"; }   # --help
     if ($arg =~ /^[+,](abbr|abk|glossar|todo)$/i)   { $arg = "--help=$1"; }     # for historic reason
-    if ($arg =~ /^(?:--|\+|,)h(?:elp)=?(.*)?$/)     { $help = $1; } # get matching string right of =
+    if ($arg =~ /^(?:--|\+|,)help=?(.*)?$/)         { $help = $1; next; } # get matching string right of =
 
     # all options starting with  --test  are not handled herein, they must be
     # handled after parsing all arguments, which may contain more options
@@ -7454,7 +7455,7 @@ if ($help !~ m/^\s*$/) {
     # Handle anything with --help* or --h .  Done after reading all arguments
     # because some information provided by --help= contain settings from %cfg
     _trace_info("  HELP    - OMan::man_printhelp($help)");
-    trace_arg("handle --help= ...");
+    trace_arg("handle help=$help");
     my $_err = _load_file('lib/OMan.pm', "help module");
     warn $STR{ERROR}, "009: $_err" if ("" ne $_err);
     OMan::man_printhelp($help);
