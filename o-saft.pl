@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.122 24/08/08 00:20:16"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.124 24/08/09 10:07:52"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -384,7 +384,8 @@ my $legacy  = "";       # the legacy mode used in main
 my $verbose = 0;        # verbose mode used in main; option --v
    # above host, port, legacy and verbose are just shortcuts for corresponding
    # values in $cfg{}, used for better human readability
-my $test    = "";       # set to argument ist it bwgins with --test*
+my $help    = "";       # set to argument if it begins with --help* or --h
+my $test    = "";       # set to argument if it begins with --test*
 my $info    = 0;        # set to 1 if +info
 my $check   = 0;        # set to 1 if +check was used
 my $quick   = 0;        # set to 1 if +quick was used
@@ -409,7 +410,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.122"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.124"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -893,6 +894,7 @@ push(@{$cfg{'cmd-info--v'}}, 'info--v');
 
 # SEE Note:Testing, sort
 foreach my $key (qw(commands commands_cmd commands_usr commands_int cmd-info--v)) {
+    # commands_usr need to be handled aftere reading arguments
     # TODO: need to test if sorting of cmd-info--v should not be done for --no-rc
     @{$cfg{$key}} = sort(@{$cfg{$key}});    # only internal use
 }
@@ -1111,7 +1113,7 @@ sub _set_cfg        {
         foreach my $key (@{$cfg{$typ}}){# check for mis-spelled commands
             next if (_is_hashkey($key, \%checks));
             next if (_is_hashkey($key, \%data));
-            next if (_is_member( $key, \@{$cfg{'cmd-NL'}}));
+            next if (_is_member( $key, \@{$cfg{'need-NL'}}));
             next if (_is_cfg_intern( $key));
             if ($key eq 'protocols') {  # valid before 17.02.26; behave smart for old rc-files
                 push(@{$cfg{$typ}}, 'next_protocols');
@@ -1137,7 +1139,7 @@ sub _set_cfg        {
             if (not _is_member("cmd-$key", \@{$cfg{'commands_cmd'}})) {
                 # needed more checks, as these commands are defined as cmd-*
                 if ($key =~ m/^([a-z0-9_.-]+)$/) {
-                    # whitelust check for valid characters; avoid injections
+                    # whitelist check for valid characters; avoid injections
                     push(@{$cfg{'commands_usr'}}, $key);
                     _warn("046: command '+$key' specified by user") if _is_v_trace();
                 }
@@ -5422,7 +5424,7 @@ sub print_data      {
         }
         $value = $k . $v;
     }
-    $value = "\n" . $value if (_is_member($key, \@{$cfg{'cmd-NL'}})); # multiline data
+    $value = "\n" . $value if (_is_member($key, \@{$cfg{'need-NL'}})); # multiline data
     if ($legacy eq 'compact') {
         $value =~ s#:\n\s+#:#g; # join lines ending with :
         $value =~ s#\n\s+# #g;  # squeeze leading whitespaces
@@ -5968,7 +5970,7 @@ sub printdata           {
         }
         trace(" (%data)   +" . $key);
         my $value = $data{$key}->{val}($host);
-        if (_is_member( $key, \@{$cfg{'cmd-NL'}})) {
+        if (_is_member( $key, \@{$cfg{'need-NL'}})) {
             # for +info print multiline data only if --v given
             # if command given explicitly, i.e. +text, print
             if (_is_cfg_do('info') and not _is_cfg_verbose()) {
@@ -6104,7 +6106,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.122");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.124");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6708,19 +6710,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--h$/)                            { $arg = "--help=help_brief"; } # --h  is special
     if ($arg =~ /^(?:--|\+)help$/)                  { $arg = "--help=NAME"; }   # --help
     if ($arg =~ /^[+,](abbr|abk|glossar|todo)$/i)   { $arg = "--help=$1"; }     # for historic reason
-    # get matching string right of =
-    if ($arg =~ /^(?:--|\+|,)help=?(.*)?$/) {
-        _trace_info("  HELP    - OMan::man_printhelp($arg)");
-        # we allow:  --help=SOMETHING  or  +help=SOMETHING
-        if (defined $1) {
-            $arg = $1 if ($1 !~ /^\s*$/);   # pass bare word, if it was --help=*
-        }
-        trace_arg("handle --help= ...");
-        my $_err = _load_file('lib/OMan.pm', "help module");
-        warn $STR{ERROR}, "009: $_err" if ("" ne $_err);
-        OMan::man_printhelp($arg);  # handles also OMan::man_docs_write("--help=gen-docs")
-        exit 0;
-    }
+    if ($arg =~ /^(?:--|\+|,)h(?:elp)=?(.*)?$/)     { $help = $1; } # get matching string right of =
 
     # all options starting with  --test  are not handled herein, they must be
     # handled after parsing all arguments, which may contain more options
@@ -7448,15 +7438,28 @@ if (0 < $cmd{'extciphers'}) {
 }
 
 if (_is_cfg_do('cipher_default')) {
+    # rare combination of options, check and exit should be done after handling HELP
     if (not _is_cfg_ciphermode('openssl|ssleay')) {
         _warn("065: '+cipher-default' is useful with '--ciphermode=openssl' only; command ignored");
         exit 0;
     }
-} # cipher_default
+}
 
 # SEE Note:Testing, sort
 @{$cfg{'do'}} = sort(@{$cfg{'do'}}) if (0 < _is_argv('(?:--no.?rc)'));
 # $cfg{'do'}} should not contain duplicate commands; SEE Note:Duplicate Commands
+@{$cfg{'commands_usr'}} = sort(@{$cfg{'commands_usr'}});  # those from RC-FILE
+
+if ($help !~ m/^\s*$/) {
+    # Handle anything with --help* or --h .  Done after reading all arguments
+    # because some information provided by --help= contain settings from %cfg
+    _trace_info("  HELP    - OMan::man_printhelp($help)");
+    trace_arg("handle --help= ...");
+    my $_err = _load_file('lib/OMan.pm', "help module");
+    warn $STR{ERROR}, "009: $_err" if ("" ne $_err);
+    OMan::man_printhelp($help);
+    exit 0;
+}
 
 if (2 == @{$cfg{'targets'}}) {
     # Exactly one host defined, check if --port was also given after --host .
