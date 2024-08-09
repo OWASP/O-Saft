@@ -35,7 +35,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_oman   = "@(#) OMan.pm 3.57 24/08/09 10:08:50";
+my  $SID_oman   = "@(#) OMan.pm 3.60 24/08/09 14:51:23";
 our $VERSION    = "24.06.24";
 
 use Exporter qw(import);
@@ -806,7 +806,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.57'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.60'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2482,7 +2482,7 @@ sub man_printhelp   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     $txt = man_table($1)        if ($hlp =~ /^(cmd|check|data|info|ourstr|text)s?$/);
     $txt = man_table('cfg_'.$1) if ($hlp =~ /^cfg[_.-]?(cmd|check|data|info|hint|text|range|regex|ourstr)s?$/);
     if ($hlp eq "cmds")     { # print program's commands
-        $txt = "# $parent commands:\t+"     . join(' +', @{$cfg{'commands'}});
+        $txt = "+"     . join(' +', @{$cfg{'commands'}}, @{$cfg{'commands_usr'}});
         # no need for _man_squeeze()
     }
 #   if ($hlp eq "check")    { # print program's check commands
@@ -2513,6 +2513,7 @@ sub man_printhelp   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
 #    } else {
 #        $hlp .= $txt;
 #    }
+    $txt =~ s/\n\n*$/\n/ if $txt;   # remove useless empty lines
     print $txt || "";
     return;
 } # man_printhelp
@@ -2770,7 +2771,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.57 2024/08/09
+3.60 2024/08/09
 
 
 =head1 AUTHOR
