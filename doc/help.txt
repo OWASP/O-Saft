@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.29 24/08/07 18:54:39
+# SID   @(#) help.txt 3.30 24/08/09 19:29:22
 
 NAME
 
@@ -393,8 +393,8 @@ COMMANDS
         The most important commands are (in alphabetical order):
           +check +cipher +info +http +list +quick +sni +sni_check +version
 
-        A list of all available commands will be printed with:
-          $0 --help=cmds
+        A brief list of all available commands will be printed with:
+          $0 --help=cmd
 
         The description of all other commands will be printed with:
           $0 --header --help=commands
@@ -759,15 +759,15 @@ OPTIONS
 # next line to keep generated HTML links happy
       --help*
 
-      --help=cmds
+      --help=cmd
 
-          Show available commands; short form.
+        Show a brief list of all available commands.
 
       --help=commands
 
           Show available commands with short description.
 
-      --help=opt
+      --help=opts
 
           Show available options; short form.
 
@@ -775,17 +775,22 @@ OPTIONS
 
           Show available options with their description.
 
+      --help=cmds
+
+          Show available internal commands with short description.
+
       --help=checks
 
-          Show available checks.
+          Show available commands for checks.
+
+      --help=data
+      --help=info
+
+          Show available commands for information.
 
       --help=tools
 
           Description of tools around O-Saft, when, where and how to use.
-
-      --help=cmd
-
-          Show additional and user specified commands.
 
       --help=cfg-cmd
 
@@ -797,10 +802,6 @@ OPTIONS
 
           Show texts used as labels in output for checks (see  +check)  ready
           for use in rc-file or as option.
-
-      --help=data
-
-          Show available information.
 
       --help=data-cfg
       --help=cfg-data
@@ -839,7 +840,7 @@ OPTIONS
 
       --help=intern
 
-          Show internal commands.
+          Show all internal commands and command lists.
 
       --help=alias
 
