@@ -35,7 +35,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_oman   = "@(#) OMan.pm 3.60 24/08/09 14:51:23";
+my  $SID_oman   = "@(#) OMan.pm 3.61 24/08/09 19:27:05";
 our $VERSION    = "24.06.24";
 
 use Exporter qw(import);
@@ -806,7 +806,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.60'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.61'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1453,7 +1453,7 @@ sub _man_cmd_from_cfg    {
         $key = $1;
         my $len = "%-17s";
            $len = "%s " if (length($key) > 16); # ensure that there is at least one space
-        $txt .= sprintf("+$len%s\n", $1, "(see $0 --help=cmd)");
+        $txt .= sprintf("+$len%s\n", $1, "(see $0 --help=cmds)");
     }
     return $txt;
 } # _man_cmd_from_cfg
@@ -2005,23 +2005,23 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     my $pod =  "";
     _man_dbx("man_table($typ) ..");
     my %types = (
-        # typ        header left    separator  header right
+        # typ        header left    separator header right
         #-----------+---------------+-------+-------------------------------
-        'regex' => ["key",           " - ",  " Regular Expressions used internally"],
-        'ourstr'=> ["key",           " - ",  " Regular Expressions to match own output"],
-        'abbr'  => ["Abbrevation",   " - ",  " Description"],
-        'intern'=> ["Command",       "    ", " list of commands"],
-        'compl' => ["Compliance",    " - ",  " Brief description of performed checks"],
-        'range' => ["range name",    " - ",  " hex values in this range"],
-        'pattern' =>["pattern name", " - ",  " pattern description; used pattern"],
-        'rfc'   => ["Number",        " - ",  " RFC Title and URL"],
-        'links' => ["Title",         " - ",  " URL"],
-        'check' => ["key",           " - ",  " Label text"],
-        'data'  => ["key",           " - ",  " Label text"],
-        'info'  => ["key",           " - ",  " Label text"],
-        'hint'  => ["key",           " - ",  " Hint text"],
-        'text'  => ["key",           " - ",  " text"],
-        'cmd'   => ["key",           " - ",  " list of commands"],
+        'regex' => ["key",            " - ", "Regular Expressions used internally"],
+        'ourstr'=> ["key",            " - ", "Regular Expressions to match own output"],
+        'abbr'  => ["Abbrevation",    " - ", "Description"],
+        'intern'=> ["Command",       "    ", " List of commands"],
+        'compl' => ["Compliance",     " - ", "Brief description of performed checks"],
+        'range' => ["Range name",     " - ", "hex values in this range"],
+        'pattern' => ["Pattern name", " - ", "Pattern description\tused pattern"],
+        'rfc'   => ["Number",         " - ", "RFC Title and URL"],
+        'links' => ["Title",          " - ", "URL"],
+        'check' => ["+command / key", " - ", "Description and text for label"],
+        'data'  => ["+command / key", " - ", "Description and text for label"],
+        'info'  => ["+command / key", " - ", "Description and text for label"],
+        'hint'  => ["key",            " - ", "Hint text"],
+        'text'  => ["key",            " - ", " text"],
+        'cmds'  => ["internal key",   " - ", "List of commands"],
     );
     my $txt = "";
     my $sep = "\t";
@@ -2479,29 +2479,17 @@ sub man_printhelp   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         # while they are originaly named OTrace::*_show
     # anything below requires data defined in parent (usually o-saft.pl)
     # TODO: move to o-saft.pl
-    $txt = man_table($1)        if ($hlp =~ /^(cmd|check|data|info|ourstr|text)s?$/);
+    $txt = man_table($1)        if ($hlp =~ /^(cmds|check|data|info|ourstr|text)s?$/);
     $txt = man_table('cfg_'.$1) if ($hlp =~ /^cfg[_.-]?(cmd|check|data|info|hint|text|range|regex|ourstr)s?$/);
-    if ($hlp eq "cmds")     { # print program's commands
+    if ($hlp eq "cmd")      { # print program's commands
         $txt = "+"     . join(' +', @{$cfg{'commands'}}, @{$cfg{'commands_usr'}});
         # no need for _man_squeeze()
     }
-#   if ($hlp eq "check")    { # print program's check commands
-#       $txt = "# $parent check commands:\t+". join(' +', keys(%checks));
-#       # no need for _man_squeeze()
-#   }
-#   if ($hlp eq "data")     { # print program's data commands
-#       $txt = "# $parent data commands:\t+". join(' +', keys(%data));
-#       # no need for _man_squeeze()
-#   }
-#   if ($hlp eq "info")     { # print program's info commands
-#       $txt = "# $parent info commands:\t+"     . join(' +', keys(%info));
-#       # no need for _man_squeeze()
-#   }
     if ($hlp eq "legacy")   { # print program's legacy options
         $txt = "# $parent legacy values:\t" . join(' ',  @{$cfg{'legacys'}});
         # no need for _man_squeeze()
     }
-    if (not $txt)               { # nothing matched so far, print special section from help
+    if (not $txt)           { # nothing matched so far, print special section from help
         _man_dbx("man_printhelp: " . uc($hlp));
         $txt = man_help(uc($hlp))   if ($hlp !~ m/^[+-]-?/);    # bare words only
     }
@@ -2771,7 +2759,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.60 2024/08/09
+3.61 2024/08/09
 
 
 =head1 AUTHOR
