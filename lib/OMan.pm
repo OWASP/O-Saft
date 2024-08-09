@@ -35,7 +35,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_oman   = "@(#) OMan.pm 3.56 24/08/08 22:44:41";
+my  $SID_oman   = "@(#) OMan.pm 3.57 24/08/09 10:08:50";
 our $VERSION    = "24.06.24";
 
 use Exporter qw(import);
@@ -806,7 +806,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.56'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.57'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1445,10 +1445,10 @@ EoHelp
 } # _man_wiki_foot
 
 sub _man_cmd_from_cfg    {
-    #? return all command from %data and %check_*
+    #? return summary commands from %cfg
     _man_dbx("_man_cmd_from_cfg() ...");
     my $txt  = "\n                  Commands defined internal as summary commands\n";
-    foreach my $key (sort(keys %cfg)) {
+    foreach my $key (sort(keys %cfg)) { # should be same as @{$cfg{'commands_cmd'}}
         next if ($key !~ m/^cmd-(.*)/);
         $key = $1;
         my $len = "%-17s";
@@ -1500,7 +1500,9 @@ sub _man_cmd_from_source {
 } # _man_cmd_from_source
 
 sub _man_cmd_from_rcfile {
-    #? return all command RC-FILE
+    #? return all commands defined in RC-FILE
+    #  should be same as @{$cfg{'commands_usr'}}, but we read RC-FILE again to
+    #  get the comments ##? too; it also lists the "redefined" commands
     my $txt  = "\n                  Commands locally defined in $cfg{'RC-FILE'}\n";
     my $val  = "<<description missing>>";
     my $fh   = undef;
@@ -2768,7 +2770,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.56 2024/08/08
+3.57 2024/08/09
 
 
 =head1 AUTHOR
