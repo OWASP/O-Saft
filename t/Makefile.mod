@@ -6,7 +6,7 @@
 #?      make help.test.mod
 #?
 #? VERSION
-#?      @(#) Makefile.mod 3.16 24/07/30 23:49:49
+#?      @(#) Makefile.mod 3.17 24/08/09 21:49:04
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.mod  = targets for testing module functionality
 
-O-SID.mod          := 3.16
+O-SID.mod          := 3.17
 O-SELF.mod         := t/Makefile.mod
 ALL.includes       += $(O-SELF.mod)
 ALL.inc.type       += mod
@@ -114,10 +114,10 @@ LIST.lib-ODoc.pm       := $(LIST.lib-options) \
 
 # tests are functionally the same as testarg-hlp--help-* from Makefile.hlp
 LIST.lib-OMan.pm       := $(LIST.lib-options) \
-	FAQ     WHY     CHECK   alias   check   cmd     commands compliance \
+	FAQ     WHY     CHECK   alias   check   cmds    commands compliance \
 	content data    glossar intern  help    hint    legacy   links      \
 	opt     options ourstr  pattern range   regex   rfc      text       \
-	toc     todo    tools   exit    abbr    warnings \
+	cmd     info    toc     todo    tools   exit    abbr     warnings \
 	cfg-check   cfg-data    cfg-hint    cfg-info    cfg-text cfg-regex  \
 	gen-wiki    gen-html    gen-cgi     gen-pod     gen-man \
     # lib-OMan.pm allows any of the above listed arguments like:
