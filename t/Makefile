@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 3.18 24/08/05 21:26:32
+#?      @(#) Makefile 3.19 24/08/11 16:25:17
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-O-SID.test         := 3.18
+O-SID.test         := 3.19
 O-SELF.test        := t/Makefile
 ALL.includes       += $(O-SELF.test)
 ALL.inc.type       += test
@@ -882,6 +882,10 @@ endif
 
 ifeq (,$(O-SID.init))
     -include t/Makefile.init
+endif
+
+ifeq (,$(O-SID.inst))
+    -include t/Makefile.inst
 endif
 
 ifeq (,$(O-SID.misc))
