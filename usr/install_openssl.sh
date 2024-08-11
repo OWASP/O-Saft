@@ -163,7 +163,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#) install_openssl.sh 1.41 24/03/23 08:57:22
+#?      @(#) ú;a 1.42 24/08/11 16:02:03
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -175,8 +175,10 @@ dir=`pwd`
 # TODO: on error or interrupt list remaining files and dirs
 
 # Parameters passed to build
-OSAFT_VM_SRC_SSLEAY=${OSAFT_VM_SRC_SSLEAY:="http://search.cpan.org/CPAN/authors/id/M/MI/MIKEM/Net-SSLeay-1.85.tar.gz"}
-OSAFT_VM_SHA_SSLEAY=${OSAFT_VM_SHA_SSLEAY:="9d8188b9fb1cae3bd791979c20554925d5e94a138d00414f1a6814549927b0c8"}
+#2018 OSAFT_VM_SRC_SSLEAY=${OSAFT_VM_SRC_SSLEAY:="http://search.cpan.org/CPAN/authors/id/M/MI/MIKEM/Net-SSLeay-1.85.tar.gz"}
+#2018 OSAFT_VM_SHA_SSLEAY=${OSAFT_VM_SHA_SSLEAY:="9d8188b9fb1cae3bd791979c20554925d5e94a138d00414f1a6814549927b0c8"}
+OSAFT_VM_SRC_SSLEAY=${OSAFT_VM_SRC_SSLEAY:="https://cpan.metacpan.org/authors/id/C/CH/CHRISN/Net-SSLeay-1.94.tar.gz"}
+OSAFT_VM_SHA_SSLEAY=${OSAFT_VM_SHA_SSLEAY:="9d7be8a56d1bedda05c425306cc504ba134307e0c09bda4a788c98744ebcd95d"}
 OSAFT_VM_TAR_SSLEAY=${OSAFT_VM_TAR_SSLEAY:="Net-SSLeay.tgz"}
 OSAFT_VM_SRC_OPENSSL=${OSAFT_VM_SRC_OPENSSL:="https://github.com/PeterMosmans/openssl/archive/1.0.2-chacha.tar.gz"}
 OSAFT_VM_SHA_OPENSSL=${OSAFT_VM_SHA_OPENSSL:="ad3d99ec091e403a3a7a678ddda38b392e3204515425827c53dc5baa92d61d67"}
@@ -281,7 +283,7 @@ mcpan_install   () {
 	# FIXME: perl -MCPAN does not return proper error codes; need
 	#        to parse output, grrr
 	return 0
-} # mcpan_modules
+} # mcpan_install
 
 mcpan_modules   () {
 	#? install modules (with --m only)
@@ -397,7 +399,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  '+VERSION')   echo 1.41 ; exit; ;; # for compatibility
+	  '+VERSION')   echo 1.42 ; exit; ;; # for compatibility
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
