@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 3.13 24/07/17 02:12:43
+#?      @(#) Makefile.dev 3.14 24/08/11 16:21:12
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-O-SID.dev          := 3.13
+O-SID.dev          := 3.14
 O-SELF.dev         := t/Makefile.dev
 ALL.includes       += $(O-SELF.dev)
 ALL.inc.type       += dev
@@ -71,17 +71,9 @@ LIST.o-saft-post   := \
 	-post=XML-value.awk   -post=XML-attribute.awk 
 
 LIST.t-makefile    :=
-LIST.INSTALL.sh    :=   --install  --clean  --check     --checkdev  --expected --cgi
-# NOTE: ensure that EXE.install is called with --n !
-# NOTE: EXE.install-sh --openssl does not work from t directory
-# TODO: EXE.install-sh not completely working as expected (in make targets)
-
-# TODO: need test for INSTALL.sh if perl, wish, docker are missing
-
 _TEST.dev.tmpfile  := /tmp/tmpfile
 
 LIST.usr-bunt.pl   := --test
-LIST.usr-install_openssl.sh := --n --m
 LIST.usr-gen_standalone.sh  := --n --s --t
 
 # command and checks NOT YET IMPLEMENTED are hardcoded here,
@@ -209,31 +201,6 @@ ALL.test.dev            += \
 	testarg-dev-o-saft_--colour \
 	testarg-dev-o-saft_--colour+ocsp \
 	testarg-dev-o-saft_--colour-line
-
-# do not execute script, just show: --n
-testarg-dev-usr-install_openssl_%:  TEST.args = --n
-testarg-dev-INSTALL.sh_%:           TEST.args = --n --v /tmp/o-saft
-# targets for INSTALL.sh are for testing INSTALL.sh's behaviour, they are not
-# intended to install anything, hence they are called with --n  which results
-# in some error messsages. Returns following errors, which is OK for --n :
-#   #   ../INSTALL.sh: 877: cd: can't cd to /tmp/o-saft
-#   #   **ERROR: 040: /tmp/o-saft does not exist; exit
-#   #   **ERROR: 043: missing XXXX; file ignored
-#   #   **ERROR: 050: /tmp/o-saft does not exist; exit
-# additional special option for INSTALL.sh
-testarg-dev-INSTALL.sh_--checkdev--other:   TEST.args += --checkdev --other
-testarg-dev-INSTALL.sh_--install--gnuenv:   TEST.args += --install  --gnuenv
-testarg-dev-INSTALL.sh_--install--useenv:   TEST.args += --install  --useenv
-testarg-dev-INSTALL.sh_--install--instdev:  TEST.args += --install  --instdev
-
-ALL.test.dev.INSTALL.sh += testarg-dev-INSTALL.sh_--checkdev--other \
-			   testarg-dev-INSTALL.sh_--install--gnuenv \
-			   testarg-dev-INSTALL.sh_--install--useenv \
-			   testarg-dev-INSTALL.sh_--install--instdev
-ALL.test.dev            += testarg-dev-INSTALL.sh_--checkdev--other \
-			   testarg-dev-INSTALL.sh_--install--gnuenv \
-			   testarg-dev-INSTALL.sh_--install--useenv \
-			   testarg-dev-INSTALL.sh_--install--instdev
 
 # special option for gen_standalone.sh; must remove the generated file
 # generated file has permissions 555, hence  rm -f
