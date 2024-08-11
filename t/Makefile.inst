@@ -6,7 +6,7 @@
 #?      make help.test.inst
 #?
 #? VERSION
-#?      @(#) Makefile.inst 3.1 24/08/11 16:19:46
+#?      @(#) Makefile.inst 3.2 24/08/11 19:50:16
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.inst = targets for testing INSTALL.sh
 
-O-SID.inst         := 3.1
+O-SID.inst         := 3.2
 O-SELF.inst        := t/Makefile.inst   
 ALL.includes       += $(O-SELF.inst)
 ALL.inc.type       += inst   
@@ -34,8 +34,7 @@ help.test.inst-vv:    HELP_TYPE = inst
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-TEST.inst.hosts     =
-GEN.inst           ?= INSTALL.sh
+EXE.INSTALL        ?= INSTALL.sh
 EXE.install_openssl = $(O-USR.dir)/install_openssl.sh
 
 LIST.INSTALL.sh    :=   --install   --clean --check --checkdev \
@@ -45,17 +44,20 @@ LIST.INSTALL.sh    :=   --install   --clean --check --checkdev \
 #_____________________________________________________________________________
 #______________________________________________________ targets for testing __|
 
-HELP-testcmd-inst-INSTALL.sh%   = test arguments of '($GEN.inst)'
-HELP-testarg-inst-INSTALL.sh%   = test arguments and options of '($GEN.inst)'
+HELP-testcmd-inst-INSTALL.sh%   = test arguments of '($EXE.INSTALL)'
+HELP-testarg-inst-INSTALL.sh%   = test arguments and options of '($EXE.INSTALL)'
+
+help.test.inst:
+	@echo "**WARNING: dummy target until fixed in Makefile.help"
 
 # NOTE: ensure that EXE.install is called with --n !
-# NOTE: GEN.inst --openssl does not work from t directory
-# TODO: GEN.inst not completely working as expected (in make targets)
-# TODO: need test for GEN.inst if perl, wish, docker are missing
+# NOTE: EXE.INSTALL --openssl does not work from t directory
+# TODO: EXE.INSTALL not completely working as expected (in make targets)
+# TODO: need test for EXE.INSTALL if perl, wish, docker are missing
 
-testcmd-inst-INSTALL.sh%:           EXE.pl    = ../$(GEN.inst)
+testcmd-inst-INSTALL.sh%:           EXE.pl    = ../$(EXE.INSTALL)
 testcmd-inst-INSTALL.sh%:           TEST.init = --n --v /tmp/o-saft
-testarg-inst-INSTALL.sh%:           EXE.pl    = ../$(GEN.inst)
+testarg-inst-INSTALL.sh%:           EXE.pl    = ../$(EXE.INSTALL)
 testarg-inst-INSTALL.sh%:           TEST.init = --n --v /tmp/o-saft
 # targets for INSTALL.sh are for testing INSTALL.sh's behaviour, they are not
 # intended to install anything, hence they are called with --n  which results
