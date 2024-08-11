@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.125 24/08/09 14:52:33"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.126 24/08/11 19:47:28"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -410,7 +410,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.125"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.126"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1488,6 +1488,22 @@ sub _check_functions    {
         trace("$text_ssleay (OK)\tyes");
     }
 
+    trace(" check if Net::SSLeay support SSLv2 ...");
+    if ($version_ssleay  < 1.86) {
+        if (_is_cfg_ciphermode('ssleay')) {
+            warn $STR{WARN}, "136: Net::SSLeay $version_ssleay < 1.86; does not support SSLv2;";
+                # SSLv2 will be disabled in _check_ssl_methods()
+        }
+    } else {
+        trace("$text_ssleay (OK)\tyes");
+    }
+
+    #if ($version_ssleay < 1.94) {
+        # default installation in /usr/local/lib
+    #} else {
+        # default installation in /usr/lib
+    #}
+
     trace(" check for NPN and ALPN support ...");  # SEE Note:OpenSSL Version
     if (($version_ssleay < 1.56) or ($version_openssl < 0x10002000)) {
         $cfg{'ssleay'}->{'set_alpn'} = 0;
@@ -1500,11 +1516,6 @@ sub _check_functions    {
     } else {
         trace("$text_ssleay  NPN\tyes");
     }
-    #if ($version_ssleay < 1.94) {
-        # default installation in /usr/local/lib
-    #} else {
-        # default installation in /usr/lib
-    #}
 
     if (not exists &Net::SSLeay::CTX_set_alpn_protos) {
         $cfg{'ssleay'}->{'set_alpn'} = 0;
@@ -6106,7 +6117,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.125");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.126");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
