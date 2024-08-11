@@ -49,7 +49,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.22 24/08/05 00:20:09";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.23 24/08/11 19:49:13";
 our $VERSION        =  "24.06.24";  # official verion number of this file
 
 BEGIN {
@@ -2439,15 +2439,14 @@ sub do_ssl_new      {   ## no critic qw(Subroutines::ProhibitManyArgs)
                 my $bitmask = _SSLbitmask_get($_ssl);
                 if (defined $bitmask) {        # if there is a bitmask, disable this version
                     _trace("do_ssl_new: OP_NO_$_ssl");  # NOTE: constant name *not* as in ssl.h
-                    if (1.88 <= $Net::SSLeay::VERSION) {
+                    if (1.85 <= $Net::SSLeay::VERSION) {
                         # either perl after 5.32 (here 5.36) complains with:
                         #   Argument "0x04000000" isn't numeric in subroutine entry at ...
-                        # or the API of Net::SSLeay::CTX_set_options() after 1.88 changed,
+                        # or the API of Net::SSLeay::CTX_set_options() after 1.85 changed,
                         # so that the bitmask must be passed as integer
                         Net::SSLeay::CTX_set_options($ctx, hex($bitmask));
                     } else {
-                        # fix 10nov23: not sure if this was really correct for 1.88 and older
-                        Net::SSLeay::CTX_set_options($ctx, $bitmask);
+                        Net::SSLeay::CTX_set_options($ctx, $bitmask); # 10nov23: 1.85 and older
                     }
                 }
                 #$Net::SSLeay::ssl_version = 2;  # Insist on SSLv2
