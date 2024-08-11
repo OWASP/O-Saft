@@ -1,0 +1,108 @@
+#!/usr/bin/make -rRf
+#?
+#? DESCRIPTION
+#?      For more details please see
+#?          ../Makefile  Makefile  Makefile.help  Makefile.pod
+#?      make help.test.inst
+#?
+#? VERSION
+#?      @(#) Makefile.inst 3.1 24/08/11 16:19:46
+#?
+#? AUTHOR
+#?      19-apr-19 Achim Hoffmann
+#?
+# -----------------------------------------------------------------------------
+
+HELP-help.test.inst = targets for testing INSTALL.sh
+
+O-SID.inst         := 3.1
+O-SELF.inst        := t/Makefile.inst   
+ALL.includes       += $(O-SELF.inst)
+ALL.inc.type       += inst   
+ALL.help.tests     += help.test.inst   
+
+first-inst-target-is-default: help.test.inst   
+
+ifeq (,$(O-SID.test))
+    -include t/Makefile
+endif
+
+help.test.inst:       HELP_TYPE = inst   
+help.test.inst-v:     HELP_TYPE = inst   
+help.test.inst-vv:    HELP_TYPE = inst   
+
+#_____________________________________________________________________________
+#________________________________________________________________ variables __|
+
+TEST.inst.hosts     =
+GEN.inst           ?= INSTALL.sh
+EXE.install_openssl = $(O-USR.dir)/install_openssl.sh
+
+LIST.INSTALL.sh    :=   --install   --clean --check --checkdev \
+			--expected  --cgi   --openssl  --usage
+# --openssl not jet tested because it calls install_openssl.sh
+
+#_____________________________________________________________________________
+#______________________________________________________ targets for testing __|
+
+HELP-testcmd-inst-INSTALL.sh%   = test arguments of '($GEN.inst)'
+HELP-testarg-inst-INSTALL.sh%   = test arguments and options of '($GEN.inst)'
+
+# NOTE: ensure that EXE.install is called with --n !
+# NOTE: GEN.inst --openssl does not work from t directory
+# TODO: GEN.inst not completely working as expected (in make targets)
+# TODO: need test for GEN.inst if perl, wish, docker are missing
+
+testcmd-inst-INSTALL.sh%:           EXE.pl    = ../$(GEN.inst)
+testcmd-inst-INSTALL.sh%:           TEST.init = --n --v /tmp/o-saft
+testarg-inst-INSTALL.sh%:           EXE.pl    = ../$(GEN.inst)
+testarg-inst-INSTALL.sh%:           TEST.init = --n --v /tmp/o-saft
+# targets for INSTALL.sh are for testing INSTALL.sh's behaviour, they are not
+# intended to install anything, hence they are called with --n  which results
+# in some error messsages. Returns following errors, which is OK for --n :
+#   #   ../INSTALL.sh: 895: cd: can't cd to /tmp/o-saft
+#   #   **ERROR: 040: /tmp/o-saft does not exist; exit
+#   #   **ERROR: 043: missing XXXX; file ignored
+#   #   **ERROR: 050: /tmp/o-saft does not exist; exit
+
+ALL.test.inst       = $(LIST.INSTALL.sh:%=testcmd-inst-INSTALL.sh_%)
+
+# additional special option for INSTALL.sh
+testcmd-inst-INSTALL.sh_--usage:            TEST.init  =
+    # simulate empty arguments
+testarg-inst-INSTALL.sh_--check--colour:    TEST.args += --check    --colour
+testarg-inst-INSTALL.sh_--checkdev--colour: TEST.args += --checkdev --colour
+testarg-inst-INSTALL.sh_--checkdev--other:  TEST.args += --checkdev --other
+testarg-inst-INSTALL.sh_--install--gnuenv:  TEST.args += --install  --gnuenv
+testarg-inst-INSTALL.sh_--install--useenv:  TEST.args += --install  --useenv
+testarg-inst-INSTALL.sh_--install--instdev: TEST.args += --install  --instdev
+testarg-inst-INSTALL.sh_--simulate-vm:      export osaft_vm_build = 1
+    # set TEST.init  empty not necessary as long as there is no --check
+ALL.test.inst      += \
+	testarg-inst-INSTALL.sh_--check--colour \
+	testarg-inst-INSTALL.sh_--checkdev--colour \
+	testarg-inst-INSTALL.sh_--checkdev--other \
+	testarg-inst-INSTALL.sh_--install--gnuenv \
+	testarg-inst-INSTALL.sh_--install--useenv \
+	testarg-inst-INSTALL.sh_--install--instdev \
+	testarg-inst-INSTALL.sh_--simulate-vm
+
+# targets for install_openssl.sh
+testarg-inst-usr-install_openssl_%:     EXE.pl    = ../$(EXE.install_openssl)
+testarg-inst-usr-install_openssl_%:     TEST.init =
+testarg-inst-usr-install_openssl_--n:   TEST.args = --n
+testarg-inst-usr-install_openssl_--m:   TEST.args = --m
+testarg-inst-usr-install_openssl_--list:TEST.args = --list
+ALL.test.inst      += \
+	testarg-inst-usr-install_openssl_--m  \
+	testarg-inst-usr-install_openssl_--n  \
+	testarg-inst-usr-install_openssl_--list
+
+ALL.test.inst.log   = $(ALL.test.inst:%=%.log)
+
+test.inst.log-compare:  TEST.target_prefix  = testarg-inst-
+test.inst.log-move:     TEST.target_prefix  = testarg-inst-
+test.inst.log:          TEST.target_prefix  = testarg-inst-
+
+test.inst:          $(ALL.test.inst)
+test.inst.log:      $(ALL.test.inst.log) test.log-compare-hint
