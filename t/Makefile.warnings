@@ -13,7 +13,7 @@
 #?      the warning message is not present.
 #?
 #? VERSION
-#?      @(#) Makefile.warnigs 3.21 24/08/12 13:27:38
+#?      @(#) Makefile.warnigs 3.22 24/08/12 14:41:34
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -22,7 +22,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-O-SID.warnings     := 3.21
+O-SID.warnings     := 3.22
 O-SELF.warnings    := t/Makefile.warnings
 ALL.includes       += $(O-SELF.warnings)
 ALL.inc.type       += warnings
@@ -175,6 +175,10 @@ warning-%: message-%
 #   As this is just a simple number in all rules here, the search may re-
 #   sult in false positives.  Manual checks of the rule commands (recipe)
 #   are recommended from time to time.
+
+#   The message text assigned to  TEST.args  must not contain ( except it
+#   is used for make variables. Otherwise following error may occour:
+#        /bin/sh: 6: Syntax error: "(" unexpected (expecting "fi")
 #
 #   NOTE:  in rare cases the target may succedd wrongly,  see description
 #   of   message-%  pattern rule in t/Makefile.
@@ -289,8 +293,8 @@ warning-132: TEST.args  = TODO: testing openssl < 1.0.1, NPN disabled
 warning-133: TEST.args  = TODO: testing Net::SSLeay without OCSP
 warning-134: TEST.args  = TODO: testing Net::SSLeay without EC
 warning-135: TEST.args  = TODO: testing Net::SSLeay < 1.49
-warning-136: TEST.args  = TODO: testing Net::SSLeay < 1.86 (no SSLv2)
-warning-137: TEST.args  = TODO: testing Net::SSLeay < 1.92 (no TLSv13)
+warning-136: TEST.args  = TODO: testing Net::SSLeay < 1.86, no SSLv2
+warning-137: TEST.args  = TODO: testing Net::SSLeay < 1.92, no TLSv13
 #warning-138: TEST.args  = free
 #warning-139: TEST.args  = free
 warning-140: TEST.args  = +cipherraw --dtlsv1               +quit
@@ -308,7 +312,7 @@ warning-149: TEST.args  = --openssl=/does/not/exist         +quit
 warning-201: TEST.args  = +cn                               unknown-host
 warning-202: TEST.args  = +cn --exit=HOST1                  www.skype.com
 #                       # scary: need a reliable FQDN here -^^^^^^^^^^^^^
-warning-203: TEST.args  = TODO: testing connection without SNI (errors), difficult ...
+warning-203: TEST.args  = TODO: testing connection without SNI errors, difficult ...
 warning-204: TEST.args  = TODO: testing connection without SNI, difficult ...
 warning-205: TEST.args  = TODO: testing connection failed, difficult ...
 warning-206: TEST.args  = TODO: testing connection witout SNI errors from SSLinfo, difficult ...
@@ -440,7 +444,7 @@ warnings-%.log: $(TEST.logdir)
 # $(_TEST.warning.log) calls "make -s" to avoid printing of executed commands
 _TEST.warning.log   = $(TEST.logdir)/test.warnings.log-$(TEST.today)
 $(_TEST.warning.log):
-	@echo "# $(O-SELF.warnings) 3.21: $(MAKE) test.warnings.log" > $@
+	@echo "# $(O-SELF.warnings) 3.22: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
