@@ -209,7 +209,7 @@
 #?      --v     print verbose information about performed actions
 #?      -x      debug using shell's "set -x"
 #?      --check --checkdev --clean --cgi --expected --install --openssl
-#?                      - commands, see  DESCRIPTION  above
+#?                      - these are commands, see  DESCRIPTION  above
 #?      --force         - install  RC-FILEs  .o-saft.pl  and  .o-saft.tcl in
 #?                        $HOME, overwrites existing ones
 #?      --instdev       - copy also all files necessary for development into
@@ -324,7 +324,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.32 24/08/12 10:25:12"
+SID="@(#) INSTALL-template.sh 3.33 24/08/12 22:16:59"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -556,16 +556,16 @@ check_pm    () {
 	return 1
 }
 
-check_commands () {
+check_commands  () {
 	for c in $* ; do
 		echo_label "$c"
 		is=$(\command -v $c)
 		[ -n "$is" ] && echo_green "$is" || echo_red "missing"
 	done
 	return
-}
+} # check_commands
 
-check_development  () {
+check_development () {
 	# $1 is -d -e -f or -L ; $2 is name of directory, file, link, ...
 	# use own label instead of echo_label
 	perl -le "printf'# %25s%c','$2',0x09"
@@ -576,7 +576,17 @@ check_development  () {
 		err=`expr $err + 1`
 	fi
 	return
-}
+} # check_development
+
+check_exec  () {
+# TODO: this is a variant of check_development(), should be implemented there
+	for c in $* ; do
+		echo_label "$c"
+		[ -x "$c" ] && echo_green "OK" || echo_red "not executable"
+		[ -x "$c" ] || err=`expr $err + 1`
+	done
+	return
+} # check_exec
 
 copy_file   () {
 	src=$1
@@ -951,9 +961,14 @@ mode_checkdev () {
 		d="$inst_directory/$f"  # $f already contains $tst_dir
 		check_development -f $d
 	done
-	echo_head "# check for tools used with/in make targets"
+	echo_head "# check for own tools used with/in make targets"
 	check_commands $tools_intern
+	echo_head "# check for standard tools used with/in make targets"
 	check_commands $tools_extern
+	echo_head "# check if own Perl modules are executable"
+	check_exec $osaft_pm
+	echo_head "# check if own tools are executable"
+	check_exec $tools_intern
 	echo      "#"
 	echo      "# $text_podm"
 	echo_foot
@@ -1232,7 +1247,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.32 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.33 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1256,7 +1271,7 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.32; $mode $src_txt $inst_directory ..."
+echo "# $0 3.33; $mode $src_txt $inst_directory ..."
     # always print internal SID, makes debugging simpler
     # do not use $SID, which is too noisy for make targets
 
