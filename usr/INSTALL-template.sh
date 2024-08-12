@@ -32,6 +32,15 @@
 #?          --expected  - show sample output expected for  --check
 #                         All lines starting with #= are the sample output.
 #?          --checkdev  - check system for development (make) requirements
+#?          --check=tools         - just check main tools
+#?          --check=self          - just check main tool versions
+#?          --check=perl          - just check Perl required modules
+#?          --check=modules       - just check all required modules
+#?          --check=rc            - just check resource files
+#?          --check=inst          - just check installation in specified dir
+#?          --check=openssl       - just check openssl       ; ;;
+#?          --check=usr           - just check tools in usr/
+#?          --check=podtools      - just check for tools to view POD files
 #?
 #?      With --install  only warnings or errors are reported. Use option --v
 #?      to get a detailed report.
@@ -308,7 +317,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) ¿utÈüU 3.28 24/08/11 16:26:01"
+SID="@(#) »:ÍV 3.29 24/08/12 09:03:53"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -548,7 +557,7 @@ check_commands () {
 	return
 }
 
-check_development () {
+check_development  () {
 	# $1 is -d -e -f or -L ; $2 is name of directory, file, link, ...
 	# use own label instead of echo_label
 	perl -le "printf'# %25s%c','$2',0x09"
@@ -611,8 +620,8 @@ copy_file   () {
 
 #_____________________________________________________________________________
 #__________________________________________________________ check functions __|
-check_self  () {
-	echo_info "check_self() ..."
+check_tools () {
+	echo_info "check_tools() ..."
 	echo_head "# check for O-Saft programs found via environment variable PATH"
 	_cnt=0
 	_gui=0
@@ -642,7 +651,7 @@ check_self  () {
 	[ -e "$osaft_one" ] || ( echo_label "$osaft_one" && echo_yellow "$text_one" )
 	echo_foot
 	return
-} # check_self
+} # check_tools
 
 check_inst  () {
 	echo_info "check_inst() ..."
@@ -671,8 +680,8 @@ check_inst  () {
 	return
 } # check_inst
 
-check_self_version () {
-	echo_info "check_self_version() ..."
+check_self  () {
+	echo_info "check_self() ..."
 	echo_head '# check for used O-Saft programs (according $PATH)'
 	for o in $all_exe ; do
 		# $osaft_cgi cannot be checked here because it behaves different
@@ -696,7 +705,7 @@ check_self_version () {
 	done
 	echo_foot
 	return
-} # check_self_version
+} # check_self
 
 check_rc    () {
 	echo_info "check_rc() ..."
@@ -724,8 +733,62 @@ check_rc    () {
 	return
 } # check_rc
 
-check_perl_self    () {
-	echo_info "check_perl_self() ..."
+check_usr   () {
+	echo_info "check_usr() ..."
+	echo_head "# check for contributed files (in $inst_directory/$usr_dir )"
+	for c in $files_contrib $osaft_one ; do
+		_skip=0
+		for f in $files_not_installed $files_develop ; do
+			[ "$f" = "$c" ] && _skip=1
+		done
+		[ $_skip -eq 1 ] && continue
+		_c=${c##*/}
+		echo_label "$_c" #&& echo_green "$openssl"
+		c="$inst_directory/$c"
+		[ -e "$c" ] && echo_green "$c" || echo_yellow "missing $c"
+		#err=`expr $err + 1`    # not counted as error
+	done
+	echo_foot
+	return
+} # check_usr
+
+check_perl  () {
+	echo_info "check_perl() ..."
+	echo_head "# check for important Perl modules used by installed O-Saft"
+	for p in `echo $inst_directory $PATH|tr ':' ' '` ; do
+		o="$p/$osaft_exe"
+		[ -e "$o" ] || continue
+		# NOTE: output format is slightly different, 'cause **WARNINGs are printed too
+		echo "# testing $o ...$tab"
+		for m in $perl_modules ; do
+			echo_label "$m"
+			w=`$o --no-warn +version 2>&1        | awk '/(ERROR|WARNING).*'$m'/{print}'`
+			v=`$o --no-warn +version 2>/dev/null | awk '($1=="'$m'"){printf"%8s %s",$2,$3}'`
+			if [ -n "$w" ]; then
+				# ERROR in $w most likely means that $m is not found by
+				# perl, then $v is empty
+				if [ -z "$v" ]; then
+					echo_red    "$w"
+				else
+					echo_red    "$v"
+					echo_yellow "$w"
+				fi
+			else
+				if [ -z "$v" ]; then
+					echo_yellow "missing?"  # probaly due to ERROR
+				else
+					echo_green  "$v"
+				fi
+			fi
+			#err=`expr $err + 1`    # already counted in previous check
+		done
+	done
+	echo_foot
+	return
+} # check_perl
+
+check_modules   () {
+	echo_info "check_modules() ..."
 	echo_head "# check for installed Perl modules (started in $inst_directory )"
 	for m in $perl_modules $osaft_modules ; do
 		echo_label "$m"
@@ -776,44 +839,9 @@ check_perl_self    () {
 	done
 	echo_foot
 	return
-} # check_perl_self
+} # check_modules
 
-check_perl_modules () {
-	echo_info "check_perl_modules() ..."
-	echo_head "# check for important Perl modules used by installed O-Saft"
-	for p in `echo $inst_directory $PATH|tr ':' ' '` ; do
-		o="$p/$osaft_exe"
-		[ -e "$o" ] || continue
-		# NOTE: output format is slightly different, 'cause **WARNINGs are printed too
-		echo "# testing $o ...$tab"
-		for m in $perl_modules ; do
-			echo_label "$m"
-			w=`$o --no-warn +version 2>&1        | awk '/(ERROR|WARNING).*'$m'/{print}'`
-			v=`$o --no-warn +version 2>/dev/null | awk '($1=="'$m'"){printf"%8s %s",$2,$3}'`
-			if [ -n "$w" ]; then
-				# ERROR in $w most likely means that $m is not found by
-				# perl, then $v is empty
-				if [ -z "$v" ]; then
-					echo_red    "$w"
-				else
-					echo_red    "$v"
-					echo_yellow "$w"
-				fi
-			else
-				if [ -z "$v" ]; then
-					echo_yellow "missing?"  # probaly due to ERROR
-				else
-					echo_green  "$v"
-				fi
-			fi
-			#err=`expr $err + 1`    # already counted in previous check
-		done
-	done
-	echo_foot
-	return
-} # check_perl_modules
-
-check_summary () {
+check_summary   () {
 	echo_info "check_summary() ..."
 	echo_head "# summary of warnings from installed O-Saft (should be empty)"
 	o="$inst_directory/$osaft_exe"
@@ -827,7 +855,7 @@ check_summary () {
 	return
 } # check_summary
 
-check_openssl () {
+check_openssl   () {
 	echo_info "check_openssl() ..."
 	echo_head "# check for openssl executable in PATH"
 	echo_label "openssl" && echo_green "`which openssl`" "(`openssl version`)" \
@@ -856,59 +884,40 @@ check_openssl () {
 	return
 } # check_openssl
 
-check_tools () {
-	echo_info "check_tools() ..."
+check_podtools  () {
+	echo_info "check_podtools() ..."
 	echo_head "# check for optional tools to view documentation"
 	check_commands $tools_optional
 	echo      "#"
 	echo      "# $text_podm"
 	echo_foot
 	return
-} # check_tools
-
-check_files () {
-	echo_info "check_files() ..."
-	echo_head "# check for contributed files (in $inst_directory/$usr_dir )"
-	for c in $files_contrib $osaft_one ; do
-		_skip=0
-		for f in $files_not_installed $files_develop ; do
-			[ "$f" = "$c" ] && _skip=1
-		done
-		[ $_skip -eq 1 ] && continue
-		_c=${c##*/}
-		echo_label "$_c" #&& echo_green "$openssl"
-		c="$inst_directory/$c"
-		[ -e "$c" ] && echo_green "$c" || echo_yellow "missing $c"
-		#err=`expr $err + 1`    # not counted as error
-	done
-	echo_foot
-	return
-} # check_files
+} # check_podtools
 
 mode_check  () {
 	echo_info "mode_check() ..."
 	echo "# PATH$tab$PATH"
-	check_self
+	check_tools
 
 	PATH=${inst_directory}:$PATH # ensure that given directory is in PATH
 	[ -n "$optn"  ] && echo "cd $inst_directory"
 	cd "$inst_directory"   # mus be done with --n too
 
 	check_inst
-	check_self_version
+	check_self
 	check_rc
-	# from here on, all **WARNINGS (from $osaft_exe) are unimportant and
-	# hence redirected to /dev/null
-	check_perl_self
-	check_perl_modules
+	# from here on, all **WARNINGS (from $osaft_exe) are not important
+	# and hence redirected to /dev/null
+	check_perl
+	check_modules
 	check_summary
 	check_openssl
-	check_tools
-	check_files
+	check_podtools
+	check_usr
 
 	echo_error $err
 
-	# more hints, if no installation directory was given; uses echo!
+	# more hints, if no installation directory was given
 	[ -z "$new_dir" ] && echo "# default installation directory Â»$inst_directoryÂ« used"
 	[ -z "$new_dir" ] && echo "# consider using Â»$0 path/to/directoryÂ« "
     	# last message also occours if OSAFT_DIR was used; that's OK
@@ -1192,6 +1201,7 @@ while [ $# -gt 0 ]; do
 	  '--checkdev')         mode=checkdev;  ;;
 	  '--check-dev')        mode=checkdev;  ;;
 	  '--usage')            mode=usage;     ;; # alias
+	   --check*)            mode="$1";      ;;
 	  '--force')            force=1;        ;;
 	  '--other')            other=1;        ;;
 	  '--instdev')          instdev=1;      ;;
@@ -1214,7 +1224,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.28 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.29 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1231,16 +1241,17 @@ fi
 if [ -n "$new_dir" ]; then
 	# new dir given, implies --install
 	inst_directory="$new_dir"
-	[ -z "$mode" ] && mode=install
 fi
 clean_directory="$inst_directory/$clean_directory"
 	# set on command line, required for --clean and --cgi
 
-echo "# $0 3.28 ..."    # always print internal SID, makes debugging simpler
-                       # do not use $SID, which is too noisy for make targets
-
 [ -z "$mode" ] && mode="usage"  # default mode
-echo_info "$mode $inst_directory ..."
+src_txt=
+[ "install" = "$mode" ] && src_txt="$src_directory -->"
+echo "# $0 3.29; $mode $src_txt $inst_directory ..."
+    # always print internal SID, makes debugging simpler
+    # do not use $SID, which is too noisy for make targets
+
 case $mode in
 	usage)      mode_usage   ; ;;
 	check)      mode_check   ; ;;
@@ -1250,6 +1261,25 @@ case $mode in
 	openssl)    mode_openssl ; ;;
 	expected)   mode_expected; ;;
 	cgi)        mode_cgi     ; ;;
+ 	# parts of check; allow any separator for --check= beside =
+	#--check?sid)           check_sid       ; ;;
+	#--check?SID)           check_sid       ; ;;
+	#--check?ssl)           check_ssl       ; ;;
+	#--check?dev)           check_dev       ; ;;
+	#--check?doc)           check_doc       ; ;;
+	#--check?limit)         check_limit     ; ;;
+	--check?tool)          check_tools     ; ;;
+	--check?tools)         check_tools     ; ;;
+	--check?self)          check_self      ; ;;
+	--check?perl)          check_perl      ; ;;
+	--check?modules)       check_modules   ; ;;
+	--check?rc)            check_rc        ; ;;
+	--check?inst)          check_inst      ; ;;
+	--check?summary)       check_summary   ; ;;
+	--check?openssl)       check_openssl   ; ;;
+	--check?pod)           check_podtools  ; ;;
+	--check?podtools)      check_podtools  ; ;;
+	--check?usr)           check_usr       ; ;;
 	*)          err=5; echo_red "**ERROR: 060: unknow mode  $mode; exit"; ;;
 esac
 
