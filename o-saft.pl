@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.126 24/08/11 19:47:28"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.127 24/08/12 14:07:18"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -410,7 +410,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.126"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.127"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1497,6 +1497,20 @@ sub _check_functions    {
     } else {
         trace("$text_ssleay (OK)\tyes");
     }
+
+    trace(" check if Net::SSLeay support TLSv13 ...");
+    if ($version_ssleay  < 1.92) {
+        if (_is_cfg_ciphermode('ssleay')) {
+            warn $STR{WARN}, "137: Net::SSLeay $version_ssleay < 1.92; does not support TLSv13;";
+                # SSLv2 will be disabled in _check_ssl_methods()
+        }
+    } else {
+        trace("$text_ssleay (OK)\tyes");
+    }
+    #if ($version_ssleay  > 1.90) {
+    #   does not support CTX_v2_new,and CTX_v3_new, only CTX_v23_new
+    #   does not support SSLv2_method, SSLv3_method
+    #}
 
     #if ($version_ssleay < 1.94) {
         # default installation in /usr/local/lib
@@ -6117,7 +6131,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.126");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.127");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
