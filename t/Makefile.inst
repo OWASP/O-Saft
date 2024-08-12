@@ -6,7 +6,7 @@
 #?      make help.test.inst
 #?
 #? VERSION
-#?      @(#) Makefile.inst 3.2 24/08/11 19:50:16
+#?      @(#) Makefile.inst 3.3 24/08/12 10:40:10
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.inst = targets for testing INSTALL.sh
 
-O-SID.inst         := 3.2
+O-SID.inst         := 3.3
 O-SELF.inst        := t/Makefile.inst   
 ALL.includes       += $(O-SELF.inst)
 ALL.inc.type       += inst   
@@ -37,8 +37,13 @@ help.test.inst-vv:    HELP_TYPE = inst
 EXE.INSTALL        ?= INSTALL.sh
 EXE.install_openssl = $(O-USR.dir)/install_openssl.sh
 
-LIST.INSTALL.sh    :=   --install   --clean --check --checkdev \
-			--expected  --cgi   --openssl  --usage
+LIST.INSTALL.sh    :=   --install   --clean --check    --checkdev \
+			--expected  --cgi   --usage \
+	--check-tools   --check-self   --check-perl    --check-modules \
+	--check-rc      --check-inst   --check-summary --check-openssl \
+	--check-usr     --check-podtools
+# --check-* used instead of --check=* to avoid GNU make problems with
+# target names containing =
 # --openssl not jet tested because it calls install_openssl.sh
 
 #_____________________________________________________________________________
