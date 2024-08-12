@@ -303,6 +303,13 @@
 #       fails (prints ANSI escapes and/or \-escapes verbatim,  and/or prints
 #       -n verbatim, etc.).
 #
+#    INSTALL.sh.lock
+#       If the file  INSTALL.sh.lock exists in the source or destination dir
+#       mv and rm commands will not be executed (--cgi, --clean --install).
+#       This is not officially described with  --help  because it is used to
+#       to protect the develepopment directory for unintended use.
+#       
+#
 #? DEPENDENCIES
 #?      Following tools are required for proper functionality:
 #?          awk, cat, perl, sed, tr, which, /bin/echo
@@ -317,12 +324,13 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) »:ÍV 3.29 24/08/12 09:03:53"
+SID="@(#) µ0V 3.30 24/08/12 09:36:11"
 try=''
 ich=${0##*/}
 dir=${0%/*}
 [ "$dir" = "$0" ] && dir="." # $0 found via $PATH in .
 # note that all variables are used global
+lock="INSTALL.sh.lock"
 src_directory="$dir"
 clean_directory=".files_to_be_removed"  # must be set after reading arguments
 _break=0                # 1 if screen width < 50; then use two lines as output
@@ -595,7 +603,7 @@ copy_file   () {
 	if [ 1 -eq $convert ]; then
 		echo_info "install converted $src ..."
 		# only the very first line $. ist changed
-		if [ "$try" = "echo" ]; then
+		if [ -n "$try" ]; then
 		    echo 'perl -lane "if(1==$.){s|^.*?/([a-zA-Z0-9_.-]+$)|#\!/usr/bin/env $1|;}print;" '"'$src' > '$dst'"
 		    return
 		fi
@@ -900,8 +908,8 @@ mode_check  () {
 	check_tools
 
 	PATH=${inst_directory}:$PATH # ensure that given directory is in PATH
-	[ -n "$optn"  ] && echo "cd $inst_directory"
-	cd "$inst_directory"   # mus be done with --n too
+	echo "cd $inst_directory"
+	cd "$inst_directory"         # must be done with --n too
 
 	check_inst
 	check_self
@@ -981,7 +989,7 @@ mode_install () {
 	echo_info "force=$force , ignore=$ignore , gnuenv=$gnuenv , useenv=$useenv"
 	if [ ! -d "$inst_directory" ]; then
 		echo_red "**ERROR: 040: $inst_directory does not exist; exit"
-		[ "$try" = "echo" ] || exit 2
+		[ -n "$try" ] || exit 2
 		# with --n continue, so we see what would be done
 	fi
 
@@ -1108,7 +1116,7 @@ mode_cgi    () {
 	echo_info "prepare $inst_directory for use in CGI mode ..."
 	if [ ! -d "$inst_directory" ]; then
 		echo_red "**ERROR: 050: $inst_directory does not exist; exit"
-		[ "$try" = "echo" ] || exit 2
+		[ -n "$try" ] || exit 2
 		# with --n continue, so we see what would be done
 	fi
 	if [ -d "$clean_directory" ]; then
@@ -1224,7 +1232,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.29 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.30 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1248,9 +1256,20 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.29; $mode $src_txt $inst_directory ..."
+echo "# $0 3.30; $mode $src_txt $inst_directory ..."
     # always print internal SID, makes debugging simpler
     # do not use $SID, which is too noisy for make targets
+
+# check for lock-file
+echo "$src_directory/$lock -o $inst_directory/$lock"
+if [ -e "$src_directory/$lock" -o -e "$inst_directory/$lock" ]; then
+	case $mode in
+	cgi | cleanup | install)
+		echo_red "**ERROR: 003: development directory; --n enforced"
+		try=echo
+		;;
+	esac
+fi
 
 case $mode in
 	usage)      mode_usage   ; ;;
