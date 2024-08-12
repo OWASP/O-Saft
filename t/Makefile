@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 3.19 24/08/11 16:25:17
+#?      @(#) Makefile 3.20 24/08/12 13:22:35
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-O-SID.test         := 3.19
+O-SID.test         := 3.20
 O-SELF.test        := t/Makefile
 ALL.includes       += $(O-SELF.test)
 ALL.inc.type       += test
@@ -423,6 +423,10 @@ test_file-3:
 testcmd-test.internal: test.file-1 test,file-2 test_file-3
 	@$(O-TRACE.target)
 	@echo 'testcmd-test.internal: test.file-1 test-file-2 test_file-3'
+	$(foreach _v,$(filter O-SID%,$(sort $(.VARIABLES))), \
+		$(eval _sids += $(_v)) \
+	 )
+	@echo '# found O-SID.*     = $(_sids)'
 	@echo '# SIDs of included Makefile* (file not included if SID missing):'
 	@echo '# $$(O-SID)          = $(O-SID)'
 	@echo '# $$(O-SID.help)     = $(O-SID.help)'
@@ -433,6 +437,7 @@ testcmd-test.internal: test.file-1 test,file-2 test_file-3
 	@echo '# $$(O-SID.make)     = $(O-SID.make)'
 	@echo '# $$(O-SID.exit)     = $(O-SID.exit)'
 	@echo '# $$(O-SID.init)     = $(O-SID.init)'
+	@echo '# $$(O-SID.inst)     = $(O-SID.inst)'
 	@echo '# $$(O-SID.misc)     = $(O-SID.misc)'
 	@echo '# $$(O-SID.cmd)      = $(O-SID.cmd)'
 	@echo '# $$(O-SID.dev)      = $(O-SID.dev)'
