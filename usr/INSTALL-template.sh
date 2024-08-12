@@ -84,6 +84,21 @@
 #=# /home/USER/.o-saft.tcl	missing, consider generating: »o-saft.tcl --rc > /home/USER/.o-saft.tcl«
 #=#----------------------+---------------------------------------
 #=
+#=# check for important Perl modules used by installed O-Saft
+#=#----------------------+---------------------------------------
+#=# testing /opt/o-saft/o-saft.pl ...	
+#=#              Net::DNS	    1.29 /usr/local/share/perl/5.24.1/Net/DNS.pm
+#=#           Net::SSLeay	    1.88 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
+#=#      IO::Socket::INET	    1.41 /usr/local/lib/x86_64-linux-gnu/perl-base/IO/Socket/INET.pm
+#=#       IO::Socket::SSL	   2.069 /usr/share/perl5/IO/Socket/SSL.pm
+#=#           Time::Local	    1.28 /usr/share/perl/5.24/Time/Local.pm
+#=# testing /opt/o-saft/o-saft.pl in /opt/o-saft ...	
+#=#              Net::DNS	    1.29 /usr/local/share/perl/5.24.1/Net/DNS.pm
+#=#           Net::SSLeay	    1.88 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
+#=#       IO::Socket::SSL	   2.069 /usr/share/perl5/IO/Socket/SSL.pm
+#=#           Time::Local	    1.28 /usr/share/perl/5.24/Time/Local.pm
+#=#----------------------+---------------------------------------
+#=
 #=# check for installed Perl modules (started in '$inst_directory')
 #=#----------------------+---------------------------------------
 #=#              Net::DNS	    1.36 /usr/local/share/perl/5.24.1/Net/DNS.pm
@@ -105,21 +120,6 @@
 #=#                  OUsr	24.01.24 lib/OUsr.pm
 #=#----------------------+---------------------------------------
 #=
-#=# check for important Perl modules used by installed O-Saft
-#=#----------------------+---------------------------------------
-#=# testing /opt/o-saft/o-saft.pl ...	
-#=#              Net::DNS	    1.29 /usr/local/share/perl/5.24.1/Net/DNS.pm
-#=#           Net::SSLeay	    1.88 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
-#=#      IO::Socket::INET	    1.41 /usr/local/lib/x86_64-linux-gnu/perl-base/IO/Socket/INET.pm
-#=#       IO::Socket::SSL	   2.069 /usr/share/perl5/IO/Socket/SSL.pm
-#=#           Time::Local	    1.28 /usr/share/perl/5.24/Time/Local.pm
-#=# testing /opt/o-saft/o-saft.pl in /opt/o-saft ...	
-#=#              Net::DNS	    1.29 /usr/local/share/perl/5.24.1/Net/DNS.pm
-#=#           Net::SSLeay	    1.88 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
-#=#       IO::Socket::SSL	   2.069 /usr/share/perl5/IO/Socket/SSL.pm
-#=#           Time::Local	    1.28 /usr/share/perl/5.24/Time/Local.pm
-#=#----------------------+---------------------------------------
-#=
 #=# summary of warnings from installed O-Saft (should be empty)
 #=#----------------------+---------------------------------------
 #=# testing /opt/o-saft/o-saft.pl in /opt/o-saft ...	
@@ -128,7 +128,7 @@
 #=
 #=# check for openssl executable in PATH
 #=#----------------------+---------------------------------------
-#=#               openssl	/usr/bin/openssl (OpenSSL 3.0.11 19 Sep 2023 (Library: OpenSSL 3.0.11 19 Sep 2023))
+#=#               openssl	/usr/bin/openssl (OpenSSL 3.0.13 30 Jan 2024 (Library: OpenSSL 3.0.13 30 Jan 2024))
 #=#----------------------+---------------------------------------
 #=
 #=# check for openssl executable used by O-Saft
@@ -324,7 +324,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) �0V 3.30 24/08/12 09:36:11"
+SID="@(#) INSTALL-template.sh 3.31 24/08/12 10:06:30"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -629,12 +629,12 @@ copy_file   () {
 #_____________________________________________________________________________
 #__________________________________________________________ check functions __|
 check_tools () {
-	echo_info "check_tools() ..."
+	[ "check" = "$mode" ] || echo_info "check_tools() ..."
 	echo_head "# check for O-Saft programs found via environment variable PATH"
 	_cnt=0
 	_gui=0
 	for p in `echo $PATH|tr ':' ' '` ; do
-		for o in $all_exe wish ; do
+		for o in $all_exe perl wish ; do
 			exe="$p/$o"
 			if [ -e "$exe" ]; then
 				_cnt=`expr $_cnt + 1`
@@ -662,7 +662,7 @@ check_tools () {
 } # check_tools
 
 check_inst  () {
-	echo_info "check_inst() ..."
+	[ "check" = "$mode" ] || echo_info "check_inst() ..."
 	echo_head "# check installation in $inst_directory"
 	echo      "# (warnings are ok if »git clone« will be used for development)"
 	_cnt=0
@@ -689,7 +689,7 @@ check_inst  () {
 } # check_inst
 
 check_self  () {
-	echo_info "check_self() ..."
+	[ "check" = "$mode" ] || echo_info "check_self() ..."
 	echo_head '# check for used O-Saft programs (according $PATH)'
 	for o in $all_exe ; do
 		# $osaft_cgi cannot be checked here because it behaves different
@@ -716,7 +716,7 @@ check_self  () {
 } # check_self
 
 check_rc    () {
-	echo_info "check_rc() ..."
+	[ "check" = "$mode" ] || echo_info "check_rc() ..."
 	echo_head "# check for installed O-Saft resource files"
 	# currently no version check
 	_cnt=0
@@ -742,7 +742,7 @@ check_rc    () {
 } # check_rc
 
 check_usr   () {
-	echo_info "check_usr() ..."
+	[ "check" = "$mode" ] || echo_info "check_usr() ..."
 	echo_head "# check for contributed files (in $inst_directory/$usr_dir )"
 	for c in $files_contrib $osaft_one ; do
 		_skip=0
@@ -761,7 +761,7 @@ check_usr   () {
 } # check_usr
 
 check_perl  () {
-	echo_info "check_perl() ..."
+	[ "check" = "$mode" ] || echo_info "check_perl() ..."
 	echo_head "# check for important Perl modules used by installed O-Saft"
 	for p in `echo $inst_directory $PATH|tr ':' ' '` ; do
 		o="$p/$osaft_exe"
@@ -796,7 +796,7 @@ check_perl  () {
 } # check_perl
 
 check_modules   () {
-	echo_info "check_modules() ..."
+	[ "check" = "$mode" ] || echo_info "check_modules() ..."
 	echo_head "# check for installed Perl modules (started in $inst_directory )"
 	for m in $perl_modules $osaft_modules ; do
 		echo_label "$m"
@@ -850,7 +850,7 @@ check_modules   () {
 } # check_modules
 
 check_summary   () {
-	echo_info "check_summary() ..."
+	[ "check" = "$mode" ] || echo_info "check_summary() ..."
 	echo_head "# summary of warnings from installed O-Saft (should be empty)"
 	o="$inst_directory/$osaft_exe"
 	if [ -e "$o" ]; then
@@ -864,7 +864,7 @@ check_summary   () {
 } # check_summary
 
 check_openssl   () {
-	echo_info "check_openssl() ..."
+	[ "check" = "$mode" ] || echo_info "check_openssl() ..."
 	echo_head "# check for openssl executable in PATH"
 	echo_label "openssl" && echo_green "`which openssl`" "(`openssl version`)" \
 		|| echo_yellow "missing"
@@ -893,7 +893,7 @@ check_openssl   () {
 } # check_openssl
 
 check_podtools  () {
-	echo_info "check_podtools() ..."
+	[ "check" = "$mode" ] || echo_info "check_podtools() ..."
 	echo_head "# check for optional tools to view documentation"
 	check_commands $tools_optional
 	echo      "#"
@@ -1232,7 +1232,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.30 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.31 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1256,7 +1256,7 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.30; $mode $src_txt $inst_directory ..."
+echo "# $0 3.31; $mode $src_txt $inst_directory ..."
     # always print internal SID, makes debugging simpler
     # do not use $SID, which is too noisy for make targets
 
