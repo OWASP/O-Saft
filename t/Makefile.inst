@@ -6,7 +6,7 @@
 #?      make help.test.inst
 #?
 #? VERSION
-#?      @(#) Makefile.inst 3.3 24/08/12 10:40:10
+#?      @(#) Makefile.inst 3.4 24/08/12 21:18:38
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,21 +15,21 @@
 
 HELP-help.test.inst = targets for testing INSTALL.sh
 
-O-SID.inst         := 3.3
-O-SELF.inst        := t/Makefile.inst   
+O-SID.inst         := 3.4
+O-SELF.inst        := t/Makefile.inst
 ALL.includes       += $(O-SELF.inst)
-ALL.inc.type       += inst   
-ALL.help.tests     += help.test.inst   
+ALL.inc.type       += inst
+ALL.help.tests     += help.test.inst
 
-first-inst-target-is-default: help.test.inst   
+first-inst-target-is-default: help.test.inst
 
 ifeq (,$(O-SID.test))
     -include t/Makefile
 endif
 
-help.test.inst:       HELP_TYPE = inst   
-help.test.inst-v:     HELP_TYPE = inst   
-help.test.inst-vv:    HELP_TYPE = inst   
+help.test.inst:       HELP_TYPE = inst
+help.test.inst-v:     HELP_TYPE = inst
+help.test.inst-vv:    HELP_TYPE = inst
 
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
@@ -49,11 +49,11 @@ LIST.INSTALL.sh    :=   --install   --clean --check    --checkdev \
 #_____________________________________________________________________________
 #______________________________________________________ targets for testing __|
 
+HELP-_inst  = ________________________________________ testing INSTALL.sh _
 HELP-testcmd-inst-INSTALL.sh%   = test arguments of '($EXE.INSTALL)'
 HELP-testarg-inst-INSTALL.sh%   = test arguments and options of '($EXE.INSTALL)'
-
-help.test.inst:
-	@echo "**WARNING: dummy target until fixed in Makefile.help"
+HELP-testarg-inst-INSTALL.sh%.log = same as testarg-inst-INSTALL.sh% but store output in '$(TEST.logdir)/'
+HELP-testarg-inst-usr-install_openssl%  = test arguments and options of '($EXE.install_openssl)'
 
 # NOTE: ensure that EXE.install is called with --n !
 # NOTE: EXE.INSTALL --openssl does not work from t directory
