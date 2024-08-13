@@ -324,7 +324,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.33 24/08/12 22:16:59"
+SID="@(#) INSTALL-template.sh 3.34 24/08/13 12:16:08"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -886,6 +886,12 @@ check_openssl   () {
 		o="$p/$osaft_exe"
 		r="$p/.$osaft_exe"
 		if [ -x "$o" ]; then
+			_pwd=`\pwd`
+			if [ "t" = `basename $_pwd` -a ".." = "$p" ]; then
+				# contribution to our make
+				o="${_pwd%/*}/$osaft_exe"  # full path
+				echo_yellow "**WARNING: call in development directory t/.. assumed; using '$o'"
+			fi
 			# first call program to check if it is starting properly
 			# if it fails with a status, the corresponding error is printed
 			# and the extraction of the openssl executable is not done
@@ -1247,7 +1253,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.33 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.34 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1271,7 +1277,7 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.33; $mode $src_txt $inst_directory ..."
+echo "# $0 3.34; $mode $src_txt $inst_directory ..."
     # always print internal SID, makes debugging simpler
     # do not use $SID, which is too noisy for make targets
 
