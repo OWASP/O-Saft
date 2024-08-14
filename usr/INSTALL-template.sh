@@ -325,7 +325,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.35 24/08/14 11:22:01"
+SID="@(#) INSTALL-template.sh 3.36 24/08/14 11:49:40"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -479,6 +479,7 @@ if [ 0 -lt $_cols ]; then
 	[ -n "$OSAFT_MAKE" ] && _cols=78    # SEE Make:OSAFT_MAKE
 	[ 51 -gt $_cols ]    && _break=1    # see echo_label()
 	while [ 42 -lt $_cols ]; do
+		# FIXME: some terminal break line when colour is used
 		_line="$_line-"
 		_cols=`expr $_cols - 1`
 	done
@@ -490,12 +491,16 @@ __exit      () {
 	[ 0 -lt $ignore ] && return
 	exit $@
 }
+echo_grey   () {
+	[ -z "$colour" ] && echo "$@" && return
+	\echo "\033[7;33m\033[1;30m$@\033[0m"
+}
 echo_info   () {
 	[ -z "$optv" ] && return
 	if [ -z "$colour" ]; then
 		echo "# $@"
 	else
-		\echo "\033[7;37m\033[1;30m# $@"
+		echo_grey "# $@"
 	fi
 }
 echo_head   () {
@@ -504,6 +509,8 @@ echo_head   () {
 		echo "$@"
 		echo "#$_line"
 	else
+		#echo_grey "$@"
+		#echo_grey "#$_line"
 		\echo "\033[7;37m\033[1;30m$@"
 		\echo "#$_line\033[0m"
 	fi
@@ -512,7 +519,7 @@ echo_foot   () {
 	if [ -z "$colour" ]; then
 		echo "#$_line"
 	else
-		\echo "\033[7;37m\033[1;30m#$_line\033[0m"
+		echo_grey "#$_line"
 	fi
 }
 echo_label  () {
@@ -929,6 +936,7 @@ check_sids  () {
 	echo_head "# SID\tdate\ttime\tmd5sum\tfilename\tpath"
 	\echo "$files_all_src" | t/get-SIDs.sh
 	echo_foot
+	echo_grey "# some files in doc/ t/ and usr/ don't have a SID"
 	return
 } # check_sids
 
@@ -963,7 +971,7 @@ mode_check  () {
 } # mode_check
 
 mode_checkdev () {
-	echo "'#mode_checkdev() ..."
+	echo "#mode_checkdev() ..."
 	# does not use echo_info(), because text always printed
 	echo      "# check system for development usage ..."
 	echo_head "# check setup for development ..."
@@ -1267,7 +1275,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.35 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.36 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1291,7 +1299,7 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.35; $mode $src_txt $inst_directory ..."
+echo "# $0 3.36; $mode $src_txt $inst_directory ..."
     # always print internal SID, makes debugging simpler
     # do not use $SID, which is too noisy for make targets
 
