@@ -41,7 +41,8 @@
 #?          --check=openssl       - just check openssl       ; ;;
 #?          --check=usr           - just check tools in usr/
 #?          --check=podtools      - just check for tools to view POD files
-#?          --check=SID           - check SIDs and md5sum of installed files
+#?          --check=SID           - list SIDs and md5sum of installed files
+#?          --check=SID --changes - list SIDs and md5sum of changed files
 #?
 #?      With --install  only warnings or errors are reported. Use option --v
 #?      to get a detailed report.
@@ -215,6 +216,7 @@
 #?                        $HOME, overwrites existing ones
 #?      --instdev       - copy also all files necessary for development into
 #?                        specified directory; implies --install
+#?      --changes       - report only changes with --check=SID
 #?      --no-colour     - do not use coloured texts; default
 #?      --colour        - use coloured texts (red, yellow, blue|green)
 #?      --colour-blind  - same as --colour
@@ -325,7 +327,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.36 24/08/14 11:49:40"
+SID="@(#) INSTALL-template.sh 3.37 24/08/14 22:40:31"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -341,10 +343,11 @@ gnuenv=0                # 1 to change shebang lines to /usr/bin/env -S
 ignore=0                # 1 ignore errors, continue script instead of exit
 other=0
 force=0
-instdev=0;              # 1 install development files also
+instdev=0               # 1 install development files also
+changes=0               # 1 show only changed file with --check=SID
 optn=""
 optv=                   # 1 print verbose information
-mode="";                # "", cgi, check, clean-up, install, openssl
+mode=""                 # "", cgi, check, clean-up, install, openssl
 alias echo=/bin/echo    # need special echo which has -n option;
 	                # TODO: check path for each platform
 tab="	"               # need a real TAB (0x09) for /bin/echo
@@ -366,6 +369,7 @@ osaft_pm="INSERTED_BY_MAKE_OSAFT_PM"
 osaft_exe="INSERTED_BY_MAKE_OSAFT_PL"
 osaft_cgi="INSERTED_BY_MAKE_OSAFT_CGI"
 osaft_gui="INSERTED_BY_MAKE_OSAFT_GUI"
+osaft_rel="INSERTED_BY_MAKE_OSAFT_REL"
 osaft_one="INSERTED_BY_MAKE_OSAFT_STAND"
 osaft_dock="INSERTED_BY_MAKE_OSAFT_DOCKER"
 doc_dir="INSERTED_BY_MAKE_DOC_DIR"
@@ -391,7 +395,7 @@ files_install="
 	"
 
 files_install_cgi="
-	INSERTED_BY_MAKE_OSAFT_CGI
+	INSERTED_BY_MAKE_OSAFT_INSTCGI
 	"
 
 files_install_doc="
@@ -446,6 +450,7 @@ files_ancient="
 [ "INSERTED_""BY_MAKE_OSAFT_CGI"  = "$osaft_cgi"    ] && osaft_gui=o-saft.cgi
 [ "INSERTED_""BY_MAKE_OSAFT_GUI"  = "$osaft_gui"    ] && osaft_gui=o-saft.tcl
 [ "INSERTED_""BY_MAKE_OSAFT_DOCKER" = "$osaft_dock" ] && osaft_dock=o-saft-docker
+[ "INSERTED_""BY_MAKE_OSAFT_rel"  = "$osaft_rel"    ] && osaft_rel=doc/o-saft.rel
 [ "INSERTED_""BY_MAKE_USR_DIR"    = "$usr_dir"      ] && usr_dir=usr
 
 # some files "not to be installed" are ancient, they are kept here in
@@ -498,7 +503,7 @@ echo_grey   () {
 echo_info   () {
 	[ -z "$optv" ] && return
 	if [ -z "$colour" ]; then
-		echo "# $@"
+		\echo "# $@"
 	else
 		echo_grey "# $@"
 	fi
@@ -506,8 +511,8 @@ echo_info   () {
 echo_head   () {
 	echo ""
 	if [ -z "$colour" ]; then
-		echo "$@"
-		echo "#$_line"
+		\echo "$@"
+		\echo "#$_line"
 	else
 		#echo_grey "$@"
 		#echo_grey "#$_line"
@@ -934,7 +939,12 @@ check_sids  () {
 	[ "check" = "$mode" ] || echo_info "check_sids() ..."
 	#echo_head "# check SIDs of installed files"
 	echo_head "# SID\tdate\ttime\tmd5sum\tfilename\tpath"
-	\echo "$files_all_src" | t/get-SIDs.sh
+	if [ 0 -eq $changes ]; then
+		\echo "$files_all_src" | t/get-SIDs.sh
+	else
+		# show diff only (tested with GNU diff only)
+		\echo "$files_all_src" | t/get-SIDs.sh | \diff $osaft_rel -
+	fi
 	echo_foot
 	echo_grey "# some files in doc/ t/ and usr/ don't have a SID"
 	return
@@ -1256,6 +1266,7 @@ while [ $# -gt 0 ]; do
 	  '--force')            force=1;        ;;
 	  '--other')            other=1;        ;;
 	  '--instdev')          instdev=1;      ;;
+	  '--changes')          changes=1;      ;;
           '--no-colour')        colour="";      ;;
           '--colour')           colour="34m";   ;;
           '--colour-blind')     colour="34m";   ;;
@@ -1275,7 +1286,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.36 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.37 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1299,7 +1310,7 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.36; $mode $src_txt $inst_directory ..."
+echo "# $0 3.37; $mode $src_txt $inst_directory ..."
     # always print internal SID, makes debugging simpler
     # do not use $SID, which is too noisy for make targets
 
