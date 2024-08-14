@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.38 24/08/14 17:20:34
+#?      @(#) Makefile 3.39 24/08/14 22:09:37
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-O-SID           = 3.38
+O-SID           = 3.39
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -332,8 +332,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.38 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.38
+_INST.genbytext = generated data by Makefile 3.39 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.39
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
 		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DOC.dir)@'              \
 		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-LIB.dir)@'              \
@@ -501,10 +501,12 @@ release: $(GEN.tgz)
 
 # Generating a release file, containing all files with their SID.  Use external
 # script which is also used in INSTALL.sh
-# NOTE: only files available in the repository are used, therefore the variable
-#       $(ALL.src)  is used. Because $(ALL.src) also contains $(ALL.gen), which
-#       is wrong here, $(ALL.gen) is  set empty for this target.
-$(GEN.rel):   ALL.gen =
+# NOTE: Only files available in the repository should be used,  but  $(ALL.src)
+#       contains  $(ALL.gen)  also which aren't in the repository.  Setting the
+#       variable emtpty would remove them from the genrated list. Unfortunately
+#       this results in different output if get-SIDs.sh is called in  make here
+#       and called standalone. Hence we use the full list from  $(ALL.gen) . It
+#       also has the advantage that the md5sum of the generated files is there.
 $(GEN.rel): $(ALL.src)
 	$(TEST.dir)/get-SIDs.sh $(ALL.src) > $@
 rel :$(GEN.rel)
@@ -592,8 +594,8 @@ docs:       $(GEN.docs)
 standalone: $(GEN.src)
 stand-alone:$(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.38
-tar:     _INST.is_edit  = 3.38
+_INST.is_edit           = 3.39
+tar:     _INST.is_edit  = 3.39
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
