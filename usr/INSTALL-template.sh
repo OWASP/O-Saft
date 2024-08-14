@@ -41,6 +41,7 @@
 #?          --check=openssl       - just check openssl       ; ;;
 #?          --check=usr           - just check tools in usr/
 #?          --check=podtools      - just check for tools to view POD files
+#?          --check=SID           - check SIDs and md5sum of installed files
 #?
 #?      With --install  only warnings or errors are reported. Use option --v
 #?      to get a detailed report.
@@ -324,7 +325,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.34 24/08/13 12:16:08"
+SID="@(#) INSTALL-template.sh 3.35 24/08/14 11:22:01"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -399,6 +400,10 @@ files_install_doc="
 
 files_install_dev="
 	INSERTED_BY_MAKE_DEV_FILES
+	"
+
+files_all_src="
+	INSERTED_BY_MAKE_ALL_SRC
 	"
 
 tools_intern="
@@ -918,6 +923,15 @@ check_podtools  () {
 	return
 } # check_podtools
 
+check_sids  () {
+	[ "check" = "$mode" ] || echo_info "check_sids() ..."
+	#echo_head "# check SIDs of installed files"
+	echo_head "# SID\tdate\ttime\tmd5sum\tfilename\tpath"
+	\echo "$files_all_src" | t/get-SIDs.sh
+	echo_foot
+	return
+} # check_sids
+
 mode_check  () {
 	echo_info "mode_check() ..."
 	echo "# PATH$tab$PATH"
@@ -1253,7 +1267,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.34 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.35 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1277,7 +1291,7 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.34; $mode $src_txt $inst_directory ..."
+echo "# $0 3.35; $mode $src_txt $inst_directory ..."
     # always print internal SID, makes debugging simpler
     # do not use $SID, which is too noisy for make targets
 
@@ -1301,8 +1315,10 @@ case $mode in
 	expected)   mode_expected; ;;
 	cgi)        mode_cgi     ; ;;
  	# parts of check; allow any separator for --check= beside =
-	#--check?sid)           check_sid       ; ;;
-	#--check?SID)           check_sid       ; ;;
+	--check?sid)           check_sids      ; ;;
+	--check?SID)           check_sids      ; ;;
+	--check?sids)          check_sids      ; ;;
+	--check?SIDs)          check_sids      ; ;;
 	#--check?ssl)           check_ssl       ; ;;
 	#--check?dev)           check_dev       ; ;;
 	#--check?doc)           check_doc       ; ;;
