@@ -17,7 +17,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.33 24/07/27 14:33:42";
+my  $SID_odoc   = "@(#) ODoc.pm 3.34 24/08/14 23:20:05";
 our $VERSION    = "24.06.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -500,6 +500,33 @@ sub get_section {
     my $txt = join ("", <$fh>); ## no critic qw(InputOutput::ProhibitJoinedReadline)
     close($fh);
     if ($label =~ m/^name/i)    { $end = "TODO";  }
+    $txt =~ s/.*?\n$anf/$anf/ms;
+    $txt =~ s/\n$end.*//ms;             # grep all data
+        # $txt contains now anthing between $anf and $end     
+    # remove markup
+    $txt =~ s/\n#[^\n]*//g;
+    $txt =~ s/[IX]&([^&]*)&/$1/g;       # internal links without markup
+    if (0 < (grep{/^--v/} @ARGV)) {     # do not use $^O but our own option
+        # some systems are tooo stupid to print strings > 32k, i.e. cmd.exe
+        _warn("192: using workaround to print large strings.\n\n");
+        $hlp .= $_ foreach split(//, $txt);  # print character by character :-((
+    } else {
+        $hlp .= $txt;
+    }
+    return $hlp;
+} # get_section
+
+sub get_section_from_pod {
+    #? return data of section $start from file as string, removes POD format
+    my $file    = shift;
+    my $label   = lc(shift) || "";  # || to avoid "Use of uninitialised value"
+    my $anf     = uc($label);
+    my $end     = "[A-Z]";
+    my $hlp;
+#   _dbx("get_section_from_pod($anf, $end) ...");
+    # no special help, print full one or parts of it
+    my $txt = join("", get_markup($file));
+    if ($label =~ m/^name/i)    { $end = "TODO";  }
     #$txt =~ s{.*?(=head. $anf.*?)\n=head. $end.*}{$1}ms;# grep all data
         # above terrible performance and unreliable, hence in peaces below
     $txt =~ s/.*?\n=head1 $anf//ms;
@@ -521,7 +548,7 @@ sub get_section {
         $hlp .= $txt;
     }
     return $hlp;
-} # get_section
+} # get_section_from_pod
 
 sub list    {
     #? return sorted list of available .txt files in ./doc or doc/ directory
@@ -603,7 +630,7 @@ lib/OText.pm
 
 =head1 VERSION
 
-3.33 2024/07/27
+3.34 2024/08/14
 
 
 =head1 AUTHOR
