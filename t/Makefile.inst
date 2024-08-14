@@ -6,7 +6,7 @@
 #?      make help.test.inst
 #?
 #? VERSION
-#?      @(#) Makefile.inst 3.5 24/08/15 01:02:07
+#?      @(#) Makefile.inst 3.6 24/08/15 01:03:42
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.inst = targets for testing INSTALL.sh
 
-O-SID.inst         := 3.5
+O-SID.inst         := 3.6
 O-SELF.inst        := t/Makefile.inst
 ALL.includes       += $(O-SELF.inst)
 ALL.inc.type       += inst
@@ -77,7 +77,7 @@ ALL.test.inst       = $(LIST.INSTALL.sh:%=testcmd-inst-INSTALL.sh_%)
 # additional special option for INSTALL.sh
 testcmd-inst-INSTALL.sh_--usage:            TEST.init  =
     # simulate empty arguments
-testarg-inst-INSTALL.sh_--check-SID--changes TEST.args += --check-SID --changes
+testarg-inst-INSTALL.sh_--check-SID--changes: TEST.args += --check-SID --changes
 testarg-inst-INSTALL.sh_--check--colour:    TEST.args += --check    --colour
 testarg-inst-INSTALL.sh_--checkdev--colour: TEST.args += --checkdev --colour
 testarg-inst-INSTALL.sh_--checkdev--other:  TEST.args += --checkdev --other
