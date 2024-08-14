@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 3.16 24/08/12 22:24:26
+#?      @(#) Makefile.misc 3.18 24/08/14 10:51:18
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-O-SID.misc         := 3.16
+O-SID.misc         := 3.18
 O-SELF.misc        := t/Makefile.misc
 ALL.includes       += $(O-SELF.misc)
 ALL.inc.type       += misc
@@ -73,7 +73,7 @@ EXE.graph-subs     := $(TEST.dir)/gen-graph-sub-calls.sh
 
 # summary variables (mainly used for INSTALL.sh)
 _ALL.devtools.intern   += $(EXE.bench) $(EXE.test.bunt) $(EXE.cloc.total)
-_ALL.devtools.intern   += $(O-USR.dir)/bunt.pl
+_ALL.devtools.intern   += $(O-USR.dir)/bunt.pl $(TEST.dir)/get-SIDs.sh
 _ALL.devtools.intern   += $(EXE.graph-anno) $(EXE.graph-src) $(EXE.graph-subs)
                         # own scripts, but needed for _ALL.devtools.extern only
 _ALL.devtools.extern   += ctags make gmake
@@ -251,7 +251,7 @@ cloc:       cloc.stat
 # if STDOUT and STDERR is redirected to a file
 _TEST.cloc.log   = $(TEST.logdir)/test.cloc.stat.log
 $(_TEST.cloc.log):
-	@echo "# Makefile.misc 3.16: $(MAKE) cloc.stat.log" > $@
+	@echo "# Makefile.misc 3.18: $(MAKE) cloc.stat.log" > $@
 	@$(MAKE) -i cloc.stat >> $@ 2>&1
 cloc.stat.log: $(_TEST.cloc.log)
 
@@ -502,7 +502,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 3.16: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 3.18: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(O-TRACE.target)
