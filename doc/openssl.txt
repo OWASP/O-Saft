@@ -1,6 +1,8 @@
 
 # SID   @(#) %M% %I% %E% %U%
 
+### work in progress ...
+
 NAME
 
         openssl.txt - informations, hints and tricks about openssl
@@ -13,7 +15,7 @@ DESCRIPTION
 
         This file contains informations, hints and tricks about "openssl".
         The main purpose is for programming, debugging, and testing.
-        is the documentation for development!
+        It is documentation for development!
 
     Debugging, Tracing
 
