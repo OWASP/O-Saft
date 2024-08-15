@@ -327,7 +327,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.37 24/08/14 22:40:31"
+SID="@(#) INSTALL-template.sh 3.38 24/08/15 22:17:47"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -652,6 +652,29 @@ copy_file   () {
 	fi
 	return
 } # copy_file
+
+check_md5   () {
+	# compute md5sum and compare with value in *.rel file; increments $err
+	# TODO: md5sum useless for converted files, as it differs always
+	_rel=$1
+	_dst=$2
+	[ -e "$_dst" ] || echo_yellow "**WARNING: missing '$_dst'; checksum ignored"
+	[ -e "$_dst" ] || return
+	name=${_dst##*/}   # filename without path because / causes problem in awk
+	[ ! -e "$_rel" ] && return  # warning already printed
+	# get expected md5sum
+		# ^[0-9]       - to ensure matching lines with SID
+		#         SID %I (edited file) does not match and will be reported
+		# (^|.*\/)     - to ensure matching path or bare name
+		# exit         - to ensure only one (first) value is returned
+	md5sum=`\awk '/^[0-9]/{if($6~/(^|.*\/)'$name'$/){print $4;exit}}' $_rel`
+	newsum=`\md5sum $_dst` # compute m5sum of installed file
+	newsum=${newsum%% *}   # remove trailing filename
+	#dbx# echo "# $name : $md5sum : $newsum."
+	[ "$md5sum" = "$newsum" ] || echo_red "# wrong checksum $newsum for '$_dst'"
+	[ "$md5sum" = "$newsum" ] || err=`expr $err + 1`
+	return
+} # check_md5
 
 #_____________________________________________________________________________
 #__________________________________________________________ check functions __|
@@ -1040,10 +1063,14 @@ mode_install () {
 	echo_info "mode_install() ..."
 	echo_info "$mode from $src_directory"
 	echo_info "force=$force , ignore=$ignore , gnuenv=$gnuenv , useenv=$useenv"
+	err=0
 	if [ ! -d "$inst_directory" ]; then
 		echo_red "**ERROR: 040: $inst_directory does not exist; exit"
 		[ -n "$try" ] || exit 2
 		# with --n continue, so we see what would be done
+	fi
+	if [ ! -e "$src_directory/$osaft_rel" ]; then
+		echo_yellow "**WARNING: missing '$src_directory/$osaft_rel'; checksum ignored"
 	fi
 
 	files="$files_install $files_install_cgi $files_install_doc $files_contrib $osaft_one"
@@ -1062,7 +1089,8 @@ mode_install () {
 	done
 	for f in $files ; do
 		[ -e "$src_directory/$f" ] || echo_red "**ERROR: 043: missing $f; file ignored"
-		copy_file "$src_directory/$f" "$inst_directory/$f"
+		copy_file "$src_directory/$f"         "$inst_directory/$f"
+		check_md5 "$src_directory/$osaft_rel" "$inst_directory/$f"
 	done
 	echo_info "generate $inst_directory/$osaft_guirc ..."
 	if [ -z "$try" ]; then
@@ -1085,11 +1113,13 @@ mode_install () {
 			$try \ln -s "../$d" "$inst_directory/$tst_dir/$d"
 		done
 		for f in $files_install_dev; do
-			echo_info "  cp    $src_directory/$f $inst_directory/"
-			$try \cp    "$src_directory/$f" "$inst_directory/$tst_dir" \
-			|| echo_red "**ERROR: 044: copying $f failed"
+			_dst="$inst_directory/$tst_dir/$f"
+			echo_info "  cp    $src_directory/$f      $_dst"
+			$try \cp    "$src_directory/$f"          "$_dst" \
+			|| echo_red "**ERROR: 044: copying $f failed" \
+			&& check_md5 "$src_directory/$osaft_rel" "$_dst"
 		done
-		# correct wrong installed (needs to be adapted in Makefile)
+		# wrong installed (needs to be adapted in Makefile)
 		for f in Makefile CHANGES README.md; do
 			$try \mv "$inst_directory/$tst_dir/$f" "$inst_directory/"
 		done
@@ -1100,7 +1130,8 @@ mode_install () {
 		for f in $inst_directory/$osaft_exerc $inst_directory/$osaft_exerc ; do
 			echo_info "  cp    $src_directory/$f $HOME/"
 			$try   \cp "$src_directory/$f" "$HOME/" \
-			|| echo_red "**ERROR: 042: copying $f failed"
+			|| echo_red "**ERROR: 042: copying $f failed" \
+			&& check_md5 "$src_directory/$osaft_rel" "$HOME/$f"
 		done
 	fi
 
@@ -1109,8 +1140,11 @@ mode_install () {
 
 	echo_info "consider calling:    »$0 --clean $inst_directory«"
 	echo_info "installaion details: »$0 --check $inst_directory«"
-	[ -n "$optv" ] && echo_green "# installation in $inst_directory completed."
-	err=0
+	if [ 0 -le $err ]; then
+		echo_green "# installation in $inst_directory completed."
+	else
+		echo_error $err
+	fi
 	return
 } # mode_install
 
@@ -1286,7 +1320,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.37 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.38 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1310,11 +1344,11 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.37; $mode $src_txt $inst_directory ..."
+echo "# $0 3.38; $mode $src_txt $inst_directory ..."
     # always print internal SID, makes debugging simpler
     # do not use $SID, which is too noisy for make targets
 
-# check for lock-file
+# check for lock-file, should only exist on author's system
 if [ -e "$src_directory/$lock" -o -e "$inst_directory/$lock" ]; then
 	case $mode in
 	cgi | cleanup | install)
