@@ -6,7 +6,7 @@
 #?      make help.test.inst
 #?
 #? VERSION
-#?      @(#) Makefile.inst 3.6 24/08/15 01:03:42
+#?      @(#) Makefile.inst 3.7 24/08/15 22:21:09
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.inst = targets for testing INSTALL.sh
 
-O-SID.inst         := 3.6
+O-SID.inst         := 3.7
 O-SELF.inst        := t/Makefile.inst
 ALL.includes       += $(O-SELF.inst)
 ALL.inc.type       += inst
@@ -86,6 +86,23 @@ testarg-inst-INSTALL.sh_--install--useenv:  TEST.args += --install  --useenv
 testarg-inst-INSTALL.sh_--install--instdev: TEST.args += --install  --instdev
 testarg-inst-INSTALL.sh_--simulate-vm:      export osaft_vm_build = 1
     # set TEST.init  empty not necessary as long as there is no --check
+
+# perform complete installation from .tgz
+# the target would fail if $(EXE.INSTALL) exits with status, hence /bin/true
+# to ensure the generated directory is removed at end
+testarg-inst-INSTALL.sh-from-tgz: $(GEN.tgz)
+	@mkdir -p $(O-TMP.dir)/i
+	@cp $(GEN.tgz) $(O-TMP.dir)/i/
+	@cd     $(O-TMP.dir)/i && \
+		tar xf $(GEN.tgz) && cd O-Saft && \
+		./$(EXE.INSTALL) --install $(O-TMP.dir); \
+		./$(EXE.INSTALL) --check   $(O-TMP.dir); \
+		./$(EXE.INSTALL) --clean   $(O-TMP.dir); \
+		rm -rf $(O-TMP.dir)/i; \
+		/bin/true
+	@ls -la $(O-TMP.dir) $(O-TMP.dir)/.files_to_be_removed
+	@rm -rf $(O-TMP.dir)
+
 ALL.test.inst      += \
 	testarg-inst-INSTALL.sh_--check-SID--changes \
 	testarg-inst-INSTALL.sh_--check--colour \
@@ -94,7 +111,8 @@ ALL.test.inst      += \
 	testarg-inst-INSTALL.sh_--install--gnuenv \
 	testarg-inst-INSTALL.sh_--install--useenv \
 	testarg-inst-INSTALL.sh_--install--instdev \
-	testarg-inst-INSTALL.sh_--simulate-vm
+	testarg-inst-INSTALL.sh_--simulate-vm \
+	testarg-inst-INSTALL.sh-from-tgz
 
 # targets for install_openssl.sh
 testarg-inst-usr-install_openssl_%:     EXE.pl    = ../$(EXE.install_openssl)
@@ -102,10 +120,11 @@ testarg-inst-usr-install_openssl_%:     TEST.init =
 testarg-inst-usr-install_openssl_--n:   TEST.args = --n
 testarg-inst-usr-install_openssl_--m:   TEST.args = --m
 testarg-inst-usr-install_openssl_--list:TEST.args = --list
+
 ALL.test.inst      += \
 	testarg-inst-usr-install_openssl_--m  \
 	testarg-inst-usr-install_openssl_--n  \
-	testarg-inst-usr-install_openssl_--list
+	testarg-inst-usr-install_openssl_--list \
 
 ALL.test.inst.log   = $(ALL.test.inst:%=%.log)
 
