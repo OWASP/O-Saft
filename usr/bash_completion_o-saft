@@ -14,6 +14,9 @@
 #?      bind -p | grep complete
 #?      http://www.gnu.org/software/bash/manual/bash.html#Programmable-Completion
 #?
+#? VERSION
+#?      @(#) bash_completion_o-saft 1.5 24/08/16 13:02:41
+#?
 #? AUTHOR
 #?      14-dec-14 Achim Hoffmann
 # ------------------------------------------------------------------------------
