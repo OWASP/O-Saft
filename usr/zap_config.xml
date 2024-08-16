@@ -26,6 +26,9 @@
 #?      for that. If  <directory/>  is empty, o-saft.pl will be started in the
 #?      same directory as ZAP itself. Place your .o-saft.pl in that directory.
 #?
+#? VERSION
+#?      @(#) zap_config.xml 1.7 24/08/16 12:55:45
+#?
 #? AUTHOR
 #?      16-dec-14 Achim Hoffmann
 # _____________________________________________________________________________
