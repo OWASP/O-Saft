@@ -18,10 +18,13 @@
 #? SEE ALSO
 #?      http://fishshell.com/docs/current/index.html#completion-own
 #?
+#? VERSION
+#?      @(#) fish_completion_o-saft 1.2 24/08/16 13:05:01
+#?
 #? AUTHOR
 #?      14-dec-14 Benjamin Kellermann
 # ------------------------------------------------------------------------------
-SID="fish_completion_o-saft 1.1 16/09/25 11:10:47"
+SID="fish_completion_o-saft 1.2 24/08/16 13:05:01"
 
 BIN="o-saft.pl"
 
