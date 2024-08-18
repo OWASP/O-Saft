@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.56 24/08/08 22:47:35";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.57 24/08/18 15:02:48";
 our $VERSION    =  "24.06.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -2655,7 +2655,7 @@ our %cfg = (    # main data structure for configuration
         'commands_int'  => '^(?:cn_nosni|valid_(?:year|month|day|host)s?)', # internal data only, no command
         'opt_empty'     => '(?:[+]|--)(?:cmd|help|host|port|format|legacy|timeout|trace|openssl|(?:cipher|proxy|sep|starttls|exe|lib|ca-|cfg-|ssl-|usr-).*)',
                            # these options may have no value
-                           # i.e.  --cmd=   ; this may occour in CGI mode
+                           # i.e.  --cmd=   ; this may occur in CGI mode
         'std_format'    => '^(?:unix|raw|crlf|utf8|win32|perlio)$', # match keys for --std-format
 
         # RegEx for matching strings to anonymise in output 
@@ -3414,7 +3414,7 @@ sub test_cipher_regex   {
         printf("  %s\t%s\t%s\t%s\n", $is_pfs, get_cipher_owasp($cipher), join("", @o), $cipher);
         $cnt++;
     }
-    print "= Please use  o-saft.pl --test-regex  for data." if (1 > $cnt);
+    print "= Please use  o-saft.pl +test-regex  for data." if (1 > $cnt);
         # TODO: may be fixed by loading lib/Ciphers.pm is here
     print _regex_line();
     print _regex_head();
@@ -3557,7 +3557,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.56"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.57"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3580,7 +3580,7 @@ sub _main       {
         # ----------------------------- commands
         if ($arg =~ /^version$/)         { print "$SID_ocfg\n"; next; }
         if ($arg =~ /^[-+]?V(ERSION)?$/) { print "$VERSION\n";  next; }
-        $arg =~ s/^--test[_.-]?//;  # allow short option without prefix --test
+        $arg =~ s/^\+test[_.-]?//;  # allow short command without prefix +test
         if ($arg eq 'regex')             { test_cipher_regex(); }
     }
     exit 0;
@@ -3603,7 +3603,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.56 2024/08/08
+3.57 2024/08/18
 
 =head1 AUTHOR
 
