@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.30 24/08/09 19:29:22
+# SID   @(#) help.txt 3.31 24/08/18 13:40:18
 
 NAME
 
@@ -253,7 +253,7 @@ TECHNICAL INFORMATION
         with the  +cipher  command.
 
         Therefore following commands and options changed:
-           # VERSION < 19.11.19       |  change ...
+           # Version < 19.11.19       |  change ...
            #--------------------------+---------------------------------
             * +cipher                 | uses internal method
             * +cipherall              | command obsolete, !!Hint is printed
@@ -267,7 +267,7 @@ TECHNICAL INFORMATION
         The historic commands  +cipherall  and  +cipherraw should be replaced
         with the new syntax, as follows:
 
-           # VERSION < 19.11.19       |  VERSION > 19.11.19
+           # Version < 19.11.19       |  Version > 19.11.19
            #--------------------------+---------------------------------
             * +cipher                 |  +cipher  --ciphermode=ssleay
             * +cipher --force-openssl |  +cipher  --ciphermode=openssl
@@ -1170,7 +1170,7 @@ OPTIONS
           In particular when checking ciphers with  +cipher , this may result
           in long delays until results are printed.
           Using this option stops trying to do more connections to the target
-          when  --ssl-error-max=CNT  consecutive errors occoured, or when the
+          when  --ssl-error-max=CNT  consecutive errors occurred, or when the
           total amount of errors increases  --ssl-error-total=CNT.
 
           Note that this may result in loss of information and/or checks.
@@ -1200,7 +1200,7 @@ OPTIONS
 
           This option disables the strict check of availability.
           If the underlaying library doesn't support the required SSL version
-          at all, following error may occour:
+          at all, following error may occur:
               Can't locate auto/Net/SSLeay/CTX_v2_new.al in @INC ...
 
           See X&Note on SSL versions&  for a general note about SSL versions.
@@ -1318,7 +1318,7 @@ OPTIONS
           The purpose is to avoid warnings from  IO::Socket::SSL(3pm)  like:
               Use of uninitialized value in subroutine entry at lib/IO/Socket/SSL.pm line 430.
 
-          which occours with some versions of  IO::Socket::SSL(3pm)  when a
+          which occurs with some versions of  IO::Socket::SSL(3pm)  when a
           *-MD5  ciphers will be used with other protocols than SSLv2.
 
           Note that these ciphers will be checked for SSLv2 only.
@@ -1946,8 +1946,23 @@ OPTIONS
 
           Prefix each printed line with the given hostname (target).
           The hostname will be followed by the separator character.
+          Example without  --showhost :
+              Certificate Common Name:            localhost
 
+          Example with     --showhost :
+              localhost:443:Certificate Serial Number:          localhost
 #         However, it applies partially if used twice for  +info.
+
+      --showkey
+
+          Print some internal variable names in output texts (labels).
+          Variable names are prefixed to printed line and enclosed in  # .
+          Example without  --showkey :
+              Certificate Serial Number:          deadbeef
+
+          Example with     --showkey :
+              #[serial]:         Certificate Serial Number:          deadbeef
+# same as --trace-key or --traceKEY
 
 # next line to keep generated HTML links happy
       --std-format=*
@@ -2178,16 +2193,19 @@ OPTIONS
 
           Print debugging messages, function names, variable names or values.
 
+      --trace=2
       --trace --trace
 
           Print more debugging messages and pass 'trace=2' to Net::SSLeay and
           lib/SSLinfo.
 
+      --trace=3
       --trace --trace --trace
 
           Print more debugging messages and pass 'trace=3' to Net::SSLeay and
           lib/SSLinfo.
 
+      --trace=4
       --trace --trace --trace --trace
 
           Print processing of all command-line arguments.
@@ -2211,13 +2229,7 @@ OPTIONS
       --trace-key
       --trace@
 
-          Print some internal variable names in output texts (labels).
-          Variable names are prefixed to printed line and enclosed in  # .
-          Example without  --trace-key :
-              Certificate Serial Number:          deadbeef
-
-          Example with     --trace-key :
-              #serial#          Certificate Serial Number:          deadbeef
+          Same as  --showkey .
 
       --trace-time
 
@@ -2288,8 +2300,8 @@ OPTIONS
     Options vs. Commands
 
         For compatibility with other programs and lazy users,  some arguments
-        looking like options are silently taken as commands.  This means that
-        --THIS  becomes  +THIS  then. These options are:
+        looking like options are silently taken as commands or vice versa.
+        This means that --THIS  becomes  +THIS  then. These options are:
           * --help
           * --abbr
           * --todo
@@ -2297,6 +2309,7 @@ OPTIONS
           * --default
           * --fingerprint
           * --list
+          * --test*
           * --version
 
         Take care that this behaviour may be removed in future versions as it
@@ -3185,7 +3198,7 @@ OUTPUT
     Errors, warnings, hints
 
         Errors, warnings and hints may be part of the output as needed. While
-        errors and warnings are printed immediately as they occour during the
+        errors and warnings are printed immediately as they occur  during the
         program flow, hints are printed right after the corresponding result.
 
         Errors and warnings start with a unique  3-digit number.  The numbers
@@ -3466,8 +3479,8 @@ CIPHER NAMES
         If in any doubt, use any of the  provided commands or options to list
         to show our known ciphers. For example:
 
-              $0 --test-ciphers-show  # or any other  --test-ciphers-*
-              $0 --list
+              $0 +test-ciphers-show  # or any other  +test-ciphers-*
+              $0 +list
               $0 --help=ciphers-text
               $0 ciphers -V
 
@@ -3544,7 +3557,7 @@ CIPHER NAMES
 KNOWN PROBLEMS
 
         This section describes knwon problems, and known error messages which
-        may occour when using $0. This sections can be used as FAQ too
+        may occur when using $0. This sections can be used as FAQ too
         as it gives hints and workarounds.
 
     +cipher hangs
@@ -3624,7 +3637,7 @@ KNOWN PROBLEMS
 
     **WARNING: 016: undefined cipher description
 
-        May occour if ciphers are checked, but no description is available for
+        May occur if ciphers are checked, but no description is available for
         them herein. This results in printed cipher checks like:
               EXP-KRB5-RC4-MD5                no       <<undef>>
 
@@ -3634,8 +3647,8 @@ KNOWN PROBLEMS
     **WARNING: 205: Can't make a connection to your.tld:443; no initial data
     **WARNING: 205: Can't make a connection to your.tld:443; target ignored
 
-        This message occours if the underlaying  SSL library (i.e. libssl.a)
-        was not able to connect to the target. Known observed reasons are:
+        The message occurs if the underlaying SSL library (i.e. libssl.a) was
+        not able to connect to the target. Known observed reasons are:
           * target does not support SSL protocol on specified port
           * target expects a client certificate in ClientHello message
 
@@ -3666,7 +3679,7 @@ KNOWN PROBLEMS
 
     Use of uninitialized value $_[0] in length at (eval 4) line 1.
 
-        This warning occours with IO::Socket::SSL 1.967, reason is unknown.
+        This warning occurs with IO::Socket::SSL 1.967, reason is unknown.
         It seems not to harm functionality, hence no workaround, just ignore.
 
     Use of uninitialized value in subroutine entry at lib/IO/Socket/SSL.pm line 430.
@@ -3711,7 +3724,7 @@ KNOWN PROBLEMS
 
     Integer overflow in hexadecimal number at ...
 
-        This error message may occour on  32-bit systems if perl was not com-
+        This error message may occur on  32-bit systems  if perl was not com-
         piled with proper options. I.g. perl automatically converts the value
         to a floating pont number.
         Please report a bug with output of following command:
@@ -3954,9 +3967,9 @@ LIMITATIONS
             #-----------------------+----------------------------------------
 
         This means that no more connections are made when more than
-            * --ssl-error-max errors occour sequentialy
+            * --ssl-error-max errors occur sequentialy
         or
-            * --ssl-error-total errors occoured
+            * --ssl-error-total errors occurred
 
         Examples:
           * --ssl-error-max=3
@@ -3964,7 +3977,7 @@ LIMITATIONS
           * --ssl-error-total=6
 
         no more connections are made if for example  any sequence of timeouts
-        occour:
+        occur:
               0 5 2 2                   - --ssl-error-max matches
               0 1 3 0 0 0 4 1 2 2 2     - --ssl-error-max matches
               0 5 0 2 0 2 2 0 2 0 2     - --ssl-error-total matches
@@ -4006,7 +4019,7 @@ LIMITATIONS
 
     Debug and trace output
 
-# until VERSION 23.11.23
+# until Version 23.11.23
 #        When both  --trace-key  and  --trace-cmd  options are used, output is
 #        mixed, obviously.
 #        Hint: output for  --trace-cmd  always contains "CMD".
@@ -4512,7 +4525,7 @@ HACKER's INFO
         All such warnings look like:
               **WARNING: 303: SSL version 'SSLv2': ...
 
-        If problems occour with  SSL versions, following commands and options
+        If problems occur with  SSL versions, following  commands and options
         may help to get closer to the reason or can be used as workaround:
               $0 +version
               $0 +version --v
