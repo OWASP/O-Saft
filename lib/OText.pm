@@ -10,7 +10,7 @@ use strict;
 use warnings;
 use utf8;
 
-my  $SID_otext  =  "@(#) OText.pm 3.16 24/07/27 14:37:46";
+my  $SID_otext  =  "@(#) OText.pm 3.17 24/08/18 14:54:55";
 our $VERSION    =  "24.06.24";
 
 #_____________________________________________________________________________
@@ -74,6 +74,17 @@ Print brief usage.
 =back
 
 
+=head1 OPTIONS
+
+=over 4
+
+=item +test-text
+
+Print texts defined herein in %STR.
+
+=back
+
+
 =head1 DESCRIPTION
 
 Utility package for O-Saft (o-saft.pl and related tools).  It declares and
@@ -108,7 +119,7 @@ Perlish spoken, all texts are L</VARIABLES>.
 
 =head1 METHODS
 
-=head2 Functions for internal testing; initiated with option  I<--test-*>
+=head2 Functions for internal testing; initiated with command  I<+test-*>
 
 =head3 test_show( )
 
@@ -130,7 +141,7 @@ Print data from given hash (used for --usage option).
 
 =head1 VERSION
 
-3.16 2024/07/27
+3.17 2024/08/18
 
 
 =head1 AUTHOR
@@ -200,8 +211,8 @@ sub usage_show  {
 #____________________________________________________ internal test methods __|
 
 sub test_show   {
-    #? dispatcher for internal tests, initiated with option --test-*
-    my $arg = shift;    # normalised option, like --testinit, --testcipherlist
+    #? dispatcher for internal tests, initiated with command +test-*
+    my $arg = shift;    # normalised command, like +testinit, +testcipherlist
     printf("#%s:\n", (caller(0))[3]);
     print <<'EoT';
 
@@ -222,14 +233,14 @@ EoT
 sub _main   {
     my @argv = @_;
     push(@argv, "--help") if (0 > $#argv);
-    my %usage = ( '# commands to show data' => { '--test-text' => 'show %STR' } );
+    my %usage = ( '# commands to show data' => { '+test-text' => 'show %STR' } );
     # got arguments, do something special
     while (my $arg = shift @argv) {
         if ($arg =~ m/^--?h(?:elp)?$/msx)       { print_pod($0, __PACKAGE__, $SID_otext); exit 0; } # print own help
         if ($arg =~ /^--usage$/x)               { usage_show("", \%usage);  exit 0; }
         if ($arg =~ /^version$/x)               { print "$SID_otext\n"; next; }
         if ($arg =~ /^[-+]?V(ERSION)?$/x)       { print "$VERSION\n";   next; }
-        if ($arg =~ m/^--(?:test[_.-]?)text/mx) { test_show($arg); }
+        if ($arg =~ m/^\+(?:test[_.-]?)text/mx) { test_show($arg); }
     }
     exit 0;
 } # _main
