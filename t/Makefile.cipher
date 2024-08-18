@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 3.13 24/07/27 19:38:21
+#?      @(#) Makefile.cipher 3.14 24/08/18 16:09:32
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-O-SID.cipher       := 3.13
+O-SID.cipher       := 3.14
 O-SELF.cipher      := t/Makefile.cipher
 ALL.includes       += $(O-SELF.cipher)
 ALL.inc.type       += cipher
@@ -104,7 +104,7 @@ ifndef cipher-macros-generated
 	$(eval $(_target)_%:  TEST.args = $(arg)) \
 	$(eval ALL.testcipher  += $(_target)_)    \
     )
-    # for --test-ciphers-list see Makefile.opt
+    # for +test-ciphers-list see Makefile.opt
     $(foreach arg, $(LIST.cipher-range),\
 	$(eval _target=testarg-cipher-+test-ciphers-list_$(subst =,-,$(arg))) \
 	$(eval $(_target):    TEST.args = $(arg)) \
@@ -130,7 +130,7 @@ endif
 # the TEST.cipher.hosts below
 
 testarg-cipher-%:                   EXE.pl      = ../$(SRC.pl)
-testarg-cipher-+test-ciphers-list_%: TEST.init  = --test-ciphers-list
+testarg-cipher-+test-ciphers-list_%: TEST.init  = +test-ciphers-list
 testcmd-cipher-%:                   EXE.pl      = ../$(SRC.pl)
 testcmd-cipher-%:                   TEST.init   = --header
 testcmd-cipher-+cipher--%:          TEST.init  += +cipher
