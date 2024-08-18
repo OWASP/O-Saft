@@ -6,7 +6,7 @@
 #?      make help.test.tcl
 #?
 #? VERSION
-#?      @(#) Makefile.tcl 3.6 24/07/27 19:35:19
+#?      @(#) Makefile.tcl 3.7 24/08/18 19:20:02
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.tcl  = targets for testing '$(O-Project).tcl'
 
-O-SID.tcl          := 3.6
+O-SID.tcl          := 3.7
 O-SELF.tcl         := t/Makefile.tcl
 ALL.includes       += $(O-SELF.tcl)
 ALL.inc.type       += tcl
@@ -55,39 +55,40 @@ testarg-tcl-o-saft.tcl_%:               TEST.init   = localhost +quit
     # ensure that o-saft.tcl exits and does not build the GUI
 
 LIST.tcl.args  := \
-	+VERSION --version --d --d=2 --d=6 --trace --rc --rc=unknown --no-rc \
+	+VERSION --version --d --d=2 --d=6 --trace --v \
+	--rc  --rc=unknown --no-rc \
 	--gui --gui-layout=classic --gui-layout=tablet \
 	--test-osaft --test-docs   --unknown
 
 # some special targets
-testarg-tcl-o-saft.tcl_--no-rc:         TEST.init  += --v
-testarg-tcl-o-saft.tcl_--rc-invalid:    TEST.init  += --v
-testarg-tcl-o-saft.tcl_--v--no-docs:    TEST.args  += --v --no-docs
-testarg-tcl-o-saft.tcl_--v--load:       TEST.args  += --v --load=Makefile
+testarg-tcl-o-saft.tcl_--no-rc:         TEST.init  += --d
+testarg-tcl-o-saft.tcl_--rc-invalid:    TEST.init  += --d
+testarg-tcl-o-saft.tcl_--d--no-docs:    TEST.args  += --d --no-docs
+testarg-tcl-o-saft.tcl_--d--load:       TEST.args  += --d --load=Makefile
 #               returns: different count and TAB tabs: .... .note.oX3XXMake
-testarg-tcl-o-saft.tcl_--v--img:        TEST.args  += --v --img   --gui-layout=classic
-testarg-tcl-o-saft.tcl_--v--text:       TEST.args  += --v --text  --gui-layout=classic
-testarg-tcl-o-saft.tcl_--v-host:        TEST.args  += --v host1 host2
-testarg-tcl-o-saft.tcl_--v-host-host:   TEST.args  += --v host1 host2 host3 host4 host5
+testarg-tcl-o-saft.tcl_--d--img:        TEST.args  += --d --img   --gui-layout=classic
+testarg-tcl-o-saft.tcl_--d--text:       TEST.args  += --d --text  --gui-layout=classic
+testarg-tcl-o-saft.tcl_--d-host:        TEST.args  += --d host1 host2
+testarg-tcl-o-saft.tcl_--d-host-host:   TEST.args  += --d host1 host2 host3 host4 host5
 # test some warnings
-testarg-tcl-o-saft.tcl_--v-host1-host2: TEST.args  += --v host1 host2 host3 host4 host5 host6 
-#testarg-tcl---v--load-bad_%:TEST.args  += --load=/tmp/bad  # file with large value > 5000
+testarg-tcl-o-saft.tcl_--d-host1-host2: TEST.args  += --d host1 host2 host3 host4 host5 host6 
+#testarg-tcl---d--load-bad_%:TEST.args  += --load=/tmp/bad  # file with large value > 5000
 # TODO:  to be implemented
 #--load=EXAMPLE
 # TODO:  test with docker
 #testarg-tcl-o-saft.tcl_--id:            TEST.args  += --id=docker-ID
 #testarg-tcl-o-saft.tcl_--tag:           TEST.args  += --id=docker-Tag
-#testarg-tcl-o-saft.tcl_--v--gen-docs:   TEST.args  += --v --gen-docs
+#testarg-tcl-o-saft.tcl_--d--gen-docs:   TEST.args  += --d --gen-docs
     # --gen-docs should be used with o-saft.pl only, see Makefile.hlp
 
 ifndef tcl-macros-generated
     $(call GEN.targets,testarg,tcl,-$(SRC.tcl),$(SRC.tcl),LIST.tcl.args,TEST.args,TEST.dumm)
 endif
 ALL.test.tcl   += \
-	testarg-tcl-o-saft.tcl_--v--no-docs testarg-tcl-o-saft.tcl_--v--load \
-	testarg-tcl-o-saft.tcl_--v--img     testarg-tcl-o-saft.tcl_--v--text \
-	testarg-tcl-o-saft.tcl_--v-host     testarg-tcl-o-saft.tcl_--v-host-host \
-	testarg-tcl-o-saft.tcl_--v-host1-host2
+	testarg-tcl-o-saft.tcl_--d--no-docs testarg-tcl-o-saft.tcl_--d--load \
+	testarg-tcl-o-saft.tcl_--d--img     testarg-tcl-o-saft.tcl_--d--text \
+	testarg-tcl-o-saft.tcl_--d-host     testarg-tcl-o-saft.tcl_--d-host-host \
+	testarg-tcl-o-saft.tcl_--d-host1-host2
 ALL.test.tcl.log= $(ALL.test.tcl:%=%.log)
 
 # test command which require user interaction (in GUI)
