@@ -56,7 +56,7 @@ use utf8;
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
 #  because we use /x as needed for human readability
 
-my  $SID_sslhello = "@(#) SSLhello.pm 3.30 24/08/18 16:28:49";
+my  $SID_sslhello = "@(#) SSLhello.pm 3.31 24/08/19 01:48:12";
 our $VERSION    = "24.06.24";
 my  $SSLHELLO   = "SSLhello";
 
@@ -3059,6 +3059,9 @@ sub _doCheckSSLciphers ($$$$;$$) {
 
     $retryCnt = 0;
     $my_error = ""; # reset error message
+    binmode($socket, ":raw");
+        # contribution to in stand-alone mode where perl bails out with:
+        # ... send() isn't allowed on :utf8 handles at usr/o-saft-standalone.pl line ..
     RETRY_TO_EXCHANGE_CLIENT_AND_SERVER_HELLO: while ($retryCnt++ < $SSLhello::retry) { # no error and still retries to go
         #### compile ClientHello
         $clientHello = compileClientHello ($protocol, $protocol, $cipher_spec, $host, $dtls_epoch, $dtlsSequence++, $dtlsCookieLen, $dtlsCookie);
