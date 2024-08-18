@@ -29,7 +29,7 @@ our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.57 24/08/05 15:36:01";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.58 24/08/18 15:08:06";
 our $VERSION    = "24.06.24";   # official verion number of this file
 
 use Exporter qw(import);
@@ -119,7 +119,7 @@ for example:
 For a more detailed description, please use:
 
     lib/Ciphers.pm description
-    lib/Ciphers.pm --test-ciphers-description
+    lib/Ciphers.pm +test-ciphers-description
 
 or consult the source code directly, in particular  C<%ciphers_desc>.
 
@@ -1621,9 +1621,9 @@ EoT
 } # show_ciphers
 
 sub show            {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
-    #? dispatcher for various --test-ciphers-* options; show information
-    my $arg = shift;    # any --test-ciphers-*
-       $arg =~ s/^--test[._-]?ciphers[._-]?//;   # normalize
+    #? dispatcher for various +test-ciphers-* commands; show information
+    my $arg = shift;    # any +test-ciphers-*
+       $arg =~ s/^\+test[._-]?ciphers[._-]?//;  # normalize
     _v_print((caller(0))[3]);
     #_dbx("arg=$arg");
     local $\ = "\n";
@@ -1683,7 +1683,7 @@ sub show            {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     print join(" ", get_keys_list())    if ($arg =~ m/^(?:get.)?keys.?list$/ );
     print join(" ", get_names_list())   if ($arg =~ m/^(?:get.)?names.?list$/);
     if ($arg =~ m/^regex/) {
-        printf("#$0: direct testing not yet possible here, please try:\n   o-saft.pl --test-ciphers-regex\n");
+        printf("#$0: direct testing not yet possible here, please try:\n   o-saft.pl +test-ciphers-regex\n");
     }
     return;
 } # show
@@ -1784,7 +1784,7 @@ sub _main   {
             'key=ECDHE-ECDSA-CHACHA20-POLY1305-SHA256' => '',
             'is_valid_key=0300Cca9'     => '',
         },
-        "## all commands can also be used as '--test-ciphers-CMD'" => {},
+        "## all commands can also be used as '+test-ciphers-CMD'" => {},
     );
     # got arguments, do something special
     while (my $arg = shift @argv) {
@@ -1796,10 +1796,10 @@ sub _main   {
         # ----------------------------- commands
         if ($arg =~ /^version$/)        { print "$SID_ciphers\n";  next; }
         if ($arg =~ /^[-+]?V(ERSION)?$/){ print "$VERSION\n";      next; }
-        if ($arg =~ /^--test.?ciphers.?version/i) { print "$VERSION\n"; next; }
+        if ($arg =~ /^\+test.?ciphers.?version/i) { print "$VERSION\n"; next; }
         $arg =~ s/^[+]//;   # allow leading + prefix
-        $arg =~ s/^--test.?ciphers[_.-]?//; # allow short option without prefix --test-ciphers
-        show("--test-ciphers$arg");
+        $arg =~ s/^\+test.?ciphers[_.-]?//; # allow short option without prefix +test-ciphers
+        show("+test-ciphers$arg");
     }
     exit 0;
 } # _main
@@ -1882,8 +1882,8 @@ this modules provides following commands:
 =back
 
 All commands can be used with or without '+' prefix, for example 'dump' is same
-as '+dump'. They can also be used with '--test-ciphers-' perfix, for example:
-'--test-ciphers-show'.
+as '+dump'. They can also be used with '+test-ciphers-' perfix, for example:
+'+test-ciphers-show'.
 
 The commands  'simple' 'openssl' 'openssl-v' 'openssl-V' and 'ssltest'  are the
 same as '+list' command with corresponding '--legacy=' option of "o-saft.pl".
@@ -1934,7 +1934,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.57 2024/08/05
+3.58 2024/08/18
 
 
 =head1 AUTHOR
