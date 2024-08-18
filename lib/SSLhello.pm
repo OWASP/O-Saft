@@ -56,7 +56,7 @@ use utf8;
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
 #  because we use /x as needed for human readability
 
-my  $SID_sslhello = "@(#) SSLhello.pm 3.28 24/07/27 14:52:21";
+my  $SID_sslhello = "@(#) SSLhello.pm 3.29 24/08/18 12:48:52";
 our $VERSION    = "24.06.24";
 my  $SSLHELLO   = "SSLhello";
 
@@ -3267,7 +3267,7 @@ sub _readRecord ($$$;$$$$) {
         #    7 octets for TCP (=len of an alert message);
         # remark rk: the minimum record len is 5 bytes, but it is better to
         #            read 7 bytes to get a compete alert message before any
-        #            disconnects can occure #### was: $MAXLEN; # read up to MAXLEN octets
+        #            disconnects can occur #### was: $MAXLEN; # read up to MAXLEN octets
     my $recordType      = 0;
     my $recordVersion   = 0;
     my $recordEpoch     = 0;
