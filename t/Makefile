@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 3.20 24/08/12 13:22:35
+#?      @(#) Makefile 3.21 24/08/18 15:12:49
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-O-SID.test         := 3.20
+O-SID.test         := 3.21
 O-SELF.test        := t/Makefile
 ALL.includes       += $(O-SELF.test)
 ALL.inc.type       += test
@@ -637,7 +637,7 @@ _FORCE:
 #                     +quit  command or  other command and hostname is needed
 #                     for testing the warning message
 #
-# NOTE: if  TEST.args  contains special characters,  syntax errors may occour
+# NOTE:  if  TEST.args  contains special characters,  syntax errors may occur
 # when used in the shell. Quoting  TEST.args  is not possible because then it
 # becomes a single argument instead of discrete arguments. At least following
 # special characters should not be used:  ; & | # < > ` [ ]
