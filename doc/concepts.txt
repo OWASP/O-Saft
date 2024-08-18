@@ -27,7 +27,7 @@ PRINCIPLES
 
         Program arguments
           * --help*  provides user help/usage
-          * --test*  provides information about internal data
+          * +test*   provides information about internal data
           * '+'  prefix for command arguments
           * '--' prefix for option arguments
           * the sequence of commands and options is not important
@@ -575,7 +575,7 @@ GLOSSAR
 
 
 VERSION
-        @(#) concepts.txt 1.7 24/08/18 12:51:32
+        @(#) concepts.txt 1.8 24/08/18 13:38:33
 
 
 AUTHOR
