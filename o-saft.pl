@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.127 24/08/12 14:07:18"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.128 24/08/18 15:11:36"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -385,7 +385,7 @@ my $verbose = 0;        # verbose mode used in main; option --v
    # above host, port, legacy and verbose are just shortcuts for corresponding
    # values in $cfg{}, used for better human readability
 my $help    = "";       # set to argument if it begins with --help* or --h
-my $test    = "";       # set to argument if it begins with --test*
+my $test    = "";       # set to argument if it begins with --test* or +test*
 my $info    = 0;        # set to 1 if +info
 my $check   = 0;        # set to 1 if +check was used
 my $quick   = 0;        # set to 1 if +quick was used
@@ -410,7 +410,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.127"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.128"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -679,7 +679,7 @@ push(@ARGV, "--no-header") if ((grep{/--no-?header/} @argv)); # if defined in RC
 #| read DEBUG-FILE, if any (source for trace and verbose)
 #| -------------------------------------
 my $err = "";
-my @dbx =  grep{/--(?:trace|v$|exitcode.?v$|tests?|yeast)/} @argv;  # may have --trace=./file
+my @dbx =  grep{/--(?:trace|v$|exitcode.?v$|tests?)/} @argv;  # may have --trace=./file
 push(@dbx, grep{/^[+,](?:tests?)/} @argv);  # may have +test*
 if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {    # SEE Note:CGI mode
     $arg =  "lib/OTrace.pm";
@@ -1091,7 +1091,7 @@ sub _set_cfg        {
         # we're picky about valid filenames: only characters, digits and some
         # special chars (this should work on all platforms)
         if ($cgi == 1) { # SEE Note:CGI mode
-            # should never occour, defensive programming
+            # should never occur, defensive programming
             _warn("072: configuration files are not read in CGI mode; ignored");
             return;
         }
@@ -2038,7 +2038,7 @@ sub _is_tls12only   {
 } # _is_tls12only
 
 sub _is_ssl_error   {
-    # returns 1 if probably a SSL connection error occoured; 0 otherwise
+    # returns 1 if probably a SSL connection error occurred; 0 otherwise
     # increments counters in $cfg{'done'}
     my ($anf, $end, $txt) = @_;
     return 0 if (($end - $anf) <= $cfg{'sslerror'}->{'timeout'});
@@ -2515,7 +2515,7 @@ sub _usesocket      {
     my $sslsocket = undef;
     # TODO: dirty hack (undef) to avoid Perl error like:
     #    Use of uninitialized value in subroutine entry at /usr/share/perl5/IO/Socket/SSL.pm line 562.
-    # which may occour if Net::SSLeay was not build properly with support for
+    # which may occur if  Net::SSLeay was not build properly with support for
     # these protocol versions. We only check for SSLv2 and SSLv3 as the *TLSx
     # doesn't produce such warnings. Sigh.
     trace1("_usesocket($ssl, $host, $port, $ciphers) { sni: $sni");
@@ -5279,7 +5279,7 @@ sub _cleanup_data   {
     my ($key, $value) = @_;
     if ($key eq "https_status") {
         # remove non-printables from HTTP Status line
-        # such bytes may occour if SSL connection failed
+        # such bytes may occur if SSL connection failed
         _vprint("  removing non-printable characters from $key: $value");
         $value =~ s/[^[:print:]]+//g;   # FIXME: not yet perfect
     }
@@ -6124,14 +6124,14 @@ sub printversion        {
     local $\ = "\n";
     if (defined $ENV{PWD}) {
     print( "=== started in: $ENV{PWD} ===");    # avoid "use Cwd;" or `pwd`
-    } # quick&dirty check, should rarely occour (i.e. when used as CGI)
+    } # quick&dirty check, should rarely occur (i.e. when used as CGI)
     # SEE Note:OpenSSL Version
     my $version_openssl  = Net::SSLeay::OPENSSL_VERSION_NUMBER() || $STR{UNDEF};
     my @my_modules = qw(Ciphers OCfg OData ODoc error_handler SSLinfo SSLhello OMan OText OTrace OUsr);
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.127");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.128");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6715,7 +6715,6 @@ while ($#argv >= 0) {
         _warn("023: old (pre 19.01.14) syntax '--legacy=key' obsolete, please use '--label=key'; option ignored");
         next;
     }
-    if ($arg =~ /^--yeast[_.-]?(.*)/)   { $arg = "--test-$1";    }
     if ($arg eq  '--openssl')           { $arg = '--extopenssl'; }
 
     # ignore -post= option passed from shell script; ugly but defensive programming
@@ -6738,20 +6737,22 @@ while ($#argv >= 0) {
     if ($arg =~ /^[+,](abbr|abk|glossar|todo)$/i)   { $arg = "--help=$1"; }     # for historic reason
     if ($arg =~ /^(?:--|\+|,)help=?(.*)?$/)         { $help = $1; next; } # get matching string right of =
 
-    # all options starting with  --test  are not handled herein, they must be
+    # all commands starting with  +test  are not handled herein, they must be
     # handled after parsing all arguments, which may contain more options
     # see testing $test near "no connection commands" below
     trace_arg("opt_--t? $arg");
-    if ($arg =~ /^(?:--|\+|,)(test.*)/) {   # SEE Note:--test-*
-        # handles also --test-* and --tests-*
+    if ($arg =~ /^(?:--|,)(test.*)$/)               { $arg  = "+$1"; }    # alias: same as +test*
+    if ($arg =~ /^\+(test.*)/) {   # SEE Note:+test-*
+        # handles also +test-* and +tests-*
         _vprint("test $arg");
-        $test = "--$1";
+        $test = $arg;
         $test =~ s/([a-zA-Z0-9])(?:[_.-])/$1/g;
         _trace_info("  TEST    - prepare for test functions");
         # some --test-* are special (need other data like %cfg)
         $cfg{'need_netdns'}     = 1;
         $cfg{'need_timelocal'}  = 1;
         $cfg{'need_netinfo'}    = 1;
+        next;
     }
 
     #{ handle some specials
@@ -7385,7 +7386,7 @@ while ($#argv >= 0) {
         my ($_prot, $_host, $_port, $_auth, $_path) = _get_target($default_port, $arg);
         if (($_host =~ m/^\s*$/) or ($_port =~ m/^\s*$/)){
             _warn("043: invalid port argument '$arg'; ignored");
-            # TODO: occours i.e with --port=' ' but not with --host=' '
+            # TODO: occurs i.e with --port=' ' but not with --host=' '
         } else {
             my $idx   = $#{$cfg{'targets'}}; $idx++; # next one
             my $_proxy = 0; # TODO: target parameter for proxy not yet supported
@@ -7766,10 +7767,10 @@ _trace_info("CONF9   - runtime configuration end");
 #| now all commands which do not make a connection
 #| -------------------------------------
 _vprint("check for no connection commands");
-# --test*  are not handled herein
+# +test*  are not handled herein
 if ($test =~ m/ciphers.*regex/) { _vprint("  test regex "); OCfg::test_cipher_regex(); exit 0; }
 if ($test !~ /^\s*$/)           { _vprint("  show any   "); OTrace::test_show($test);  exit 0; }
-# interanl information commands
+# internal information commands
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))         { _vprint("  list       "); printciphers_list('list'); exit 0; }
 if (_is_cfg_do('ciphers'))      { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
@@ -8097,7 +8098,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         _trace_time("  connection open.");
         my @errtxt = SSLinfo::errors($host, $port);
         if (0 < (grep{/\*\*ERROR/} @errtxt)) {
-            _warn("207: Errors occoured when using '$cmd{'openssl'}', some results may be wrong; errors ignored");
+            _warn("207: Errors occurred when using '$cmd{'openssl'}', some results may be wrong; errors ignored");
             _hint("use '--v' to show more information");
             # do not print @errtxt because of multiple lines not in standard format
         }
@@ -8403,7 +8404,7 @@ used for our decorations.
 
 =head1 Testing (Development)
 
-See  L<Documentation>  above and  L<Note:--test-*>  below and
+See  L<Documentation>  above and  L<Note:+test-*>  below and
 
     o-saft.pl  --help=testing
 
@@ -8485,7 +8486,7 @@ it, which is described in o-saft-README itself. People won't read :-(
 The documentation was initially written in Perl's doc format: perldoc POD.
 The advantage  of POD is the  well formatted output on  various platforms,
 but results in more difficult efforts for extracting information from it.
-In particular following problems occoured with POD:
+In particular following problems occurred with POD:
 
     - perldoc is not available on all platforms by default
     - POD is picky when text lines start with a whitespace
@@ -8736,7 +8737,7 @@ used there but not `Readonly' variables.
 A hash is used for our texts. This has the advantage, that many values can
 be defined without the need to care about every value everywhere. This has
 the disadvantage,  that runtime errors like  'Undefined variable ...'  may
-occour.
+occur.
 
 Instead of using `constant', corresponding `sub's are defined verbatim.
 
@@ -9188,7 +9189,7 @@ or no capability) are stored in `$cfg{'openssl'}'.
 
 Some options for s_client are implemented, see  lib/SSLinfo.pm , or use:
 
-    lib/SSLinfo.pm --test-sclient
+    lib/SSLinfo.pm +test-sclient
 
 More details can be found in  doc/openssl.txt .
 
@@ -9367,7 +9368,7 @@ It is recommended that  o-saft.pl  is called by  o-saft.cgi  in CGI mode.
 
 In CGI mode all options are passed with a trailing  =  even those which do
 not have an argument (value). This means that options cannot be ignored in
-general, because they may occour at least in CGI mode, i.e.  --cmd=  .
+general, because they may occur at least in CGI mode, i.e.  --cmd=  .
 The trailing  =  can always be removed, empty values are not possible.
 
 
@@ -9469,10 +9470,10 @@ uses "default" as part of variable or function names.
 
 If a command is given multiple times, in any order,  it should be executed
 only once.  The normalisation is done  right before commands are executed,
-because multiple commands may occour in many places.
+because multiple commands may occur in many places.
 
 The normalisation must preserve the sequence of the commands, which can be
-defined by the user. The first occourance of a command is used, all others
+defined by the user. The first occurrence of a command is used, all others
 are ignored.
 
 
@@ -9524,10 +9525,9 @@ The options  --noenabled  and  --nodisabled  are just for convenience, but
 do not toggle the opposite one.
 
 
-=head2 Note:--test-*
+=head2 Note:+test-*
 
-The options  --test-*  are used for testing, showing internal information.
-Actually these are commands, hence the form  +test-*  is also supported.
+The commands  +test-*  are used for testing, showing internal information.
 All these commands do not perform any checks on the specified targets, but
 exit right before the checks start.
 
@@ -9628,7 +9628,7 @@ Following restrictions, oddities exist:
 
     * splitting is done on length of the text not on word bounderies, some
       words may be split in the middle
-    * additional empty lines may occour
+    * additional empty lines may occur
     * dashed lines (used for headings) are mainly not adapted (split)
 
 To clearly mark the special formatting,  an additional  "return" character
