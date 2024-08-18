@@ -1,5 +1,5 @@
 
-# SID   @(#) devel.txt 3.5 24/08/18 12:50:15
+# SID   @(#) devel.txt 3.6 24/08/18 13:37:17
 
 
 NAME
@@ -35,7 +35,7 @@ DESCRIPTION
 
           * the files itself
           * with:   $0 --help=test
-          * with:   $0 --test
+          * with:   $0 +test
           * reading: Makefile.pod
             with:   perldoc Makefile.pod
           * using:  make
@@ -66,8 +66,8 @@ OVERVIEW
 
         Configurations
 
-          make testarg-mod-lib-OTrace.pm_--test-vars
-          o-saft.pl --test-vars
+          make testarg-mod-lib-OTrace.pm_+test-vars
+          o-saft.pl +test-vars
           o-saft.pl +quit --trace
           o-saft.pl +quit --trace=3
 
@@ -92,7 +92,7 @@ OVERVIEW
         Special Informations
 
           make testcmd-cipher-+cipher---cipher-IS-UNKNOWN--ciphermode-openssl_localhost
-          o-saft.pl --test
+          o-saft.pl +test
 
           o-saft.pl --header --enabled +dump localhost
 
@@ -194,7 +194,7 @@ DEBUGGING
              Note that 'value'  here can span multiple lines and ends with:
               #}
 
-        Some  --test-*  options produce output with lines starting with '=',
+        Some  +test-*  ommands produce output with lines starting with '=',
         which is intended as header line for descriptions.
 
     Debugging BEGIN and @EXPORT
@@ -510,85 +510,85 @@ TESTING
         perform any checks on the target(s).  
         See 't/Makefile.*' how to use these tests.
 
-      --tests
+      +tests
 
           Print overview of following commands/options.
 
-      --test-ciphers-list
+      +test-ciphers-list
 
-          Obsolte since version 23.11.23, please use  --test-ciphers .
+          Obsolte since version 23.11.23, please use  +test-ciphers .
 
-      --test-ciphers-openssl
-      --test-ciphers-simple
-      --test-ciphers-ssltest
+      +test-ciphers-openssl
+      +test-ciphers-simple
+      +test-ciphers-ssltest
 
-          These options are aliases for:  +list --legacy=TYP  .
+          These commands are aliases for:  +list --legacy=TYP  .
           Print ciphers in various formats, please see: lib/Ciphers.pm .
 
-      --test-ciphers-alias
-      --test-ciphers-const
-      --test-ciphers-dump
-      --test-ciphers-description
-      --test-ciphers-overview
-      --test-ciphers-openssl
-      --test-ciphers-simple
-      --test-ciphers-ssltest
-      --test-ciphers-rfcs
-      --test-ciphers-sort
+      +test-ciphers-alias
+      +test-ciphers-const
+      +test-ciphers-dump
+      +test-ciphers-description
+      +test-ciphers-overview
+      +test-ciphers-openssl
+      +test-ciphers-simple
+      +test-ciphers-ssltest
+      +test-ciphers-rfcs
+      +test-ciphers-sort
 
           Print ciphers in various formats, please see: lib/Ciphers.pm .
 
-      --test-ciphers-getter=*
-      --test-ciphers-get_CMD=*
+      +test-ciphers-getter=*
+      +test-ciphers-get_CMD=*
 
           Print some special information, please see: lib/Ciphers.pm .
 
-      --test-avail
+      +test-avail
 
           Print overview of all available commands and checks.
 
-      --test-maps
+      +test-maps
 
           Print internal data structures  '%cfg{openssl}',  '%cfg{ssleay}'.
 
-      --test-prot
+      +test-prot
 
           Print internal data according protocols.
 
-      --test-vars
+      +test-vars
 
           Print internal data structures  '%ciphers',  '$cipher_results',
           '%prot',  '%cfg',  '%data',  '%info'  and  '%checks'  using Perl's
           "Data::Dumper".
 
-      --test-regex
+      +test-regex
 
           Print results for applying various texts to defined regex.
 
-      --test-init
+      +test-init
 
-          Print parts of  data structure  '%cfg'.  In contrast to the options
-          described above,  --test-init  exits straight before performing the
+          Print parts of  data structure  '%cfg'. In contrast to the commands
+          described above,  +test-init  exits straight before  performing the
           specified commands on the target.  Therefore it prints the settings
           in  '%cfg'  containing all applied commands and options.
 
-      --test-memory
+      +test-memory
 
           Print overview of variables' memory usage, used for debugging only.
 
-      --test-methods
+      +test-methods
 
           Print available methods for 'openssl' in Net::SSLeay.
 
-      --test-sclient
+      +test-sclient
 
           Print available options for 'openssl s_client' from Net::SSLeay.
 
-      --test-sslmap
+      +test-sslmap
 
           Print SSL protocols constants from Net::SSLeay.
 
-      --test-ssleay
+      +test-ssleay
 
           Print information about Net::SSLeay capabilities.
 
