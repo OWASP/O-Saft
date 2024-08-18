@@ -56,7 +56,7 @@ use utf8;
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
 #  because we use /x as needed for human readability
 
-my  $SID_sslhello = "@(#) SSLhello.pm 3.29 24/08/18 12:48:52";
+my  $SID_sslhello = "@(#) SSLhello.pm 3.30 24/08/18 16:28:49";
 our $VERSION    = "24.06.24";
 my  $SSLHELLO   = "SSLhello";
 
@@ -191,11 +191,11 @@ Following options are for internal testing:
 
 =item --help
 
-=item --test-init
+=item +test-init
 
-=item --test-parameters
+=item +test-parameters
 
-=item --test-constants
+=item +test-constants
 
 List constants and/or parameters used by SSLhello.
 
@@ -6313,9 +6313,9 @@ sub _main       {
         if ($arg =~ /^--?h(?:elp)?$/x)          { _main_help();         }
         if ($arg =~ /^version$/x)               { print "$SID_sslhello\n";}
         if ($arg =~ /^[+-]?VERSION/x)           { print "$VERSION\n";   }
-        if ($arg =~ /^--test.?init/x)           { printParameters();    }
-        if ($arg =~ /^--test.?para(?:meter)?/x) { printParameters();    }
-        if ($arg =~ /^--test.?const(?:ant)?/x)  { printConstants();     }
+        if ($arg =~ /^\+test.?init/x)           { printParameters();    }
+        if ($arg =~ /^\+test.?para(?:meter)?/x) { printParameters();    }
+        if ($arg =~ /^\+test.?const(?:ant)?/x)  { printConstants();     }
         if ($arg =~ /^[+-]/)                    { exit 0; } # silently ignore unknown options
     }
     exit 0;
