@@ -48,16 +48,16 @@ package error_handler;
 #?                      ($OERR{'...'}), needs to be a more severe error than the
 #?                       stored error type (=smaller value)
 #?             module:  text: module or package of the caller where the error occured
-#?             sub      text: sub of the caller where the error occored
+#?             sub      text: sub of the caller where the error occurred
 #?             id       text: id inside the sub to identify the exact location where
-#?                            the error occured
+#?                            the error occurred
 #?             message: text: error message providede by the caller
 #?             print:   1: prints a standardized warning to stdout; 0: no output (default)
 #?             warn:    1: prints a standardized warning to stderr; 0: no output (default)
 #?             trace:   1: prints a standardized trace to stdouti (default); 0: no output
 #?     error_handler::reset_err(<hash_ref (optional)>):
 #?                                                reset the last error, optionally set a new error using hash_ref
-#?     error_handler::is_err():                   returns '1' if an error has occured
+#?     error_handler::is_err():                   returns '1' if an error has occurred
 #?     error_handler::get_err_type():             get (internal) number of the last error type
 #?     error_handler::get_err_type_name():        get name of the last error type
 #?     error_handler::get_err_val():              get a value of the error hash
@@ -80,7 +80,7 @@ use strict;
 use warnings;
 use Carp;
 
-my  $SID_error  = "@(#) error_handler.pm 3.9 24/01/29 11:05:03";
+my  $SID_error  = "@(#) error_handler.pm 3.10 24/08/18 12:45:46";
 our $VERSION    = "24.01.24";
 
 use Exporter qw(import);
