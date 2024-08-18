@@ -18,7 +18,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odata  =  "@(#) OData.pm 3.27 24/08/18 12:52:53";
+my  $SID_odata  =  "@(#) OData.pm 3.28 24/08/18 14:48:56";
 our $VERSION    =  "24.06.24";
 
 use Exporter qw(import);
@@ -1072,7 +1072,7 @@ None.
 #____________________________________________________ internal test methods __|
 
 sub show    {
-    #? dispatcher for various --test-data-* options to show information
+    #? dispatcher for various +test-data-* commands to show information
     # output similar (but not identical) to lib/OMan::man_table()
     my $arg = shift;
     printf("= %%$arg\n");
@@ -1215,7 +1215,7 @@ sub _main   {
         # ----------------------------- commands
         if ($arg =~ /^version$/x)        { print "$SID_odata\n";next; }
         if ($arg =~ /^[-+]?V(ERSION)?$/) { print "$VERSION\n";  next; }
-        $arg =~ s/^--test[_.-]?//x; # allow short option without prefix --test
+        $arg =~ s/^\+test[_.-]?//x; # allow short option without prefix +test
         if ($arg eq 'info') { $arg = "data"; }
         show($arg);
     }
@@ -1238,7 +1238,7 @@ _init();
 
 =head1 VERSION
 
-3.27 2024/08/18
+3.28 2024/08/18
 
 
 =head1 AUTHOR
