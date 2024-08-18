@@ -79,7 +79,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 3.1 24/01/26 00:58:34
+#?      @(#) o-saft 3.2 24/08/18 19:32:33
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -92,19 +92,21 @@ log=$$.$USER
 [ -n "$OSAFT_MAKE" ] && log=OSAFT_MAKE
     # avoid random name, which confuses diff of generated output (i.e. with make)
 log=/tmp/$ich.$log.log;
+usr=$dir/usr
 prg=$dir/$ich.pl     # most likely ich=o-saft  ..
 gui=$dir/$ich.tcl
 cgi=$dir/$ich.cgi
 dok=$dir/$ich-docker
+bunt=$usr/bunt.pl
     # all tools are prefix with the path $dir to avoid incomplete $PATH settings
     # then check (below) if tools exists, if not, remove path and rely on $PATH
-[ ! -x "$prg" ] && prg=$ich.pl
-[ ! -x "$gui" ] && gui=$ich.tcl
-[ ! -x "$cgi" ] && cgi=$ich.cgi
-[ ! -x "$dok" ] && dok=$ich-docker
+[ ! -x "$prg" ]  && prg=$ich.pl
+[ ! -x "$gui" ]  && gui=$ich.tcl
+[ ! -x "$cgi" ]  && cgi=$ich.cgi
+[ ! -x "$dok" ]  && dok=$ich-docker
 
-usr=$dir/usr
 try=
+args=           # argumets passed through (main --help)
 post="cat"      # default, avoids special handling if -post= missing
 post_args=
     # aguments passed to post command, mainly used for -help=
@@ -136,7 +138,7 @@ while [ $# -gt 0 ]; do
 EoT
             exit 0
             ;;
-        +VERSION)       echo "3.1"; exit 0; ;;
+        +VERSION)       echo "3.2"; exit 0; ;;
         -help=*)
             such="`expr "$1" ':' '-help=\(.*\)'`"
             args="--help"
@@ -159,10 +161,10 @@ EoT
         -docker | --docker) docker=1    ; ;;
         -id*)           docker_id="$1"  ; ;;
         -tag*)          docker_tag="$1" ; ;;
-        -colour | --colour) post="$usr/bunt.pl" ; ;;
-        -color  | --color)  post="$usr/bunt.pl" ; ;;
-        -blind  | --blind)  post="$usr/bunt.pl --blind" ; ;;
-        -line   | --line)   post="$usr/bunt.pl --line"  ; ;;
+        -colour | --colour) post="$bunt" ; ;;
+        -color  | --color)  post="$bunt" ; ;;
+        -blind  | --blind)  post="$bunt --blind" ; ;;
+        -line   | --line)   post="$bunt --line"  ; ;;
         -less   | --less)   post="less" ; ;;
         -more   | --more)   post="more" ; ;;
         -prg=*) prg="`expr "$1" ':' '-prg=\(.*\)'`" ; ;;  # for debugging only
