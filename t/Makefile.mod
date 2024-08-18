@@ -6,7 +6,7 @@
 #?      make help.test.mod
 #?
 #? VERSION
-#?      @(#) Makefile.mod 3.19 24/08/18 19:07:02
+#?      @(#) Makefile.mod 3.20 24/08/19 00:38:56
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.mod  = targets for testing module functionality
 
-O-SID.mod          := 3.19
+O-SID.mod          := 3.20
 O-SELF.mod         := t/Makefile.mod
 ALL.includes       += $(O-SELF.mod)
 ALL.inc.type       += mod
@@ -97,7 +97,7 @@ LIST.lib-Ciphers.pm    := \
 # following generated list contains following commands unknown to Ciphers.pm:
 #    +test-ciphers-version +test-ciphers-get_keys_list +test-ciphers-get_keys_list
 # doesn't harm, they produce nearly emty output
-LIST.lib-Ciphers--test := $(LIST.lib-Ciphers.pm-cmd:%=-+test-ciphers-%)
+LIST.lib-Ciphers--test := $(LIST.lib-Ciphers.pm-cmd:%=+test-ciphers-%)
 LIST.o-saft.pl         += $(LIST.lib-Ciphers--test)
 
 LIST.lib-options       := version +VERSION --usage
