@@ -1,5 +1,5 @@
 
-# SID   @(#) devel.txt 3.4 24/04/07 10:28:26
+# SID   @(#) devel.txt 3.5 24/08/18 12:50:15
 
 
 NAME
@@ -467,7 +467,7 @@ TESTING
 
         Testing SSL/TLS  is a challenging task. Beside the oddities described
         elsewhere, for example  X&Name Rodeo&,  there are a bunch of problems
-        and errors which may occour during runtime.
+        and errors which may occur during runtime.
 
         Following options and commands for  $0  are available to improve
         testing.  They mainly can simulate error conditions or stop execution
