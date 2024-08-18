@@ -13,7 +13,7 @@
 #?      the warning message is not present.
 #?
 #? VERSION
-#?      @(#) Makefile.warnigs 3.22 24/08/12 14:41:34
+#?      @(#) Makefile.warnigs 3.23 24/08/18 15:14:37
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -22,7 +22,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-O-SID.warnings     := 3.22
+O-SID.warnings     := 3.23
 O-SELF.warnings    := t/Makefile.warnings
 ALL.includes       += $(O-SELF.warnings)
 ALL.inc.type       += warnings
@@ -177,7 +177,7 @@ warning-%: message-%
 #   are recommended from time to time.
 
 #   The message text assigned to  TEST.args  must not contain ( except it
-#   is used for make variables. Otherwise following error may occour:
+#   is used for make variables. Otherwise following error may occur:
 #        /bin/sh: 6: Syntax error: "(" unexpected (expecting "fi")
 #
 #   NOTE:  in rare cases the target may succedd wrongly,  see description
@@ -444,7 +444,7 @@ warnings-%.log: $(TEST.logdir)
 # $(_TEST.warning.log) calls "make -s" to avoid printing of executed commands
 _TEST.warning.log   = $(TEST.logdir)/test.warnings.log-$(TEST.today)
 $(_TEST.warning.log):
-	@echo "# $(O-SELF.warnings) 3.22: $(MAKE) test.warnings.log" > $@
+	@echo "# $(O-SELF.warnings) 3.23: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
