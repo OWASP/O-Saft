@@ -35,7 +35,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_oman   = "@(#) OMan.pm 3.61 24/08/09 19:27:05";
+my  $SID_oman   = "@(#) OMan.pm 3.62 24/08/18 15:01:48";
 our $VERSION    = "24.06.24";
 
 use Exporter qw(import);
@@ -806,7 +806,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.61'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.62'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2412,7 +2412,7 @@ sub man_src_grep    {
 sub man_printhelp   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? simple dispatcher for various help requests
     #  NOTE critic: as said: *this code is a simple dispatcher*, that's it
-    my $hlp = shift;    # reqested help: option without --help* or --test* prefix
+    my $hlp = shift;    # reqested help: option without --help* or +test* prefix
     my $txt;
     _man_dbx("man_printhelp($hlp) ...");
      man_docs_write() if ($hlp =~ m/^gen[_.=-]?docs$/);
@@ -2543,6 +2543,7 @@ sub _main   {
         # testing this module is technically the same as getting the text
         $arg =~ s/--help[_.=-]?//;  # allow --help=* and simply *
         $arg =~ s/--test[_.=-]?//;  # allow --test-* also,
+        $arg =~ s/\+test[_.=-]?//;  # allow  +test-* also,
 	next if ($arg =~ m/^[+-]-?/);   # ignore other options
         man_printhelp($arg);
     }
@@ -2610,7 +2611,7 @@ For compatibility with other programs and modules it also supports:
 
 =item * OMan.pm --help=<$format>
 
-=item * OMan.pm --test-<$format>
+=item * OMan.pm +test-<$format>
 
 =back
 
@@ -2629,7 +2630,7 @@ Print usage for COMMANDS of CLI mode.
 
 =item * --v, --trace        # enable trace output for $0 itself
 
-=item * --test*             # for comptibility with o-saft.pl
+=item * +test*              # for comptibility with o-saft.pl
 
 =back
 
@@ -2759,7 +2760,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.61 2024/08/09
+3.62 2024/08/18
 
 
 =head1 AUTHOR
