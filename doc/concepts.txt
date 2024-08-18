@@ -176,7 +176,7 @@ CONCEPTS
     Errors, warnings, hints
 
         Errors, warnings and hints may be part of the output as needed. While
-        errors and warnings are printed immediately as they occour during the
+        errors and warnings are printed immediately  as they occur during the
         program flow, hints are printed right after the corresponding result.
 
         Hints print an additional explanation of a specific result.
@@ -575,7 +575,7 @@ GLOSSAR
 
 
 VERSION
-        @(#) concepts.txt 1.6 24/05/26 13:26:42
+        @(#) concepts.txt 1.7 24/08/18 12:51:32
 
 
 AUTHOR
