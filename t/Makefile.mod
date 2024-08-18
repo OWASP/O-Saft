@@ -6,7 +6,7 @@
 #?      make help.test.mod
 #?
 #? VERSION
-#?      @(#) Makefile.mod 3.17 24/08/09 21:49:04
+#?      @(#) Makefile.mod 3.18 24/08/18 16:29:12
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.mod  = targets for testing module functionality
 
-O-SID.mod          := 3.17
+O-SID.mod          := 3.18
 O-SELF.mod         := t/Makefile.mod
 ALL.includes       += $(O-SELF.mod)
 ALL.inc.type       += mod
@@ -93,12 +93,12 @@ LIST.lib-Ciphers.pm    := \
     # same output as $(LIST.lib-Ciphers--test)
 
 # some command and options supported by Ciphers.pm are supported by $(SRC.pl)
-# too, but must be used there as  --test-ciphers-*
+# too, but must be used there as  +test-ciphers-*
 # following generated list contains following commands unknown to Ciphers.pm:
-#    --test-ciphers-version --test-ciphers-get_keys_list --test-ciphers-get_keys_list
+#    +test-ciphers-version +test-ciphers-get_keys_list +test-ciphers-get_keys_list
 # doesn't harm, they produce nearly emty output
-LIST.lib-Ciphers--test := $(LIST.lib-Ciphers.pm-cmd:%=--test-ciphers-%)
-LIST.o-saft.pl         += $(LIST.lib-Ciphers--test)
+LIST.lib-Ciphers--test := $(LIST.lib-Ciphers.pm-cmd:%=-+test-ciphers-%)
+LIST.o-saft.pl         += $(LIST.lib-Ciphers-+test)
 
 LIST.lib-options       := version +VERSION --usage
     # these options should be implemented in all tools
@@ -127,18 +127,18 @@ LIST.lib-OMan.pm       := $(LIST.lib-options) \
     # only the first form is tested here, as they all produce the same output
 
 LIST.lib-SSLinfo.pm-t  := \
-	--test-openssl --test-sclient --test-sslmap \
-	--test-methods --test-ssleay
+	+test-openssl +test-sclient +test-sslmap \
+	+test-methods +test-ssleay
 
 LIST.lib-OTrace.pm     := $(LIST.lib-options) \
-	--tests $(LIST.lib-SSLinfo.pm-t)  --test-memory --test-regex \
-	--test-avail --test-init --test-maps --test-prot --test-vars \
-	--test-methods  --test-sclient  --test-sslmap   --test-ssleay
+	+tests $(LIST.lib-SSLinfo.pm-t) +test-memory    +test-regex \
+	+test-avail     +test-init +test-maps +test-prot +test-vars \
+	+test-methods   +test-sclient   +test-sslmap    +test-ssleay
 # $(O_LIB.dir)/OTrace.pm doesn't handle the options, hence call o-saft.pl with them
 LIST.o-saft.pl         += $(LIST.lib-OTrace.pm)
 
 LIST.lib-SSLinfo.pm    := $(LIST.lib-options)  localhost $(LIST.lib-SSLinfo.pm-t)
-LIST.lib-SSLhello.pm   := $(LIST.lib-options)  --test-init --test-constant --test-parameter
+LIST.lib-SSLhello.pm   := $(LIST.lib-options)  +test-init +test-constant +test-parameter
 #LIST.o-saft.pl        += $(LIST.lib-SSLinfo.pm-t)
 
 # command and checks "NOT YET IMPLEMENTED" are hardcoded here,
