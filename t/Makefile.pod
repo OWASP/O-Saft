@@ -88,7 +88,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 3.12 24/07/27 19:46:22
+@(#) Makefile.pod 3.13 24/08/18 15:13:39
 
 =head1 AUTHOR
 
@@ -846,7 +846,7 @@ is used:
 (where  target-  is an example target name, and _EXE.print_arr_END.awk is
 the awk code to print the defined array  arr[]).
 
-Target names may occour as following constructs:
+Target names may occur as following constructs:
 
     static-target:
     pattern-rule-%:
