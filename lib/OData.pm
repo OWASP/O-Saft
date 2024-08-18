@@ -18,7 +18,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odata  =  "@(#) OData.pm 3.26 24/08/05 09:36:34";
+my  $SID_odata  =  "@(#) OData.pm 3.27 24/08/18 12:52:53";
 our $VERSION    =  "24.06.24";
 
 use Exporter qw(import);
@@ -1021,7 +1021,7 @@ sub __SSLinfo   { ## no critic qw(Subroutines::ProhibitExcessComplexity)
         $val =~ s#.*?Netscape Cert Type:$rex#$1#ms              if ($cmd eq 'ext_certtype');
         $val =~ s#.*?Issuer Alternative Name:$rex#$1#ms         if ($cmd eq 'ext_issuer');
         if ($cmd eq 'ext_crl') {
-            $val =~ s#\s*Full Name:\s*##imsg;   # multiple occourances possible
+            $val =~ s#\s*Full Name:\s*##imsg;   # multiple occurrences possible
             $val =~ s#(\s*URI\s*:)# #msg;
         }
         $val =  "" if ($ext eq $val);   # nothing changed, then expected pattern is missing
@@ -1238,7 +1238,7 @@ _init();
 
 =head1 VERSION
 
-3.26 2024/08/05
+3.27 2024/08/18
 
 
 =head1 AUTHOR
