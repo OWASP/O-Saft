@@ -8,7 +8,7 @@
 #?      make help.test.opt
 #?
 #? VERSION
-#?      @(#) Makefile.opt 3.5 24/07/27 19:36:35
+#?      @(#) Makefile.opt 3.6 24/08/18 16:12:16
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -17,7 +17,7 @@
 
 HELP-help.test.opt  = targets for testing '$(SRC.pl)' options
 
-O-SID.opt          := 3.5
+O-SID.opt          := 3.6
 O-SELF.opt         := t/Makefile.opt
 ALL.includes       += $(O-SELF.opt)
 ALL.inc.type       += opt
@@ -61,7 +61,7 @@ testarg-opt-alias-enabled..1:   TEST.args  += --exit=MAIN  -b
 #testarg-opt-alias-enabled..2:   TEST.args  += --exit=MAIN  -b
 testarg-opt-alias-ca_path..x:   TEST.args  += --exit=MAIN  -c x
 
-testarg-opt-alias---test-ciphers-list:  TEST.args += --test-ciphers-list
+testarg-opt-alias-+test-ciphers-list: TEST.args += +test-ciphers-list
 
 # folgende noch in passende Makefile verschieben
 testarg-opt-alias-HOST0%:       TEST.init   = --exit=HOST0 +cn
