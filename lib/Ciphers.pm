@@ -29,7 +29,7 @@ our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.58 24/08/18 15:08:06";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.59 24/08/19 16:41:21";
 our $VERSION    = "24.06.24";   # official verion number of this file
 
 use Exporter qw(import);
@@ -1623,11 +1623,11 @@ EoT
 sub show            {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? dispatcher for various +test-ciphers-* commands; show information
     my $arg = shift;    # any +test-ciphers-*
-       $arg =~ s/^\+test[._-]?ciphers[._-]?//;  # normalize
+       $arg =~ s/^\+?test[._-]?ciphers[._-]?//; # normalize
     _v_print((caller(0))[3]);
     #_dbx("arg=$arg");
     local $\ = "\n";
-    return                  if ($arg =~ m/^version/i            ); # done in main
+    print "$VERSION"        if ($arg =~ /version$/i             );
     show_all_names('const') if ($arg =~ m/const(?:ants?)?$/     );
     show_all_names('names') if ($arg =~ m/alias(?:es)?$/        );
     show_all_names('rfc')   if ($arg =~ m/rfcs?$/               );
@@ -1676,12 +1676,12 @@ sub show            {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     print join(" ", find_names($1))     if ($arg =~ m/^find.?names=(.*)/     );
     print join(" ", find_keys($1))      if ($arg =~ m/^find.?keys=(.*)/      );
     print join(" ", find_consts($1))    if ($arg =~ m/^find.?consts=(.*)/    );
-    print join(" ", get_names($1))      if ($arg =~ m/^(?:get.)?names=(.*)/  );
-    print join(" ", get_aliases($1))    if ($arg =~ m/^(?:get.)?aliases=(.*)/);
-    print join(" ", get_consts($1))     if ($arg =~ m/^(?:get.)?consts=(.*)/ );
-    print join(" ", get_notes($1))      if ($arg =~ m/^(?:get.)?notes=(.*)/  );
-    print join(" ", get_keys_list())    if ($arg =~ m/^(?:get.)?keys.?list$/ );
-    print join(" ", get_names_list())   if ($arg =~ m/^(?:get.)?names.?list$/);
+    print join(" ", get_names($1))      if ($arg =~ m/^(?:get.?)?names=(.*)/  );
+    print join(" ", get_aliases($1))    if ($arg =~ m/^(?:get.?)?aliases=(.*)/);
+    print join(" ", get_consts($1))     if ($arg =~ m/^(?:get.?)?consts=(.*)/ );
+    print join(" ", get_notes($1))      if ($arg =~ m/^(?:get.?)?notes=(.*)/  );
+    print join(" ", get_keys_list())    if ($arg =~ m/^(?:get.?)?keys.?list$/ );
+    print join(" ", get_names_list())   if ($arg =~ m/^(?:get.?)?names.?list$/);
     if ($arg =~ m/^regex/) {
         printf("#$0: direct testing not yet possible here, please try:\n   o-saft.pl +test-ciphers-regex\n");
     }
@@ -1795,10 +1795,9 @@ sub _main   {
         if ($arg eq '--v')              { $OCfg::cfg{'verbose'}++; next; }
         # ----------------------------- commands
         if ($arg =~ /^version$/)        { print "$SID_ciphers\n";  next; }
-        if ($arg =~ /^[-+]?V(ERSION)?$/){ print "$VERSION\n";      next; }
-        if ($arg =~ /^\+test.?ciphers.?version/i) { print "$VERSION\n"; next; }
+        if ($arg =~ /^[-+]?V(ERSION)?$/){ $arg = "test-ciphers-version"; }
         $arg =~ s/^[+]//;   # allow leading + prefix
-        $arg =~ s/^\+test.?ciphers[_.-]?//; # allow short option without prefix +test-ciphers
+        $arg =~ s/^test.?ciphers[_.-]?//; # allow option without prefix +test-ciphers
         show("+test-ciphers$arg");
     }
     exit 0;
@@ -1934,7 +1933,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.58 2024/08/18
+3.59 2024/08/19
 
 
 =head1 AUTHOR
