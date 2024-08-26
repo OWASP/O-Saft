@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 3.19 24/08/27 00:52:02
+#?      @(#) Makefile.misc 3.20 24/08/27 00:54:22
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-O-SID.misc         := 3.19
+O-SID.misc         := 3.20
 O-SELF.misc        := t/Makefile.misc
 ALL.includes       += $(O-SELF.misc)
 ALL.inc.type       += misc
@@ -73,7 +73,7 @@ EXE.graph-subs     := $(TEST.dir)/gen-graph-sub-calls.sh
 
 # summary variables (mainly used for INSTALL.sh)
 _ALL.devtools.intern   += $(EXE.bench) $(EXE.test.bunt) $(EXE.cloc.total)
-_ALL.devtools.intern   += $(O-USR.dir)/bunt.pl $(TEST.dir)/get-SIDs.sh
+_ALL.devtools.intern   += $(O-DIR.usr)/bunt.pl $(TEST.dir)/get-SIDs.sh
 _ALL.devtools.intern   += $(EXE.graph-anno) $(EXE.graph-src) $(EXE.graph-subs)
                         # own scripts, but needed for _ALL.devtools.extern only
 _ALL.devtools.extern   += ctags make gmake
@@ -96,7 +96,7 @@ _ALL.openssl.debian.mod+= libmodule-build-perl libnet-dns-perl libnet-libidn-per
 _ALL.openssl.alpine.mod+= perl-net-dns  perl-mozilla-ca  perl-net-libidn
 _ALL.devmodules.openssl+= Module::Build Mozilla::CA Net::LibIDN Net::LibIDN2 Net::DNS
 
-O-USR.dir  ?= usr
+O-DIR.usr  ?= usr
 
 # cloc detect file types (language) on file extension primarily. Unfortunately
 # some files have no extension and some extension fool cloc's detection. Hence
@@ -121,7 +121,7 @@ _TEST.cloc.hint= Ruby detected by cloc incorrectly, should be make
 HELP-_misc1         = ____________________________________________ testing misc. _
 HELP-test.bench     = call '$(EXE.bench)' for some benchmarks
 HELP-test.bench.log = call '$(EXE.bench)' and save result in '$(TEST.bench.times)'
-HELP-test.bunt      = test '$(O-USR.dir)/bunt.pl' with sample file
+HELP-test.bunt      = test '$(O-DIR.usr)/bunt.pl' with sample file
 
 HELP.misc           = $(O-NL)\
 \# Make may return status code for any  qa.*  target, even the result is not$(O-NL)\
@@ -142,11 +142,11 @@ test.bench.log: $(TEST.bench.times)
 
 test.bunt: $(EXE.test.bunt)
 	@$(O-TRACE.target)
-	-cat $(EXE.test.bunt) | $(O-USR.dir)/bunt.pl
+	-cat $(EXE.test.bunt) | $(O-DIR.usr)/bunt.pl
 $(TEST.bunt.log):
 	@$(O-TRACE.target)
 	@$(O-TRACE.target.log)
-	-cat $(EXE.test.bunt) | $(O-USR.dir)/bunt.pl > $@
+	-cat $(EXE.test.bunt) | $(O-DIR.usr)/bunt.pl > $@
 test.bunt.log: $(TEST.bunt.log)
 # TODO: test.bunt.log should use testarg%log target
 
@@ -251,7 +251,7 @@ cloc:       cloc.stat
 # if STDOUT and STDERR is redirected to a file
 _TEST.cloc.log   = $(TEST.logdir)/test.cloc.stat.log
 $(_TEST.cloc.log):
-	@echo "# Makefile.misc 3.19: $(MAKE) cloc.stat.log" > $@
+	@echo "# Makefile.misc 3.20: $(MAKE) cloc.stat.log" > $@
 	@$(MAKE) -i cloc.stat >> $@ 2>&1
 cloc.stat.log: $(_TEST.cloc.log)
 
@@ -502,7 +502,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 3.19: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 3.20: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(O-TRACE.target)
