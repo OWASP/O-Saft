@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 3.21 24/08/18 15:12:49
+#?      @(#) Makefile 3.22 24/08/27 01:06:46
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-O-SID.test         := 3.21
+O-SID.test         := 3.22
 O-SELF.test        := t/Makefile
 ALL.includes       += $(O-SELF.test)
 ALL.inc.type       += test
@@ -154,10 +154,6 @@ TEST.tmp.rc    ?= $(TEST.tmpdir)/.rc
 # ALL.tests =
 
 # $(SRC.rc)  may not be defined here, hence hardcoded
-
-ifndef O-USR.dir
-    O-USR.dir = usr
-endif
 
 # Tracing just the log-targets is special. Using $(O-TRACE.target) is not an
 # option, because it would als change the final target called with  $(MAKE) .
