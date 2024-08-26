@@ -13,7 +13,7 @@
 #?      the warning message is not present.
 #?
 #? VERSION
-#?      @(#) Makefile.warnigs 3.23 24/08/18 15:14:37
+#?      @(#) Makefile.warnigs 3.24 24/08/27 00:56:28
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -22,7 +22,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-O-SID.warnings     := 3.23
+O-SID.warnings     := 3.24
 O-SELF.warnings    := t/Makefile.warnings
 ALL.includes       += $(O-SELF.warnings)
 ALL.inc.type       += warnings
@@ -267,10 +267,10 @@ warning-093: TEST.args  = TODO: help file cannot be opened, difficult ...
 warning-101: TEST.args  = TODO: 'require $file' failed, difficult ...
 # warning-189 .. warning-191 are for missing $(O-LIB.dir)/doc/file.txt
 # testing with o-saft-standalone.pl with full path may trigger the warning
-warning-189: EXE.pl     = $(CURDIR)/$(O-USR.dir)/o-saft-standalone.pl
+warning-189: EXE.pl     = $(CURDIR)/$(O-DIR.usr)/o-saft-standalone.pl
 warning-189: TEST.args  = --help +quit
 warning-190: TEST.args  = TODO: open($(O-LIB.dir)/doc/file.txt): failed, difficult ...
-warning-191: EXE.pl     = $(CURDIR)/$(O-USR.dir)/o-saft-standalone.pl
+warning-191: EXE.pl     = $(CURDIR)/$(O-DIR.usr)/o-saft-standalone.pl
 warning-191: TEST.args  = --help +quit
 warning-111: TEST.args  = --mx --nodns                      +quit
 warning-111: TEST.args  = TODO: testing missing Net/DNS.pm
@@ -444,7 +444,7 @@ warnings-%.log: $(TEST.logdir)
 # $(_TEST.warning.log) calls "make -s" to avoid printing of executed commands
 _TEST.warning.log   = $(TEST.logdir)/test.warnings.log-$(TEST.today)
 $(_TEST.warning.log):
-	@echo "# $(O-SELF.warnings) 3.23: $(MAKE) test.warnings.log" > $@
+	@echo "# $(O-SELF.warnings) 3.24: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
