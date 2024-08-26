@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.43 24/08/27 00:08:38
+#?      @(#) Makefile 3.44 24/08/27 01:19:41
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-O-SID           = 3.43
+O-SID           = 3.44
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -62,15 +62,15 @@ O-Project       = o-saft
 O-ProjectName   = O-Saft
 
 # tool directories (i.g. related to ./ )
-O-DOC.dir       = doc
-O-LIB.dir       = lib
-O-USR.dir       = usr
+O-DIR.doc       = doc
+O-DIR.lib       = lib
+O-DIR.usr       = usr
 TEST.dir        = t
 TEST.logdir     = $(TEST.dir)/log
-O-WEB.dir       = $(O-DOC.dir)/img
-O-TGZ.dir       = $(O-ProjectName)
-O-TMP.dir       = /tmp/$(O-Project)
-O-INSTALL.dir   = /usr/local/$(O-Project)
+O-DIR.web       = $(O-DIR.doc)/img
+O-DIR.tgz       = $(O-ProjectName)
+O-DIR.tmp       = /tmp/$(O-Project)
+O-DIR.install   = /usr/local/$(O-Project)
 
 # tool source files
 O-SRC.lic       = o-saft.lic
@@ -86,10 +86,11 @@ O-LIB.pm        = \
 		  OText.pm \
 		  OTrace.pm \
 		  OUsr.pm
-O-DOC.pm        = $(O-LIB.dir)/ODoc.pm
-O-MAN.pm        = $(O-LIB.dir)/OMan.pm
+O-DOC.pm        = $(O-DIR.lib)/ODoc.pm
+O-MAN.pm        = $(O-DIR.lib)/OMan.pm
 O-TXT.txt       = \
 		  coding.txt \
+		  concepts.txt \
 		  glossary.txt \
 		  help.txt \
 		  links.txt \
@@ -97,14 +98,14 @@ O-TXT.txt       = \
 		  openssl.txt \
 		  rfc.txt \
 		  tools.txt
-O-SRC.txt       = $(O-TXT.txt:%=$(O-DOC.dir)/%)
-SRC.pm          = $(O-LIB.pm:%=$(O-LIB.dir)/%)
+O-SRC.txt       = $(O-TXT.txt:%=$(O-DIR.doc)/%)
+SRC.pm          = $(O-LIB.pm:%=$(O-DIR.lib)/%)
 SRC.sh          = $(O-Project)
 SRC.pl          = $(O-Project).pl
 SRC.tcl         = $(O-Project).tcl
-SRC.gui         = $(O-Project).tcl $(O-LIB.dir)/$(O-Project)-img.tcl
+SRC.gui         = $(O-Project).tcl $(O-DIR.lib)/$(O-Project)-img.tcl
 SRC.cgi         = $(O-Project).cgi
-SRC.php         = $(O-USR.dir)/$(O-Project).php
+SRC.php         = $(O-DIR.usr)/$(O-Project).php
 SRC.docker      = \
 		  $(O-Project)-docker \
 		  $(O-Project)-docker-dev \
@@ -115,11 +116,11 @@ SRC.exe         = $(SRC.pl) $(SRC.gui) $(SRC.sh) $(O-Project)-docker
 
 SRC.make        = Makefile
 SRC.misc        = README.md CHANGES
-SRC.inst        = $(O-USR.dir)/INSTALL-template.sh
-SRC.testssl.unused  = $(O-USR.dir)/Dockerfile.mbedtls $(O-USR.dir)/Dockerfile.wolfssl
+SRC.inst        = $(O-DIR.usr)/INSTALL-template.sh
+SRC.testssl.unused  = $(O-DIR.usr)/Dockerfile.mbedtls $(O-DIR.usr)/Dockerfile.wolfssl
 
 # contrib / usr files
-$(O-USR.dir)/HTML%-table.awk: $(O-USR.dir)/HTML-table.awk
+$(O-DIR.usr)/HTML%-table.awk: $(O-DIR.usr)/HTML-table.awk
 	@$(O-TRACE.target)
 	cp $< $@
 # should be ln -s $< $@ ; but some systems are too stupid for symlinks
@@ -158,12 +159,12 @@ SRC.usr.complete= \
 		  fish_completion \
 		  tcsh_completion
 SRC.usr         = \
-		  $(SRC.usr.complete:%=$(O-USR.dir)/%_$(O-Project)) \
-		  $(SRC.usr.examples:%=$(O-USR.dir)/%) \
-		  $(SRC.usr.post.awk:%=$(O-USR.dir)/%) \
-		  $(SRC.usr.post:%=$(O-USR.dir)/%) \
-		  $(SRC.usr.misc:%=$(O-USR.dir)/%) \
-		  $(SRC.usr.zap:%=$(O-USR.dir)/%)
+		  $(SRC.usr.complete:%=$(O-DIR.usr)/%_$(O-Project)) \
+		  $(SRC.usr.examples:%=$(O-DIR.usr)/%) \
+		  $(SRC.usr.post.awk:%=$(O-DIR.usr)/%) \
+		  $(SRC.usr.post:%=$(O-DIR.usr)/%) \
+		  $(SRC.usr.misc:%=$(O-DIR.usr)/%) \
+		  $(SRC.usr.zap:%=$(O-DIR.usr)/%)
 
 
 TEST.exe        = SSLinfo.pl \
@@ -203,10 +204,8 @@ O-DOC.odg       = o-saft_CLI_data_flow.odg \
 		  o-saft_GUI_data_flow.odg \
 		  o-saft_docker.de.odg \
 		  o-saft_docker.en.odg
-O-DOC.info      = concepts.txt
-SRC.odg         = $(O-DOC.odg:%=$(O-DOC.dir)/%)
-SRC.info        = $(O-DOC.info:%=$(O-DOC.dir)/%)
-O-WEB.src       = \
+SRC.odg         = $(O-DOC.odg:%=$(O-DIR.doc)/%)
+O-SRC.web       = \
 		  img.css \
 		  O-Saft_CLI-cipher.png \
 		  O-Saft_CLI-altname.png \
@@ -223,23 +222,23 @@ O-WEB.src       = \
 		  O-Saft_GUI-vulns.png \
 		  O-Saft_CLI-vulns.png \
 		  O-Saft_CLI__faked.txt
-SRC.web         = $(O-WEB.src:%=$(O-WEB.dir)/%)
+SRC.web         = $(O-SRC.web:%=$(O-DIR.web)/%)
 
 # generated files
-GEN.html        = $(O-DOC.dir)/$(O-Project).html
-GEN.cgi.html    = $(O-DOC.dir)/$(O-Project).cgi.html
-GEN.text        = $(O-DOC.dir)/$(O-Project).txt
-GEN.wiki        = $(O-DOC.dir)/$(O-Project).wiki
-GEN.man         = $(O-DOC.dir)/$(O-Project).1
-GEN.pod         = $(O-DOC.dir)/$(O-Project).pod
-GEN.src         = $(O-USR.dir)/$(O-Project)-standalone.pl
+GEN.html        = $(O-DIR.doc)/$(O-Project).html
+GEN.cgi.html    = $(O-DIR.doc)/$(O-Project).cgi.html
+GEN.text        = $(O-DIR.doc)/$(O-Project).txt
+GEN.wiki        = $(O-DIR.doc)/$(O-Project).wiki
+GEN.man         = $(O-DIR.doc)/$(O-Project).1
+GEN.pod         = $(O-DIR.doc)/$(O-Project).pod
+GEN.src         = $(O-DIR.usr)/$(O-Project)-standalone.pl
 GEN.pdf         = $(SRC.odg:%.odg=%.pdf)
 GEN.inst        = INSTALL.sh
 GEN.tags        = tags
-GEN.rel         = $(O-DOC.dir)/$(O-Project).rel
+GEN.rel         = $(O-DIR.doc)/$(O-Project).rel
 
 GEN.tgz         = $(O-Project).tgz
-GEN.tmptgz      = $(O-TMP.dir)/$(GEN.tgz)
+GEN.tmptgz      = $(O-DIR.tmp)/$(GEN.tgz)
 
 # generated files for internal use, i.e. $(SRC.tcl)
 # TODO: because make does not allow = in target names, the generated targets
@@ -248,11 +247,11 @@ LIST.DOC_data   = --help --help=opts --help=commands --help=glossar --help=alias
 		  --help=data --help=data --help=checks --help=regex --help=rfc \
 		  --help=ciphers-html --help=ciphers-text
 # --help=warnings  uses a different command to be generated
-GEN.DOC.data    = $(LIST.DOC_data:%=$(O-DOC.dir)/$(SRC.pl).%)
-GEN.DOC.data   += $(O-DOC.dir)/$(SRC.pl).--help=warnings
+GEN.DOC.data    = $(LIST.DOC_data:%=$(O-DIR.doc)/$(SRC.pl).%)
+GEN.DOC.data   += $(O-DIR.doc)/$(SRC.pl).--help=warnings
 
 # summary variables
-O-DIRS          = $(O-LIB.dir) $(O-DOC.dir) $(O-WEB.dir) $(O-USR.dir) $(TEST.dir)
+O-DIRS          = $(O-DIR.lib) $(O-DIR.doc) $(O-DIR.web) $(O-DIR.usr) $(TEST.dir)
 GEN.docs        = $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.wiki) $(GEN.man) $(GEN.DOC.data)
 # NOTE: sequence in ALL.Makefiles is important, for example when used in target doc
 ALL.Makefiles   = $(SRC.make) $(SRC.Makefiles)
@@ -266,12 +265,12 @@ ALL.osaft       = $(SRC.pl)  $(SRC.gui) $(SRC.pm)  $(SRC.sh) $(O-SRC.txt) $(SRC.
 ALL.exe         = $(SRC.exe) $(SRC.cgi) $(SRC.php) $(GEN.src) $(SRC.docker)
 ALL.tst         = $(SRC.test)
 ALL.usr         = $(SRC.usr)
-ALL.doc         = $(SRC.odg) $(SRC.info) $(SRC.web)
+ALL.doc         = $(SRC.odg) $(O-SRC.txt) $(SRC.web)
 ALL.pm          = $(SRC.pm)
-ALL.gen         = $(GEN.src) $(GEN.docs) $(GEN.DOC.data)
+ALL.gen         = $(GEN.src) $(GEN.docs)
     # NOTE: GEN.rel should not be part of ALL.gen, as it is generated with the
     #       release target; see ALL.tgz below
-ALL.docs        = $(SRC.odg) $(GEN.docs) $(SRC.info)
+ALL.docs        = $(SRC.odg) $(O-SRC.txt) $(GEN.docs)
     # NOTE: ALL.docs are the files for user documentation, ALL.doc are SRC-files
     #       $(GEN.wiki) is rarley used but part of ALL.gen for simplicity
 #               # $(GEN.tags) added in t/Makefile.misc
@@ -282,21 +281,20 @@ ALL.src         = \
 		  $(SRC.rc) \
 		  $(SRC.misc) \
 		  $(SRC.odg) \
-		  $(SRC.info) \
 		  $(ALL.gen) \
 		  $(ALL.Makefiles) \
 		  $(ALL.tst) \
 		  $(ALL.usr)
-ALL.tgz         = $(ALL.src:%=$(O-TGZ.dir)/%)
-ALL.tgz        += $(O-TGZ.dir)/$(GEN.inst) $(O-TGZ.dir)/$(GEN.rel)
-ALL.tgz        += $(SRC.Makefiles.ssl:%=$(O-TGZ.dir)/%)
+ALL.tgz         = $(ALL.src:%=$(O-DIR.tgz)/%)
+ALL.tgz        += $(O-DIR.tgz)/$(GEN.inst) $(O-DIR.tgz)/$(GEN.rel)
+ALL.tgz        += $(SRC.Makefiles.ssl:%=$(O-DIR.tgz)/%)
 
 # internal used make
 MAKE            = $(MAKE_COMMAND)
 # some rules need to have a command, otherwise they are not evaluated
 EXE.dummy       = /bin/echo -n ""
 # internal used tools (paths hardcoded!)
-EXE.single      = $(O-USR.dir)/gen_standalone.sh
+EXE.single      = $(O-DIR.usr)/gen_standalone.sh
 EXE.o_docker    = o-saft-docker
 EXE.pl          = $(SRC.pl)
 #                   SRC.pl is used for generating a couple of data
@@ -331,12 +329,12 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.43 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.43
-EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
-		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DOC.dir)@'              \
-		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-LIB.dir)@'              \
-		  -e 's@INSERTED_BY_MAKE_USR_DIR@$(O-USR.dir)@'              \
+_INST.genbytext = generated data by Makefile 3.44 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.44
+EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-DIR.install)@'       \
+		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DIR.doc)@'              \
+		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-DIR.lib)@'              \
+		  -e 's@INSERTED_BY_MAKE_USR_DIR@$(O-DIR.usr)@'              \
 		  -e 's@INSERTED_BY_MAKE_TST_DIR@$(TEST.dir)@'               \
 		  -e 's@INSERTED_BY_MAKE_LOG_DIR@$(TEST.logdir)@'            \
 		  -e 's@INSERTED_BY_MAKE_ALL_SRC@$(ALL.src)@'                \
@@ -348,7 +346,7 @@ EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
 		  -e 's@INSERTED_BY_MAKE_DEVTOOLSEXT@$(_INST.tools_ext)@'    \
 		  -e 's@INSERTED_BY_MAKE_DEVMODULES@$(_INST.devmodules)@'    \
 		  -e 's@INSERTED_BY_MAKE_PERL_MODULES@$(ALL.perlmodules)@'   \
-		  -e 's@INSERTED_BY_MAKE_OSAFT_LIBDIR@$(O-LIB.dir)@'         \
+		  -e 's@INSERTED_BY_MAKE_OSAFT_LIBDIR@$(O-DIR.lib)@'         \
 		  -e 's@INSERTED_BY_MAKE_OSAFT_DIRS@$(O-DIRS)@'              \
 		  -e 's@INSERTED_BY_MAKE_OSAFT_SH@$(SRC.sh)@'                \
 		  -e 's@INSERTED_BY_MAKE_OSAFT_PM@$(SRC.pm)@'                \
@@ -453,12 +451,12 @@ HELP-_known     = _______________________________________ well known targets _
 HELP-all        = does nothing; alias for help
 HELP-clean      = remove all generated files '$(ALL.gen) $(GEN.tags)'
 HELP-release    = generate signed '$(GEN.tgz)' from sources
-HELP-install    = install tool in '$(O-INSTALL.dir)' using '$(GEN.inst)', $(O-INSTALL.dir) must exist
-HELP-uninstall  = remove installtion directory '$(O-INSTALL.dir)' completely
+HELP-install    = install tool in '$(O-DIR.install)' using '$(GEN.inst)', $(O-DIR.install) must exist
+HELP-uninstall  = remove installtion directory '$(O-DIR.install)' completely
 
-$(O-INSTALL.dir):
+$(O-DIR.install):
 	@$(O-TRACE.target)
-	mkdir $(_INSTALL_FORCE_) $(O-INSTALL.dir)
+	mkdir $(_INSTALL_FORCE_) $(O-DIR.install)
 
 all:    help
 
@@ -466,16 +464,16 @@ clean:  clean.tmp clean.tar clean.gen
 clear:  clean
 
 # target calls installed $(SRC.pl) to test general functionality
-install: $(GEN.inst) $(O-INSTALL.dir)
+install: $(GEN.inst) $(O-DIR.install)
 	@$(O-TRACE.target)
-	$(GEN.inst) $(O-INSTALL.dir) \
-	    && $(O-INSTALL.dir)/$(SRC.pl) --no-warning --tracearg +quit > /dev/null
+	$(GEN.inst) $(O-DIR.install) \
+	    && $(O-DIR.install)/$(SRC.pl) --no-warning --tracearg +quit > /dev/null
 install-f: _INSTALL_FORCE_ = -p
 install-f: install
 
 uninstall:
 	@$(O-TRACE.target)
-	-rm -r --interactive=never $(O-INSTALL.dir)
+	-rm -r --interactive=never $(O-DIR.install)
 
 _RELEASE    = $(shell perl -nle '/^\s*sub _VERSION/ && do { s/.*?"([^"]*)".*/$$1/;print }' $(SRC.pl))
 
@@ -553,18 +551,18 @@ HELP-html       = generate HTML format help '$(GEN.html)'
 HELP-text       = generate plain text  help '$(GEN.text)'
 HELP-wiki       = generate mediawiki format help '$(GEN.wiki)'
 HELP-docs       = generate '$(GEN.docs)'; see also target doc.data
-HELP-tar        = generate '$(GEN.tgz)' from all source prefixed with '$(O-TGZ.dir)/'
+HELP-tar        = generate '$(GEN.tgz)' from all source prefixed with '$(O-DIR.tgz)/'
 HELP-tmptar     = generate '$(GEN.tmptgz)' from all sources without prefix
 HELP-doc.data   = generate '$(GEN.DOC.data)' for $(SRC.tcl)
 HELP-gen.all    = generate most "generatable" file
 HELP-docker     = generate local docker image (release version) and add updated files
 HELP-docker.dev = generate local docker image (development version)
 HELP-docker.push= install local docker image at Docker repository
-HELP-clean.tmp  = remove '$(O-TMP.dir)'
+HELP-clean.tmp  = remove '$(O-DIR.tmp)'
 HELP-clean.tar  = remove '$(GEN.tgz)'
 HELP-clean.gen  = remove '$(ALL.gen)' '$(GEN.inst)' '$(GEN.tags)'
 HELP-clean.all  = remove '$(ALL.gen)' '$(GEN.inst)' '$(GEN.tags)' '$(GEN.tgz)'
-HELP-install-f  = install tool in '$(O-INSTALL.dir)' using '$(GEN.inst)', '$(O-INSTALL.dir)' may exist
+HELP-install-f  = install tool in '$(O-DIR.install)' using '$(GEN.inst)', '$(O-DIR.install)' may exist
 HELP-o-saft.rel = generate '$(GEN.rel)' (version numbers of files from repository)
 HELP-rel        = alias for o-saft.rel
 #               # HELP-o-saft.rel hardcoded, grrr
@@ -594,8 +592,8 @@ docs:       $(GEN.docs)
 standalone: $(GEN.src)
 stand-alone:$(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.43
-tar:     _INST.is_edit  = 3.43
+_INST.is_edit           = 3.44
+tar:     _INST.is_edit  = 3.44
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
@@ -652,7 +650,7 @@ clean.gen:
 	rm -rf $(ALL.gen) $(GEN.inst)
 clean.tmp:
 	@$(O-TRACE.target)
-	rm -rf $(O-TMP.dir)
+	rm -rf $(O-DIR.tmp)
 clean.tar:
 	@$(O-TRACE.target)
 	rm -rf $(GEN.tgz)
@@ -660,15 +658,15 @@ clean.tgz: clean.tar
 clean.docker: docker.rm
 
 # avoid matching implicit rule help% in some of following targets
-$(O-DOC.dir)/help.txt:
+$(O-DIR.doc)/help.txt:
 	@$(O-TRACE.target)
 
 #_____________________________________________________________________________
 #_______________________________________________ targets for generated files__|
 
-# targets for generation: $(O-DIRS:%=$(O-TMP.dir)/%)
-# no pattern rule $(O-TMP.dir)/%:  used to avoid creation of unused directories
-$(O-TMP.dir)/$(O-LIB.dir) $(O-TMP.dir)/$(O-DOC.dir) $(O-TMP.dir)/$(O-USR.dir) $(O-TMP.dir)/$(TEST.dir):
+# targets for generation: $(O-DIRS:%=$(O-DIR.tmp)/%)
+# no pattern rule $(O-DIR.tmp)/%:  used to avoid creation of unused directories
+$(O-DIR.tmp)/$(O-DIR.lib) $(O-DIR.tmp)/$(O-DIR.doc) $(O-DIR.tmp)/$(O-DIR.usr) $(O-DIR.tmp)/$(TEST.dir):
 	@$(O-TRACE.target)
 	mkdir -p $@
 
@@ -719,14 +717,14 @@ $(GEN.tgz)--to-noisy: $(ALL.src)
 # TODO: this is a dirty hack, because no Makefiles from t/ should be used here
 # most files could also be generated with: ./$(SRC.pl) --gen-docs
 # SEE GNU Make:Pattern Rule
-$(O-DOC.dir)/$(SRC.pl).%warnings: Makefile $(SRC.pl) $(SRC.pm) $(SRC.cgi) $(TEST.dir)/Makefile.warnings
+$(O-DIR.doc)/$(SRC.pl).%warnings: Makefile $(SRC.pl) $(SRC.pm) $(SRC.cgi) $(TEST.dir)/Makefile.warnings
 	@$(O-TRACE.target)
 	$(MAKE_COMMAND) -s warnings-info > $@
 
-# pattern rule for generating $(O-DOC.dir)/$(SRC.pl).--help=*
+# pattern rule for generating $(O-DIR.doc)/$(SRC.pl).--help=*
 # unfortunately the target name does not contain any hint on which source file
 # it depends, hence all possible dependencies are used
-$(O-DOC.dir)/$(SRC.pl).%: Makefile $(SRC.pl) $(SRC.pm)
+$(O-DIR.doc)/$(SRC.pl).%: Makefile $(SRC.pl) $(SRC.pm)
 	@$(O-TRACE.target)
 	./$(SRC.pl) --no-rc $* > $@
 
@@ -738,9 +736,9 @@ $(O-DOC.dir)/$(SRC.pl).%: Makefile $(SRC.pl) $(SRC.pm)
 # FIXME: (11/2021) libreoffice --headless  generates a file slighly different
 #        compared to the file generated interactively (reason yet unknown)
 #        we keep the generation here, to avoid missing files
-$(O-DOC.dir)/%.pdf: $(O-DOC.dir)/%.odg
+$(O-DIR.doc)/%.pdf: $(O-DIR.doc)/%.odg
 	@$(O-TRACE.target)
-	$(EXE.office) --headless --nologo --nolockcheck --norestore --convert-to pdf:draw_pdf_Export --outdir $(O-DOC.dir)/ $^
+	$(EXE.office) --headless --nologo --nolockcheck --norestore --convert-to pdf:draw_pdf_Export --outdir $(O-DIR.doc)/ $^
 
 # Special target to check for edited files;  it only checks the source files of
 # the tool (o-saft.pl) but no other source files.
