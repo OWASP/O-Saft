@@ -6,7 +6,7 @@
 #?      make help.test.inst
 #?
 #? VERSION
-#?      @(#) Makefile.inst 3.8 24/08/16 11:51:35
+#?      @(#) Makefile.inst 3.9 24/08/27 00:48:35
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.inst = targets for testing INSTALL.sh
 
-O-SID.inst         := 3.8
+O-SID.inst         := 3.9
 O-SELF.inst        := t/Makefile.inst
 ALL.includes       += $(O-SELF.inst)
 ALL.inc.type       += inst
@@ -92,17 +92,17 @@ testarg-inst-INSTALL.sh_--simulate-vm:      export osaft_vm_build = 1
 # to ensure the generated directory is removed at end;
 # no -l for ls to avoid avoid diff with testarg-inst-INSTALL.sh-from-tgz.log
 testarg-inst-INSTALL.sh-from-tgz: $(GEN.tgz)
-	@mkdir -p $(O-TMP.dir)/i
-	@cp $(GEN.tgz) $(O-TMP.dir)/i/
-	@cd     $(O-TMP.dir)/i && \
+	@mkdir -p $(O-DIR.tmp)/i
+	@cp $(GEN.tgz) $(O-DIR.tmp)/i/
+	@cd     $(O-DIR.tmp)/i && \
 		tar xf $(GEN.tgz) && cd O-Saft && \
-		./$(EXE.INSTALL) --install $(O-TMP.dir); \
-		./$(EXE.INSTALL) --check   $(O-TMP.dir); \
-		./$(EXE.INSTALL) --clean   $(O-TMP.dir); \
-		rm -rf $(O-TMP.dir)/i; \
+		./$(EXE.INSTALL) --install $(O-DIR.tmp); \
+		./$(EXE.INSTALL) --check   $(O-DIR.tmp); \
+		./$(EXE.INSTALL) --clean   $(O-DIR.tmp); \
+		rm -rf $(O-DIR.tmp)/i; \
 		/bin/true
-	@ls -aF $(O-TMP.dir) $(O-TMP.dir)/.files_to_be_removed
-	@rm -rf $(O-TMP.dir)
+	@ls -aF $(O-DIR.tmp) $(O-DIR.tmp)/.files_to_be_removed
+	@rm -rf $(O-DIR.tmp)
 
 ALL.test.inst      += \
 	testarg-inst-INSTALL.sh_--check-SID--changes \
