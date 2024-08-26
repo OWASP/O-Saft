@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 3.20 24/08/27 00:54:22
+#?      @(#) Makefile.misc 3.21 24/08/27 01:13:44
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-O-SID.misc         := 3.20
+O-SID.misc         := 3.21
 O-SELF.misc        := t/Makefile.misc
 ALL.includes       += $(O-SELF.misc)
 ALL.inc.type       += misc
@@ -171,10 +171,10 @@ HELP-docs.subs.all  = generate graph with defined and used perl subroutines for 
 # quick&dirty without check if passed file exists, must be in /lib
 docs.anno.%:
 	@$(O-TRACE.target)
-	@$(EXE.graph-anno) --dir=$(O-DIR.doc) --prefix=$(*)_  $(O-LIB.dir)/$(*)
+	@$(EXE.graph-anno) --dir=$(O-DIR.doc) --prefix=$(*)_  $(O-DIR.lib)/$(*)
 docs.subs.%:
 	@$(O-TRACE.target)
-	@$(EXE.graph-subs) --dir=$(O-DIR.doc) --prefix=$(*)_  $(O-LIB.dir)/$(*)
+	@$(EXE.graph-subs) --dir=$(O-DIR.doc) --prefix=$(*)_  $(O-DIR.lib)/$(*)
 
 ALL.docsanno    = $(O-LIB.pm:%=docs.anno.%)
 ALL.docssubs    = $(O-LIB.pm:%=docs.subs.%)
@@ -251,7 +251,7 @@ cloc:       cloc.stat
 # if STDOUT and STDERR is redirected to a file
 _TEST.cloc.log   = $(TEST.logdir)/test.cloc.stat.log
 $(_TEST.cloc.log):
-	@echo "# Makefile.misc 3.20: $(MAKE) cloc.stat.log" > $@
+	@echo "# Makefile.misc 3.21: $(MAKE) cloc.stat.log" > $@
 	@$(MAKE) -i cloc.stat >> $@ 2>&1
 cloc.stat.log: $(_TEST.cloc.log)
 
@@ -502,7 +502,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 3.20: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 3.21: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(O-TRACE.target)
