@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 3.14 24/08/11 16:21:12
+#?      @(#) Makefile.dev 3.15 24/08/27 01:02:04
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-O-SID.dev          := 3.14
+O-SID.dev          := 3.15
 O-SELF.dev         := t/Makefile.dev
 ALL.includes       += $(O-SELF.dev)
 ALL.inc.type       += dev
@@ -52,9 +52,9 @@ LIST.programs      := \
 	$(SRC.pl) $(SRC.tcl)      $(SRC.pm)  \
 	$(TEST.dir)/Makefile.pod \
 	INSTALL.sh \
-	$(O-USR.dir)/bunt.pl \
-	$(O-USR.dir)/install_openssl.sh  \
-	$(O-USR.dir)/gen_standalone.sh
+	$(O-DIR.usr)/bunt.pl \
+	$(O-DIR.usr)/install_openssl.sh  \
+	$(O-DIR.usr)/gen_standalone.sh
 #EXE.o-saft-docker-dev  := ../$(EXE.o_docker)-dev
 
 # no targets are generated for empty LIST.* variables
@@ -205,7 +205,7 @@ ALL.test.dev            += \
 # special option for gen_standalone.sh; must remove the generated file
 # generated file has permissions 555, hence  rm -f
 # TODO: target works but gen_standalone.sh returns errors (needs to be improved)
-testarg-dev-usr-standalone-tmp: EXE.pl    = $(O-USR.dir)/gen_standalone.sh
+testarg-dev-usr-standalone-tmp: EXE.pl    = $(O-DIR.usr)/gen_standalone.sh
 testarg-dev-usr-standalone-tmp: TEST.args = $(_TEST.dev.tmpfile)
 testarg-dev-usr-standalone_tmpfile: testarg-dev-usr-standalone-tmp
 	@rm -f $(_TEST.dev.tmpfile)
