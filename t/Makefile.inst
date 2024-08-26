@@ -6,7 +6,7 @@
 #?      make help.test.inst
 #?
 #? VERSION
-#?      @(#) Makefile.inst 3.9 24/08/27 00:48:35
+#?      @(#) Makefile.inst 3.10 24/08/27 01:03:02
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.inst = targets for testing INSTALL.sh
 
-O-SID.inst         := 3.9
+O-SID.inst         := 3.10
 O-SELF.inst        := t/Makefile.inst
 ALL.includes       += $(O-SELF.inst)
 ALL.inc.type       += inst
@@ -35,7 +35,7 @@ help.test.inst-vv:    HELP_TYPE = inst
 #________________________________________________________________ variables __|
 
 EXE.INSTALL        ?= INSTALL.sh
-EXE.install_openssl = $(O-USR.dir)/install_openssl.sh
+EXE.install_openssl = $(O-DIR.usr)/install_openssl.sh
 
 LIST.INSTALL.sh    :=   --install   --clean --check    --checkdev \
 			--expected  --cgi   --usage \
