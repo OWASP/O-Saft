@@ -6,7 +6,7 @@
 #?      make help.test.misc
 #?
 #? VERSION
-#?      @(#) Makefile.misc 3.18 24/08/14 10:51:18
+#?      @(#) Makefile.misc 3.19 24/08/27 00:52:02
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.misc = targets for misc. tests and development
 
-O-SID.misc         := 3.18
+O-SID.misc         := 3.19
 O-SELF.misc        := t/Makefile.misc
 ALL.includes       += $(O-SELF.misc)
 ALL.inc.type       += misc
@@ -171,10 +171,10 @@ HELP-docs.subs.all  = generate graph with defined and used perl subroutines for 
 # quick&dirty without check if passed file exists, must be in /lib
 docs.anno.%:
 	@$(O-TRACE.target)
-	@$(EXE.graph-anno) --dir=$(O-DOC.dir) --prefix=$(*)_  $(O-LIB.dir)/$(*)
+	@$(EXE.graph-anno) --dir=$(O-DIR.doc) --prefix=$(*)_  $(O-LIB.dir)/$(*)
 docs.subs.%:
 	@$(O-TRACE.target)
-	@$(EXE.graph-subs) --dir=$(O-DOC.dir) --prefix=$(*)_  $(O-LIB.dir)/$(*)
+	@$(EXE.graph-subs) --dir=$(O-DIR.doc) --prefix=$(*)_  $(O-LIB.dir)/$(*)
 
 ALL.docsanno    = $(O-LIB.pm:%=docs.anno.%)
 ALL.docssubs    = $(O-LIB.pm:%=docs.subs.%)
@@ -182,15 +182,15 @@ ALL.docssubs    = $(O-LIB.pm:%=docs.subs.%)
 # only one target, as it generates multiple files anyway
 docs.anno:
 	@$(O-TRACE.target)
-	@$(EXE.graph-anno) --dir=$(O-DOC.dir) --prefix=$(O-Project)_ --make=e-ALL.src
-	@$(EXE.graph-anno) --dir=$(O-DOC.dir) --prefix=$(SRC.pl)_    $(SRC.pl)
+	@$(EXE.graph-anno) --dir=$(O-DIR.doc) --prefix=$(O-Project)_ --make=e-ALL.src
+	@$(EXE.graph-anno) --dir=$(O-DIR.doc) --prefix=$(SRC.pl)_    $(SRC.pl)
 docs.annotations: docs.anno
 
 # only one target, as it generates multiple files anyway
 docs.subs:
 	@$(O-TRACE.target)
-	@$(EXE.graph-subs) --dir=$(O-DOC.dir) --prefix=$(O-Project)_ --make=e-ALL.pm
-	@$(EXE.graph-subs) --dir=$(O-DOC.dir) --prefix=$(SRC.pl)_    $(SRC.pl)
+	@$(EXE.graph-subs) --dir=$(O-DIR.doc) --prefix=$(O-Project)_ --make=e-ALL.pm
+	@$(EXE.graph-subs) --dir=$(O-DIR.doc) --prefix=$(SRC.pl)_    $(SRC.pl)
 
 ALL.testdocs   := docs.anno docs.subs $(ALL.docsanno) $(ALL.docssubs)
 
@@ -251,7 +251,7 @@ cloc:       cloc.stat
 # if STDOUT and STDERR is redirected to a file
 _TEST.cloc.log   = $(TEST.logdir)/test.cloc.stat.log
 $(_TEST.cloc.log):
-	@echo "# Makefile.misc 3.18: $(MAKE) cloc.stat.log" > $@
+	@echo "# Makefile.misc 3.19: $(MAKE) cloc.stat.log" > $@
 	@$(MAKE) -i cloc.stat >> $@ 2>&1
 cloc.stat.log: $(_TEST.cloc.log)
 
@@ -292,7 +292,7 @@ HELP-nytprof.html   = generate profiling data in HTML format
 HELP-dprof.out      = generate profiling data (for dprofpp; times, counts, calling tree)
 
 _TEST.analyse.src  := ./
-_TEST.analyse.dst  := ./$(O-DOC.dir)/perl-analyzer
+_TEST.analyse.dst  := ./$(O-DIR.doc)/perl-analyzer
 _TEST.analyse.dat  := $(_TEST.analyse.dst)/o-saft.dat
 _TEST.analyse.html := $(_TEST.analyse.dst)/index.html
 TEST.opt.analyse    =
@@ -502,7 +502,7 @@ test.quality:         $(ALL.test.quality)
 
 _TEST.quality.log   = $(TEST.logdir)/test.quality.log-$(TEST.today)
 $(_TEST.quality.log):
-	@echo "# Makefile.misc 3.18: $(MAKE) test.quality.log" > $@
+	@echo "# Makefile.misc 3.19: $(MAKE) test.quality.log" > $@
 	@$(MAKE) -i test.quality >> $@ 2>&1
 test.quality.log: $(_TEST.quality.log)
 	@$(O-TRACE.target)
