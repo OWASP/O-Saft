@@ -12,20 +12,20 @@
 #?      include Makefile.testssl.wolfssl
 #?
 #? VERSION
-#?      @@(#) {l}xqU 1.14 24/07/01 21:11:23
+#?      @@(#) Makefile.testssl.wolfssl 1.15 24/08/27 01:08:04
 #?
 #? AUTHOR
 #?      04-jun-24 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-O-SID.testssl.wolfssl  := 1.14
+O-SID.testssl.wolfssl  := 1.15
 #O-SELF.wolfssl         := $(firstword $(MAKEFILE_LIST))
 
 #_____________________________________________________________________________
 #_____________________________________ global variables for image and build __|
 
-wolfssl-%:      TESTSSL.vm.version      = {l}xqU 1.14
+wolfssl-%:      TESTSSL.vm.version      = Makefile.testssl.wolfssl 1.15
 wolfssl-%:      TESTSSL.vm.type         = wolfssl
 wolfssl-%:      TESTSSL.vm.port         = 11111
 wolfssl-%:      TESTSSL.vm.client       = client
@@ -44,7 +44,7 @@ wolfssl-%:      TESTSSL.vm.run.args     = --network=host
 #   6/2024 ah: workaround 'cause wolfSSL's server struggles with forwarded port
 #       from host to docker image (docker's -e option)
 #       run still uses "-e port:port" options but "--network=host" ignores them
-# TODO: wolfssl-3.15.3-build: TESTSSL.vm.context  = $(O-USR.dir)/Dockerfile.wolfssl
+# TODO: wolfssl-3.15.3-build: TESTSSL.vm.context  = $(O-DIR.usr)/Dockerfile.wolfssl
 
 wolfssl-%:      TESTSSL.src.packages    = $(TESTSSL.default.apk)
 wolfssl-%:      TESTSSL.src.configure  += $(TESTSSL.src.configure.wolfssl)
