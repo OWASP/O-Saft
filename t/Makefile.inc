@@ -12,14 +12,14 @@
 #?      Defines general variables used in Makefile if they are missing.
 #?
 #? VERSION
-#?      @(#) Makefile.inc 3.10 24/07/28 10:43:26
+#?      @(#) Makefile.inc 3.11 24/08/27 00:46:18
 #?
 #? AUTHOR
 #?      18-may-18 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-O-SID.inc          := 3.10
+O-SID.inc          := 3.11
 O-SELF.inc         := t/Makefile.inc
 ALL.includes       += $(O-SELF.inc)
 ALL.inc.type       += inc
@@ -42,19 +42,19 @@ LC_CTYPE       := C.UTF-8
 
 O-Project      ?= o-saft
 O-ProjectName  ?= O-Saft
-O-TMP.dir       = /tmp/$(O-Project)
+O-DIR.tmp       = /tmp/$(O-Project)
 TEST.host      ?= localhost
 TEST.init      ?= --header
 TEST.dir       ?= t
 TEST.logdir     = $(TEST.dir)/log
 TEST.logtxt     = <<random value replaced by make>>
-TEST.tmpdir    ?= $(O-TMP.dir)
+TEST.tmpdir    ?= $(O-DIR.tmp)
 TEST.tmp.rc    ?= $(TEST.tmpdir)/.rc
 
-SRC.sh         ?= o-saft
-SRC.pl         ?= o-saft.pl
-SRC.cgi        ?= o-saft.cgi
-SRC.tcl        ?= o-saft.tcl
+SRC.sh         ?= $(O-Project)
+SRC.pl         ?= $(O-Project).pl
+SRC.cgi        ?= $(O-Project).cgi
+SRC.tcl        ?= $(O-Project).tcl
 
 # Define a variable for myself, it is the first file in MAKEFILE_LIST.
 # $(MAKEFILE)  will be used where  any makefile is possible.
@@ -74,9 +74,9 @@ MAKEFLAGS      ?= --no-builtin-variables --no-builtin-rules --no-print-directory
 # internal used tools (paths hardcoded!) and their options
 export OSAFT_MAKE ?= avoid writing random data (like date and time string)
 EXE.echo       ?= /bin/echo -e
-EXE.pl         ?= o-saft.pl
-EXE.tcl        ?= o-saft.tcl
-EXE.o_docker   ?= o-saft-docker
+EXE.pl         ?= $(O-Project).pl
+EXE.tcl        ?= $(O-Project).tcl
+EXE.o_docker   ?= $(O-Project)-docker
 EXE.docker     ?= docker
 EXE.dummy      ?= /bin/echo -n ""
 EXE.log-filterarg  ?= cat
