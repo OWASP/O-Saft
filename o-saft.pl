@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.129 24/08/27 00:06:22"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.130 24/08/27 00:14:54"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -199,9 +199,9 @@ BEGIN {
         # print complete command-line if any --trace-* was given, it's intended
         # that it works if unknown --trace-* was given, for example --trace-CLI
         # use $0 instead of $cfg{'me'}, shows PATH  which is nice for debugging
-        printf("#$0 %s\n", join(" ", @ARGV)) if not _is_argv('--help=gen');
-            # don't print command-line in files generated with  --help=gen*  as
-            # these file may be with special syntax wher the #* line is wrong
+        printf("#$0 %s\n", join(" ", @ARGV)) if not _is_argv('--help=');
+            # do not print command-line in files generated with option --help=*
+            # as they may contain special syntax where the  #*  line is wrong
     }
 
     _trace_info("BEGIN0  - start");
@@ -412,7 +412,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.129"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.130"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6133,7 +6133,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.129");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.130");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
