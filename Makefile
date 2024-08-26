@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.42 24/08/16 13:22:32
+#?      @(#) Makefile 3.43 24/08/27 00:08:38
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-O-SID           = 3.42
+O-SID           = 3.43
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -331,8 +331,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.42 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.42
+_INST.genbytext = generated data by Makefile 3.43 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.43
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-INSTALL.dir)@'       \
 		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DOC.dir)@'              \
 		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-LIB.dir)@'              \
@@ -594,8 +594,8 @@ docs:       $(GEN.docs)
 standalone: $(GEN.src)
 stand-alone:$(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.42
-tar:     _INST.is_edit  = 3.42
+_INST.is_edit           = 3.43
+tar:     _INST.is_edit  = 3.43
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
@@ -681,27 +681,27 @@ $(GEN.src):  $(EXE.single) $(SRC.pl) $(ALL.pm)
 
 $(GEN.man):  $(SRC.pl) $(O-DOC.pm) $(O-MAN.pm) $(O-SRC.txt) $(GEN.pod)
 	@$(O-TRACE.target)
-	$(SRC.pl) --no-rc --no-warning --help=gen-man  > $@
+	./$(SRC.pl) --no-rc --no-warning --help=gen-man  > $@
 
 $(GEN.pod):  $(SRC.pl) $(O-DOC.pm) $(O-MAN.pm) $(O-SRC.txt)
 	@$(O-TRACE.target)
-	$(SRC.pl) --no-rc --no-warning --help=gen-pod  > $@
+	./$(SRC.pl) --no-rc --no-warning --help=gen-pod  > $@
 
 $(GEN.text): $(SRC.pl) $(O-DOC.pm) $(O-MAN.pm) $(O-SRC.txt)
 	@$(O-TRACE.target)
-	$(SRC.pl) --no-rc --no-warning --help          > $@
+	./$(SRC.pl) --no-rc --no-warning --help          > $@
 
 $(GEN.wiki): $(SRC.pl) $(O-DOC.pm) $(O-MAN.pm) $(O-SRC.txt)
 	@$(O-TRACE.target)
-	$(SRC.pl) --no-rc --no-warning --help=gen-wiki > $@
+	./$(SRC.pl) --no-rc --no-warning --help=gen-wiki > $@
 
 $(GEN.html): $(SRC.pl) $(O-DOC.pm) $(O-MAN.pm) $(O-SRC.txt)
 	@$(O-TRACE.target)
-	$(SRC.pl) --no-rc --no-warning --help=gen-html > $@
+	./$(SRC.pl) --no-rc --no-warning --help=gen-html > $@
 
 $(GEN.cgi.html): $(SRC.pl) $(O-DOC.pm) $(O-MAN.pm) $(O-SRC.txt)
 	@$(O-TRACE.target)
-	$(SRC.pl) --no-rc --no-warning --help=gen-cgi  > $@
+	./$(SRC.pl) --no-rc --no-warning --help=gen-cgi  > $@
 
 $(GEN.inst): $(SRC.inst) Makefile $(TEST.dir)/Makefile.misc
 	@$(O-TRACE.target)
@@ -717,7 +717,7 @@ $(GEN.tgz)--to-noisy: $(ALL.src)
 # generating file containing our messages uses target from t/Makefile.warnings
 # hence make is called recursively for this special file
 # TODO: this is a dirty hack, because no Makefiles from t/ should be used here
-# most files could also be generated with: $(SRC.pl) --gen-docs
+# most files could also be generated with: ./$(SRC.pl) --gen-docs
 # SEE GNU Make:Pattern Rule
 $(O-DOC.dir)/$(SRC.pl).%warnings: Makefile $(SRC.pl) $(SRC.pm) $(SRC.cgi) $(TEST.dir)/Makefile.warnings
 	@$(O-TRACE.target)
@@ -728,7 +728,7 @@ $(O-DOC.dir)/$(SRC.pl).%warnings: Makefile $(SRC.pl) $(SRC.pm) $(SRC.cgi) $(TEST
 # it depends, hence all possible dependencies are used
 $(O-DOC.dir)/$(SRC.pl).%: Makefile $(SRC.pl) $(SRC.pm)
 	@$(O-TRACE.target)
-	$(SRC.pl) --no-rc $* > $@
+	./$(SRC.pl) --no-rc $* > $@
 
 # use libreoffice to generate PDF from .odg
 # unfortunately  libreoffice has no option to specify the name of the output,
