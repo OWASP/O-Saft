@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.128 24/08/18 15:11:36"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.129 24/08/27 00:06:22"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -199,7 +199,9 @@ BEGIN {
         # print complete command-line if any --trace-* was given, it's intended
         # that it works if unknown --trace-* was given, for example --trace-CLI
         # use $0 instead of $cfg{'me'}, shows PATH  which is nice for debugging
-        printf("#$0 %s\n", join(" ", @ARGV));
+        printf("#$0 %s\n", join(" ", @ARGV)) if not _is_argv('--help=gen');
+            # don't print command-line in files generated with  --help=gen*  as
+            # these file may be with special syntax wher the #* line is wrong
     }
 
     _trace_info("BEGIN0  - start");
@@ -410,7 +412,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.128"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.129"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6131,7 +6133,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.128");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.129");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6858,7 +6860,6 @@ while ($#argv >= 0) {
     if ($arg eq  '--pci')               { $arg = '+pci';            } # alias: ssltest.pl
     if ($arg eq  '--printavailable')    { $arg = '+ciphers';        } # alias: ssldiagnose.exe
     if ($arg eq  '--printcert')         { $arg = '+text';           } # alias: ssldiagnose.exe
-    if ($arg =~ /^--showkeys?/i)        { $arg = '--traceKEY';      } # alias:
     if ($arg eq  '--version')           { $arg = '+version';        } # alias: various programs
     if ($arg eq  '--forceopenssl')      { $arg = '--opensslciphers';    } # alias:
     if ($arg eq  '--cipheropenssl')     { $arg = '--opensslciphers';    } # alias:
@@ -6891,7 +6892,7 @@ while ($#argv >= 0) {
     if ($arg eq  '--dryrun')            { $cfg{'try'}       = 1;    } # alias: --n
     if ($arg =~ /^--tracearg/i)         { _set_cfg_out('traceARG',     1);  } # special internal tracing
     if ($arg =~ /^--tracecmd/i)         { _set_cfg_out('traceCMD',     1);  } # ..
-    if ($arg =~ /^--trace(?:@|key)/i)   { _set_cfg_out('traceKEY',     1);  } # ..
+    if ($arg =~ /^--trace(?:@|key)/i)   { _set_cfg_out('traceKEY',     1);  } # same as --showkey
     if ($arg =~ /^--tracetime/i)        { _set_cfg_out('traceTIME',    1);  } # ..
     if ($arg =~ /^--traceme/i)          { $cfg{'traceME'}++;        } # ..
     if ($arg =~ /^--tracenotme/i)       { $cfg{'traceME'}--;        } # ..
@@ -7091,6 +7092,7 @@ while ($#argv >= 0) {
         _set_cfg_out('hint_cipher', 0);
     }
     if ($arg =~ /^--showhosts?/i)       { _set_cfg_out('hostname',    1); }
+    if ($arg =~ /^--showkeys?/i)        { _set_cfg_out('traceKEY',    1); }
     if ($arg eq  '--score')             { _set_cfg_out('score',       1); }
     if ($arg eq  '--noscore')           { _set_cfg_out('score',       0); }
     if ($arg eq  '--tab')               { $text{'separator'}= "\t"; } # TAB character
