@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.131 24/08/27 21:09:42"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.132 24/08/27 21:12:55"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -412,7 +412,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.131"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.132"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6133,7 +6133,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.131");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.132");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7772,7 +7772,6 @@ _trace_info("CONF9   - runtime configuration end");
 #| -------------------------------------
 _vprint("check for no connection commands");
 # +test*  are not handled herein
-print "# test= $test\n"; #exit;
 if ($test =~ m/ciphers.*regex/) { _vprint("  test regex "); OCfg::test_cipher_regex(); exit 0; }
 if ($test !~ /^\s*$/)           { _vprint("  show any   "); OTrace::test_show($test);  exit 0; }
 # internal information commands
