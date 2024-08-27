@@ -41,7 +41,7 @@ use Data::Dumper qw(Dumper);
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_trace      = "@(#) OTrace.pm 3.37 24/07/29 16:36:30";
+my  $SID_trace      = "@(#) OTrace.pm 3.39 24/08/27 22:08:46";
 our $VERSION        = "24.06.24";
 
 our $prefix_trace   = "#". __PACKAGE__ . ":";
@@ -111,9 +111,9 @@ BEGIN { # mainly required for testing ...
 
 # Version >= 24.01.24
 #o-saft.pl 01:00:01 SSLeay
-#o-saft.pl 01:00:01 SSLinfo::do_ssl_open(localhost,443,,) {
+#o-saft.pl 01:00:01 SSLinfo::do_ssl_open(localhost,443,,) 
 #o-saft.pl 01:00:01  do=certversion cn ...
-#o-saft.pl 01:00:01 printdata(simple, localhost, 443) {
+#o-saft.pl 01:00:01 printdata(simple, localhost, 443) 
 #-------------------------------------------------------------------------
 
 use OText        qw(%STR);
@@ -254,27 +254,27 @@ sub _test_help  {
 =
 = Print list of commands for internal testing/information.
 =
-=   command/option  prints this information
+=   command         prints this information
 =  ----------------+----------------------------------------------
-=   --tests         this text
-=   --test-init     data structure  %cfg after initialisation
-=   --test-avail    overview of all available commands and checks
-=   --test-maps     internal data strucures '%cfg{openssl}', '%cfg{ssleay}'
-=   --test-prot     internal data according protocols
-=   --test-vars     internal data structures using Data::Dumper
-=   --test-regex    results for applying various texts to regex
-=   --test-memory   overview of variables' memory usage
-=   --test-methods  available methods for openssl in Net::SSLeay
-=   --test-sclient  available options for 'openssl s_client' from Net::SSLeay
-=   --test-sslmap   constants for SSL protocols from Net::SSLeay
-=   --test-ssleay   information about Net::SSLeay capabilities
-=   --test-ciphers-*    various ciphers listings; available with o-saft.pl only
+=   +tests          this text
+=   +test-init      data structure  %cfg after initialisation
+=   +test-avail     overview of all available commands and checks
+=   +test-maps      internal data strucures '%cfg{openssl}', '%cfg{ssleay}'
+=   +test-prot      internal data according protocols
+=   +test-vars      internal data structures using Data::Dumper
+=   +test-regex     results for applying various texts to regex
+=   +test-memory    overview of variables' memory usage
+=   +test-methods   available methods for openssl in Net::SSLeay
+=   +test-sclient   available options for 'openssl s_client' from Net::SSLeay
+=   +test-sslmap    constants for SSL protocols from Net::SSLeay
+=   +test-ssleay    information about Net::SSLeay capabilities
+=   +test-ciphers-* various ciphers listings; available with o-saft.pl only
 =  ----------------+----------------------------------------------
 =
 EoT
-    # o-saft.tcl --test-o-saft  # just for completeness, not used here
+    # o-saft.tcl +test-o-saft  # just for completeness, not used here
     # NOTE: description above should be similar to those in
-    #       doc/help.txt
+    #       doc/help.txt  <== 19aug24 gibts da nicht
     return $data;
 } # _test_help
 
@@ -408,10 +408,10 @@ EoT
         #             return $prot{$ssl}{'default'};
         #         }
         #     },
-        # the line with "package" occours only if the data is in another namespace
+        # the line with "package" occurs only if the data is in another namespace
         # we only want the code line, hence remove the others
         #dbx# print "##CODE= $code";
-        $code =~ s/^\$VAR.*//;                  # ex 1, 2
+        $code =~ s/^\$VAR.*//;                  # ex 1, 2 # dummy { for next line
         $code =~ s/(?:}[;,])?\s*$//g;           # ex 1, 2
         $code =~ s/use\s*(?:strict|warnings);//g;# ex 1, 2
         $code =~ s/package\s*.*;//g;            # ex 1
@@ -855,17 +855,9 @@ sub init_show   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     }
 
     _pline("%cmd {");
-    if (2 > $cfg{'trace'}) {    # user-friendly information
-        _p_k_v("path",      ___ARR(@{$::cmd{'path'}}));
-        _p_k_v("libs",      ___ARR(@{$::cmd{'libs'}}));
-        _p_k_v("envlibvar", $::cmd{'envlibvar'});
-        _p_k_v("timeout",   $::cmd{'timeout'});
-        _p_k_v("openssl",   $::cmd{'openssl'});
-    } else {    # full information
-        foreach my $key (sort(keys %::cmd)) { _ptype(\%::cmd, $key); }
-    }
-    _p_k_v("extopenssl",    $::cmd{'extopenssl'} . " (1= use openssl to check ciphers)");
-    _p_k_v("extciphers",    $::cmd{'extciphers'} . " (1= use cipher from openssl)");
+    foreach my $key (sort(keys %::cmd)) { _ptype(\%::cmd, $key); }
+    _p_k_v("# extopenssl", "1 # use openssl to check ciphers");
+    _p_k_v("# extciphers", "1 # use cipher from openssl");
     _pline("%cmd }");
 
     if (1 < $cfg{'trace'}) {    # full information
@@ -996,15 +988,15 @@ sub rcfile_show {
     _pline("RC-FILE {");
     _pline("RC-FILE }");
     return;
-} # rcfile_show {
+} # rcfile_show
 
 sub test_show   {
-    #? dispatcher for internal tests, initiated with option --test-*
+    #? dispatcher for internal tests, initiated with command +test-*
     #  cannot be called using __FILE__ itself
-    my $arg = shift;    # normalised option, like --testinit, --testcipherlist
+    my $arg = shift;    # normalised command, like +testinit, +testcipherlist
     _ptext($arg);
-    if ($arg =~ /^--test.?ciphers?.?list$/) {   # allow not normalised also
-        # --test-ciphers-list is for printing ciphers in common --v format, it
+    if ($arg =~ /^\+test.?ciphers?.?list$/) {   # allow not normalised also
+        # +test-ciphers-list  is for printing ciphers in common --v format, it
         # also honors the option  --cipherrange=  additonaly it relies on some
         # special settings in $cfg{};  +cipher  must be added to $cfg{'do'} to
         # enforce printing, also at least one TLS version must be used;
@@ -1018,23 +1010,23 @@ sub test_show   {
         return;
     }
     OCfg::test_cipher_regex()   if ($arg =~ m/cipher.?regex/);
-    Ciphers::show($arg)         if ($arg =~ /^--test.?cipher/);
-    _test_help()        if ('--test'          eq $arg);
-    _test_help()        if ('--tests'         eq $arg);
-    _test_help()        if ('--testtest'      eq $arg);
-    _test_sclient()     if ('--testsclient'   eq $arg); # SSLinfo
-    _test_ssleay()      if ('--testssleay'    eq $arg); # SSLinfo
-    _test_sslmap()      if ('--testsslmap'    eq $arg); # SSLinfo
-    _test_openssl()     if ('--testopenssl'   eq $arg); # SSLinfo
-    _test_methods()     if ('--testmethods'   eq $arg); # SSLinfo
-    _test_memory()      if ('--testmemory'    eq $arg);
-    _test_regex()       if ('--testregex'     eq $arg); # %cfg{regex}
-    $arg =~ s/^[+-]-?tests?[._-]?//; # remove --test
+    Ciphers::show($arg)         if ($arg =~ /^\+test.?cipher/);
+    _test_help()        if ('+test'         eq $arg);
+    _test_help()        if ('+tests'        eq $arg);
+    _test_help()        if ('+testtest'     eq $arg);
+    _test_sclient()     if ('+testsclient'  eq $arg); # SSLinfo
+    _test_ssleay()      if ('+testssleay'   eq $arg); # SSLinfo
+    _test_sslmap()      if ('+testsslmap'   eq $arg); # SSLinfo
+    _test_openssl()     if ('+testopenssl'  eq $arg); # SSLinfo
+    _test_methods()     if ('+testmethods'  eq $arg); # SSLinfo
+    _test_memory()      if ('+testmemory'   eq $arg);
+    _test_regex()       if ('+testregex'    eq $arg); # %cfg{regex}
+    $arg =~ s/^[+-]-?tests?[._-]?//; # remove +test
     _test_avail()       if ($arg =~ m/^avail(?:able)?$/);
-    _test_init()        if ('init'            eq $arg);
-    _test_maps()        if ('maps'            eq $arg);
-    _test_prot()        if ('prot'            eq $arg);
-    _test_vars()        if ('vars'            eq $arg);
+    _test_init()        if ('init'           eq $arg);
+    _test_maps()        if ('maps'           eq $arg);
+    _test_prot()        if ('prot'           eq $arg);
+    _test_vars()        if ('vars'           eq $arg);
     return;
 } # test_show
 
@@ -1048,7 +1040,7 @@ sub _main       {
         # dirty hack here which asumes that _main() is called to print
         # information only and does not need time0
     my %usage = (
-      '# commands to print data' => {'--test-regex'=>'show %cfg{regex}'},
+      '# commands to print data' => {'+test-regex'=>'show %cfg{regex}'},
     );
     if ($arg =~ m/--?h(elp)?$/x)        { OText::print_pod($0, __FILE__, $SID_trace); exit 0; }
     if ($arg eq '--usage')              { OText::usage_show("", \%usage); exit 0; }
@@ -1057,10 +1049,10 @@ sub _main       {
     if ($arg =~ m/^--?trace/)           { $trace++; }
     if ($arg eq 'version')              { print "$SID_trace\n"; exit 0; }
     if ($arg =~ m/^[-+]?V(ERSION)?$/)   { print "$VERSION\n";   exit 0; }
-    if ($arg =~ m/--test.?regex$/)      { _test_regex();        exit 0; }
-    if ($arg =~ m/--tests?$/)           { _test_help();         exit 0; }
-    if ($arg =~ m/--test[_.-]?(.*)/)    {
-        $arg = "--test-$2";
+    if ($arg =~ m/\+test.?regex$/)      { _test_regex();        exit 0; }
+    if ($arg =~ m/\+tests?$/)           { _test_help();         exit 0; }
+    if ($arg =~ m/[-+]-?test[_.-]?(.*)/){   # allow +test* and --test*
+        $arg = "+test-$1";  # normalise
         printf("#$0: direct testing not yet possible, please try:\n   o-saft.pl $arg\n");
     }
     exit 0;
@@ -1070,6 +1062,7 @@ sub done  {};   # dummy to check successful include
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
+# see also "Options vs. Commands" in doc/help.txt 
 
 =pod
 
@@ -1105,25 +1098,36 @@ Print this help.
 
 Print brief usage.
 
-=item --tests
+=item --test-init
+
+Alias for command I<+test-init> for compatibility with L<o-saft.pl|o-saft.pl>.
+
+=back
+
+
+=head1 COMMANDS
+
+=over 2
+
+=item +tests
 
 List available commands or options for internal testing.
 
-=item --test-ciphers-list
+=item +test-ciphers-list
 
-=item --test-regex
+=item +test-regex
 
-=item --test-avail
+=item +test-avail
 
-=item --test-init
+=item +test-init
 
-=item --test-maps
+=item +test-maps
 
-=item --test-prot
+=item +test-prot
 
-=item --test-vars
+=item +test-vars
 
-See  I<--tests>  for description of these options.
+See  I<+tests>  for description of these options.
 
 =back
 
@@ -1135,8 +1139,8 @@ Defines all functions needed for trace and debug output in  L<o-saft.pl|o-saft.p
 
 =head1 METHODS
 
-=head2 Functions for internal testing; initiated with option  I<--test-*>
-For example  I<--test-maps>  calls  C<_test_maps()>.
+=head2 Functions for internal testing; initiated with command  I<+test-*>
+For example  I<+test-maps>  calls  C<_test_maps()>.
 
 =head3 _test_help( )
 
@@ -1222,7 +1226,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.37 2024/07/29
+3.39 2024/08/27
 
 =head1 AUTHOR
 
