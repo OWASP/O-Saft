@@ -327,7 +327,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.38 24/08/15 22:17:47"
+SID="@(#) INSTALL-template.sh 3.39 24/08/27 11:06:56"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -1201,6 +1201,9 @@ mode_cleanup () {
 mode_cgi    () {
 	echo_info "mode_cgi() ..."
 	echo_info "prepare $inst_directory for use in CGI mode ..."
+	cgibin="$inst_directory/cgi-bin" # hardcoded
+	htdocs="$inst_directory/htdocs"  # hardcoded
+	err=0
 	if [ ! -d "$inst_directory" ]; then
 		echo_red "**ERROR: 050: $inst_directory does not exist; exit"
 		[ -n "$try" ] || exit 2
@@ -1210,16 +1213,36 @@ mode_cgi    () {
 		echo_red "**ERROR: 051: $clean_directory exist; CGI installation not yet supported"
 		exit 2
 	fi
+	$try \mkdir -p "$cgibin"   # -p avoids error check if dir exists
+	$try \mkdir -p "$htdocs"
+	# mv files necessary to run tool, leaves all others here (currently hardcoded)
+	for f in $osaft_exe doc lib usr ; do
+		[ -e "$cgibin/$f" ]    && echo_yellow "# existing $f; ignored" && continue
+		f="$src_directory/$f"
+		if ! $try \mv $f "$cgibin/" ; then
+			echo_red "**ERROR: 052: moving $f failed"
+			err=`expr $err + 1`
+		fi
+	done
 	for f in $files_install_cgi ; do
 		file=${f##*/}
-		[ -e "$inst_directory/$file" ] && echo_yellow "# existing $file; ignored" && continue
+		[ -e "$htdocs/$file" ] && echo_yellow "# existing $file; ignored" && continue
 		f="$src_directory/$f"
-		$try \mv $f "$inst_directory/" || echo_red "**ERROR: 052: moving $f failed"
+		if ! $try \mv $f "$htdocs/" ; then
+			echo_red "**ERROR: 053: moving $f failed"
+			err=`expr $err + 1`
+		fi
 	done
-	lnk=cgi-bin
-	[ -e "$inst_directory/$lnk" ]          && echo_yellow "# existing $lnk; ignored" && continue
-	$try \ln -s "$inst_directory" $lnk     || echo_red "**ERROR: 053: symlink $lnk failed"
-	err=0
+	if [ 0 -eq $err ]; then
+		echo_green  "# setup  web server: DocumentRoot $htdocs"
+		echo_green  "# setup  web server: ScriptAlias  $cgibin"
+		echo_green  "# access web server: /o-saft.cgi.html"
+		echo_yellow "# consider removing: $src_directory"
+		echo_yellow "# consider adapting variable '\$openssl' in $cgibin/o-saft.cgi"
+	else
+		echo_error $err
+		echo_red "# consider reverting installtion in: $htdocs and $cgibin"
+	fi
 	return
 } # mode_cgi
 
@@ -1320,7 +1343,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.38 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.39 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1344,7 +1367,7 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.38; $mode $src_txt $inst_directory ..."
+echo "# $0 3.39; $mode $src_txt $inst_directory ..."
     # always print internal SID, makes debugging simpler
     # do not use $SID, which is too noisy for make targets
 
