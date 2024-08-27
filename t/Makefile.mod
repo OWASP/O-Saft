@@ -6,7 +6,7 @@
 #?      make help.test.mod
 #?
 #? VERSION
-#?      @(#) Makefile.mod 3.20 24/08/19 00:38:56
+#?      @(#) Makefile.mod 3.22 24/08/27 09:48:55
 #?
 #? AUTHOR
 #?      22-oct-22 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.mod  = targets for testing module functionality
 
-O-SID.mod          := 3.20
+O-SID.mod          := 3.22
 O-SELF.mod         := t/Makefile.mod
 ALL.includes       += $(O-SELF.mod)
 ALL.inc.type       += mod
@@ -154,15 +154,29 @@ HELP-test.mod.log   = same as test.mod but store output in '$(TEST.logdir)/'
 #_____________________________________________________________________________
 #______________________________________________________ targets for testing __|
 
-# programs to be tested here are in $(SRC.pm)
+# programs used in targets here are in $(SRC.pm), $(SRC.pm) which must be the
+# same as defined in ../Makefile;  variable may be missing due to sequence of
+# included Makefiles or if make called in .t/;  hence following dirty hack:
 ifndef SRC.pm
-    # define dummy to inform user about missing macro
-    SRC.pm          = __SRC.pm_
+    # for better readability lib is used verbatime instead of $(O-DIR.lib)
+    # because lib is used in LIST.* variables also (see above)
+    SRC.pm  = \
+	lib/OCfg.pm \
+	lib/Ciphers.pm \
+	lib/error_handler.pm \
+	lib/SSLinfo.pm \
+	lib/SSLhello.pm \
+	lib/OData.pm \
+	lib/ODoc.pm \
+	lib/OMan.pm \
+	lib/OText.pm \
+	lib/OTrace.pm \
+	lib/OUsr.pm
+    # define dummy to inform user about missing macro if necessary
     LIST.__SRC.pm_  = not-defined-in-Makefile.mod
 endif
 
 # all targets are generated, see Makefile.gen
-
 # generate targets for all *pm and SRC.pl
 ifndef mod-macros-generated
     $(foreach _prg, $(SRC.pm) $(SRC.pl),\
