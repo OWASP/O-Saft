@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.45 24/08/27 12:19:59
+#?      @(#) Makefile 3.46 24/08/28 11:10:30
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-O-SID           = 3.45
+O-SID           = 3.46
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -307,7 +307,14 @@ EXE.office      = libreoffice
 _ALL.devtools.intern  += $(EXE.single)
 _ALL.devtools.extern  += sccs gpg sha256sum docker
 ALL.tools.optional     = aha perldoc pod2html pod2man pod2pdf pod2text pod2usage podman podviewer tkpod stty tput
-ALL.perlmodules = Net::DNS Net::SSLeay IO::Socket::INET IO::Socket::SSL Time::Local
+ALL.perlmodules = Carp \
+		  Net::DNS Net::SSLeay \
+		  IO::Socket::INET IO::Socket::SSL Socket \
+		  Time::Local \
+		  Config Math::BigInt
+#                 Config Math::BigInt # on 32-bit systems only, see SSLinfo.pm
+#                 Pod::Perldoc        # is optional for --help; no need to check
+#                 base Exporter DynaLoader XSLoader # part of basic Perl
 ALL.devtools    = $(_ALL.devtools.intern)   $(_ALL.devtools.extern)
 ALL.devmodules  = $(_ALL.devmodules.intern) $(_ALL.devmodules.extern)
 #                 defined in t/Makefile.misc
@@ -329,8 +336,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.45 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.45
+_INST.genbytext = generated data by Makefile 3.46 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.46
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-DIR.install)@'       \
 		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DIR.doc)@'              \
 		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-DIR.lib)@'              \
@@ -592,8 +599,8 @@ docs:       $(GEN.docs)
 standalone: $(GEN.src)
 stand-alone:$(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.45
-tar:     _INST.is_edit  = 3.45
+_INST.is_edit           = 3.46
+tar:     _INST.is_edit  = 3.46
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
