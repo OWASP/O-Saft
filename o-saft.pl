@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.132 24/08/27 21:12:55"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.133 24/08/28 10:42:09"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -412,7 +412,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.132"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.133"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1677,13 +1677,13 @@ sub _enable_sclient {
         if ($opt =~ m/^-(?:alpn|npn|curves)$/) {
             # no warning for external openssl, as -alpn or -npn is only used with +cipher
             if ($cmd{'extciphers'} > 0) {
-            _warn("144: 'openssl s_client' does not support '$opt'; $txt") if ($txt ne "");
+            _warn("144: openssl $cmd{'version'}: 's_client' does not support '$opt'; $txt") if ($txt ne "");
             }
         } else {
-            _warn("145: 'openssl s_client' does not support '$opt'; $txt") if ($txt ne "");
+            _warn("145: openssl $cmd{'version'}: 's_client' does not support '$opt'; $txt") if ($txt ne "");
         }
         if ($opt eq '-tlsextdebug') {   # additional warning
-            _warn("146: 'openssl -tlsextdebug' not supported; results for following commands may be wrong: +heartbeat, +heartbleed, +session_ticket, +session_lifetime");
+            _warn("146: openssl $cmd{'version'}: '-tlsextdebug' not supported; results for following commands may be wrong: +heartbeat, +heartbleed, +session_ticket, +session_lifetime");
         }
         # switch $opt {
         $cfg{'use'}->{'reconnect'}  = $val  if ($opt eq '-reconnect');
@@ -1735,7 +1735,7 @@ sub _check_openssl  {
         # Perl warning  "Use of uninitialized value in ..."  here indicates
         # that cfg{openssl} is not properly initialised
         my $val = SSLinfo::s_client_opt_get($opt);
-           $val = 0 if ($val eq '<<openssl>>');
+           $val = 0 if ('<<openssl>>' eq $val);
         $cfg{'openssl'}->{$opt}[0] = $val;
         next if ($cfg{'openssl'}->{$opt}[1] eq "<<NOT YET USED>>");
         _enable_sclient($opt);  # may print propper _warn(), for example 145
@@ -1751,13 +1751,12 @@ sub _check_openssl  {
             # equals $opt grep() sets $ssl to the key of %prot
             # ||""  avoids Perl warning "Use of uninitialized value ..."
             # nothing to do if protocol disabled by user
-            $cfg{$ssl} = $val if 0 < $cfg{$ssl};
+            $cfg{$ssl} = $val if (0 < $cfg{$ssl});
                 # _check_ssl_methods() sets @{$cfg{'versions'}} depending on $cfg{$ssl}
                 # no need for warning, already done in _enable_sclient()
         }
     }
-    $cmd{'version'} = OCfg::get_openssl_version($cmd{'openssl'});
-    if ($cmd{'version'} lt "1.0.2") {
+    if ($cmd{'version'} lt "1.0.2") {   # got $cmd{version} in _init_openssl()
         _warn("142: ancient openssl $cmd{'version'}: using '-msg' option to get DH parameters");
         $cfg{'openssl_msg'} = '-msg' if (1 == $cfg{'openssl'}->{'-msg'}[0]);
     }
@@ -1766,6 +1765,8 @@ sub _check_openssl  {
             _hint($cfg{'hints'}->{'openssl3'});
             _hint($cfg{'hints'}->{'openssl3c'});
         }
+    }
+    if ($cmd{'version'} gt "2.0") {
     }
     # TODO: should check openssl with a real connection also
     trace("_check_openssl() }");
@@ -1885,7 +1886,7 @@ sub _init_openssl       {
     #       Checking for openssl executable and configuration files may print
     #       **WARNINGs, even if openssl is not used at all.
     #       Unfortunately there is no simple rule "openssl needed if ...", so
-    #       A userfriendly solution would be to define %cfg{need-openssl}  to
+    #       A user-friendly solution would be to define %cfg{need-openssl} to
     #       contain all commands which require openssl, following settings
     #       should then check %cfg{need-openssl}.
     #       As long as there is no %cfg{need-openssl}, warnings are printed.
@@ -1894,6 +1895,7 @@ sub _init_openssl       {
     # or for advanced check commands
     trace("_init_openssl() {");
     $cmd{'openssl'} = _init_opensslexe();       # warnings already printed if empty
+    $cmd{'version'} = OCfg::get_openssl_version($cmd{'openssl'});
 
     if (not defined $cfg{'ca_path'}) {          # not passed as option, use default
         $cfg{'ca_path'} = _init_openssldir();   # warnings already printed if empty
@@ -6133,7 +6135,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.132");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.133");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7632,7 +7634,7 @@ _check_functions()  if (0 < $do_checks + _is_cfg_do('cipher') + _need_checkprot(
 #| check for proper openssl support
 #| -------------------------------------
 _vprint("  check openssl capabilities for '$cmd{'openssl'}'");
-_check_openssl()    if (0 < $do_checks); # TODO: if (0 < _need_openssl()); cfg{need-openssl}
+_check_openssl()    if (0 == _is_cfg_do('cipher')); # TODO: if (0 < _need_openssl()); cfg{need-openssl}
 
 #| check for supported SSL versions
 #| -------------------------------------
