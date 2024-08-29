@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.134 24/08/29 11:06:23"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.135 24/08/29 11:44:17"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -412,7 +412,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.134"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.135"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1679,8 +1679,13 @@ sub _enable_sclient {
             if ($cmd{'extciphers'} > 0) {
             _warn("144: openssl $cmd{'version'}: 's_client' does not support '$opt'; $txt") if ($txt ne "");
             }
-        } else {
-            _warn("145: openssl $cmd{'version'}: 's_client' does not support '$opt'; $txt") if ($txt ne "");
+        }
+        if ($opt =~ m/^-(?:no.?)?(?:dtls|tls|ssl)/) {
+            # protocol options are important when checking for ciphers only
+            # don't bother with warning if ciphers are not checked with openssl
+            if (_is_cfg_ciphermode('openssl|ssleay')) {
+                _warn("145: openssl $cmd{'version'}: 's_client' does not support '$opt'; $txt") if ($txt ne "");
+            }
         }
         if ($opt eq '-tlsextdebug') {   # additional warning
             _warn("146: openssl $cmd{'version'}: '-tlsextdebug' not supported; results for following commands may be wrong: +heartbeat, +heartbleed, +session_ticket, +session_lifetime");
@@ -6135,7 +6140,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.134");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.135");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7638,7 +7643,11 @@ _check_functions()  if (0 < $do_checks + _is_cfg_do('cipher') + _need_checkprot(
 #| check for proper openssl support
 #| -------------------------------------
 _vprint("  check openssl capabilities for '$cmd{'openssl'}'");
-_check_openssl()    if (0 == _is_cfg_do('cipher')); # TODO: if (0 < _need_openssl()); cfg{need-openssl}
+_check_openssl();
+     # openssl is used with option  --ciphermode=openssl  (most commands)
+     # or for any +info or +check command, even the individual ones like +cn
+     # hence we check capabilities always and print warnings if appropriate
+     # TODO: _check_openssl() needs to be documented in doc/help.txt somehow
 
 #| check for supported SSL versions
 #| -------------------------------------
