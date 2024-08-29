@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.137 24/08/29 15:39:50"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.138 24/08/29 23:51:36"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -412,7 +412,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.137"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.138"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6145,7 +6145,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.137");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.138");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6282,7 +6282,7 @@ sub printversion        {
     # TODO: following list should be same as in _check_modules()
     foreach my $m (qw(IO::Socket::INET IO::Socket::SSL Socket Time::Local Net::DNS Net::SSLeay Carp), @my_modules, qw(Config Math::BigInt)) {
         if ($m =~ m/(?:Config|Math::BigInt)/) {
-            printf("    %-22s %s\n", $m, "<<module loaded on 32-bit systems only>>");
+            printf("    %-22s %-9s%s\n", $m, "-", "<<module loaded on 32-bit systems only>>");
             next;
         }
         no strict 'refs';   ## no critic qw(TestingAndDebugging::ProhibitNoStrict TestingAndDebugging::ProhibitProlongedStrictureOverride)
