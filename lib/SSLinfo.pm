@@ -49,7 +49,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.25 24/08/28 18:52:46";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.26 24/08/29 13:05:38";
 our $VERSION        =  "24.06.24";  # official verion number of this file
 
 BEGIN {
@@ -3434,11 +3434,18 @@ sub do_openssl($$$$)  {
             # a line in access.log like: "\n" 400 750 "-" "-"
             # to avoid this, \r is appended to the string always
         #dbx# print "echo $pipe | $_timeout $_openssl $mode $host$port 2>&1";
-        $data  = qx((echo "$pipe"; sleep 1) | $_timeout $_openssl $mode $host$port 2>&1); ## no critic qw(InputOutput::ProhibitBacktickOperators)
+        $data  = qx((echo "$pipe"; perl -I lib -MOData -le "" ) | $_timeout $_openssl $mode $host$port 2>&1); ## no critic qw(InputOutput::ProhibitBacktickOperators)
             # system() or qx() should be safe because $_openssl and $timeout
             # are already checked in _setcommand()
             # 28aug24: openssl 3.x behaves different, if STDIN is closed too
-            #          early some output is missing, hence the sleep 1
+            #          early some output is missing, hence the "perl -le .."
+            #          (empty code but tries to load our own module wasteing
+            #           some time;  oversized compared to a simple "sleep 1"
+            #           but wastes a fraction of a second only -which is not
+            #           possible with sleep; using "sleep 1" would result in
+            #           a  huge performance problem for example when testing
+            #           hundreds of ciphers with openssl
+            #          )
             #          simple checks to verify:
             #          echo|openssl s_client -connect localhost:443
             #          perl -le 'qx(echo | openssl s_client -connect localhost:443)'
@@ -3455,7 +3462,7 @@ sub do_openssl($$$$)  {
             $mode .= ' -CAfile ' . $cafile if ('' ne $cafile);
             $mode .= ' -reconnect'   if (1 == $SSLinfo::use_reconnect);
             $mode .= ' -connect';
-            $data .= qx((echo "$pipe"; sleep 1) | $_timeout $_openssl $mode $host$port 2>&1); ## no critic qw(InputOutput::ProhibitBacktickOperators)
+            $data .= qx((echo "$pipe"; perl -I lib -MOData -le "" ) | $_timeout $_openssl $mode $host$port 2>&1); ## no critic qw(InputOutput::ProhibitBacktickOperators)
         }
     } else {
         $data = _openssl_MS($mode, $host, $port, '');
