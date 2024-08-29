@@ -49,7 +49,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.23 24/08/11 19:49:13";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.25 24/08/28 18:52:46";
 our $VERSION        =  "24.06.24";  # official verion number of this file
 
 BEGIN {
@@ -205,11 +205,11 @@ SSLinfo -- Perl module to retrieve SSL connection and certificate data
     SSLinfo.pm --help           # print help
     SSLinfo.pm +VERSION         # print version string
     SSLinfo.pm version          # print internal version string
-    SSLinfo.pm --test-sclient   # print available options for 'openssl s_client'
-    SSLinfo.pm --test-sslmap    # print constants for SSL protocols
-    SSLinfo.pm --test-openssl   # print information about openssl capabilities
-    SSLinfo.pm --test-ssleay    # print information about Net::SSLeay capabilities
-    SSLinfo.pm --test-methods   # print available methods in Net::SSLeay
+    SSLinfo.pm +test-sclient    # print available options for 'openssl s_client'
+    SSLinfo.pm +test-sslmap     # print constants for SSL protocols
+    SSLinfo.pm +test-openssl    # print information about openssl capabilities
+    SSLinfo.pm +test-ssleay     # print information about Net::SSLeay capabilities
+    SSLinfo.pm +test-methods    # print available methods in Net::SSLeay
     SSLinfo.pm unknown-host     # print empty data structure
     SSLinfo.pm your.tld         # print data from your.tld
 
@@ -2860,7 +2860,7 @@ sub do_ssl_open($$$@) {
 
 # $t3 = time(); set error = "<<timeout: Net::SSLeay::get_http()>>";
             if ($_SSLinfo{'http_status'} =~ m:^HTTP/... ([1234][0-9][0-9]|500) :) {
-                # TODO: not tested if following grep() catches multiple occourances
+                # TODO: not tested if following grep() catches multiple occurrences
                 $_SSLinfo{'http_location'}  =  $headers{(grep{/^Location$/i} keys %headers)[0] || ''};
                 $_SSLinfo{'http_refresh'}   =  $headers{(grep{/^Refresh$/i}  keys %headers)[0] || ''};
                 $_SSLinfo{'http_sts'}       =  $headers{(grep{/^Strict-Transport-Security$/i} keys %headers)[0] || ''};
@@ -3430,13 +3430,18 @@ sub do_openssl($$$$)  {
         $host .= ':' if ($port ne '');
         $pipe  = 'HEAD / HTTP/1.1' if ($pipe =~ m/^$/);
         $pipe .= "\r\nUser-Agent:$SSLinfo::user_agent\r\n\r";
-        #$pipe .= "\r";
             # sending an empty string or simply one without \r results in
             # a line in access.log like: "\n" 400 750 "-" "-"
             # to avoid this, \r is appended to the string always
         #dbx# print "echo $pipe | $_timeout $_openssl $mode $host$port 2>&1";
-        # qx() below should be safe here because `$_openssl' and `$timeout' checked in _setcommand()
-        $data  = qx(echo "$pipe" | $_timeout $_openssl $mode $host$port 2>&1); ## no critic qw(InputOutput::ProhibitBacktickOperators)
+        $data  = qx((echo "$pipe"; sleep 1) | $_timeout $_openssl $mode $host$port 2>&1); ## no critic qw(InputOutput::ProhibitBacktickOperators)
+            # system() or qx() should be safe because $_openssl and $timeout
+            # are already checked in _setcommand()
+            # 28aug24: openssl 3.x behaves different, if STDIN is closed too
+            #          early some output is missing, hence the sleep 1
+            #          simple checks to verify:
+            #          echo|openssl s_client -connect localhost:443
+            #          perl -le 'qx(echo | openssl s_client -connect localhost:443)'
         if ($data =~ m/(\nusage:|unknown option)/s) {
             #$data =~ s/((?:usage:|unknown option)[^\r\n]*).*/$1/g;
             my $u1 = $data; $u1 =~ s/.*?(unknown option[^\r\n]*).*/$1/s;
@@ -3450,7 +3455,7 @@ sub do_openssl($$$$)  {
             $mode .= ' -CAfile ' . $cafile if ('' ne $cafile);
             $mode .= ' -reconnect'   if (1 == $SSLinfo::use_reconnect);
             $mode .= ' -connect';
-            $data .= qx(echo $pipe | $_timeout $_openssl $mode $host$port 2>&1); ## no critic qw(InputOutput::ProhibitBacktickOperators)
+            $data .= qx((echo "$pipe"; sleep 1) | $_timeout $_openssl $mode $host$port 2>&1); ## no critic qw(InputOutput::ProhibitBacktickOperators)
         }
     } else {
         $data = _openssl_MS($mode, $host, $port, '');
@@ -4214,7 +4219,7 @@ sub _main           {
           'unknown-host' => 'show empty data structure',
           'your.tld' => 'show data from your.tld',
       },
-      "## some commands can also be used as '--test-CMD'" => {},
+      "## some commands can also be used as '+test-CMD'" => {},
     );
     local $\="\n";  # wegen eigenen test_*()
     # got arguments, do something special; any -option or +command exits
@@ -4224,13 +4229,15 @@ sub _main           {
         # ----------------------------- options
         if ($arg =~ m/^--(?:v|trace.?)/i)       { $SSLinfo::verbose++;  next; }
         # ----------------------------- commands
+        if ($arg =~ m/^(test.*)/)               { $arg = "+$1"; }   # + may be omitted
+        if ($arg =~ m/^(?:--|,)(test.*)/)       { $arg = "+$1"; }   # alias: +test*
         if ($arg =~ m/^version$/)               { print "$SID_sslinfo"; next; }
         if ($arg =~ m/^[+-]?VERSION/i)          { print "$VERSION";     next; }
-        if ($arg =~ m/^(?:--test)?.?ssleay/)    { print test_ssleay();  next; }
-        if ($arg =~ m/^(?:--test)?.?sslmap/)    { print test_sslmap();  next; }
-        if ($arg =~ m/^(?:--test)?.?s_?client/) { print test_sclient(); next; }
-        if ($arg =~ m/^(?:--test)?.?methods/)   { print test_methods(); next; }
-        if ($arg =~ m/^(?:--test)?.?openssl/)   { print test_openssl(); next; }
+        if ($arg =~ m/^(?:\+test)?.?ssleay/)    { print test_ssleay();  next; }
+        if ($arg =~ m/^(?:\+test)?.?sslmap/)    { print test_sslmap();  next; }
+        if ($arg =~ m/^(?:\+test)?.?s_?client/) { print test_sclient(); next; }
+        if ($arg =~ m/^(?:\+test)?.?methods/)   { print test_methods(); next; }
+        if ($arg =~ m/^(?:\+test)?.?openssl/)   { print test_openssl(); next; }
         if ($arg =~ m/^[+-]/)                   { next; }   # silently ignore unknown options
         # treat remaining args as hostname to test
         do_ssl_open( $arg, 443, '');
