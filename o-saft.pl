@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.133 24/08/28 10:42:09"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.134 24/08/29 11:06:23"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -412,7 +412,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.133"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.134"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6135,7 +6135,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.133");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.134");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6752,7 +6752,11 @@ while ($#argv >= 0) {
         $test = $arg;
         my ($k,$v) = split(/=/,$arg);   # normalise command only, not value
             $k =~ s/([a-zA-Z0-9])(?:[_.-])/$1/g;
-        $test = "$k=$v";
+        if (defined $v) {
+            $test = "$k=$v";
+        } else {
+            $test = "$k";
+        }
         _trace_info("  TEST    - prepare for test functions");
         # some --test-* are special (need other data like %cfg)
         $cfg{'need_netdns'}     = 1;
