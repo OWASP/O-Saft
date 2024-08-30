@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.138 24/08/29 23:51:36"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.139 24/08/30 01:57:37"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -412,7 +412,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.138"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.139"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1706,6 +1706,34 @@ sub _enable_sclient {
     return;
 } # _enable_sclient
 
+sub _check_protocol {
+    # check protocol cpapbilities of openssl; sets $cfg{$ssl}
+    # should be called for  $cmd{'extciphers'}==1  only
+    my $opt = shift;    # somthing lime -tlsv1_3
+    my $ssl;
+    return if ($opt !~ m/^-(?:no.?)?(?:dtls|tls|ssl)/);
+    # need to find internal name for given $opt (openssl s_client option), for
+    # example $opt="-tlsv1_3' is name='TLSv13'; name is the key in %prot where
+    # each such key is a hash; such a hash contains the key 'opt' which is set
+    # to $opt;  hence we can use '$prot{$_}{'opt'} keys %prot' to find the key
+    # for debugging use:  print Dumper(\%prot);
+    # %prot instead of  %{$cfg{'openssl_option_map'}}  used for better human
+    # readability
+    my $val = SSLinfo::s_client_opt_get($opt);
+       $val = 0 if ('<<openssl>>' eq $val);
+    $cfg{'openssl'}->{$opt}[0] = $val;
+    if (grep{$ssl = $_ if $opt eq ($prot{$_}{'opt'}||"");} keys %prot) {
+        # nothing to do if protocol already disabled by user
+        #_dbx "opt : $opt = $val # $ssl = $cfg{$ssl}";
+        $cfg{$ssl} = $val if (0 < $cfg{$ssl});
+            # simple one-liner to get key from %prot which has 'opt'="$opt"
+            # ||""  avoids Perl warning "Use of uninitialized value ..."
+            # %cfg{$ssl} is set to 0 (disabled) if openssl s_client doesn't
+            # provide an option for it, ciphers cannot be scanned then
+    }
+    return;
+} # _check_protocol
+
 sub _reset_openssl  {
     # reset all %cfg and %cmd settings according openssl executable
     $cmd{'openssl'}     = "";
@@ -1748,23 +1776,8 @@ sub _check_openssl  {
            $val = 0 if ('<<openssl>>' eq $val);
         $cfg{'openssl'}->{$opt}[0] = $val;
         next if ($cfg{'openssl'}->{$opt}[1] eq "<<NOT YET USED>>");
-        _enable_sclient($opt);  # may print propper _warn(), for example 145
-        my $ssl;
-        # NOTE: grep() uses %prot instead of %{$cfg{'openssl_option_map'}}
-        #       for better human readability
-        if (grep{$ssl = $_ if $opt eq ($prot{$_}{'opt'}||"");} keys %prot) {
-            #_dbx "opt : $opt = $val # $ssl = $cfg{$ssl}";
-            # simple one-liner to get key from %prot for which $opt matches
-            # %prot maps our internal protocol string to the option used by
-            # openssl; %cfg{$ssl} is set to 1 if ciphers should be scanned.
-            # if $opt exists in %prot,  in particula if  $prot{$ssl}->{opt}
-            # equals $opt grep() sets $ssl to the key of %prot
-            # ||""  avoids Perl warning "Use of uninitialized value ..."
-            # nothing to do if protocol disabled by user
-            $cfg{$ssl} = $val if (0 < $cfg{$ssl});
-                # _check_ssl_methods() sets @{$cfg{'versions'}} depending on $cfg{$ssl}
-                # no need for warning, already done in _enable_sclient()
-        }
+        _enable_sclient($opt);  # may print propper _warn()
+        _check_protocol($opt) if (1 == $cmd{'extciphers'}); 
     }
     if ($cmd{'version'} lt "1.0.2") {   # got $cmd{version} in _init_openssl()
         _warn("142: ancient openssl $cmd{'version'}: using '-msg' option to get DH parameters");
@@ -2893,7 +2906,7 @@ sub _get_cipherslist    {
             # list, which is either de default pattern or the specified one
             $pattern = $cfg{'cipherpattern'} if $pattern =~ m/^ *$/;
                 # use default if no --cipher=* was given or was invalid
-            if ($cmd{'extciphers'} == 1) {
+            if (1 == $cmd{'extciphers'}) {
                 trace(" get list openssl  = $pattern");
                 push(@ciphers, SSLinfo::cipher_openssl($pattern));
             } else {
@@ -6145,7 +6158,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.138");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.139");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
