@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.139 24/08/30 01:57:37"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.140 24/08/30 13:32:22"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -412,7 +412,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.139"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.140"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -2649,15 +2649,25 @@ sub _useopenssl     {
     # adds all configured options, like -alpn -curves -servername etc. with
     # their proper values
     my ($ssl, $host, $port, $ciphers) = @_;
-    my $msg  =  $cfg{'openssl_msg'};
-    my $sni  = (not _is_cfg_use('sni'))  ? "" : "-servername $host";
-    $ciphers = ($ciphers      eq "") ? "" : "-cipher $ciphers";
-    my $curves  = "-curves " . join(":", $cfg{'ciphercurves'}); # TODO: add to command below
     trace1("_useopenssl($ssl, $host, $port, $ciphers)"); # no { in comment here ; dumm }
-    $ssl = ($cfg{'openssl_option_map'}->{$ssl} || '');  # set empty if no protocol given
-    my $data = SSLinfo::do_openssl("s_client $ssl $sni $msg $ciphers ", $host, $port, '');
-# TODO: hier -alpn $protos_alpn und -nextprotoneg $protos_npn übergeben
-#       dann entsprechenden Code in SSLinfo::do_openssl() entfernen
+        $ssl  = ($cfg{'openssl_option_map'}->{$ssl} || ''); # set empty if no protocol given
+    my $args  = "$ssl ";
+       $args .= " $cfg{'openssl_msg'} ";
+       $args .= " -servername $host" if _is_cfg_use('sni');
+       $args .= " -alpn "         . join(",", @{$cfg{'protos_alpn'}}) if _is_cfg_use('alpn');
+       $args .= " -nextprotoneg " . join(",", @{$cfg{'protos_npn'}})  if _is_cfg_use('npn');
+       $args .= " -cipher $ciphers"   if ("" ne $ciphers);
+    # TODO: $args .= "-curves " . join(":", @{$cfg{'ciphercurves'}});
+    # do not use SSLinfo::do_openssl() here because it is a performance culprit
+    # due to its compatibility for openssl 3.x
+    trace1("_useopenssl: echo | $cmd{'timeout'} $cfg{'timeout'} $cmd{'openssl'} s_client $args -connect $host:$port 2>&1");
+    my $data = qx(echo | $cmd{'timeout'} $cfg{'timeout'} $cmd{'openssl'} s_client $args -connect $host:$port 2>&1);
+
+    # we may get for failure:
+    #   New, (NONE), Cipher is (NONE)
+    #   SSL-Session:
+    #       Protocol  : TLSv1
+    #       Cipher    : 0000
     # we may get for success:
     #   New, TLSv1/SSLv3, Cipher is DES-CBC3-SHA
     # also possible would be Cipher line from:
@@ -6158,7 +6168,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.139");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.140");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
