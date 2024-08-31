@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 3.22 24/08/27 01:06:46
+#?      @(#) Makefile 3.23 24/08/31 17:00:50
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-O-SID.test         := 3.22
+O-SID.test         := 3.23
 O-SELF.test        := t/Makefile
 ALL.includes       += $(O-SELF.test)
 ALL.inc.type       += test
@@ -639,6 +639,8 @@ _FORCE:
 # special characters should not be used:  ; & | # < > ` [ ]
 
 # target succeeds if message is there
+message-%:  TEST.tmp.rc = /tmp/.rc
+    # simple /tmp, no need to create it for message-%:
 message-%:
 	@$(O-TRACE.target)
 	@-if expr "$(TEST.args)" ":" "^TODO" >/dev/null ; then \
