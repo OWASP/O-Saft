@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.144 24/08/31 13:59:18"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.145 24/08/31 14:15:19"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -418,7 +418,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.144"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.145"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -2668,8 +2668,8 @@ sub _useopenssl     {
     my $args  = ($cfg{'openssl_option_map'}->{$ssl} || ''); # set empty if no protocol given
        $args .= " $cfg{'openssl_msg'} ";
        $args .= " -servername $host" if _is_cfg_use('sni');
-       $args .= " -alpn "         . join(",", @{$cfg{'protos_alpn'}}) if _is_cfg_use('alpn');
-       $args .= " -nextprotoneg " . join(",", @{$cfg{'protos_npn'}})  if _is_cfg_use('npn');
+       $args .= " -alpn "         . join(",", @{$cfg{'cipher_alpns'}}) if _is_cfg_use('alpn');
+       $args .= " -nextprotoneg " . join(",", @{$cfg{'cipher_npns'}})  if _is_cfg_use('npn');
        $args .= " -cipher $ciphers"   if ("" ne $ciphers);
     # TODO: $args .= "-curves " . join(":", @{$cfg{'ciphercurves'}});
     # do not use SSLinfo::do_openssl() here because it is a performance culprit
@@ -6177,7 +6177,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.144");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.145");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6263,8 +6263,10 @@ sub printversion        {
     print "    list of supported elliptic curves ". join(" ", @{$cfg{'ciphercurves'}});
     print "    list of supported ALPN, NPN      " . join(" ", $cfg{'protos_next'});
     if (_is_cfg_verbose()) {
-        print "    list of supported ALPN       " . join(" ", @{$cfg{'protos_alpn'}});
-        print "    list of supported NPN        " . join(" ", @{$cfg{'protos_npn'}});
+        print "    list of supported ALPN           " . join(" ", @{$cfg{'protos_alpn'}});
+        print "    list of supported NPN            " . join(" ", @{$cfg{'protos_npn'}});
+        print "    list of supported ALPN for +cipher " . join(" ", @{$cfg{'cipher_alpns'}});
+        print "    list of supported NPN  for +cipher " . join(" ", @{$cfg{'cipher_npns'}});
     }
 
     print "= $me +cipher --ciphermode=openssl or --ciphermode=ssleay =";
