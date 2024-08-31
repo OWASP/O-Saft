@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.142 24/08/31 08:52:20"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.143 24/08/31 13:53:52"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -412,7 +412,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.142"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.143"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1397,7 +1397,7 @@ sub _enable_functions   {
             if ($version_openssl  < 0x10002000) {
                 warn $STR{WARN}, "128: $txo < 1.0.2" if ($cfg{'verbose'} > 1);
             }
-            _hint("use '--no-alpn' to disable this check") if (_is_cfg_out('hint_check'));
+            _hint("126: use '--no-alpn' to disable this check") if (_is_cfg_out('hint_check'));
         }
     }
     trace(" cfg{use}->{alpn}= $cfg{'use'}->{'alpn'}");
@@ -1410,19 +1410,19 @@ sub _enable_functions   {
             if ($version_openssl  < 0x10001000) {
                 warn $STR{WARN}, "132: $txo < 1.0.1" if ($cfg{'verbose'} > 1);
             }
-            _hint("use '--no-npn' to disable this check") if (_is_cfg_out('hint_check'));
+            _hint("129: use '--no-npn' to disable this check") if (_is_cfg_out('hint_check'));
         }
     }
     trace(" cfg{use}->{npn}= $cfg{'use'}->{'npn'}");
 
     if ($cfg{'ssleay'}->{'can_ocsp'} == 0) {    # Net::SSLeay < 1.59  and  OpenSSL 1.0.0
         warn $STR{WARN}, "133: $txt; tests for OCSP disabled";
-        #_hint("use '--no-ocsp' to disable this check") if (_is_cfg_out('hint_check'));
+        #_hint("133: use '--no-ocsp' to disable this check") if (_is_cfg_out('hint_check'));
     }
 
     if ($cfg{'ssleay'}->{'can_ecdh'} == 0) {    # Net::SSLeay < 1.56
         warn $STR{WARN}, "134: $txt; setting curves disabled";
-        #_hint("use '--no-cipher-ecdh' to disable this check") if (_is_cfg_out('hint_check'));
+        #_hint("134: use '--no-cipher-ecdh' to disable this check") if (_is_cfg_out('hint_check'));
     }
     trace("_enable_functions() }");
     return;
@@ -1654,7 +1654,7 @@ sub _check_ssl_methods  {
             $cfg{$ssl} = 1;
         } else {
             _warn("143: SSL version '$ssl': not supported by Net::SSLeay; not checked");
-            _hint("consider using '--ciphermode=intern' instead") if not _is_cfg_ciphermode('intern');
+            _hint("143: consider using '--ciphermode=intern' instead") if not _is_cfg_ciphermode('intern');
         }
     } # $ssl
 
@@ -1702,8 +1702,9 @@ sub _enable_sclient {
         if (_is_cfg_use('npn') and ($cmd{'version'} gt "2.0")) {
             # check and warning if -nextprotoneg with OPenSSL 3.x only
             # avoids warning:  Cannot supply -nextprotoneg with TLSv1.3
-            $cfg{'use'}->{'npn'}    = 0; # SEE
-            _warn("150: openssl $cmd{'version'}: cannot supply '-nextprotoneg' with TLSv1.3, henc globally disabled");
+            $cfg{'use'}->{'npn'}    = 0; # see --help=TECHNIC
+            _warn("150: openssl $cmd{'version'}: cannot supply '-nextprotoneg' with TLSv1.3, hence globally disabled");
+            _hint("150: $cfg{'hints'}->{'150'}") if _is_cfg_out('hint_cipher'); # SEE Note:hints
         }
     }
     # TODO: remove commands, i.e. +s_client, +heartbleed, from $cmd{do}
@@ -1768,7 +1769,7 @@ sub _check_openssl  {
     }
     if (not defined SSLinfo::s_client_check()) {
         _warn("147: '$cmd{'openssl'}' not available; all openssl functionality disabled");
-        _hint("consider using '--openssl=/path/to/openssl'");
+        _hint("147: consider using '--openssl=/path/to/openssl'");
         _reset_openssl();
     }
     # NOTE: if loading SSLinfo failed, then we get a Perl warning here:
@@ -1791,8 +1792,10 @@ sub _check_openssl  {
     }
     if ($cmd{'version'} gt "2.0") {
         if (_is_cfg_ciphermode('openssl|ssleay')) {
-            _hint($cfg{'hints'}->{'openssl3'});
-            _hint($cfg{'hints'}->{'openssl3c'});
+            if (_is_cfg_out('hint_cipher')) {
+                _hint("142: $cfg{'hints'}->{'openssl3'}");
+                _hint("142: $cfg{'hints'}->{'openssl3c'}");
+            }
         }
     }
     if ($cmd{'version'} gt "2.0") {
@@ -1820,7 +1823,7 @@ sub _init_opensslexe    {
     if ($exe eq "" or $exe eq "/") {
         $exe = "";
         _warn("149: no executable for '$cmd{'openssl'}' found; all openssl functionality disabled");
-        _hint("consider using '--openssl=/path/to/openssl'");
+        _hint("149: consider using '--openssl=/path/to/openssl'");
         _reset_openssl();
     }
     trace("_init_opensslexe()\t= $exe }");
@@ -1935,7 +1938,7 @@ sub _init_openssl       {
         $cfg{'ca_file'} = "$cfg{'ca_paths'}[0]/$cfg{'ca_files'}[0]"; # use default
         _warn("060: no PEM file for CA found; using '--ca-file=$cfg{'ca_file'}'");
         _warn("060: if default file does not exist, some certificate checks may fail");
-        _hint("use '--ca-file=/full/path/$cfg{'ca_files'}[0]'");
+        _hint("060: use '--ca-file=/full/path/$cfg{'ca_files'}[0]'");
     }
     trace("_init_openssl() }");
     return;
@@ -2080,12 +2083,12 @@ sub _is_ssl_error   {
     return 0 if (not _is_cfg_use('ssl_error'));# no action required
     if ($cfg{'done'}->{'ssl_errors'} > $cfg{'sslerror'}->{'total'}) {
         _warn("301: $txt after $cfg{'sslerror'}->{'total'} total errors");
-        _hint("use '--no-ssl-error' or '--ssl-error-max=' to continue connecting");
+        _hint("301: use '--no-ssl-error' or '--ssl-error-max=' to continue connecting");
         return 1;
     }
     if ($cfg{'done'}->{'ssl_failed'} > $cfg{'sslerror'}->{'max'}) {
         _warn("302: $txt after $cfg{'sslerror'}->{'max'} max errors");
-        _hint("use '--no-ssl-error' or '--ssl-error-max=' to continue connecting");
+        _hint("302: use '--no-ssl-error' or '--ssl-error-max=' to continue connecting");
         return 1;
     }
     return 0;
@@ -2181,7 +2184,7 @@ sub _is_vuln_bleed  {
         ($type,$ver,@msg) = __readframe($cl) or do {
             #ORIG die "no reply";
             _warn("323: heartbleed: no reply: '$!'");
-            _hint("server does not respond, this does not indicate that it is not vulnerable!");
+            _hint("323: server does not respond, this does not indicate that it is not vulnerable!");
                 # 7/2024 ah: modern servers (OpenSSL 3.x) may return this also
             return "no reply";
         };
@@ -2854,7 +2857,7 @@ sub _get_data0      {
             #   **WARNING: 206: do_openssl(ciphers localhost) failed: Error in cipher list
             #   ....SSL routines:SSL_CTX_set_cipher_list:no cipher match:ssl_lib.c:1383:
         } else {
-            _hint("use '--v' to show more information about SSLinfo::do_ssl_open() errors");
+            _hint("203: use '--v' to show more information about SSLinfo::do_ssl_open() errors");
         }
     }
     _trace_time("no SNI}");         # should be before if {}, but also ok here
@@ -5004,7 +5007,7 @@ sub checkhttp       {
 
     if ($https_body =~ /^<</) { # private string, see SSLinfo
         _warn("641: HTTPS response failed, some information and checks are missing");
-        _hint("consider using '--proto-alpn=,' also")   if ($https_body =~ /bad client magic byte string/);
+        _hint("641: consider using '--proto-alpn=,' also")  if ($https_body =~ /bad client magic byte string/);
     }
 
     $checks{'breach'}       ->{val} = _is_vuln_breach($host, $port);
@@ -6168,7 +6171,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.142");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.143");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7113,8 +7116,8 @@ while ($#argv >= 0) {
     if ($arg =~ /^--nohints?infos?/)    { _set_cfg_out('hint_info',   0); }
     if ($arg =~ /^--hints?checks?/)     { _set_cfg_out('hint_check',  1); }
     if ($arg =~ /^--nohints?checks?/)   { _set_cfg_out('hint_check',  0); }
-    if ($arg =~ /^--hints?cipher/)      { _set_cfg_out('hint_cipher', 1); }
-    if ($arg =~ /^--nohints?cipher/)    { _set_cfg_out('hint_cipher', 0); }
+    if ($arg =~ /^--hints?ciphers?/)    { _set_cfg_out('hint_cipher', 1); }
+    if ($arg =~ /^--nohints?ciphers?/)  { _set_cfg_out('hint_cipher', 0); }
     if ($arg =~ /^--hints?$/)           {
         _set_cfg_out('hint',        1);
         _set_cfg_out('hint_info',   1);
@@ -7407,7 +7410,7 @@ while ($#argv >= 0) {
         } else {
             _warn("049: command '$val' unknown; command ignored");
             if (_is_cfg_out('hint_cipher')) {   # SEE Note:hints
-                _hint($cfg{'hints'}->{$val}) if ($val =~ m/^cipher(?:all|raw)/);
+                _hint("049: $cfg{'hints'}->{$val}") if ($val =~ m/^cipher(?:all|raw)/);
             }
         }
         next;
@@ -7416,7 +7419,7 @@ while ($#argv >= 0) {
 
     if ($arg =~ /(?:ciphers|s_client|version)/) {  # handle openssl commands special
         _warn("041: host-like argument '$arg'; treated as command '+$arg'");
-        _hint("please use '+$arg' instead");
+        _hint("041: please use '+$arg' instead");
         push(@{$cfg{'do'}}, $arg);
         next;
     }
@@ -7894,7 +7897,7 @@ if ($fail > 0) {
     } else {
         _hint("use '--v' for more information");
     }
-    _hint("do not use '--ignore-out=*' or '--no-out=*'");
+    _hint("066: do not use '--ignore-out=*' or '--no-out=*'");
         # It's not simple to identify the given command, as $cfg{'do'} may
         # contain a list of commands. So the hint is a bit vage.
 } else {
@@ -7997,7 +8000,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             }
             if ($cfg{'rhost'} =~ m/gethostbyaddr/) {
                 _warn("202: Can't do DNS reverse lookup: for '$host': $fail; ignored");
-                _hint("use '--no-dns' to disable this check");
+                _hint("202: use '--no-dns' to disable this check");
             }
            _trace_time("test DNS}");
         }
@@ -8138,10 +8141,10 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             if (0 < $#errtxt) {
                 trace(join("\n".$STR{ERROR}, @errtxt));
                 _warn("205: Can't make a connection to '$host:$port'; target ignored");
-                _hint("use '--v' to show more information");
-                _hint("use '--socket-reuse' it may help in some cases");
-                _hint("use '--ignore-no-conn' to disable this check");
-                _hint("do not use '--no-ignore-handshake'") if ($cfg{'sslerror'}->{'ignore_handshake'} <= 0);
+                _hint("205: use '--v' to show more information");
+                _hint("205: use '--socket-reuse' it may help in some cases");
+                _hint("205: use '--ignore-no-conn' to disable this check");
+                _hint("205: do not use '--no-ignore-handshake'") if ($cfg{'sslerror'}->{'ignore_handshake'} <= 0);
                 _trace_time("  test connection} failed");
                 goto CLOSE_SSL;
             }
@@ -8150,7 +8153,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         my @errtxt = SSLinfo::errors($host, $port);
         if (0 < (grep{/\*\*ERROR/} @errtxt)) {
             _warn("207: Errors occurred when using '$cmd{'openssl'}', some results may be wrong; errors ignored");
-            _hint("use '--v' to show more information");
+            _hint("207: use '--v' to show more information");
             # do not print @errtxt because of multiple lines not in standard format
         }
         _trace_time("test connection}");
