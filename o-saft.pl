@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.145 24/08/31 14:15:19"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.146 24/08/31 16:50:08"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -418,7 +418,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.145"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.146"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -2726,7 +2726,7 @@ sub _useopenssl     {
         _warn("311: SSL version '$ssl': empty result from openssl");
     } else {
         chomp($cipher); # pretty print
-        warn("312: SSL version '$ssl': unknown result from openssl or '$cipher'");
+        _warn("312: SSL version '$ssl': unknown result from openssl or '$cipher'");
         _warn("312: result from openssl: '$data'") if _is_trace(); # same warning number intended!
     }
     trace2("_useopenssl: #{ $data }");
@@ -6177,7 +6177,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.145");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.146");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
