@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.141 24/08/30 14:43:35"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.142 24/08/31 08:52:20"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -412,7 +412,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.141"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.142"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1699,6 +1699,12 @@ sub _enable_sclient {
         $cfg{'ca_file'}       = undef if ($opt =~ /^-CAfile/i);
         $cfg{'ca_path'}       = undef if ($opt =~ /^-CApath/i);
         # }
+        if (_is_cfg_use('npn') and ($cmd{'version'} gt "2.0")) {
+            # check and warning if -nextprotoneg with OPenSSL 3.x only
+            # avoids warning:  Cannot supply -nextprotoneg with TLSv1.3
+            $cfg{'use'}->{'npn'}    = 0; # SEE
+            _warn("150: openssl $cmd{'version'}: cannot supply '-nextprotoneg' with TLSv1.3, henc globally disabled");
+        }
     }
     # TODO: remove commands, i.e. +s_client, +heartbleed, from $cmd{do}
     #    -fallback_scsv: remove +scsv and +fallback
@@ -2650,8 +2656,7 @@ sub _useopenssl     {
     # their proper values
     my ($ssl, $host, $port, $ciphers) = @_;
     trace1("_useopenssl($ssl, $host, $port, $ciphers)"); # no { in comment here ; dumm }
-        $ssl  = ($cfg{'openssl_option_map'}->{$ssl} || ''); # set empty if no protocol given
-    my $args  = "$ssl ";
+    my $args  = ($cfg{'openssl_option_map'}->{$ssl} || ''); # set empty if no protocol given
        $args .= " $cfg{'openssl_msg'} ";
        $args .= " -servername $host" if _is_cfg_use('sni');
        $args .= " -alpn "         . join(",", @{$cfg{'protos_alpn'}}) if _is_cfg_use('alpn');
@@ -2716,12 +2721,6 @@ sub _useopenssl     {
         _warn("312: result from openssl: '$data'") if _is_trace(); # same warning number intended!
     }
     trace2("_useopenssl: #{ $data }");
-    if ($cfg{'verbose'} < 1) {
-        _hint("use '--v' or '--trace'"); # print always
-    } else {
-        trace1("_useopenssl: SSLinfo::do_openssl() #{\n$data\n#}");
-    }
-
     return "", "", "";
 } # _useopenssl
 
@@ -6169,7 +6168,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.141");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.142");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -9194,6 +9193,7 @@ About OpenSSL's version numbers see openssl/opensslv.h . Examples:
   0x10002000 => openssl-1.0.2
   0x102031af => 1.2.3z
   0x30000050 => 3.0.11
+  0x30000050 => 3.0.13
 
 
 =head2 Note:need SSLinfo
