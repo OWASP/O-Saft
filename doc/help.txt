@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.31 24/08/18 13:40:18
+# SID   @(#) help.txt 3.32 24/08/31 13:48:04
 
 NAME
 
@@ -206,7 +206,7 @@ TECHNICAL INFORMATION
         Keep in mind that it is not possible  to check if the target supports
         ancient ciphers with openssl 3.x. There even does not exist a patched
         version, as we used before, to do it. However, any openssl 1.x can be
-        be used if specified with the  --openssl=  option.
+        be used if specified with the  --openssl=/path/to/openssl  option.
 
         Following changes in OpenSSL have been observed (incomplete list):
            # our command/option| OpenSSL 1.x           | OpenSSL 3.0.x
@@ -217,6 +217,7 @@ TECHNICAL INFORMATION
             -dtls1  -dtls1_2   | <<not supported>>     | -dtls1  -dtls1_2
                                | <<not supported>>     | -legacy_renegotiation
                                | <<not supported>>     | -prioritize_chacha
+            +resumption_psk    | <<not supported>>     | Resumption PSK: ...
             +selfsigned        | self signed           | num=18:self-signed
             +sslversion        | TLSv1.2               | TLSv12
             +renegotiation     | renegotiation info" (id=65281), len=1
@@ -225,12 +226,17 @@ TECHNICAL INFORMATION
             +sigkey_value      | hexhex                | Signature Value hexhex
             +dh_parameter      | ECDH, P-256, 256 bits | X25519, 253 bits
             +cipher-selected   | New, TLSv1/SSLv3, ... | New, TLSv1.3, ...
+            -nextprotoneg -npn | -nextprotoneg         | not allowed for TLSv1.3
            #-------------------+-----------------------+---------------------
 
         As the purpose of this tool is to check for any cipher,  wether known
         or not, using modern OpenSSL 3.x is not feasible because it is simply
         not possible. This restriction may apply to other tools which rely on
         openssl or the underlying libssl too.
+
+        The default configurations are build for detecting  any known issues. It may
+        This may result in warning messages when tools are used which miss
+        proper funtionality (for example in OpenSSL 3.x).
 
         Beyond this limitation, checking old protocols and ciphers on targets
         which use modern libraries, may result in a bunch of warnings.  If it
@@ -241,6 +247,11 @@ TECHNICAL INFORMATION
           $0 target --header +cipher --no-warnings
           $0 target --header +cipher --nossl2 --nossl3 --notls1 --no-warnings
           $0 target --header +cipher --ciphermode=openssl --openssl=/path/openssl
+          $0 target --header +cipher --ciphermode=openssl --notls --tlsv13 --no-npn
+
+        As workaround to get rid of a warning the option --ignore-warning=NNN
+        can be used, for example:
+          --ignore-warning=150
 
     Version 19.11.19 and later
 
@@ -2260,19 +2271,19 @@ OPTIONS
 #
 #          Print debugging messages for modules only, but not  $0  itself.
 #
-      --hint
+      --hints
 
           Print hint messages (!!Hint:).
 
-      --no-hint
+      --no-hints
 
           Do not print hint messages (!!Hint:).
 
-      --warning
+      --warnings
 
           Print warning messages (**WARNING:).
 
-      --no-warning
+      --no-warnings
 
           Do not print warning messages (**WARNING:).
 
@@ -2286,12 +2297,13 @@ OPTIONS
       --ignore-warning=NNN
 
           Supress printing of warning messages with number NNN (**WARNING:).
+          It also supresses hint messages if they begin with number NNN.
           Mainly used for internal testing.
 
       --quiet
       --silent
 
-          Shortcut for:  --no-warning --no-hint .
+          Shortcut for:  --no-warnings --no-hints .
 
       --exit=KEY
 
@@ -3833,6 +3845,23 @@ KNOWN PROBLEMS
               info:            <1 sec
               check:           <1 sec
 
+    Warnings and hints
+
+        Sometimes a bunch of warnings and or hints are printed. That's mainly
+        due to missing of functionality somewhere (for example used openssl),
+        and the default configuration expecting the availability of it.
+
+        There are following workarounds to avoid messages, for details please
+        see corresponding option:
+              --no-hints
+              --no-hints-cipher
+              --no-hints-check
+              --no-hints-info
+              --no-warnings
+              --no-warnings-no-dups
+              --ignore-warning=NNN
+              --silent
+
 
 LIMITATIONS
 
@@ -3937,12 +3966,12 @@ LIMITATIONS
         for right at the beginning. Proper warnings and hints are printed.
         Following table shows the openssl option and how to disable it within
         $0:
-            #-------------------+---------------------
-            * -nextprotoneg     | --no-nextprotoneg
+            #-------------------+-------------------------------
+            * -nextprotoneg     | --no-nextprotoneg or --no-npn
             * -reconnect        | --no-reconnect
             * -tlsextdebug      | --no-tlsextdebug
             * -alpn             | --no-alpn
-            #-------------------+---------------------
+            #-------------------+-------------------------------
 
     Connection problems
 
