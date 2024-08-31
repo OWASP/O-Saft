@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.57 24/08/18 15:02:48";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.58 24/08/31 13:52:13";
 our $VERSION    =  "24.06.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -2852,6 +2852,8 @@ our %cfg = (    # main data structure for configuration
     'hints' => {       # texts used for hints, SEE Note:hints
        # key for hints must be same as a command (without leading +), otherwise
        # it will not be used automatically.
+       # key may also be a warning number to indicate that the hint  is related
+       # to that warning message
        # 'key'      => "any string, may contain \t and \n",
        #--------------+--------------------------------------------------------
         'help=warnings' => "consider building the file using: 'make warnings-info'",
@@ -2863,6 +2865,7 @@ our %cfg = (    # main data structure for configuration
         'cipherraw' => "+cipherraw : functionality changed, please see '$cfg__me --help=TECHNIC'",
         'openssl3'  => "OpenSSL 3.x changed some functionality, please see '$cfg__me --help=TECHNIC'",
         'openssl3c' => "+cipher for OpenSSL 3.x may result in many warnings, consider using '--no-warning'",
+        '150'       => "when using OpenSSL 3.x consider using '--no-npn', please see '$cfg__me --help=TECHNIC'",
        #--------------+--------------------------------------------------------
     }, # hints
    #------------------+--------------------------------------------------------
@@ -3557,7 +3560,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.57"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.58"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3603,7 +3606,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.57 2024/08/18
+3.58 2024/08/31
 
 =head1 AUTHOR
 
