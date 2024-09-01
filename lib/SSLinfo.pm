@@ -49,7 +49,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.27 24/09/01 10:16:43";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.28 24/09/01 12:02:17";
 our $VERSION        =  "24.06.24";  # official verion number of this file
 
 BEGIN {
@@ -3120,7 +3120,6 @@ sub do_ssl_open($$$@) {
                 _trace2("do_ssl_open: match value: $key\t= $_SSLinfo{$key}");
             }
         }
-exit;
             # from s_client:
             # ....
             #     Start Time: 1544899903
