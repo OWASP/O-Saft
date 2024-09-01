@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.146 24/08/31 16:50:08"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.147 24/09/02 01:08:45"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -418,7 +418,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.146"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.147"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6177,7 +6177,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.146");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.147");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -8047,6 +8047,10 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     if (_is_cfg_do('cipher_dh')) {
         # abort here is ok because +cipher-dh cannot be combined with other commands
 # TODO: ciphermode=dump ungültig, warning und auf intern ändern
+        if (not _is_cfg_ciphermode('intern')) {
+            _warn("405: option '--ciphermode=', not supported for '+cipher-dh'; option ignored");
+            $cfg{'ciphermode'} = "intern";
+        }
         if (0 >= $cmd{'extopenssl'}) {   # TODO: as long as openssl necessary
             _warn("408: OpenSSL disabled using '--no-openssl', can't check DH parameters; target ignored");
             next;
