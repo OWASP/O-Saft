@@ -49,7 +49,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.26 24/08/29 13:05:38";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.27 24/09/01 10:16:43";
 our $VERSION        =  "24.06.24";  # official verion number of this file
 
 BEGIN {
@@ -3105,18 +3105,22 @@ sub do_ssl_open($$$@) {
             # it's not ensured that all 5 data sets are identical, hence
             # we need to check them all -at least the last one-
             # Unfortunately all following checks use all 5 data sets.
+#print "####\n $data \n####";
         foreach my $key (sort keys %match_map) {
             my $regex = $match_map{$key};
             $d = $data;
             $d =~ s/.*?$regex[ \t]*([^\n\r]*)\n.*/$1/si;
+#print("do_ssl_open: match key:   $key\t= $regex");
             _trace2("do_ssl_open: match key:   $key\t= $regex");
             if ($data =~ m/$regex/) {
                 $_SSLinfo{$key} = $d;
                 $_SSLinfo{$key} = $regex if ($key eq 'no_alpn');
                     # no_alpn: single line, has no value: No ALPN negotiated
+#print("do_ssl_open: match value: $key\t= $_SSLinfo{$key}");
                 _trace2("do_ssl_open: match value: $key\t= $_SSLinfo{$key}");
             }
         }
+exit;
             # from s_client:
             # ....
             #     Start Time: 1544899903
@@ -3364,6 +3368,8 @@ Returns '<<undefined>>' if PEM missing.
 
 sub do_openssl($$$$)  {
     #? call external openssl executable to retrive more data
+    #  should not be used to check ciphers because of timeout of 1 second for
+    #  each call due to compatibility with openssl 3.x
     my $mode = shift;   # must be openssl command
     my $host = shift;
     my $port = shift || '';  # may be empty for some calls
@@ -3434,21 +3440,11 @@ sub do_openssl($$$$)  {
             # a line in access.log like: "\n" 400 750 "-" "-"
             # to avoid this, \r is appended to the string always
         #dbx# print "echo $pipe | $_timeout $_openssl $mode $host$port 2>&1";
-        $data  = qx((echo "$pipe"; perl -I lib -MOData -le "" ) | $_timeout $_openssl $mode $host$port 2>&1); ## no critic qw(InputOutput::ProhibitBacktickOperators)
+        $data  = qx((echo "$pipe"; sleep 1 ) | $_timeout $_openssl $mode $host$port 2>&1); ## no critic qw(InputOutput::ProhibitBacktickOperators)
             # system() or qx() should be safe because $_openssl and $timeout
             # are already checked in _setcommand()
-            # 28aug24: openssl 3.x behaves different, if STDIN is closed too
-            #          early some output is missing, hence the "perl -le .."
-            #          (empty code but tries to load our own module wasteing
-            #           some time;  oversized compared to a simple "sleep 1"
-            #           but wastes a fraction of a second only -which is not
-            #           possible with sleep; using "sleep 1" would result in
-            #           a  huge performance problem for example when testing
-            #           hundreds of ciphers with openssl
-            #          )
-            #          simple checks to verify:
-            #          echo|openssl s_client -connect localhost:443
-            #          perl -le 'qx(echo | openssl s_client -connect localhost:443)'
+            # 31aug24: openssl 3.x behaves different, if STDIN is closed too
+            #          early some output is missing, hence the "sleep 1
         if ($data =~ m/(\nusage:|unknown option)/s) {
             #$data =~ s/((?:usage:|unknown option)[^\r\n]*).*/$1/g;
             my $u1 = $data; $u1 =~ s/.*?(unknown option[^\r\n]*).*/$1/s;
@@ -3462,7 +3458,7 @@ sub do_openssl($$$$)  {
             $mode .= ' -CAfile ' . $cafile if ('' ne $cafile);
             $mode .= ' -reconnect'   if (1 == $SSLinfo::use_reconnect);
             $mode .= ' -connect';
-            $data .= qx((echo "$pipe"; perl -I lib -MOData -le "" ) | $_timeout $_openssl $mode $host$port 2>&1); ## no critic qw(InputOutput::ProhibitBacktickOperators)
+            $data .= qx((echo "$pipe"; sleep 1 ) | $_timeout $_openssl $mode $host$port 2>&1); ## no critic qw(InputOutput::ProhibitBacktickOperators)
         }
     } else {
         $data = _openssl_MS($mode, $host, $port, '');
