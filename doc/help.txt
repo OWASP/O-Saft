@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.32 24/08/31 13:48:04
+# SID   @(#) help.txt 3.33 24/09/02 16:15:45
 
 NAME
 
@@ -172,6 +172,17 @@ CONCEPTS
 
     Results
 
+        Results of SSL/TLS security tests of this tool are of these types:
+
+        * cipher suite names with a security qualification
+
+        * checks with a value of  'yes'  or  'no'
+
+        * information with various random texts
+
+        These results are grouped and provided with a propper headline. Some-
+        times some summary lines are also printed.
+
         Results of checks are marked  'yes'  or 'no'.  This leaves the proper
         interpretation, if the result is "good" or "bad", to the user.
         Background:  it is not always possible to rate a result as  "good" or
@@ -199,9 +210,9 @@ TECHNICAL INFORMATION
 
         Beside  new and removed funtionality  in OpenSSL (details see below),
         OpenSSL also changed some texts in its responses. Again this makes it
-        hard to parse openssl's output properly. Therfore checking for cipher
-        is now done without openssl.  Using openssl for checking ciphers must
-        be requested explicitly with the  --ciphermode=openssl  option.
+        hard to parse openssl's output properly. Therfore scanning for cipher
+        is now done without openssl.  Using openssl to scan must be requested
+        explicitly with the  --ciphermode=openssl  option.
 
         Keep in mind that it is not possible  to check if the target supports
         ancient ciphers with openssl 3.x. There even does not exist a patched
@@ -260,7 +271,7 @@ TECHNICAL INFORMATION
         Only other collected SSL/TLS related information requires an external
         library, in general libssl.
         The description about OpenSSL and libssl below applies only if any of
-        the options  --ciphermode=openssl  or  --ciphermode=ssleay  are given
+        the options  --ciphermode=openssl  or  --ciphermode=socket  are given
         with the  +cipher  command.
 
         Therefore following commands and options changed:
@@ -280,7 +291,7 @@ TECHNICAL INFORMATION
 
            # Version < 19.11.19       |  Version > 19.11.19
            #--------------------------+---------------------------------
-            * +cipher                 |  +cipher  --ciphermode=ssleay
+            * +cipher                 |  +cipher  --ciphermode=socket
             * +cipher --force-openssl |  +cipher  --ciphermode=openssl
             * +cipherall              |  +cipher
             * +cipherraw              |  +cipher  --ciphermode=intern
@@ -291,6 +302,16 @@ TECHNICAL INFORMATION
         Up to version 19.11.19 the default behaviour for the  +cipher command
         was to use libssl. The commands  +cipherall  and  +cipherraw  did not
         use any other library as described below.
+
+    Testing for ciphers
+
+        The default mode of the tool is to check ciphers with a simple socket
+        connection providing the minimal required data for SSL/TLS. It allows
+        testing for any cipher independent of any other tool installed on the
+        system.
+
+        For more details on testing ciphers,  please see section  SSL ciphers
+        in  CHECKS  below.
 
     OpenSSL, libssl, libcrypto
 
@@ -306,7 +327,7 @@ TECHNICAL INFORMATION
         options:
           * --openssl=TOOL
           * --no-openssl
-          * --openssl-ciphers   --force-openssl
+          * --ciphermode=openssl
           * --exe-path=PATH     --exe=PATH
           * --openssl-cnf=PATH
           * --openssl-s_client  --s_client
@@ -1133,13 +1154,6 @@ OPTIONS
 
           Options are obsolete. Please use  --ciphermode=openssl  instead.
 
-          Use openssl to check for supported ciphers; default: IO::Socket(3pm)
-
-          This option forces to use  "openssl s_slient -connect CIPHER .." to
-          check if a cipher is supported by the remote target. This is useful
-          if the  --lib=PATH  option doesn't work (for example due to changes
-          of the API or other incompatibilities).
-
       --exe-path=PATH
       --exe=PATH
 
@@ -1290,15 +1304,34 @@ OPTIONS
 
       --ciphermode=intern
       --ciphermode=openssl
-      --ciphermode=ssleay
+      --ciphermode=socket
+      --ciphermode=dump
       --ciphermode=MODE
 
-          Following 'MODE's are supported:
+          Following 'MODE's are supported for scanning ciphers:
           * 'intern'    - scan for ciphers using internal method; (default)
           * 'openssl'   - scan for ciphers using external openssl executable
-          * 'ssleay'    - scan for ciphers using  IO::Socket and  Net::SSLeay
+          * 'socket'    - scan for ciphers using  IO::Socket::SSL
           * 'dump'      - same as 'intern' but print  all cipher information,
                           useful when postprocessed by usr/* tools
+
+          'intern' uses a socket connection to the target  which provides all
+          ciphers of the specified range. The amount of provided ciphers will
+          be reduced and tested in chunks if the target returns errors.  This
+          is the fastest mode for most targets.
+
+          'socket' uses a new socket connection to the target for each cipher
+          of the specified range. It provides only this cipher.
+
+          'openssl' uses  "openssl s_slient -connect CIPHER ..."  to check if
+          a cipher is supported by the remote target. It may be useful if the
+          target behaves strange (warnings, hints are printed),  or if option
+          --lib=PATH  doesn't work (for example due to changes of the API).
+          Note that this mode is  very slow, compared to the others,  because
+          an external executable must be called and a timeout of at least one
+          second is necessary for each cipher check (due to restrictions with
+          openssl 3.x). Consider to use another cipher range than the default
+          'rfc', for example with  --cipherrange=openssl .
 
       --socket-reuse
 
@@ -1588,7 +1621,7 @@ OPTIONS
           The pattern can be common RegEx like 'GCM|CHACHA'.  Simple OpenSSL-
           style pattern are also accepted, for example: 'AES:ECDH'.
 
-          When  --ciphermode=openssl or --ciphermode=ssleay is used, 'CIPHER'
+          When  --ciphermode=openssl or --ciphermode=socket is used, 'CIPHER'
           can only be any string or a hex key accepted by openssl. Examples:
             * --cipher=DHE_DSS_WITH_RC4_128_SHA
             * --cipher=0x03000066
@@ -1619,7 +1652,7 @@ OPTIONS
           * --cipher-npn=,,     - sets list to empty element "".
 
           Note:  setting empty list or element most likely does not work with
-          openssl executable (for example  --force-openssl).
+          openssl executable, for example  --ciphermode=openssl .
 
       --cipher-curve=NAME
 
@@ -1630,7 +1663,7 @@ OPTIONS
           * --cipher-curve=,,   - sets list to empty element "".
 
           Note:  setting empty list or element most likely does not work with
-          openssl executable (for example  --force-openssl).
+          openssl executable, for example  --ciphermode=openssl .
 
       --range=RANGE
       --cipherrange=RANGE
@@ -1660,6 +1693,8 @@ OPTIONS
           * 'c0xx'            - ECC ciphers, constants 0x0300C000 .. 0x0300C0FF
           * 'ccxx'            - ECC ciphers, constants 0x0300CC00 .. 0x0300CCFF
           * 'ecc'             - all constants for ciphers using ECC
+          * 'openssl'         - all ciphers known by openssl
+                                note that this requires an openssl executable
 
           [v2]:  'SSLv2' is the internal list used for testing SSLv2 ciphers.
           It does not make sense to use it for other protocols; however ...
@@ -2396,8 +2431,8 @@ RESULTS
               NULL-SHA         no     weak
 
           Depending on the used  --legacy=*  option the format may differ and
-          also contain more information.  For details see  --legacy=*  option
-          below.
+          also contain more or less information.  For details see  --legacy=*
+          option below.
 
           The text for security qualifications are (mainly) those returned by
           openssl (version 1.0.1): LOW, MEDIUM, HIGH and WEAK.
@@ -2459,7 +2494,25 @@ CHECKS
     SSL ciphers
 
         Check which ciphers are supported by target. Please see  RESULTS  for
-        details of this check.
+        output format of this test.
+
+        There are following methods (modes) implemented to scan for ciphers:
+
+          * 'intern'    - internal method using low-level sockets
+          * 'socket'    - use Perl's IO::Socket::SSL
+          * 'openssl'   - use external openssl executable
+          * 'dump'      - like 'intern' but print all cipher information
+
+        The option  --ciphermode=MODE  can be used to change the method.
+        Default is --ciphermode=intern because it doesn't require other tools
+        (like openssl) and may work on ancient systems too.
+
+        The options  --cipher=CIPHER  or  --cipherrange=RANGE  can be used to
+        select the ciphers to be tested. Default is the full range of ciphers
+        defined by various RFC, including those marked "unused" and "reserved
+        for future use". These are roughly 2600 ciphers per protocol.
+
+        For details please see description of the mentioned options.
 
     SSL connection
 
@@ -3823,7 +3876,7 @@ KNOWN PROBLEMS
              Try with  --no-sni
 
           f) use of external openssl(1) executable
-             Use  --no-openssl
+             Use  --no-openssl  or  --ciphermode=intern
 
           g) target does not respond at all and/or blocks
              Use  --ssl-error
@@ -4893,7 +4946,7 @@ EXAMPLES
           $0 +cipher --openssl=/foo/bar-1.42/openssl some.tld
 
         * Test using a private openssl also for testing supported ciphers
-          $0 +cipher --openssl=/foo/bar-1.42/openssl --force-openssl some.tld
+          $0 +cipher --openssl=/foo/bar-1.42/openssl --ciphermode=openssl some.tld
 
         * Show supported (enabled) ciphers with their DH parameters:
           $0 +cipher-dh --ciphermode=openssl example.tld
@@ -4991,7 +5044,7 @@ EXAMPLES
           $0 +cipher some.tld --v
 
         * Show checking ciphers
-          $0 +cipher some.tld --v --v --ciphermode=openssl
+          $0 +cipher some.tld --v --ciphermode=openssl
 #
 #        * List checked ciphers one per line
 #          $0 +cipher some.tld --v --v --v
