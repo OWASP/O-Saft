@@ -6,7 +6,7 @@
 #?      make help.test.cipher
 #?
 #? VERSION
-#?      @(#) Makefile.cipher 3.15 24/08/31 17:09:55
+#?      @(#) Makefile.cipher 3.16 24/09/02 16:22:30
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cipher  = targets for testing '$(SRC.pl)' commands and options
 
-O-SID.cipher       := 3.15
+O-SID.cipher       := 3.16
 O-SELF.cipher      := t/Makefile.cipher
 ALL.includes       += $(O-SELF.cipher)
 ALL.inc.type       += cipher
@@ -63,7 +63,7 @@ HELP.test.cipher.all   = # no special documentation yet
 # SEE Make:target name
 # SEE Make:target name prefix
 
-LIST.cipher-mode       := --ciphermode=intern --ciphermode=openssl --ciphermode=dump
+LIST.cipher-mode       := --ciphermode=intern --ciphermode=openssl --ciphermode=socket --ciphermode=dump
 LIST.cipher-pattern    := --cipher=AES128-SHA --cipher=0x0300002F  --cipher=IS-UNKNOWN --cipher=is_invalid
 #TODO: --cipher=0x0300002F invalid with --ciphermode=openssl; will be fixed later
 
@@ -79,11 +79,11 @@ LIST.cipher-range  := \
 	--range=c0xx    --range=ccxx    --range=ecc       --range=iana \
 	--range=rfc     --range=long    --range=shifted   \
 	--range=SSLv2   --range=SSLv3   --range=TLSv12    --range=TLSv13 \
-	--range=iana
+	--range=iana    --range=openssl
 # --range=safe  and  --range=huge  disabled, because it takes a long time
 LIST.cipher        := \
 	--dummy-no-arg  $(LIST.cipher-range) \
-	--legacy=owasp  --force-openssl  --cipher-openssl --showhost  \
+	--legacy=owasp  --showhost  --showkey  \
 	--cipher-npn=,  --cipher-alpn=,  --cipher-curves=, \
 	--cipher-npn=,, --cipher-alpn=,, --cipher-curves=,, \
 	--cipher-npn=h2 --cipher-alpn=h2 --cipher-curves=h2 \
@@ -160,8 +160,8 @@ testcmd-cipher-+cipher---notls-dtlsv12_%:   TEST.args  += --no-tls --dtlsv12
 testcmd-cipher-+cipher---nodtls-tlsv12_%:   TEST.args  += --no-dtls --tlsv12
 testcmd-cipher-+cipher---trace-host_%:      TEST.args  += +cipher --showhost --trace-KEY
 testcmd-cipher-+cipher---openssl-local_%:   TEST.args  += --ciphermode=openssl --openssl=$(TEST.openssl) --openssl-cnf=$(TEST.openssl-cnf)
-testcmd-cipher-+ciphercheck_%:      TEST.args  += +ciphercheck
-testcmd-cipher-+ciphercheck---no-602%:  TEST.args  += +ciphercheck --ignore-warning=602
+testcmd-cipher-+ciphercheck_%:              TEST.args  += +ciphercheck
+testcmd-cipher-+ciphercheck---no-602%:      TEST.args  += +ciphercheck --ignore-warning=602
 
 # not yet implemented # TODO: hence missing in ALL.testciphermisc below
 testcmd-cipher-+cipher-order_%:     TEST.args  += +cipher-order
