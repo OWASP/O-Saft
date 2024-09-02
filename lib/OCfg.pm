@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.60 24/09/02 14:17:39";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.61 24/09/03 00:18:10";
 our $VERSION    =  "24.06.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -2070,10 +2070,10 @@ our %cfg = (    # main data structure for configuration
         # TODO: list with 'key exchange': kRSA, kDHr, kDHd, kDH, kEDH, kECDHr, kECDHe, kECDH, kEECDH
     }, # cipherpatterns
     'ciphermode'    => 'intern',# cipher scan mode, any of 'ciphermodes'
-    'ciphermodes'   => [qw(dump intern openssl ssleay)],
+    'ciphermodes'   => [qw(dump intern openssl socket)],
                     # modes how to scan for ciphers;
                     # NOTE: commands_int must contain the commands cipher_dump
-                    #       cipher_intern, cipher_openssl and cipher_ssleay
+                    #       cipher_intern, cipher_openssl and cipher_socket
     'cipherrange'   => 'intern',# the range to be used from 'cipherranges'
     'cipherranges'  => {        # constants for ciphers (NOTE: written as hex)
                     # Technical (perl) note for definition of these ranges:
@@ -2243,7 +2243,7 @@ our %cfg = (    # main data structure for configuration
     'commands_int'  => [        # add internal commands
                                 # these have no key in %data or %checks
                         qw(
-                         cipher cipher_intern cipher_openssl cipher_ssleay
+                         cipher cipher_intern cipher_openssl cipher_socket
                          cipher_dump   cipher_dh cipher_default
                          bsi check check_sni dump ev exec help info info--v http
                          quick list libversion sigkey sizes s_client version quit
@@ -2317,7 +2317,7 @@ our %cfg = (    # main data structure for configuration
                        )],
     'need-cipher'   => [        # commands which need +cipher
                         qw(check cipher cipher_dh  cipher_strong cipher_weak
-                         cipher_dump cipher_intern cipher_ssleay cipher_openssl
+                         cipher_dump cipher_intern cipher_socket cipher_openssl
                          cipher_null cipher_adh cipher_cbc cipher_des cipher_edh
                          cipher_exp  cipher_rc4 cipher_pfs cipher_pfsall
                          beast crime time drown freak logjam
@@ -2328,7 +2328,7 @@ our %cfg = (    # main data structure for configuration
                                 # TODO: need simple check for protocols
     'need-default'  => [        # commands which need selected cipher
                         qw(check cipher cipher_default
-                         cipher_dump cipher_intern cipher_ssleay cipher_openssl
+                         cipher_dump cipher_intern cipher_socket cipher_openssl
                          cipher_pfs  cipher_order  cipher_strong cipher_selected),
                         qw(sslv3  tlsv1   tlsv10  tlsv11 tlsv12),
                                 # following checks may cause errors because
@@ -3564,7 +3564,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.60"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.61"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3610,7 +3610,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.60 2024/09/02
+3.61 2024/09/03
 
 =head1 AUTHOR
 
