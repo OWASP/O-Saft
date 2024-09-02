@@ -13,7 +13,7 @@
 #?      the warning message is not present.
 #?
 #? VERSION
-#?      @(#) Makefile.warnigs 3.27 24/09/02 01:10:08
+#?      @(#) Makefile.warnigs 3.28 24/09/03 00:20:34
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -22,7 +22,7 @@
 
 HELP-help.test.warnings = targets for testing '$(SRC.pl)' WARNING messages
 
-O-SID.warnings     := 3.27
+O-SID.warnings     := 3.28
 O-SELF.warnings    := t/Makefile.warnings
 ALL.includes       += $(O-SELF.warnings)
 ALL.inc.type       += warnings
@@ -304,7 +304,7 @@ warning-143: TEST.args  = TODO: testing SSL protocol not supported by Net::SSLea
 warning-144: TEST.args  = TODO: testing missing openssl s_client support for -alpn or -npn, difficult ...
 warning-145: TEST.args  = --cipher-openssl +cipher --dtls11 +quit
 #warning-145: TEST.args  = --cipher-openssl +cipher --sslv2 --notlsv1 --notlsv11 --notlsv12 --notlsv13 --openssl=/usr/local/openssl/bin/openssl +quit
-#     various combinations possible to trigger 145; i.e. --cipher-ssleay
+#     various combinations possible to trigger 145; i.e. --cipher-socket
 warning-146: TEST.args  = TODO: testing missing openssl -tlsextdebug option
 warning-147: TEST.args  = TODO: testing missing openssl executable in SSLinfo
 warning-148: TEST.args  = TODO: testing missing openssl version -d failed, difficult ...
@@ -338,7 +338,7 @@ warning-324: TEST.args  = TODO: --sniname=wrong +cn
 warning-325: TEST.args  = TODO: testing connection failed, HTTP disabled, difficult ...
 warning-331: TEST.args  = TODO: testing _isccs: failed to connect, difficult ...
 warning-332: TEST.args  = TODO: testing _isccs: no reply, difficult ...
-warning-405: TEST.args  = --no-rc       +cipher-dh --ciphermode=ssleay $(TEST.host)
+warning-405: TEST.args  = --no-rc       +cipher-dh --ciphermode=socket $(TEST.host)
 warning-406: TEST.args  = --no-rc       +cipher-dh --ciphermode=intern $(TEST.host)
 warning-407: TEST.args  = --no-rc       +cipher -ciphermode=intern --cipher=IS-UNKNOWN $(TEST.host)
 warning-408: TEST.args  = --no-openssl  +cipher-dh --exit=HOST2 $(TEST.host)
@@ -446,7 +446,7 @@ warnings-%.log: $(TEST.logdir)
 # $(_TEST.warning.log) calls "make -s" to avoid printing of executed commands
 _TEST.warning.log   = $(TEST.logdir)/test.warnings.log-$(TEST.today)
 $(_TEST.warning.log):
-	@echo "# $(O-SELF.warnings) 3.27: $(MAKE) test.warnings.log" > $@
+	@echo "# $(O-SELF.warnings) 3.28: $(MAKE) test.warnings.log" > $@
 	@$(MAKE) -s $(ALL.test.warnings) >> $@ 2>&1
 
 # Target should create a new logfile, then compare it with the current one. If
