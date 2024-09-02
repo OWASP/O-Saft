@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.58 24/08/31 13:52:13";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.59 24/09/02 14:05:37";
 our $VERSION    =  "24.06.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -1993,6 +1993,8 @@ our %cfg = (    # main data structure for configuration
     'DTLSv13'       => 0,       # 1:   "
     'TLS1FF'        => 0,       # dummy for future use
     'DTLSfamily'    => 0,       # dummy for future use
+    'ciphers'       => [],      # contains all cipher keys to be tested
+                                # contains cipher names for ciphermode=openssl
     'cipher'        => [],      # ciphers we got with --cipher=
                                 # if the passed value is any of cipherpatterns
                                 # the value from cipherpatterns will be used
@@ -2006,6 +2008,9 @@ our %cfg = (    # main data structure for configuration
     'cipherpatterns'    => {    # openssl patterns for cipher lists
         # key             description                cipher pattern for openssl
         #----------------+--------------------------+---------------------------
+        'all'       => [ "All known ciphers by openssl", 'ALL:NULL:eNULL:aNULL:LOW:EXP' ], 
+        'openssl'   => [ "All known ciphers by openssl", 'ALL:NULL:eNULL:aNULL:LOW:EXP' ], 
+                        # 'all' and 'openssl' are the same as the default (see above)
         'null'      => [ "Null Ciphers",            'NULL:eNULL'              ], 
         'anull'     => [ "Anonymous NULL Ciphers",  'aNULL'                   ], 
         'anon'      => [ "Anonymous DH Ciphers",    'ADH'                     ], 
@@ -2069,8 +2074,6 @@ our %cfg = (    # main data structure for configuration
                     # modes how to scan for ciphers;
                     # NOTE: commands_int must contain the commands cipher_dump
                     #       cipher_intern, cipher_openssl and cipher_ssleay
-    'ciphers'       => [],      # contains all cipher keys to be tested
-                                # contains cipher names for ciphermode=openssl
     'cipherrange'   => 'intern',# the range to be used from 'cipherranges'
     'cipherranges'  => {        # constants for ciphers (NOTE: written as hex)
                     # Technical (perl) note for definition of these ranges:
@@ -2083,6 +2086,7 @@ our %cfg = (    # main data structure for configuration
                     # memory footprint,  but requires use of  eval()  when the
                     # range is needed:  eval($cfg{cipherranges}->{rfc})
                     # Each string must be syntax for perl's range definition.
+        'openssl'   => 'openssl',   # dummy; see cipherpatterns{openssl} above
         'rfc'       =>          # constants for ciphers defined in various RFC
                     # following include reserved and some unassigned constants
                     # (lazy definition, but should contain all valid ciphers)
@@ -3560,7 +3564,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.58"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.59"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3606,7 +3610,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.58 2024/08/31
+3.59 2024/09/02
 
 =head1 AUTHOR
 
