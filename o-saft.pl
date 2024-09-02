@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.149 24/09/02 16:14:27"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.150 24/09/03 00:18:58"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -418,7 +418,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.149"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.150"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1508,7 +1508,7 @@ sub _check_functions    {
 
     trace(" check if Net::SSLeay support TLSv13 ...");
     if ($version_ssleay  < 1.92) {
-        if (_is_cfg_ciphermode('ssleay')) {
+        if (_is_cfg_ciphermode('socket')) {
             warn $STR{WARN}, "137: Net::SSLeay $version_ssleay < 1.92; does not support TLSv13;";
                 # SSLv2 will be disabled in _check_ssl_methods()
         }
@@ -1588,7 +1588,7 @@ sub _check_ssl_methods  {
     trace("_check_ssl_methods() {");
     my $typ;
     my @list;
-    if (_is_cfg_ciphermode('openssl|ssleay')) {
+    if (_is_cfg_ciphermode('openssl|socket')) {
         @list = SSLinfo::ssleay_methods();
         # method names do not literally match our version string, hence the
         # cumbersome code below
@@ -1629,7 +1629,7 @@ sub _check_ssl_methods  {
         # methods.  Sometimes, for whatever reason,  the user may know that the
         # warning can be avoided.  Therfore the  --ssl-lazy option can be used,
         # which simply disables the check.
-        if (_is_cfg_use('ssl_lazy') or _is_cfg_ciphermode('openssl|ssleay')) {
+        if (_is_cfg_use('ssl_lazy') or _is_cfg_ciphermode('openssl|socket')) {
             push(@{$cfg{'version'}}, $ssl);
             $cfg{$ssl} = 1;
             next;
@@ -1689,7 +1689,7 @@ sub _enable_sclient {
         if ($opt =~ m/^-(?:no.?)?(?:dtls|tls|ssl)/) {
             # protocol options are important when checking for ciphers only
             # don't bother with warning if ciphers are not checked with openssl
-            if (_is_cfg_ciphermode('openssl|ssleay')) {
+            if (_is_cfg_ciphermode('openssl|socket')) {
                 _warn("145: openssl $cmd{'version'}: 's_client' does not support '$opt'; $txt") if ($txt ne "");
             }
         }
@@ -1797,7 +1797,7 @@ sub _check_openssl  {
         $cfg{'openssl_msg'} = '-msg' if (1 == $cfg{'openssl'}->{'-msg'}[0]);
     }
     if ($cmd{'version'} gt "2.0") {
-        if (_is_cfg_ciphermode('openssl|ssleay')) {
+        if (_is_cfg_ciphermode('openssl|socket')) {
             if (_is_cfg_out('hint_cipher')) {
                 _hint("142: $cfg{'hints'}->{'openssl3'}");
                 _hint("142: $cfg{'hints'}->{'openssl3c'}");
@@ -3149,7 +3149,7 @@ sub ciphers_scan_openssl {
                 # in above warning, even then if  SSLv3 is not needed for the
                 # requested check;  to avoid these noicy warnings, it is only
                 # printend for  +cipher  command or with --v option
-                # NOTE: applies to --ciphermode=openssl|ssleay only
+                # NOTE: applies to --ciphermode=openssl|socket only
             }
             $cfg{'use'}->{'sni'} = 0; # do not use SNI for this $ssl
         }
@@ -3820,7 +3820,7 @@ sub checkciphers    {
         checkciphers_pfs($cnt_all, $cnt_pfs, $results->{'_admin'}{'session_protocol'});
     } else {
         _hint("no session protocol detected, PFS ciphers may be wrong; consider using '--ciphermode=intern'"); # if (_is_cfg_out('hint_ciphers'));
-        # for ciphermode=openssl|ssleay only; reason not yet identified (12/2023)
+        # for ciphermode=openssl|socket only; reason not yet identified (12/2023)
     }
     trace("checkciphers() }");
     return;
@@ -5875,7 +5875,7 @@ sub printciphersummary  {
             # NOTE: reported ciphers here may be others than detected accepted
             #       ciphers, for example when --cipher=0x0300002F was used
     }
-    if (_is_cfg_ciphermode('openssl|ssleay')) {
+    if (_is_cfg_ciphermode('openssl|socket')) {
         print_line($legacy, $host, $port, 'cipher_selected',
                    $data{'cipher_selected'}->{txt}, $prot{'cipher_selected'});
     }
@@ -5986,7 +5986,7 @@ sub printciphers        {
                 SSLhello::printCipherStringArray('compact', $host, $port, $ssl, $SSLhello::usesni, sort(keys(%{$results->{$ssl}})));
             }
         }
-        if (_is_cfg_ciphermode('openssl|ssleay')) {
+        if (_is_cfg_ciphermode('openssl|socket')) {
             printciphers_openssl($legacy, $ssl, $host, $port, $_printtitle, $results);
         }
         END_SSL:
@@ -6177,7 +6177,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.149");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.150");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6269,7 +6269,7 @@ sub printversion        {
         print "    list of supported NPN  for +cipher " . join(" ", @{$cfg{'cipher_npns'}});
     }
 
-    print "= $me +cipher --ciphermode=openssl or --ciphermode=ssleay =";
+    print "= $me +cipher --ciphermode=openssl or --ciphermode=socket =";
     my @ciphers= SSLinfo::cipher_openssl(); # openssl ciphers ALL:aNULL:eNULL:LOW:EXP
     my $cnt    = 0;
        $cnt    = @ciphers if (not grep{/<<openssl>>/} @ciphers);# if executable found
@@ -7529,7 +7529,7 @@ if (0 < $cmd{'extciphers'}) {
 
 if (_is_cfg_do('cipher_default')) {
     # rare combination of options, check and exit should be done after handling HELP
-    if (not _is_cfg_ciphermode('openssl|ssleay')) {
+    if (not _is_cfg_ciphermode('openssl|socket')) {
         _warn("065: '+cipher-default' is useful with '--ciphermode=openssl' only; command ignored");
         exit 0;
     }
@@ -7644,7 +7644,7 @@ if (0 < $info) {        # +info does not do anything with ciphers
 if ((0 < _need_cipher()) or (0 < _need_default())) {
     foreach my $mode (@{$cfg{'ciphermodes'}}) {
         if ($mode eq $cfg{'ciphermode'}) {
-            # add: cipher_intern, cipher_openssl, cipher_ssleay, cipher_dump
+            # add: cipher_intern, cipher_openssl, cipher_socket, cipher_dump
             my $do = 'cipher_' . $mode;
             push(@{$cfg{'do'}}, $do) if (not _is_cfg_do($do)); # only if not yet set
             # TODO: funktioniert nicht sauber; OWASP-Rating fehlt bei modernen ECDHE-ECDSA-*
@@ -7673,7 +7673,7 @@ _load_modules();
 _trace_info("  LOAD9   - load modules end");
 _trace_info("  CHECK0  - check configuration start");
 
-my $do_checks = _is_cfg_do('cipher_openssl') + _is_cfg_do('cipher_ssleay');
+my $do_checks = _is_cfg_do('cipher_openssl') + _is_cfg_do('cipher_socket');
 
 _vprint("  check internals");
 #| check for required module versions
@@ -7878,7 +7878,7 @@ _vprint("check target arguments");
   # could do these checks earlier (after setting defaults), but we want
   # to keep all checks together for better maintenance
 printusage_exit("no target hosts given") if ($#{$cfg{'targets'}} <= 0); # does not make any sense
-if (_is_cfg_do('cipher_openssl') or _is_cfg_do('cipher_ssleay')) {
+if (_is_cfg_do('cipher_openssl') or _is_cfg_do('cipher_socket')) {
     if ($#{$cfg{'done'}->{'arg_cmds'}} > 0) {
         printusage_exit("additional commands in conjunction with '+cipher' are not supported; '+" . join(" +", @{$cfg{'done'}->{'arg_cmds'}}) ."'");
     }
@@ -8081,7 +8081,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             SSLhello::printParameters() if ($cfg{'trace'} > 1);
             $cipher_results = ciphers_scan_intern($host, $port);
         }
-        if (_is_cfg_ciphermode('openssl|ssleay')) {
+        if (_is_cfg_ciphermode('openssl|socket')) {
             trace(" use socket ...")  if (0 == $cmd{'extciphers'});
             trace(" use openssl ...") if (1 == $cmd{'extciphers'});
             # FIXME: on tiny systems following may cause "Out of memory!"
@@ -9588,7 +9588,7 @@ also obsolete.
 More information, which is also important for users,  can be found in user
 documentation  doc/help.txt  section "Version 19.11.19 and later".
 
-Internally, the commands  cipher_intern, cipher_openssl, cipher_ssleay and
+Internally, the commands  cipher_intern, cipher_openssl, cipher_socket and
 cipher_dump are used; the command cipher still remains in `$cfg{do}'.
 
 SEE L<Note:Cipher and Protocol>.
