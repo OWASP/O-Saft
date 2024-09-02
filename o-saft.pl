@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.147 24/09/02 01:08:45"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.148 24/09/02 14:15:10"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -418,7 +418,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.147"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.148"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6177,7 +6177,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.147");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.148");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6619,6 +6619,26 @@ while ($#argv >= 0) {
             }
             push(@{$cfg{'cipher'}}, $arg) if ($arg !~ m/^\s*$/);
         }
+        if ($typ eq 'CIPHER_RANGE') {
+            if (1 == (grep{/^$arg$/i} keys %{$cfg{'cipherranges'}})) {
+                $cfg{'cipherrange'} = $arg; # case-sensitive
+                if ($arg eq 'openssl') {
+                    # allow --cipherrange=openssl as alias for cipher=openssl
+                    push(@{$cfg{'cipher'}}, $cfg{'cipherpatterns'}->{$arg}[1]);
+                    # TODO: see below near CIPHER0 also
+                }
+            } else {
+                _warn("056: option with unknown cipher range '$arg'; setting ignored") if ($arg !~ /^\s*$/);
+            }
+        }
+        if ($typ eq 'CIPHER_MODE')  {
+            $arg = lc($arg);
+            if (1 == (grep{/^$arg$/i} @{$cfg{'ciphermodes'}})) {
+                $cfg{'ciphermode'} = $arg;
+            } else {
+                _warn("057: option with unknown cipher mode '$arg'; setting ignored") if ($arg !~ /^\s*$/);
+            }
+        }
         if ($typ eq 'STD_FORMAT') {
             $arg = lc($arg);
             if ($arg =~ /$cfg{'regex'}->{'std_format'}/) {
@@ -6683,21 +6703,6 @@ while ($#argv >= 0) {
                 $cfg{'format'} = $arg;
             } else {
                 _warn("055: option with unknown format '$arg'; setting ignored") if ($arg !~ /^\s*$/);
-            }
-        }
-        if ($typ eq 'CIPHER_RANGE') {
-            if (1 == (grep{/^$arg$/i} keys %{$cfg{'cipherranges'}})) {
-                $cfg{'cipherrange'} = $arg; # case-sensitive
-            } else {
-                _warn("056: option with unknown cipher range '$arg'; setting ignored") if ($arg !~ /^\s*$/);
-            }
-        }
-        if ($typ eq 'CIPHER_MODE')  {
-            $arg = lc($arg);
-            if (1 == (grep{/^$arg$/i} @{$cfg{'ciphermodes'}})) {
-                $cfg{'ciphermode'} = $arg;
-            } else {
-                _warn("057: option with unknown cipher mode '$arg'; setting ignored") if ($arg !~ /^\s*$/);
             }
         }
 
@@ -8061,6 +8066,14 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     if (_need_cipher()) {
         _warn("209: No SSL versions for '+cipher' available") if ($#{$cfg{'version'}} < 0);
             # above warning is most likely a programming error herein
+        if ('openssl' eq $cfg{'cipherrange'}) {
+            # get ciphers from openssl for any --ciphermode=
+            # TODO: see CIPHER_RANGE also
+            require SSLinfo;    # FIXME: dirty hack until we have lib/SSLtool.pm
+            $SSLinfo::openssl = $cmd{'openssl'};
+            @{$cfg{'cipher'}} = map({Ciphers::get_key($_)||"";} SSLinfo::cipher_openssl("@{$cfg{'cipher'}}"));
+            trace(" openssl ciphers: " . scalar @{$cfg{'cipher'}});
+        }
         $cipher_results = {};           # new list for every host (array of arrays)
         _vprint("  test protocols @{$cfg{'version'}} ...");
         if (_is_cfg_ciphermode('intern|dump')) {
