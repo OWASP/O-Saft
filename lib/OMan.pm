@@ -35,7 +35,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_oman   = "@(#) OMan.pm 3.62 24/08/18 15:01:48";
+my  $SID_oman   = "@(#) OMan.pm 3.63 24/09/04 00:07:14";
 our $VERSION    = "24.06.24";
 
 use Exporter qw(import);
@@ -705,8 +705,6 @@ EoWARN
 #_________________________________________________________ internal methods __|
 
 # SEE Perl:Undefined subroutine
-*_warn = sub { print($STR{WARN}, join(" ", @_), "\n"); } if not defined &_warn;
-*_hint = sub { print($STR{HINT}, join(" ", @_), "\n"); } if not defined &_hint;
 *_dbx  = sub { print($STR{DBX},  join(" ", @_), "\n"); } if not defined &_dbx;
 
 sub _get_filename   {
@@ -806,7 +804,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.62'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.63'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -1744,8 +1742,8 @@ sub man_docs_write  {
     # NOTE: $cfg{'files'} should be same as $cfg(docs-help-all) in o-saft.tcl
     _man_dbx("man_docs_write() ...");
     if ($ich =~ m/^OMan/) {     # ugly, match should be against __PACKAGE__
-        _warn("094:", "'$parent' used as program name in generated files");
-        _hint("documentation files should be generated using '$cfg{files}{SELF} --help=gen-docs'");
+        OCfg::warn("094:", "'$parent' used as program name in generated files");
+        OCfg::hint("documentation files should be generated using '$cfg{files}{SELF} --help=gen-docs'");
     }
     my $fh  = undef;
     foreach my $mode (sort keys %{$cfg{'files'}}) {
@@ -1754,7 +1752,7 @@ sub man_docs_write  {
         my $doc = "$cfg{'files'}{$mode}";
         _man_dbx("man_docs_write: writing $doc ; mode=$mode");
         open($fh, '>:encoding(UTF-8)', $doc) or do {
-            _warn("093:", "help file '$doc' cannot be opened: $! ; ignored");
+            OCfg::warn("093:", "help file '$doc' cannot be opened: $! ; ignored");
             next;
         };
         #           $mode contains for example --help=alias$/);
@@ -1857,8 +1855,8 @@ sub man_warnings    {
         # TODO: need some kind of configuration for the filename
     _man_dbx("man_warnings: reading $doc");
     if (not open($fh, '<:encoding(UTF-8)', $doc)) {
-        _warn("091:", "help file '$doc' cannot be opened: $! ; ignored");
-        _hint($cfg{'hints'}->{'help=warnings'});
+        OCfg::warn("091:", "help file '$doc' cannot be opened: $! ; ignored");
+        OCfg::hint($cfg{'hints'}->{'help=warnings'});
         return $pod;
     } # else
     $txt  = <$fh>;
@@ -2760,7 +2758,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.62 2024/08/18
+3.63 2024/09/04
 
 
 =head1 AUTHOR
