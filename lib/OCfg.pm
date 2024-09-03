@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.62 24/09/03 17:08:04";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.64 24/09/04 00:11:26";
 our $VERSION    =  "24.06.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -3019,7 +3019,6 @@ our %dbx = (    # save hardcoded settings (command lists, texts), and debugging 
 #_________________________________________________________ internal methods __|
 
 # SEE Perl:Undefined subroutine
-*_warn    = sub { print(join(" ", "**WARNING:", @_), "\n"); return; } if not defined &_warn;
 *_dbx     = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
 *_trace   = sub {
      local $\ = undef;
@@ -3057,7 +3056,7 @@ sub hint   {
     my @txt = @_; 
     my $_no =  "@txt";
        $_no =~ s/^\s*([0-9(]{3}):?.*/$1/smx;   # message number, usually
-    return if _is_argv('(?:--no.?hint)');
+    return if grep({/(?:--no.?hint)/i} @ARGV);
     return if not $cfg{'out'}->{'hint'};
     if (0 < (grep{/^$_no$/} @{$cfg{out}->{'warnings_no_dups'}})) {
         # SEE  Note:warning-no-duplicates
@@ -3073,8 +3072,8 @@ sub warn   {
     my @txt = @_;
     my $_no =  "@txt";
        $_no =~ s/^\s*([0-9(]{3}):?.*/$1/smx;   # message number, usually
-    return if _is_argv('(?:--no.?warn(?:ings?)$)'); # ugly hack 'cause we won't always pass $cfg{use}{warning}
-    return if _is_argv('(?:--(?:quiet|silent?)$)'); #
+    return if grep({/(?:--no.?warn(?:ings?)$)/i} @ARGV); # ugly hack 'cause we won't always pass $cfg{use}{warning}
+    return if grep({/(?:--(?:quiet|silent?)$)/i} @ARGV); #
     return if not $cfg{'out'}->{'warning'};
     # other configuration values can be retrieved from %cfg
     if (0 < (grep{/^$_no$/} @{$cfg{out}->{'warnings_no_dups'}})) {
@@ -3084,7 +3083,7 @@ sub warn   {
     }
     printf($STR{WARN} ."%s\n", join(" ", @txt));
     # TODO: in CGI mode warning must be avoided until HTTP header written
-    _trace_exit("WARN - exit on first warning");
+    #_trace_exit("WARN - exit on first warning");
     return;
 } # warn
 
@@ -3616,7 +3615,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.62"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.64"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3662,7 +3661,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.62 2024/09/03
+3.64 2024/09/04
 
 =head1 AUTHOR
 
