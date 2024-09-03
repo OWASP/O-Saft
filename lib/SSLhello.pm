@@ -56,7 +56,7 @@ use utf8;
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
 #  because we use /x as needed for human readability
 
-my  $SID_sslhello = "@(#) SSLhello.pm 3.31 24/08/19 01:48:12";
+my  $SID_sslhello = "@(#) SSLhello.pm 3.32 24/09/04 00:17:20";
 our $VERSION    = "24.06.24";
 my  $SSLHELLO   = "SSLhello";
 
@@ -448,24 +448,6 @@ sub _sprintf_hex_val        ($$;$);
 # often change.
 # Finally, carp() is used for serious or rare runtime problems, and  warn()
 # (with a unique message number) is used for common runtime problems.
-
-sub _warn   {
-    #? print warning message if wanted
-    # don't print if --no-warning given
-    my @txt = @_;
-    return if ((grep{/(:?--no.?warn)/ix} @main::ARGV) > 0);
-    printf("%s%s\n", $STR{WARN}, join(" ", @txt));
-    return;
-}
-
-sub _hint   {
-    #? print hint message if wanted
-    # don't print if --no-hint given
-    my @txt = @_;
-    return if ((grep{/(:?--no.?hint)/ix} @main::ARGV) > 0);
-    printf("%s%s\n", $STR{HINT}, join(" ", @txt));
-    return;
-}
 
 sub _trace_array2str {
     #? return array in human readable internal repesentation ('0x0300xxxx' or '0x02yyyyyy')
@@ -2005,13 +1987,13 @@ sub checkSSLciphers ($$$@) {
                 } elsif ( ($my_error =~ /answer ignored/) || ($my_error =~ /protocol_version.*?not supported/) || ($my_error =~ /check.*?aborted/x) ) { # Just stop, no warning
                     _trace1 (" checkSSLciphers (3.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'\n");
                     carp("$STR{WARN} checkSSLciphers (3.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -     > Exit loop. Reason: '$my_error'");
-                    _hint("The server may have an IPS in place. To slow down the test, consider adding the option '--connect-delay=SEC'.");
+                    OCfg::hint("The server may have an IPS in place. To slow down the test, consider adding the option '--connect-delay=SEC'.");
                     $my_error = ""; # reset error message
                     last;
                 } else { #any other Error like: #} elsif ( ( $my_error =~ /\-> Received NO Data/) || ($my_error =~ /answer ignored/) || ($my_error =~ /protocol_version.*?not supported/) || ($my_error =~ /check.*?aborted/) ) {
                     _trace1 (" checkSSLciphers (3.3): => Received no cipher while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: ''\n");
                     carp("$STR{WARN} checkSSLciphers (3.3): => Received no cipher while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'");
-                    _hint("The server may have an IPS in place. To slow down the test, consider adding the option '--connect-delay=SEC'.");
+                    OCfg::hint("The server may have an IPS in place. To slow down the test, consider adding the option '--connect-delay=SEC'.");
                     $my_error = ""; # reset error message
                     last;
                 }
@@ -2073,13 +2055,13 @@ sub checkSSLciphers ($$$@) {
                 } elsif ($my_error) { #any other Error like: #} elsif ( ( $my_error =~ /\-> Received NO Data/) || ($my_error =~ /answer ignored/) || ($my_error =~ /protocol_version.*?not supported/) || ($my_error =~ /check.*?aborted/) ) {
                     _trace1 (" checkSSLciphers (6.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: ''\n");
                     carp("$STR{WARN} checkSSLciphers (6.2): => Unexpected Lack of Data or unexpected Answer while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'");
-                    _hint("The server may have an IPS in place. To slow down the test, consider adding the option '--connect-delay=SEC'.");
+                    OCfg::hint("The server may have an IPS in place. To slow down the test, consider adding the option '--connect-delay=SEC'.");
                     $my_error = ""; # reset error message
                     last;
                 } else { #any other Error like: #} elsif ( ( $my_error =~ /\-> Received NO Data/) || ($my_error =~ /answer ignored/) || ($my_error =~ /protocol_version.*?not supported/) || ($my_error =~ /check.*?aborted/) ) {
                     _trace1 (" checkSSLciphers (6.3): => Received no cipher while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: ''\n");
                     carp("$STR{WARN} checkSSLciphers (6.3): => Received no cipher while checking the priority of the ciphers \'$str\' -> Exit loop. Reason: '$my_error'");
-                    _hint("The server may have an IPS in place. To slow down the test, consider adding the option '--connect-delay=SEC'.");
+                    OCfg::hint("The server may have an IPS in place. To slow down the test, consider adding the option '--connect-delay=SEC'.");
                     $my_error = ""; # reset error message
                     last;
                 }
@@ -5668,7 +5650,7 @@ sub parseHandshakeRecord ($$$$$$$;$) {
                                 $my_error = sprintf ("parseHandshakeRecord: Server '$host:$port' ($client_ssl): received SSL/TLS warning: Description: $description ($serverHello{'description'}), but NO SNI extension has been sent. -> check of server aborted!");
                                 _trace4 ($my_error);
                                 carp("$STR{WARN} $my_error\n");
-                                _hint ("Server seens to to be a virtual server, consider adding the option '--sni' (Server Name Indication) for TLSv1 and higher");
+                                OCfg::hint ("Server seens to to be a virtual server, consider adding the option '--sni' (Server Name Indication) for TLSv1 and higher");
                             }
                             return ("", $lastMsgType, 0 , "", "");
                         } elsif ($serverHello{'description'} == 0) { # closure alert: close_notify is suppressed
@@ -5690,8 +5672,8 @@ sub parseHandshakeRecord ($$$$$$$;$) {
                             } );
                             if ((grep{/(:?--v)$/ix} @main::ARGV) > 0) { # warning with --v only
                                 # TODO: warning here disabled, as it is considered a server problem; needs to be tested again
-                                _warn("430: SSL version '$client_ssl' not supported by '$host:$port'; no ciphers detected, ignored\n");
-                                _hint("consider using '--ciphermode=openssl' also\n");
+                                OCfg::warn("430: SSL version '$client_ssl' not supported by '$host:$port'; no ciphers detected, ignored\n");
+                                OCfg::hint("consider using '--ciphermode=openssl' also\n");
                             };
                         } elsif ($serverHello{'description'} == 112) { #SNI-Warning: unrecognized_name
                             if ( ($SSLhello::usesni) && !( ( ($client_protocol == $PROTOCOL_VERSION{'SSLv3'}) && (!$SSLhello::force_TLS_extensions) ) || ($client_protocol == $PROTOCOL_VERSION{'SSLv2'}) ) ) {           # SNI sent
@@ -5708,14 +5690,14 @@ sub parseHandshakeRecord ($$$$$$$;$) {
                                 $my_error = sprintf ("parseHandshakeRecord: Server '$host:$port' ($client_ssl): received fatal SSL/TLS error (2b): Description: $description ($serverHello{'description'}), but NO SNI extension has been sent. -> check of server aborted!");
                                 _trace4 ($my_error);
                                 carp("$STR{WARN} $my_error\n");
-                                _hint ("Server seens to to be a virtual server, consider adding the option '--sni' (Server Name Indication)for TLSv1 and higher");
+                                OCfg::hint ("Server seens to to be a virtual server, consider adding the option '--sni' (Server Name Indication)for TLSv1 and higher");
                             }
                             return ("", $lastMsgType, 0 , "", "");
                         } else {
                             _trace4 ($my_error);
                             carp("$STR{WARN} parseHandshakeRecord: Server '$host:$port' ($client_ssl): received fatal SSL/TLS error (2c): Description: $description ($serverHello{'description'})\n");
                             if ($serverHello{'description'} == 50) { # decode_error (50)
-                                _hint("The server may not support the extension for elliptic curves (ECC) nor discard it silently, consider adding the option '--ssl-nouseecc'.");
+                                OCfg::hint("The server may not support the extension for elliptic curves (ECC) nor discard it silently, consider adding the option '--ssl-nouseecc'.");
                             }
                         }
                     } else { # unknown
