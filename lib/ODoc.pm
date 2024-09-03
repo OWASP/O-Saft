@@ -17,7 +17,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.34 24/08/14 23:20:05";
+my  $SID_odoc   = "@(#) ODoc.pm 3.35 24/09/04 00:13:13";
 our $VERSION    = "24.06.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -276,7 +276,6 @@ start with these prefixes, all following commands and options are ignored.
 #_________________________________________________________ internal methods __|
 
 # SEE Perl:Undefined subroutine
-*_warn    = sub { print(join(" ", "**WARNING:", @_), "\n"); return; } if not defined &_warn;
 *_dbx     = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
 
 sub _replace_var    {
@@ -305,7 +304,7 @@ sub _get_standalone {
                      ) {
         return $f if -e $f;
     }
-    _warn("189: no '$file' found, consider installing");
+    OCfg::warn("189: no '$file' found, consider installing");
     return "";
 } # _get_standalone
 if (1==42) { my $dumm = _get_standalone("never called, but keeps Perl::Critic happy"); }
@@ -345,11 +344,11 @@ sub _get_filehandle {
         ## no critic qw(InputOutput::RequireBriefOpen)
         #  file hadnle needs to be closd by caller
         if (not open($fh, '<:encoding(UTF-8)', $file)) {
-            _warn("190: open('$file'): $!");
+            OCfg::warn("190: open('$file'): $!");
         }
     } else { # FIXME: needs to be tested
         $fh = __PACKAGE__ . "::DATA";   # same as:  *ODoc::DATA
-        _warn("191: no '$file' found, using '$fh'") if not -e $file;
+        OCfg::warn("191: no '$file' found, using '$fh'") if not -e $file;
     }
     #dbx# print "#_get_filehandle: file=$file , FH=*$fh";
     return $fh;
@@ -508,7 +507,7 @@ sub get_section {
     $txt =~ s/[IX]&([^&]*)&/$1/g;       # internal links without markup
     if (0 < (grep{/^--v/} @ARGV)) {     # do not use $^O but our own option
         # some systems are tooo stupid to print strings > 32k, i.e. cmd.exe
-        _warn("192: using workaround to print large strings.\n\n");
+        OCfg::warn("192: using workaround to print large strings.\n\n");
         $hlp .= $_ foreach split(//, $txt);  # print character by character :-((
     } else {
         $hlp .= $txt;
@@ -542,7 +541,7 @@ sub get_section_from_pod {
     $txt =~ s/L&([^&]*)&/"$1"/g;        # external links, must be last one
     if (0 < (grep{/^--v/} @ARGV)) {     # do not use $^O but our own option
         # some systems are tooo stupid to print strings > 32k, i.e. cmd.exe
-        _warn("192: using workaround to print large strings.\n\n");
+        OCfg::warn("192: using workaround to print large strings.\n\n");
         $hlp .= $_ foreach split(//, $txt);  # print character by character :-((
     } else {
         $hlp .= $txt;
@@ -630,7 +629,7 @@ lib/OText.pm
 
 =head1 VERSION
 
-3.34 2024/08/14
+3.35 2024/09/04
 
 
 =head1 AUTHOR
