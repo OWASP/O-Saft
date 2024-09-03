@@ -41,7 +41,7 @@ use Data::Dumper qw(Dumper);
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_trace      = "@(#) OTrace.pm 3.40 24/08/29 15:07:20";
+my  $SID_trace      = "@(#) OTrace.pm 3.41 24/09/03 12:22:13";
 our $VERSION        = "24.06.24";
 
 our $prefix_trace   = "#". __PACKAGE__ . ":";
@@ -744,7 +744,6 @@ sub ciphers_show {
             $_cnt = scalar @range;
         }
         $_cnt = sprintf("%5s", $_cnt);  # format count
-        _p_k_v("cmd{extciphers}", $::cmd{'extciphers'} . " (1=use cipher from openssl)");
         foreach my $key (qw(starttls ciphermode cipherpattern cipherrange)) {
             _p_k_v($key,    $cfg{$key});
         }
@@ -857,7 +856,6 @@ sub init_show   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _pline("%cmd {");
     foreach my $key (sort(keys %::cmd)) { _ptype(\%::cmd, $key); }
     _p_k_v("# extopenssl", "1 # use openssl to check ciphers");
-    _p_k_v("# extciphers", "1 # use cipher from openssl");
     _pline("%cmd }");
 
     if (1 < $cfg{'trace'}) {    # full information
@@ -1230,7 +1228,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.40 2024/08/29
+3.41 2024/09/03
 
 =head1 AUTHOR
 
