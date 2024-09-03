@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.61 24/09/03 00:18:10";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.62 24/09/03 17:08:04";
 our $VERSION    =  "24.06.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -3038,6 +3038,58 @@ our %dbx = (    # save hardcoded settings (command lists, texts), and debugging 
 
 =head1 METHODS
 
+=head3 hint($text)
+
+Print hint message according configured settings.
+
+=head3 warn($text)
+
+Print warning message according configured settings.
+
+=cut
+
+# wrappers should be in OText.pm, but they use settings from %cfg, hence here
+
+sub hint   { 
+    #? print hint message if wanted; SEE Note:Message Numbers
+    # don't print if --no-hint given; checks for $cfg{'out'}->{'hint_*'} must be done in caller
+    # check must be done on ARGV, because $cfg{'out'}->{'hint_info'} may not yet set
+    my @txt = @_; 
+    my $_no =  "@txt";
+       $_no =~ s/^\s*([0-9(]{3}):?.*/$1/smx;   # message number, usually
+    return if _is_argv('(?:--no.?hint)');
+    return if not $cfg{'out'}->{'hint'};
+    if (0 < (grep{/^$_no$/} @{$cfg{out}->{'warnings_no_dups'}})) {
+        # SEE  Note:warning-no-duplicates
+        return if (0 < (grep{/^$_no$/} @{$cfg{out}->{'warnings_printed'}}));
+    }
+    printf($STR{HINT} . "%s\n", join(" ", @txt));
+    return;
+} # hint
+
+sub warn   {
+    #? print warning if wanted; SEE Note:Message Numbers
+    # don't print if (not _is_cfg_out('warning'));
+    my @txt = @_;
+    my $_no =  "@txt";
+       $_no =~ s/^\s*([0-9(]{3}):?.*/$1/smx;   # message number, usually
+    return if _is_argv('(?:--no.?warn(?:ings?)$)'); # ugly hack 'cause we won't always pass $cfg{use}{warning}
+    return if _is_argv('(?:--(?:quiet|silent?)$)'); #
+    return if not $cfg{'out'}->{'warning'};
+    # other configuration values can be retrieved from %cfg
+    if (0 < (grep{/^$_no$/} @{$cfg{out}->{'warnings_no_dups'}})) {
+        # SEE  Note:warning-no-duplicates
+        return if (0 < (grep{/^$_no$/} @{$cfg{out}->{'warnings_printed'}}));
+        push(@{$cfg{out}->{'warnings_printed'}}, $_no);
+    }
+    printf($STR{WARN} ."%s\n", join(" ", @txt));
+    # TODO: in CGI mode warning must be avoided until HTTP header written
+    _trace_exit("WARN - exit on first warning");
+    return;
+} # warn
+
+=pod
+
 =head3 tls_text2key($text)
 
 Convert text to internal key: 0x00,0x26 -> 0x03000026
@@ -3564,7 +3616,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.61"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.62"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3610,7 +3662,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.61 2024/09/03
+3.62 2024/09/03
 
 =head1 AUTHOR
 
