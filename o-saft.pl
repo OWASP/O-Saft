@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.150 24/09/03 00:18:58"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.151 24/09/03 14:26:32"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -409,7 +409,6 @@ our %cmd = (
     'path'          => [],      # where to find openssl executable
     'extopenssl'    => 1,       # 1: use external openssl; default yes, except on Win32
     'extsclient'    => 1,       # 1: use openssl s_client; default yes, except on Win32
-    'extciphers'    => 0,       # 1: use openssl s_client -cipher for connection check
     'envlibvar'     => "LD_LIBRARY_PATH",       # name of environment variable
     'envlibvar3'    => "LD_LIBRARY_PATH",       # for OpenSSL which supports TLSv1.3
     'call'          => [],      # list of special (internal) function calls
@@ -418,7 +417,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.150"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.151"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1381,7 +1380,7 @@ sub _enable_functions   {
     }
 
     if ($cfg{'ssleay'}->{'can_sni'} == 0) {
-        if((_is_cfg_use('sni')) and ($cmd{'extciphers'} == 0)) {
+        if((_is_cfg_use('sni')) and (not _is_cfg_ciphermode('openssl'))) {
             $cfg{'use'}->{'sni'} = 0;
             if ($version_iosocket < 1.90) {
                 warn $STR{WARN}, "124: $txi < 1.90; $txt_buggysni";
@@ -1389,14 +1388,13 @@ sub _enable_functions   {
             if ($version_openssl  < 0x01000000) {
                 warn $STR{WARN}, "125: $txo < 1.0.0; $txt_buggysni";
             }
-            _hint("use '--force-openssl' to disable this check") if (_is_cfg_out('hint_check'));
+            _hint("use '--ciphermode=openssl' to disable this check") if (_is_cfg_out('hint_check'));
         }
     }
     trace(" cfg{use}->{sni}= $cfg{'use'}->{'sni'}");
 
     if (($cfg{'ssleay'}->{'set_alpn'} == 0) or ($cfg{'ssleay'}->{'get_alpn'} == 0)) {
         # warnings only if ALPN functionality required
-        # TODO: is this check necessary if ($cmd{'extciphers'} > 0)?
         if (_is_cfg_use('alpn')) {
             $cfg{'use'}->{'alpn'} = 0;
             warn $STR{WARN}, "126: $txt; tests with/for ALPN disabled";
@@ -1682,8 +1680,8 @@ sub _enable_sclient {
     if ($val == 0) {
         if ($opt =~ m/^-(?:alpn|npn|curves)$/) {
             # no warning for external openssl, as -alpn or -npn is only used with +cipher
-            if ($cmd{'extciphers'} > 0) {
-            _warn("144: openssl $cmd{'version'}: 's_client' does not support '$opt'; $txt") if ($txt ne "");
+            if (_is_cfg_ciphermode('openssl')) {
+                _warn("144: openssl $cmd{'version'}: 's_client' does not support '$opt'; $txt") if ($txt ne "");
             }
         }
         if ($opt =~ m/^-(?:no.?)?(?:dtls|tls|ssl)/) {
@@ -1721,7 +1719,7 @@ sub _enable_sclient {
 
 sub _check_protocol {
     # check protocol cpapbilities of openssl; sets $cfg{$ssl}
-    # should be called for  $cmd{'extciphers'}==1  only
+    # should be called for  _is_cfg_ciphermode('openssl')  only
     my $opt = shift;    # somthing lime -tlsv1_3
     my $ssl;
     return if ($opt !~ m/^-(?:no.?)?(?:dtls|tls|ssl)/);
@@ -1752,7 +1750,6 @@ sub _reset_openssl  {
     $cmd{'openssl'}     = "";
     $cmd{'extopenssl'}  = 0;
     $cmd{'extsclient'}  = 0;
-    $cmd{'extciphers'}  = 0;
     # TODO: SSLinfo not yet included ...
     #foreach my $opt (SSLinfo::s_client_get_optionlist()) {
     #    $cfg{'openssl'}->{$opt}[0] = 0;
@@ -1790,7 +1787,7 @@ sub _check_openssl  {
         $cfg{'openssl'}->{$opt}[0] = $val;
         next if ($cfg{'openssl'}->{$opt}[1] eq "<<NOT YET USED>>");
         _enable_sclient($opt);  # may print propper _warn()
-        _check_protocol($opt) if (1 == $cmd{'extciphers'}); 
+        _check_protocol($opt) if (_is_cfg_ciphermode('openssl')); 
     }
     if ($cmd{'version'} lt "1.0.2") {   # got $cmd{version} in _init_openssl()
         _warn("142: ancient openssl $cmd{'version'}: using '-msg' option to get DH parameters");
@@ -2693,6 +2690,12 @@ sub _useopenssl     {
 
     my $version = $data;# returned version
        $version =~ s#^.*[\r\n]+ +Protocol\s*:\s*([^\r\n]*).*#$1#s;
+    if ($data eq $version) {
+       trace("_useopenssl: no line with Protocol: found, trying line with New,");
+       $version =~ s#^.*[\r\n]+New,\s*([^,]*).*#$1#s;
+           # workaround for openssl 3.x which needs "sleep 1" above; otherwise
+           # data returned misses some information
+    }
     my $cipher  = $data;
     if ($cipher =~ m#New, [A-Za-z0-9/.,-]+ Cipher is#) {
         $cipher =~ s#^.*[\r\n]+New,\s*##s;
@@ -2913,29 +2916,24 @@ sub _get_cipherslist    {
         $pattern =~ s/^://;     # remove leading :
     } # --cipher=
     if ($pattern) {
-        if (_is_cfg_ciphermode('intern|dump')) {
-            # find names, aliases and constants
-            foreach my $name (split(":", $pattern)) {
-                trace(" get list pattern  = $pattern");
-                push(@ciphers, Ciphers::find_names_any($name));
-            }
-        } else { # _is_cfg_ciphermode('openssl')
-            # 'intern' is the default cipher range (see o-saft-lib.pm), which
-            # may not be usefull for openssl; openssl needs to use it's own
-            # list, which is either de default pattern or the specified one
+        if (_is_cfg_ciphermode('openssl')) {
+            # 'intern' is the default cipher range which may not be useful for
+            # openssl; openssl needs to use it's own list, which is either the
+            # default pattern or the ciphers specified with --cipher=
             $pattern = $cfg{'cipherpattern'} if $pattern =~ m/^ *$/;
                 # use default if no --cipher=* was given or was invalid
-            if (1 == $cmd{'extciphers'}) {
-                trace(" get list openssl  = $pattern");
-                push(@ciphers, SSLinfo::cipher_openssl($pattern));
-            } else {
-                trace(" get list sslleay  = $pattern");
-                push(@ciphers, SSLinfo::cipher_list(   $pattern));
-            }
+            trace(" get list openssl  = $pattern");
+            push(@ciphers, SSLinfo::cipher_openssl($pattern));
             if (0 >= @ciphers) {
                 print "Errors: " . SSLinfo::errors();
                 die $STR{ERROR}, "015: no ciphers found; may happen with openssl pre 1.0.0 according given pattern\n";
                     # don't print line number; keep make targets *.log happy
+            }
+        } else { # _is_cfg_ciphermode('intern|socket|dump') {
+            # find names, aliases and constants
+            foreach my $name (split(":", $pattern)) {
+                trace(" get list pattern  = $pattern");
+                push(@ciphers, Ciphers::find_names_any($name));
             }
         }
     } # pattern
@@ -2998,14 +2996,15 @@ sub _get_cipher_default {
        @list = reverse Ciphers::sort_names(@{$cfg{'ciphers'}}) if ($mode eq 'weak');
     my $cipher_list = join(":", @list);
 
-    if (0 == $cmd{'extciphers'}) {
+    if (_is_cfg_ciphermode('socket')) {
         ($version, $cipher)     = _usesocket( $ssl, $host, $port, $cipher_list);
-    } else { # force openssl
+    }
+    if (_is_cfg_ciphermode('openssl')) {
         ($version, $cipher, $dh)= _useopenssl($ssl, $host, $port, $cipher_list);
            # NOTE: $ssl will be converted to corresponding option for openssl,
            #       for example: DTLSv1 becomes -dtlsv1
            # Unfortunately openssl (or SSLinfo) returns a cipher even if
-           # the protocoll is not supported. Reason (aka bug) yet unknown.
+           # the protocol is not supported. Reason (aka bug) yet unknown.
            # Hence the caller should ensure that openssl supports $ssl .
     }
 
@@ -3075,14 +3074,15 @@ sub ciphers_prot_openssl {
         printf("$STR{'INFO'}  cipher %4d/%d %s%s\r", $cnt, $total, $c, " "x $len) if (0 < _is_cfg_verbose());
             # cannot use _vprint() because it prints with \n; SEE =head2 Note:stty
         $len = length($c);
-        if (0 == $cmd{'extciphers'}) {
-            if (0 >= $cfg{'cipher_md5'}) {
-                # Net::SSLeay:SSL supports *MD5 for SSLv2 only
-                # detailled description see OPTION  --no-cipher-md5
-                #_hint("use '--no-cipher-md5' to disable checks with MD5 ciphers") if (_is_cfg_out('hint_check'));
-                _vprint("  check cipher (MD5): $ssl:$c\n") if (1 < $cfg{'verbose'});
-                next if (($ssl ne "SSLv2") && ($c =~ m/MD5/));
-            }
+        if (_is_cfg_ciphermode('socket')) {
+# TODO: necessary with IO::Socket ?
+#            if (0 >= $cfg{'cipher_md5'}) {
+#                # Net::SSLeay:SSL supports *MD5 for SSLv2 only
+#                # detailled description see OPTION  --no-cipher-md5
+#                #_hint("use '--no-cipher-md5' to disable checks with MD5 ciphers") if (_is_cfg_out('hint_check'));
+#                _vprint("  check cipher (MD5): $ssl:$c\n") if (1 < $cfg{'verbose'});
+#                next if (($ssl ne "SSLv2") && ($c =~ m/MD5/));
+#            }
             ($version, $supported)      = _usesocket( $ssl, $host, $port, $c);
         } else { # force openssl
             ($version, $supported, $dh) = _useopenssl($ssl, $host, $port, $c);
@@ -3136,10 +3136,9 @@ sub ciphers_scan_openssl {
     my $cnt = scalar(@{$cfg{'ciphers'}});
     my $results = {};       # hash of cipher list to be returned
     foreach my $ssl (@{$cfg{'version'}}) {
-        my $__openssl   = ($cmd{'extciphers'} == 0) ? 'socket' : 'openssl';
         my $usesni  = $cfg{'use'}->{'sni'};
-        _vprint("  test $cnt ciphers for $ssl ... ($__openssl) ");
-        trace( "  test $cnt ciphers for $ssl ... ($__openssl) ");
+        _vprint("  test $cnt ciphers for $ssl ... ($cfg{'ciphermode'}) ");
+        trace( "  test $cnt ciphers for $ssl ... ($cfg{'ciphermode'}) ");
         trace( "  using cipherpattern=[ @{$cfg{'cipher'}} ], cipherrange=$cfg{'cipherrange'}");
         if ($ssl =~ m/^SSLv[23]/) {
             # SSLv2 has no SNI; SSLv3 has originally no SNI
@@ -6177,7 +6176,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.150");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.151");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6854,6 +6853,12 @@ while ($#argv >= 0) {
 
     # Following checks use exact matches with 'eq' or RegEx matches with '=~'
 
+    # reject options no longer supported (since VERSION 24.09.24)
+    if ($arg =~ /^--(?:(?:no)?opensslciphers|cipheropenssl|forceopenssl)/) {
+        _warn("061: option no longer supported; '$arg' ignored");
+        next;
+    }
+
     trace_arg("option?  $arg");
     #{ OPTIONS
     #  NOTE: that strings miss - and _ characters (see normalisation above)
@@ -6922,8 +6927,6 @@ while ($#argv >= 0) {
     if ($arg eq  '--printavailable')    { $arg = '+ciphers';        } # alias: ssldiagnose.exe
     if ($arg eq  '--printcert')         { $arg = '+text';           } # alias: ssldiagnose.exe
     if ($arg eq  '--version')           { $arg = '+version';        } # alias: various programs
-    if ($arg eq  '--forceopenssl')      { $arg = '--opensslciphers';    } # alias: used before VERSION 19.11.19
-    if ($arg eq  '--cipheropenssl')     { $arg = '--opensslciphers';    } # alias: used before VERSION 19.11.19
     if ($arg eq  '--sclient')           { $arg = '--opensslsclient';    } # alias:
     if ($arg eq  '--nosclient')         { $arg = '--noopensslsclient';  } # alias:
     if ($arg eq  '--sslnouseecc')       { $arg = '--nossluseecc';       } # alias:
@@ -7002,8 +7005,6 @@ while ($#argv >= 0) {
     if ($arg eq  '--opensslfips')       { $typ = 'OPENSSL_FIPS';    }
     if ($arg eq  '--extopenssl')        { $cmd{'extopenssl'}= 1;    }
     if ($arg eq  '--noopenssl')         { $cmd{'extopenssl'}= 0;    }
-    if ($arg eq  '--opensslciphers')    { $cmd{'extciphers'}= 1;    }
-    if ($arg eq  '--noopensslciphers')  { $cmd{'extciphers'}= 0;    }
     if ($arg eq  '--opensslsclient')    { $cmd{'extsclient'}= 1;    }
     if ($arg eq  '--noopensslsclient')  { $cmd{'extsclient'}= 0;    }
     if ($arg eq  '--alpn')              { _set_cfg_use('alpn',   1);}
@@ -7519,14 +7520,6 @@ if (_is_cfg_out('http_body')) { # SEE Note:ignore-out, SEE Note:--https_body
     @{$cfg{'out'}->{'ignore'}} = grep{not /https_body/} @{$cfg{'out'}->{'ignore'}};
 }
 
-if (0 < $cmd{'extciphers'}) {
-    # force use of OpenSSL, may be ancient option was given ...
-    if (not _is_cfg_ciphermode('openssl')) {
-        $cfg{'ciphermode'} = 'openssl';
-        _warn("061: force setting '--ciphermode=openssl' to use ciphers from OpenSSL");
-    }
-}
-
 if (_is_cfg_do('cipher_default')) {
     # rare combination of options, check and exit should be done after handling HELP
     if (not _is_cfg_ciphermode('openssl|socket')) {
@@ -7633,7 +7626,6 @@ _init_openssl();    # TODO: if (0 < _need_openssl()); cfg{need-openssl}
 
 if (0 < $info) {        # +info does not do anything with ciphers
     # main purpose is to avoid missing "*PN" warnings in following _checks_*()
-    $cmd{'extciphers'}      = 0;
     $cfg{'use'}->{'alpn'}   = 0;
     $cfg{'use'}->{'npn'}    = 0;
 }
@@ -8082,8 +8074,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             $cipher_results = ciphers_scan_intern($host, $port);
         }
         if (_is_cfg_ciphermode('openssl|socket')) {
-            trace(" use socket ...")  if (0 == $cmd{'extciphers'});
-            trace(" use openssl ...") if (1 == $cmd{'extciphers'});
+            trace(" use $cfg{'ciphermode'} ...");
             # FIXME: on tiny systems following may cause "Out of memory!"
             $cipher_results = ciphers_scan_openssl($host, $port);   # uses @{$cfg{'ciphers'}}
             # TODO:  $prot{$ssl}->{'default'} = $cipher;
@@ -8133,10 +8124,10 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         _vprint("  protocol fallback support ...");
         # following similar to ciphers_prot_openssl();
         my ($version, $supported, $dh);
-        if (0 == $cmd{'extciphers'}) {
-            ($version, $supported)      = _usesocket( '', $host, $port, '');
-        } else { # force openssl
+        if (_is_cfg_ciphermode('openssl')) {
             ($version, $supported, $dh) = _useopenssl('', $host, $port, '');
+        } else {
+            ($version, $supported)      = _usesocket( '', $host, $port, '');
         }
         $prot{'fallback'}->{val} = $version;
         trace(" fallback: $version $supported");
