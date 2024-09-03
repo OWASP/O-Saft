@@ -18,7 +18,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odata  =  "@(#) OData.pm 3.28 24/08/18 14:48:56";
+my  $SID_odata  =  "@(#) OData.pm 3.29 24/09/04 00:19:39";
 our $VERSION    =  "24.06.24";
 
 use Exporter qw(import);
@@ -819,7 +819,6 @@ our %shorttexts = (
 #_________________________________________________________ internal methods __|
 
 # SEE Perl:Undefined subroutine
-*_warn    = sub { print(join(" ", "**WARNING:", @_), "\n"); return; } if not defined &_warn;
 *_dbx     = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
 
 sub __SSLinfo   { ## no critic qw(Subroutines::ProhibitExcessComplexity)
@@ -1238,7 +1237,7 @@ _init();
 
 =head1 VERSION
 
-3.28 2024/08/18
+3.29 2024/09/04
 
 
 =head1 AUTHOR
