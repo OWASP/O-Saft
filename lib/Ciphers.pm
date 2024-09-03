@@ -29,7 +29,7 @@ our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.59 24/08/19 16:41:21";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.60 24/09/04 00:14:18";
 our $VERSION    = "24.06.24";   # official verion number of this file
 
 use Exporter qw(import);
@@ -314,7 +314,6 @@ our %ciphers_cfg    = ( #  cipher-specific configurations
 #_________________________________________________________ internal methods __|
 
 # SEE Perl:Undefined subroutine
-*_warn    = sub { print(join(" ", "**WARNING:", @_), "\n"); return; } if not defined &_warn;
 *_dbx     = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
 *_trace   = sub { print(join(" ", "#${0}::",    @_), "\n") if (0 < $OCfg::cfg{'trace'});   return; } if not defined &_trace;
 *_trace2  = sub { print(join(" ", "#${0}::",    @_), "\n") if (2 < $OCfg::cfg{'trace'});   return; } if not defined &_trace2;
@@ -656,7 +655,7 @@ sub get_key     {
     }
     # ah: too noisy here# _trace("get_key: found '$txt' in %cipher{$typ}");
     return $key if ($typ !~ /^no key/);
-    _warn("521: $typ for '$txt'");  # most likely a programming error %cfg or <DATA> herein
+    OCfg::warn("521: $typ for '$txt'");  # most likely a programming error %cfg or <DATA> herein
     return '';
 } # get_key
 
@@ -834,7 +833,7 @@ sub find_name       {
 #dbx print "C = @const\n";
         # TODO
         }
-        _warn("513: partial match for cipher name found '$cipher'");
+        OCfg::warn("513: partial match for cipher name found '$cipher'");
         push(@list, $key);
     }
     return @list;
@@ -975,8 +974,8 @@ sub sort_names      {
     my $cnt_out = scalar @sorted;
     if ($cnt_in != $cnt_out) {
         # print warning if above algorithm misses ciphers;
-        # uses Perl's warn() instead of our _warn() to clearly inform the user
-        # that the code here needs to be fixed
+        # uses Perl's warn() instead of our OCfg::warn() to clearly inform the
+        # user that the code here needs to be fixed
         my @miss;
         for my $i (0..$#ciphers) {
             push(@miss, $ciphers[$i]) unless grep {$_ eq $ciphers[$i]} @sorted;
@@ -1001,7 +1000,7 @@ sub sort_results    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         next if ($key =~ m/^\s*$/);         # defensive programming ..
         my $cipher    = get_name($key);
         if (not defined $cipher) {  # defensive programming ..
-            _warn("862: unknown cipher key '$key'; key ignored");
+            OCfg::warn("862: unknown cipher key '$key'; key ignored");
             next;
         }
         my $sec_osaft = lc(get_sec($key));# lower case
@@ -1206,7 +1205,7 @@ sub show_getter     {
     print "= testing: $key ...\n";
     $key = text2key($key);    # normalize cipher key
     if (not defined $ciphers{$key}) {
-        _warn("511: undefined cipher '$key'");
+        OCfg::warn("511: undefined cipher '$key'");
         return;
     }
     printf("= %s(%s)\t%s\t%s\n", "function", "cipher key", "key", "value");
@@ -1494,7 +1493,7 @@ sub show_ciphers    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _v_print((caller(0))[3]);
     local $\ = "\n";
     if ($format !~ m/(?:dump|full|osaft|openssl|simple|show)/) {
-        _warn("520: unknown format '$format'");
+        OCfg::warn("520: unknown format '$format'");
         return;
     }
 
@@ -1712,18 +1711,18 @@ sub _ciphers_init   {
         my $len    = $#fields;
         my $key    = $fields[0];
         if ($key  !~ /^0x[0-9A-F]{8}/) {    # cannot use is_valid_key() because some keys have suffixes
-            _warn("504: DATA line" . sprintf("%4d", $.) . ": wrong hex key '$key'");
+            OCfg::warn("504: DATA line" . sprintf("%4d", $.) . ": wrong hex key '$key'");
             next;
         }
         if (13 != $len+1) {
-            _warn("505: DATA line" . sprintf("%4d", $.) . ": wrong number of TAB-separated fields '$len' != 13");
+            OCfg::warn("505: DATA line" . sprintf("%4d", $.) . ": wrong number of TAB-separated fields '$len' != 13");
             next;
         }
             # above two messages could be constructed in a simpler way, like:
-            #   _warn(sprintf("504: DATA line%4d: ..text..'", $., $key));
+            #   OCfg::warn(sprintf("504: DATA line%4d: ..text..'", $., $key));
             # because other tools (i.e. make) extract the message, we provide
             # the well known pattern for them:
-            #   _warn("504: DATA line" . sprintf("%4d", $.) . ": ..text.. '$key'");
+            #   OCfg::warn("504: DATA line" . sprintf("%4d", $.) . ": ..text.. '$key'");
         # now loop over @fields, but assign each to the hash; keys see %ciphers_desc
         $ciphers{$key}->{'openssl'} = $fields[1]  || '';
         $ciphers{$key}->{'sec'}     = $fields[2]  || '';
@@ -1933,7 +1932,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.59 2024/08/19
+3.60 2024/09/04
 
 
 =head1 AUTHOR
