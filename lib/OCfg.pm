@@ -22,15 +22,15 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.64 24/09/04 00:11:26";
-our $VERSION    =  "24.06.24";  # official version number of this file
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.65 24/09/04 08:47:24";
+our $VERSION    =  "24.09.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
     $cfg__me=~ s#^.*[/\\]##;    # of $cfg{'me'} which is used in %cfg itself
 
 use Exporter qw(import);
 
-BEGIN { # mainly required for testing ...
+BEGIN {
     # SEE Perl:@INC
     # SEE Perl:BEGIN perlcritic
     my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##x;
@@ -40,63 +40,9 @@ BEGIN { # mainly required for testing ...
     unshift(@INC, $_path)   if not (grep{/^$_path$/} @INC);
     unshift(@INC, "lib")    if not (grep{/^lib$/}    @INC);
 
-    ## no critic qw(Modules::ProhibitAutomaticExportation)
-    #  Perl::Critic complains to use @EXPORT_OK instead of @EXPORT, but we
-    #  want anything exported.
-
     # See NOTES below also.
-
-    # not exported
-    #   %info
-    #   %prot_txt
-    #   %shorttexts
-
-    our @EXPORT     = qw(
-        %cfg
-        %dbx
-        %data
-        %data_oid
-        %prot
-        get_ciphers_range
-        get_cipher_owasp
-        get_openssl_version
-        get_dh_paramter
-        get_target_nr
-        get_target_prot
-        get_target_host
-        get_target_port
-        get_target_auth
-        get_target_proxy
-        get_target_path
-        get_target_orig
-        get_target_start
-        get_target_open
-        get_target_stop
-        get_target_error
-        set_target_nr
-        set_target_prot
-        set_target_host
-        set_target_port
-        set_target_auth
-        set_target_proxy
-        set_target_path
-        set_target_orig
-        set_target_start
-        set_target_open
-        set_target_stop
-        set_target_error
-        set_user_agent
-        tls_const2text
-        tls_key2text
-        tls_text2key
-        printhint
-        test_cipher_regex
-    );
-    # not yet exported: ocfg_sleep
-    # insert above in vi with:
-    # :r !sed -ne 's/^sub \([a-zA-Z][^ (]*\).*/\t\t\1/p' %
-    # :r !sed -ne 's/^our \([\%$@][a-zA-Z0-9_][^ (]*\).*/\t\t\1/p' %
-    # :r !sed -ne 's/^ *\($STR_[A-Z][^ ]*\).*/\t\t\1/p' %
+    our @EXPORT_OK  = qw( %cfg %dbx %data %data_oid %prot _dbx );
+    # not exported:       %info %prot_txt %shorttexts
 }
 
 use OText       qw(%STR);
@@ -3019,7 +2965,6 @@ our %dbx = (    # save hardcoded settings (command lists, texts), and debugging 
 #_________________________________________________________ internal methods __|
 
 # SEE Perl:Undefined subroutine
-*_dbx     = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
 *_trace   = sub {
      local $\ = undef;
      my $func = shift;  # avoid space after :: below
@@ -3048,6 +2993,9 @@ Print warning message according configured settings.
 =cut
 
 # wrappers should be in OText.pm, but they use settings from %cfg, hence here
+
+sub _dbx   { printf(STDERR "%s%s\n", $STR{DBX}, join(" ", @_)); return; }
+    #? print line for debugging (should be exported)
 
 sub hint   { 
     #? print hint message if wanted; SEE Note:Message Numbers
@@ -3615,7 +3563,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.64"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.65"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3661,7 +3609,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.64 2024/09/04
+3.65 2024/09/04
 
 =head1 AUTHOR
 
