@@ -49,7 +49,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.30 24/09/04 08:49:51";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.31 24/09/04 10:56:40";
 our $VERSION        =  "24.09.24";  # official verion number of this file
 
 BEGIN {
@@ -148,7 +148,7 @@ BEGIN {
     Net::SSLeay::SSLeay_add_ssl_algorithms();   # Important!
     Net::SSLeay::randomize();
     if (1.45 > $Net::SSLeay::VERSION) {
-        warn("**WARNING: 081: ancient Net::SSLeay $Net::SSLeay::VERSION < 1.49; cannot use ::initialize"); ## no critic qw(ErrorHandling::RequireCarping)
+        warn("$STR{WARN} 081: ancient Net::SSLeay $Net::SSLeay::VERSION < 1.49; cannot use ::initialize"); ## no critic qw(ErrorHandling::RequireCarping)
     } else {
         Net::SSLeay::initialize();
     }
