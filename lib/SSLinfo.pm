@@ -49,8 +49,8 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.29 24/09/04 00:18:49";
-our $VERSION        =  "24.06.24";  # official verion number of this file
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.30 24/09/04 08:49:51";
+our $VERSION        =  "24.09.24";  # official verion number of this file
 
 BEGIN {
     # SEE Perl:@INC
@@ -159,12 +159,6 @@ BEGIN {
         sub _trace  { my @txt=@_; __trace(@txt) if (0  < $SSLinfo::trace); return; }
         sub _trace1 { my @txt=@_; __trace(@txt) if (1 == $SSLinfo::trace); return; }
         sub _trace2 { my @txt=@_; __trace(@txt) if (1  < $SSLinfo::trace); return; }
-    }
-    if (not exists &OCfg::warn) {
-        sub OCfg::warn   { my @txt=@_; printf("%s%s\n", ($STR{'WARN'}||"**wARNING: "), "@txt"); return; }
-    }
-    if (not exists &_dbx) {
-        sub _dbx    { my @txt=@_; printf("%s%s\n", ($STR{'DBX'} ||"#dbx# "), "@txt"); return; }
     }
 }
 
