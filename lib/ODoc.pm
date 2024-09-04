@@ -17,8 +17,8 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.35 24/09/04 00:13:13";
-our $VERSION    = "24.06.24";   # official verion number of this file
+my  $SID_odoc   = "@(#) ODoc.pm 3.36 24/09/04 08:56:15";
+our $VERSION    = "24.09.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
     # SEE Perl:@INC
@@ -274,9 +274,6 @@ start with these prefixes, all following commands and options are ignored.
 
 #_____________________________________________________________________________
 #_________________________________________________________ internal methods __|
-
-# SEE Perl:Undefined subroutine
-*_dbx     = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
 
 sub _replace_var    {
     #? replace $0 by name and $VERSION by version in array, return array
@@ -629,7 +626,7 @@ lib/OText.pm
 
 =head1 VERSION
 
-3.35 2024/09/04
+3.36 2024/09/04
 
 
 =head1 AUTHOR
