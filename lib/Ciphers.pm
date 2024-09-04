@@ -29,8 +29,8 @@ our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.60 24/09/04 00:14:18";
-our $VERSION    = "24.06.24";   # official verion number of this file
+my  $SID_ciphers= "@(#) Ciphers.pm 3.62 24/09/04 11:28:12";
+our $VERSION    = "24.09.24";   # official verion number of this file
 
 use Exporter qw(import);
 
@@ -314,7 +314,6 @@ our %ciphers_cfg    = ( #  cipher-specific configurations
 #_________________________________________________________ internal methods __|
 
 # SEE Perl:Undefined subroutine
-*_dbx     = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
 *_trace   = sub { print(join(" ", "#${0}::",    @_), "\n") if (0 < $OCfg::cfg{'trace'});   return; } if not defined &_trace;
 *_trace2  = sub { print(join(" ", "#${0}::",    @_), "\n") if (2 < $OCfg::cfg{'trace'});   return; } if not defined &_trace2;
 *_v_print = sub { print(join(" ", "#${0}: ",    @_), "\n") if (0 < $OCfg::cfg{'verbose'}); return; } if not defined &_v_print;
@@ -1326,7 +1325,7 @@ EoT
     foreach my $c (sort_names(@unsorted)) {
         my $key = get_key($c);
         push(@sorted, sprintf("%4s\t%s\t%s\t%s\t%s",
-                               get_cipher_owasp($c), get_openssl($key),
+                               OCfg::get_cipher_owasp($c), get_openssl($key),
                                get_sec($key), get_iana($key), $c
             ));
     }
@@ -1932,7 +1931,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.60 2024/09/04
+3.62 2024/09/04
 
 
 =head1 AUTHOR
