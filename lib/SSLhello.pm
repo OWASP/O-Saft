@@ -56,8 +56,8 @@ use utf8;
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
 #  because we use /x as needed for human readability
 
-my  $SID_sslhello = "@(#) SSLhello.pm 3.32 24/09/04 00:17:20";
-our $VERSION    = "24.06.24";
+my  $SID_sslhello = "@(#) SSLhello.pm 3.33 24/09/04 10:28:37";
+our $VERSION    = "24.09.24";
 my  $SSLHELLO   = "SSLhello";
 
 # 04jun24 ah: using error_handler->reset_err( {module => "#$SSLHELLO", ...)
@@ -78,7 +78,7 @@ use Socket;     # constants and methods are used with full qualified name
 use IO::Socket::INET; #require IO::Select if ($SSLhello::trace > 1);
 use Carp;
 use OText         qw(%STR);
-use OCfg          qw(%cfg); # main parameters, lists and functions that are used by o-saft and SSLhello
+use OCfg          qw(%cfg _dbx);# main parameters, lists and functions that are used by o-saft and SSLhello
 use error_handler qw(%OERR);
     # use internal error_handler, get all constants used for SSLHELLO, for subs
     # the full names will be used (includung error_handler-><sub>)
