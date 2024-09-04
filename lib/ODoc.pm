@@ -17,7 +17,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.36 24/09/04 08:56:15";
+my  $SID_odoc   = "@(#) ODoc.pm 3.37 24/09/04 09:02:00";
 our $VERSION    = "24.09.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -32,7 +32,7 @@ BEGIN { # mainly required for testing ...
 }
 
 use OText       qw(%STR);
-use OCfg;
+use OCfg        qw(_dbx);
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -626,7 +626,7 @@ lib/OText.pm
 
 =head1 VERSION
 
-3.36 2024/09/04
+3.37 2024/09/04
 
 
 =head1 AUTHOR
