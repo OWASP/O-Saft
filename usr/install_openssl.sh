@@ -11,7 +11,7 @@
 #?      --i - ignore failed preconditions; continue always
 #?      --m - install all required Perl modules also
 #?      --n - do not execute, just show preconditions and where to install
-#?	--debian    - install required debian packages first
+#?      --debian    - install required debian packages first
 #?      --list      - list required packages, modules, etc.
 #?
 #? DESCRIPTION
@@ -23,6 +23,9 @@
 #?      of O-Saft.
 #?
 #? WARNING
+#?      Installation will overwrite existing data in the  specified directory
+#?      for installation.
+#?
 #?      Note that  compilation and installation of  openssl  and  Net::SSLeay
 #?      uses known insecure configurations and features! This is essential to
 #?      make  o-saft.pl  able to check for such insecurities.
@@ -103,6 +106,7 @@
 #?
 #?          OSAFT_VM_SHA_OPENSSL
 #?              SHA256 checksum for the openssl-1.0.2-chacha.tar.gz archive.
+#?              If set empty, cheksum is not verified.
 #?
 #?          OSAFT_VM_TAR_OPENSSL
 #?              Name of archive file for OpenSSL (during build).
@@ -115,6 +119,7 @@
 #?
 #?          OSAFT_VM_SHA_SSLEAY
 #?              SHA256 checksum for the Net-SSLeay.tar.gz archive.
+#?              If set empty, cheksum is not verified.
 #?
 #?          OSAFT_VM_TAR_SSLEAY
 #?              Name of archive file for Net-SSLeay.tgz (during build).
@@ -159,11 +164,11 @@
 #?      Simple build with defaults:
 #?          $0
 #?      Build with installing packages and ignoring check errors:
-#?          $0 --debian -i
+#?          $0 --debian --i
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#) ú;a 1.42 24/08/11 16:02:03
+#?      @(#) install_openssl.sh 1.43 24/09/04 13:31:36
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -365,10 +370,10 @@ check_directories () {
 	echo ""
 	echo -n "# requred directories:"
 	txt=""
-	[ ! -e "$OSAFT_DIR" ]   && txt="$txt\n**ERROR: missing: OSAFT_DIR=$OSAFT_DIR"
-	[   -e "$BUILD_DIR" ]   && txt="$txt\n**ERROR: exists:  BUILD_DIR=$BUILD_DIR"
-	[   -e "$OPENSSL_DIR" ] && txt="$txt\n**ERROR: exists:  OPENSSL_DIR=$OPENSSL_DIR"
-	[ ! -e "$SSLEAY_DIR" ]  && txt="$txt\n**ERROR: missing: SSLEAY_DIR=$SSLEAY_DIR"
+	[   -e "$BUILD_DIR" ]   && txt="$txt\n**WARNING: exists: BUILD_DIR=$BUILD_DIR"
+	[   -e "$SSLEAY_DIR" ]  && txt="$txt\n**WARNING: exists: SSLEAY_DIR=$SSLEAY_DIR"
+	[   -e "$OPENSSL_DIR" ] && txt="$txt\n**WARNING: exists: OPENSSL_DIR=$OPENSSL_DIR"
+	[ ! -e "$OSAFT_DIR" ]   && txt="$txt\n**ERROR:  missing: OSAFT_DIR=$OSAFT_DIR"
 	[   -n "$txt" ] && miss="$miss directories" && echo $txt.
 	return
 } # check_directories
@@ -399,32 +404,17 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  '+VERSION')   echo 1.42 ; exit; ;; # for compatibility
-	  '--version')
-		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
-		exit 0
-		;;
-
-	  '-h' | '--h' | '--help' | '-?')
+	  +VERSION)     echo 1.43 ; exit; ;; # for compatibility
+	  --version)    \sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0; exit 0; ;;
+	  -h | --h | --help | '-?' | '/?')
 		sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
 		exit 0
 		;;
-	  '-list' | '--list')
-		list_data
-		exit 0
-		;;
-	  '-debian' | '--debian')
-		optd=1
-		;;
-	  '-i' | '--i')
-		opti=1
-		;;
-	  '-m' | '--m')
-		optm=1
-		;;
-	  '-n' | '--n')
-		optn=1
-	        try=echo
+	  -list | --list)       list_data; exit 0; ;;
+	  -debian | --debian)   optd=1; ;;
+	  -i | --i)             opti=1; ;;
+	  -m | --m)             optm=1; ;;
+	  -n | --n)             optn=1; try=echo;
 	        move_rc=""
 		[ -e $dir/.o-saft.pl ] && move_rc="
 # move existing  $dir/.o-saft.pl to $dir/.o-saft.pl-orig"
