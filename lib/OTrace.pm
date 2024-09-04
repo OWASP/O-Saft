@@ -41,8 +41,8 @@ use Data::Dumper qw(Dumper);
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_trace      = "@(#) OTrace.pm 3.41 24/09/03 12:22:13";
-our $VERSION        = "24.06.24";
+my  $SID_trace      = "@(#) OTrace.pm 3.42 24/09/04 09:04:07";
+our $VERSION        = "24.09.24";
 
 our $prefix_trace   = "#". __PACKAGE__ . ":";
 our $prefix_verbose = "#". __PACKAGE__ . ":";
@@ -1228,7 +1228,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.41 2024/09/03
+3.42 2024/09/04
 
 =head1 AUTHOR
 
