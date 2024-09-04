@@ -10,8 +10,8 @@ use strict;
 use warnings;
 use utf8;
 
-my  $SID_otext  =  "@(#) OText.pm 3.17 24/08/18 14:54:55";
-our $VERSION    =  "24.06.24";
+my  $SID_otext  =  "@(#) OText.pm 3.18 24/09/04 09:00:34";
+our $VERSION    =  "24.09.24";
 
 #_____________________________________________________________________________
 #________________________________________________ public (export) variables __|
@@ -141,7 +141,7 @@ Print data from given hash (used for --usage option).
 
 =head1 VERSION
 
-3.17 2024/08/18
+3.18 2024/09/04
 
 
 =head1 AUTHOR
