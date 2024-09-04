@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.153 24/09/04 08:50:41"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.154 24/09/04 23:57:11"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -87,7 +87,7 @@ my  @perl_incorig;  # save orginial @INC
 #_____________________________________________________________________________
 #______________________________________________ functions needed in BEGIN{} __|
 
-sub _VERSION { return "24.06.24"; } # <== our official version number
+sub _VERSION { return "24.09.24"; } # <== our official version number
     # get official version (used for --help=* and in private modules)
 
 sub _set_binmode    {
@@ -377,7 +377,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.153"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.154"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -593,6 +593,11 @@ if (0 >= _is_argv('(?:--no.?rc)')) {            # only if not inhibited
         close($rc);
         OCfg::warn("052: option with trailing spaces '$_'") foreach (grep{m/\s+$/} @rc_argv);
         push(@argv, @rc_argv);      # store arguments
+            # all commands, options and arguments are process later, nothing is
+            # interpreted here; see below at #| scan options
+            # this also means that --rc= cannot be used inside an RC-FILE where
+            # it needs to be ignored (for example recursive call), no injection
+            # checks necessary, it's all fine
         # OTrace::trace_rcfile();   # function cannot be used here
         my @cfgs;
         if (_is_trace()) {
@@ -6136,7 +6141,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.153");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.154");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6791,7 +6796,7 @@ while ($#argv >= 0) {
     if ($arg =~ /^--inc=/)              {                           next; } # ignore, already handled
     if ($arg =~ /^--no[,._-]?inc=/)     {                           next; } # ignore, already handled
     if ($arg =~ /^--cmd=\+?(.*)/)       { $arg = '+' . $1;                } # no next;
-    if ($arg =~ /^--rc/)                {                           next; } # nothing to do, already handled
+    if ($arg =~ /^--rc/)                {                           next; } # nothing to do, already handled; ignores use of this option in the RC-FILE itself 
     if ($arg eq  '+VERSION')            { _version_exit();        exit 0; } # used with --cgi-exec
         # in CGI mode commands need to be passed as --cmd=* option
     #!#--------+------------------------+--------------------------+------------
