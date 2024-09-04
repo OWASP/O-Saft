@@ -94,16 +94,16 @@ and should be installed in  `./lib` .
 
 Following files are optional:
 
-| File / Tool          | Description |
-|:---------------------|:------------|
-| `.o-saft.pl`         | (private user configuration) |
-| `.o-saft.tcl`        | (private user configuration for GUI) |
-| `lib/OTrace.pm`      | (functions for debugging) |
-| `lib/OMan.pm`        | (documentation and generation functions) |
-| `doc/o-saft.pod`     | (documentation in POD format) |
-| `lib/o-saft-img.tcl` | (images for buttons in GUI) |
-| `checkAllCiphers.pl` | (simple script for checking all ciphers) |
-| `usr/*`              | (additional programs and tools) |
+| File / Tool              | Description |
+|:-------------------------|:------------|
+| `.o-saft.pl`             | (private user configuration) |
+| `.o-saft.tcl`            | (private user configuration for GUI) |
+| `lib/OTrace.pm`          | (functions for debugging) |
+| `lib/OMan.pm`            | (documentation and generation functions) |
+| `doc/o-saft.pod`         | (documentation in POD format) |
+| `lib/o-saft-img.tcl`     | (images for buttons in GUI) |
+| `usr/checkAllCiphers.pl` | (simple script for checking all ciphers) |
+| `usr/*`                  | (additional programs and tools) |
 
 ## Sources 
 * Project home is https://www.owasp.org/index.php/O-Saft
@@ -153,6 +153,12 @@ b85423d142c186c1cf10494aa0e993f6f2030ab769977aca9584d7d650421697
 
 NOTE that the checksums listed here are the previous versions if this
 file is from  o-saft.tgz  itself, or inside the docker image.
+
+### Changes
+
+A detailled list of changes can be found in 
+   [CHANGES](https://github.com/OWASP/O-Saft/blob/master/CHANGES).
+It will be updated with each new version (release).
 
 ### Older version
 
