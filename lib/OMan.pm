@@ -35,7 +35,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_oman   = "@(#) OMan.pm 3.65 24/09/04 11:01:39";
+my  $SID_oman   = "@(#) OMan.pm 3.66 24/09/05 00:08:46";
 our $VERSION    = "24.09.24";
 
 use Exporter qw(import);
@@ -801,7 +801,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.65'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.66'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2139,11 +2139,12 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         # huge memory consumtion due to use of necessary eval(); the sizes
         # are not needed for normal use, just for documentation here
         my %sizes = (
-            'full' => 0xffffff,
-            'safe' => 0x2fffff,
-            'long' => 0xffff,
-            'huge' => 0xffff,
-            #'rfc'  => 2051,
+            'SSLv2_full' => 0xffffff,
+            'full'       => 0xffffff,
+            'safe'       => 0x2fffff,
+            'long'       => 0xffff,
+            'huge'       => 0xffff,
+            #'rfc'        => 2051,
         ); # %sizes
         foreach my $key (sort(keys(%{$cfg{'cipherranges'}}))) {
             next if ($key =~ m/(full|huge|long|safe)/i);
@@ -2758,7 +2759,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.65 2024/09/04
+3.66 2024/09/05
 
 
 =head1 AUTHOR
