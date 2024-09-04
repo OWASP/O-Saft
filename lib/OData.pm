@@ -18,8 +18,8 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odata  =  "@(#) OData.pm 3.29 24/09/04 00:19:39";
-our $VERSION    =  "24.06.24";
+my  $SID_odata  =  "@(#) OData.pm 3.30 24/09/04 08:53:25";
+our $VERSION    =  "24.09.24";
 
 use Exporter qw(import);
 
@@ -48,7 +48,7 @@ BEGIN {
 }
 
 use OText       qw(%STR);
-use OCfg        qw(%cfg %prot);
+use OCfg        qw(%cfg %prot _dbx);
         # 7/2024 ah: full qualified variable $OCfg:: needed; reason unknown
 
 #_____________________________________________________________________________
@@ -818,9 +818,6 @@ our %shorttexts = (
 #_____________________________________________________________________________
 #_________________________________________________________ internal methods __|
 
-# SEE Perl:Undefined subroutine
-*_dbx     = sub { print(join(" ", "#dbx#"     , @_), "\n"); return; } if not defined &_dbx;
-
 sub __SSLinfo   { ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? wrapper for SSLinfo::*() functions
     # SSLinfo::*() return raw data, depending on $OCfg::cfg{'format'}
@@ -1237,7 +1234,7 @@ _init();
 
 =head1 VERSION
 
-3.29 2024/09/04
+3.30 2024/09/04
 
 
 =head1 AUTHOR
