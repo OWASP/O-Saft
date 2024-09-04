@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.65 24/09/04 08:47:24";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.66 24/09/05 00:09:42";
 our $VERSION    =  "24.09.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -2089,6 +2089,8 @@ our %cfg = (    # main data structure for configuration
 # TODO:                 0x03000000,   0x03FFFFFF,   # increment  odd only
         'SSLv2_long'=> "",      # more lazy list of constants for ciphers for SSLv2
                                 # see _cfg_init(): SSLv2_base + SSLv2_rfc+ + SSLv2_FIPS
+        'SSLv2_full'=>          # full range of constants for cipher for SSLv2
+                       "0x02000000 .. 0x02FFFFFF",
         'SSLv3'     =>          # constants for SSLv3 ciphers (without SSLv2 ciphers)
                        "0x03000000 .. 0x0300003A, 0x03000041 .. 0x03000046,
                         0x03000060 .. 0x03000066, 0x03000080 .. 0x0300009B,
@@ -3563,7 +3565,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.65"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.66"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3609,7 +3611,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.65 2024/09/04
+3.66 2024/09/05
 
 =head1 AUTHOR
 
