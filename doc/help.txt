@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.33 24/09/02 16:15:45
+# SID   @(#) help.txt 3.34 24/09/04 14:07:26
 
 NAME
 
@@ -3966,6 +3966,15 @@ LIMITATIONS
           All other certificate in the chain are not checked.
 
           This is currently (2018) a limitation in  $0.
+
+      +resumption
+
+          Currently (2024) information  provided by openssl is used to verify
+          if the target supports resumption.  This information depends on the
+          way how openssl manages to establishes a connection to the target. 
+          Unfortunately, this behaviour is random for the same target,  means
+          that resumption is detected or not,  even both results are possible
+          within short time when called multiple times.
 
     Broken pipe
 
