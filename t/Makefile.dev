@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 3.16 24/09/04 00:22:47
+#?      @(#) Makefile.dev 3.17 24/09/04 10:22:15
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-O-SID.dev          := 3.16
+O-SID.dev          := 3.17
 O-SELF.dev         := t/Makefile.dev
 ALL.includes       += $(O-SELF.dev)
 ALL.inc.type       += dev
@@ -265,7 +265,7 @@ _TEST.brace=(
 # ) beat Make's foreach dragon
 testarg-dev-grep_hint:
 	@$(O-TRACE.target)
-	@$(foreach prg, $(LIST.sources), echo "" && echo "# grep 'OCfg::hint$(_TEST.brace)' $(prg) ..." && cd $(TEST.dir)&&grep -H '_hint$(_TEST.brace)' $(prg) |sed -e 's/: */\t/'; )
+	@$(foreach prg, $(LIST.sources), echo "" && echo "# grep 'OCfg::hint$(_TEST.brace)' $(prg) ..." && cd $(TEST.dir)&&grep -H 'OCfg::hint$(_TEST.brace)' $(prg) |sed -e 's/: */\t/'; )
 testarg-dev-grep_warn:
 	@$(O-TRACE.target)
 	@$(foreach prg, $(LIST.sources), echo "" && echo "# grep 'OCfg::warn$(_TEST.brace)' $(prg) ..." && cd $(TEST.dir)&&grep -H 'OCfg::warn$(_TEST.brace)' $(prg) |sed -e 's/: */\t/'; )
