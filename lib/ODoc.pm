@@ -17,7 +17,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.37 24/09/04 09:02:00";
+my  $SID_odoc   = "@(#) ODoc.pm 3.38 24/09/05 13:19:29";
 our $VERSION    = "24.09.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -312,6 +312,9 @@ sub _get_filehandle {
     #? return Perl's DATA file handle of this file if file does not exist
     # passed file is searched for as is, in  .  and finally  doc/
     # this function is a wrapper for Perl's DATA
+    # NOTE: finding the file in  .  may leed to corrupted, inappropriate file,
+    #       for example after: ./o-saft.pl --help>help.txt
+    #       see https://github.com/OWASP/O-Saft/issues/157
     my $file = shift || "";
     my $fh; # same as *FH
     local $\ = "\n";
@@ -626,7 +629,7 @@ lib/OText.pm
 
 =head1 VERSION
 
-3.37 2024/09/04
+3.38 2024/09/05
 
 
 =head1 AUTHOR
