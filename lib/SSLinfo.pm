@@ -49,7 +49,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.31 24/09/04 10:56:40";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.32 24/09/05 23:53:14";
 our $VERSION        =  "24.09.24";  # official verion number of this file
 
 BEGIN {
@@ -2675,7 +2675,7 @@ sub do_ssl_open($$$@) {
             warn("$STR{WARN} 652: Net::SSLeay >= 1.33 required for getting subjectAltNames");
         }
         if (1.30 <= $Net::SSLeay::VERSION) {# condition stolen from IO::Socket::SSL
-            $_SSLinfo{'cn'}     = _ssleay_cert_get('cn', $x509);
+            $_SSLinfo{'cn'}     = _ssleay_cert_get('cn', $x509) || "";
             $_SSLinfo{'cn'}     =~ s{\0$}{};# work around Bug in Net::SSLeay <1.33 (from IO::Socket::SSL)
         } else {
             warn("$STR{WARN} 653: Net::SSLeay >= 1.30 required for getting commonName");
