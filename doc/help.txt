@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.34 24/09/04 14:07:26
+# SID   @(#) help.txt 3.35 24/09/05 11:19:59
 
 NAME
 
@@ -2490,6 +2490,31 @@ CHECKS
 
         Lookup the IP of the given hostname (FQDN), and then tries to reverse
         resolve the FQDN again.
+
+    Individual check values
+
+        All cipher suites with CBC are rated 'weak' internally. It very often
+        differs to OpenSSL's rating (which is often 'HIGH').  There is no way
+        to report OpenSSL's rating.  To get these ratings, please use openssl
+        directly. Following can be used to see the difference:
+
+          $0 --test-ciphers-dump
+
+        Some values (limits) are currently (2024) hardcoded. Following values
+        are used to report  'yes'  for the command:
+
+          +sts_maxage0d	        STS max-age < 1 day
+          +sts_maxage1m	        STS max-age < 1 month
+          +sts_maxagexy	        STS max-age < 1 year
+          +sts_maxage18	        STS max-age < 18 weaks
+          +dh_512               DH Parameter >= 512 bits
+          +dh_2048              DH Parameter >= 2048 bits
+          +ecdh_512             ECDH Parameter >= 512 bits
+          +ecdh_256             ECDH Parameter >= 256 bits
+
+        If these check do not comply with the user's expectation, they can be
+        ignored by defining a +check (or even an own) command in the  RC-FILE
+        without these command.
 
     SSL ciphers
 
