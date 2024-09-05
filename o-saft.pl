@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.154 24/09/04 23:57:11"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.155 24/09/05 09:35:03"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -377,7 +377,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.154"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.155"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6141,7 +6141,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.154");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.155");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -8804,17 +8804,23 @@ is done in 2 steps:
 Now all processing of data  (the code itself, STDIN, STDOUT, STDERR)  uses
 (Unicode) characters instead of bytes. 
 As most --nearly all-- data on STDOUT and STDERR is supposed to be read by
-humans, only these channels need to handled.  It is assumed that all texts
-consist of printable characters only, probably in various languages. Hence
-UTF-8 is used as default character set.
+humans. It is assumed that all texts there consist of printable characters
+only, probably in various languages.  Hence only these channels need to be
+handled, means set to use UTF-8 as default character set.
 
 This avoids special handling of I/O layers elsewhere.
 
-The only exception (beside other Perl modules, see above) is  SSLhello.pm
-which reads data from sockets directly and handles the encoding itself.
-
 Please see the perlunitut, perluniintro and perlunicode man pages for more
 details.
+
+Following exceptions (beside other Perl modules, see above) are known:
+
+    * using option  --std-format=raw  which explicitly breaks the settings
+      by intension and may result in a warning like:
+          Wide character in print at lib/OMan.pm line ...
+      (see also t/Makefile.opt)
+
+    * SSLhello.pm  which reads binary data from sockets directly
 
 =head3 Old Versions of Perl
 
