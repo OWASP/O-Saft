@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.66 24/09/05 00:09:42";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.67 24/09/05 11:21:47";
 our $VERSION    =  "24.09.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -1884,7 +1884,7 @@ our %cfg = (    # main data structure for configuration
                                 # 1: reuse existing sockets, even if SSL connect failed
     'ignore_no_conn'=> 0,       # 1: ignore warnings if connection fails, check target anyway
     'protos_next'   =>          # all names known for ALPN or NPN
-                       'http/1.1,h2c,h2c-14,spdy/1,npn-spdy/2,spdy/2,spdy/3,spdy/3.1,spdy/4a2,spdy/4a4,grpc-exp,h2-14,h2-15,http/2.0,h2',
+                       'http/1.1,h2c,h2c-14,spdy/1,npn-spdy/2,spdy/2,spdy/3,spdy/3.1,spdy/4a2,spdy/4a4,grpc-exp,h2-14,h2-15,h2-16,http/2.0,h2',
                                 # even Net::SSLeay functions most likely use an
                                 # array,  this is a string with comma-separated
                                 # names as used by openssl
@@ -3565,7 +3565,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.66"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.67"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3611,7 +3611,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.66 2024/09/05
+3.67 2024/09/05
 
 =head1 AUTHOR
 
