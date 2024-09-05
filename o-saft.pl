@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.155 24/09/05 09:35:03"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.156 24/09/05 23:49:51"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -377,7 +377,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.155"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.156"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -903,8 +903,8 @@ sub __subst         { my ($is,$txt)=@_; $is=~s/@@/$txt/; return $is; }
     # return given text with '@@' replaced by given value
 sub _get_text       { my ($is,$txt)=@_; return __subst($text{$is}, $txt); }
     # for given index of %text return text with '@@' replaced by given value
-sub _get_yes_no     { my $val=shift; return ($val eq "") ? 'yes' : 'no (' . $val . ')'; }
-    # return 'yes' if given value is empty, return 'no' otherwise
+sub _get_yes_no     { my $val=shift || ""; return ($val eq "") ? 'yes' : 'no (' . $val . ')'; }
+    # return 'yes' if given value is empty or undefined, return 'no' otherwise
 
 sub _get_base2      {
     # return base-2 of given number
@@ -3330,7 +3330,7 @@ sub check_dh        {
         my $val = $checks{'dh_512'}->{val} . $checks{'dh_2048'}->{val} . $checks{'ecdh_256'}->{val};
         $checks{'logjam'}->{val} = $val if ($val ne "");
     } else {                    # not a number, probably suspicious
-        $checks{'logjam'}->{val}=  $txt;
+        $checks{'logjam'}->{val} =  $txt;
     }
     FIN:
     trace("check_dh() }");
@@ -4028,7 +4028,7 @@ sub checksni        {
     return if (1 < $cfg{'done'}->{'checksni'});
     trace("checksni($host, $port) {");
     my $cn          =    $data{'cn'}->{val}($host, $port);
-    my $lc_nosni    = lc($data{'cn_nosni'}->{val});
+    my $lc_nosni    = lc($data{'cn_nosni'}->{val}) || $STR{UNDEF};
     my $lc_host     = lc($host);
     my $lc_cn       = lc($cn);
     my $rex_cn      =    $cn;
@@ -6141,7 +6141,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.155");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.156");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
