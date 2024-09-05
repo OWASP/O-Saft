@@ -8,7 +8,7 @@
 #?      make help.test.opt
 #?
 #? VERSION
-#?      @(#) Makefile.opt 3.6 24/08/18 16:12:16
+#?      @(#) Makefile.opt 3.7 24/09/05 09:31:50
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -17,7 +17,7 @@
 
 HELP-help.test.opt  = targets for testing '$(SRC.pl)' options
 
-O-SID.opt          := 3.6
+O-SID.opt          := 3.7
 O-SELF.opt         := t/Makefile.opt
 ALL.includes       += $(O-SELF.opt)
 ALL.inc.type       += opt
@@ -74,6 +74,9 @@ testarg-opt-stdformat-%:    EXE.pl      = ../$(SRC.pl)
 testarg-opt-stdformat-%:    TEST.init   = --no-rc --help=pod
 testarg-opt-stdformat-crlf: TEST.args  += --std-format=crlf
 testarg-opt-stdformat-raw:  TEST.args  += --std-format=raw
+    # --std-format=raw sets Perl's I/O layer to raw, which may result in:
+    # Wide character in print at lib/OMan.pm line ...
+    # this is expected behaviour, somehow ... ; SEE Perl:binmode (in o-saft.pl)
 testarg-opt-stdformat-unix: TEST.args  += --std-format=unix
 testarg-opt-stdformat-utf8: TEST.args  += --std-format=utf8
 testarg-opt-stdformat-UTF8: TEST.args  += --std-format=UTF-8
