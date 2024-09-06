@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.67 24/09/05 11:21:47";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.68 24/09/06 09:06:30";
 our $VERSION    =  "24.09.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -3006,6 +3006,8 @@ sub hint   {
     my @txt = @_; 
     my $_no =  "@txt";
        $_no =~ s/^\s*([0-9(]{3}):?.*/$1/smx;   # message number, usually
+       $_no =~ s/([+*(\\])/\\$1/g;  # lazy escape RegEx meta characters; needed
+                                    # if previous match did not return a number
     return if grep({/(?:--no.?hint)/i} @ARGV);
     return if not $cfg{'out'}->{'hint'};
     if (0 < (grep{/^$_no$/} @{$cfg{out}->{'warnings_no_dups'}})) {
@@ -3565,7 +3567,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.67"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.68"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3611,7 +3613,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.67 2024/09/05
+3.68 2024/09/06
 
 =head1 AUTHOR
 
