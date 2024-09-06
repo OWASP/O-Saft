@@ -49,7 +49,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.32 24/09/05 23:53:14";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.33 24/09/06 16:32:46";
 our $VERSION        =  "24.09.24";  # official verion number of this file
 
 BEGIN {
@@ -1224,6 +1224,7 @@ my %_SSLinfo= ( # our internal data structure
     'master_key'        => "",  # Master-Key
     'master_secret'     => "",  # Extended master secret
     'public_key_len'    => "",  # Server public key
+    'resumption_psk'    => "",  # Resumption PSK
     'session_id'        => "",  # Session-ID
     'session_id_ctx'    => "",  # Session-ID-ctx
     'session_startdate' => "",  # TLS session start time (human readable)
@@ -1259,7 +1260,7 @@ my %_SSLinfo= ( # our internal data structure
 ); # %_SSLinfo
 
 #  $_SSLinfo_random # SEE Make:OSAFT_MAKE (in Makefile.pod)
-my $_SSLinfo_random = qr/ctx|master_key|session_(?:startdate|starttime|ticket)|ssl|x509/; ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
+my $_SSLinfo_random = qr/ctx|master_key|resumption_psk|session_(?:startdate|starttime|ticket)|ssl|x509/; ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
 my $_SSLinfo_random_text = $STR{MAKEVAL};
 
 sub _SSLinfo_reset  {
@@ -1336,6 +1337,7 @@ sub _SSLinfo_print  {
             master_secret
             master_key
             public_key_len
+            resumption_psk
             session_id
             session_id_ctx
             session_startdate
@@ -3021,6 +3023,7 @@ sub do_ssl_open($$$@) {
             'session_id_ctx'   => "Session-ID-ctx:",
             'master_key'       => "Master-Key:",
             'master_secret'    => "Extended master secret:",
+            'resumption_psk'   => "Resumption PSK:",
             'krb5'             => "Krb5 Principal:",
             'psk_identity'     => "PSK identity:",
             'psk_hint'         => "PSK identity hint:",
@@ -4071,6 +4074,7 @@ sub srp             { return _SSLinfo_get('srp',              $_[0], $_[1]); }
 sub master_key      { return _SSLinfo_get('master_key',       $_[0], $_[1]); }
 sub master_secret   { return _SSLinfo_get('master_secret',    $_[0], $_[1]); }
 sub extended_master_secret  { return _SSLinfo_get('master_secret', $_[0], $_[1]); } # alias
+sub resumption_psk  { return _SSLinfo_get('resumption_psk',   $_[0], $_[1]); }
 sub public_key_len  { return _SSLinfo_get('public_key_len',   $_[0], $_[1]); }
 sub session_id      { return _SSLinfo_get('session_id',       $_[0], $_[1]); }
 sub session_id_ctx  { return _SSLinfo_get('session_id_ctx',   $_[0], $_[1]); }
