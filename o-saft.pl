@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.156 24/09/05 23:49:51"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.157 24/09/06 08:52:32"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -377,7 +377,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.156"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.157"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -3327,8 +3327,9 @@ sub check_dh        {
             $checks{'ecdh_512'}->{val}  =  $txt if ($dh < 512);
         }
         # lazy check: logjam if bits < 256 only
-        my $val = $checks{'dh_512'}->{val} . $checks{'dh_2048'}->{val} . $checks{'ecdh_256'}->{val};
+        my $val = join(" ", $checks{'dh_512'}->{val}, $checks{'dh_2048'}->{val}, $checks{'ecdh_256'}->{val});
         $checks{'logjam'}->{val} = $val if ($val ne "");
+        #OCfg::hint("2xx: use '+cipher-dh' to get details") if ($val ne "");
     } else {                    # not a number, probably suspicious
         $checks{'logjam'}->{val} =  $txt;
     }
@@ -6141,7 +6142,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.156");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.157");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -8156,32 +8157,38 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
 
     # following sequence important!
     # if conditions are just to improve performance
-    # SSLinfo::do_ssl_open() will be call here if --ignore_no_conn was given
+    # SSLinfo::do_ssl_open() will be called here if --ignore_no_conn was given
     _vprint("  perform checks ...");
-    if (_need_checkalpn() > 0) {
+    if (0 < _need_checkalpn()) {
         checkalpn( $host, $port);   _trace_time("  checkalpn.");
     }
         checkdates($host, $port);   _trace_time("  checkdates.");
-    if (_need_checkhttp() > 0) {
+    if (0 < _need_checkhttp()) {
         checkhttp( $host, $port);   _trace_time("  checkhttp.");
     }
-        checksni(  $host, $port);   _trace_time("  checksni.");
+        checksni(  $host, $port);   _trace_time("  checksni." );
         checksizes($host, $port);   _trace_time("  checksizes.");
-    if ($info == 0) {   # not for +info
-        checkdv(   $host, $port);   _trace_time("  checkdv.");
+    if (0 == $info) {   # not for +info
+        checkdv(   $host, $port);   _trace_time("  checkdv."  );
     }
-    if (_need_checkprot() > 0) {
+    if (0 < _need_checkalpn()) {
+        checkalpn( $host, $port);   _trace_time("  checkalpn.");
+    }
+    if (0 < _need_check_dh())  {
+        check_dh(  $host, $port);   _trace_time("  check_dh." );
+    }
+    if (0 < _need_checkprot()) {
         checkprot( $host, $port);   _trace_time("  checkprot.");
     }
-    if (_need_checkdest() > 0) {
+    if (0 < _need_checkdest()) {
         checkdest( $host, $port);   _trace_time("  checkdest.");
     }
-    if (_need_checkbleed() > 0) {
+    if (0 < _need_checkbleed()) {
         checkbleed($host, $port);   _trace_time("  checkbleed.");
     }
-    if (_need_checkssl() > 0) {
+    if (0 < _need_checkssl()) {
         _vprint("  need_checkssl ...");
-        checkssl(  $host, $port);   _trace_time("  checkssl.");
+        checkssl(  $host, $port);   _trace_time("  checkssl." );
     }
     if (_is_cfg_do('sstp')) {   # only check if needed
         checksstp( $host, $port);   _trace_time("  checksstp.");
