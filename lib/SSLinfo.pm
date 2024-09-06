@@ -49,7 +49,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.33 24/09/06 16:32:46";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.34 24/09/06 21:34:46";
 our $VERSION        =  "24.09.24";  # official verion number of this file
 
 BEGIN {
@@ -4224,8 +4224,8 @@ sub _main           {
     local $\="\n";  # wegen eigenen test_*()
     # got arguments, do something special; any -option or +command exits
     while (my $arg = shift @argv) {
-        if ($arg =~ m/^--?h(?:elp)?$/)          { local $\; undef $\; OText::print_pod($0, __PACKAGE__, $SID_sslinfo); exit 0; }
-        if ($arg eq '--usage')  { local $\; undef $\; OText::usage_show("", \%usage); exit 0; }
+        if ($arg =~ m/^--?h(?:elp)?$/)          { local $\ = undef; OText::print_pod($0, __PACKAGE__, $SID_sslinfo); exit 0; }
+        if ($arg eq '--usage')  { local $\ = undef; OText::usage_show("", \%usage); exit 0; }
         # ----------------------------- options
         if ($arg =~ m/^--(?:v|trace.?)/i)       { $SSLinfo::verbose++;  next; }
         # ----------------------------- commands
