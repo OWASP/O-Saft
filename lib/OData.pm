@@ -18,7 +18,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odata  =  "@(#) OData.pm 3.30 24/09/04 08:53:25";
+my  $SID_odata  =  "@(#) OData.pm 3.31 24/09/06 16:20:11";
 our $VERSION    =  "24.09.24";
 
 use Exporter qw(import);
@@ -249,6 +249,7 @@ our %data   = (         # connection and certificate details
     'npns'              => {'val' => sub { return $info{'npns'};                        }, 'txt' => "Target's supported  NPNs"},
     'master_key'        => {'val' => sub { SSLinfo::master_key(            $_[0], $_[1])}, 'txt' => "Target's Master-Key"},
     'public_key_len'    => {'val' => sub { SSLinfo::public_key_len(        $_[0], $_[1])}, 'txt' => "Target's Server public key length"}, # value reported by openssl s_client -debug ...
+    'resumption_psk'    => {'val' => sub { SSLinfo::resumption_psk(        $_[0], $_[1])}, 'txt' => "Target's Resumption PSK"},
     'session_id'        => {'val' => sub { SSLinfo::session_id(            $_[0], $_[1])}, 'txt' => "Target's Session-ID"},
     'session_id_ctx'    => {'val' => sub { SSLinfo::session_id_ctx(        $_[0], $_[1])}, 'txt' => "Target's Session-ID-ctx"},
     'session_protocol'  => {'val' => sub { SSLinfo::session_protocol(      $_[0], $_[1])}, 'txt' => "Target's selected SSL Protocol"},
@@ -473,6 +474,7 @@ our %check_dest = (  # target (connection) data
     # following for information, checks not useful; see "# check target specials" in checkdest also
 #    'master_key'    => {'txt' => "Target supports Master-Key"},
 #    'session_id'    => {'txt' => "Target supports Session-ID"},
+#    'resumption_psk'=> {'txt' => "Target Resumption PSK"},
     'dh_512'        => {'txt' => "Target DH Parameter >= 512 bits"},
     'dh_2048'       => {'txt' => "Target DH Parameter >= 2048 bits"},
     'ecdh_256'      => {'txt' => "Target DH Parameter >= 256 bits (ECDH)"},
@@ -686,6 +688,7 @@ our %shorttexts = (
     'srp'               => "SRP Username",
     'master_key'        => "Master-Key",
     'public_key_len'    => "Server public key length",
+    'resumption_psk'    => "Resumption PSK",
     'session_id'        => "Session-ID",
     'session_id_ctx'    => "Session-ID-ctx",
     'session_protocol'  => "Selected SSL Protocol",
@@ -1234,7 +1237,7 @@ _init();
 
 =head1 VERSION
 
-3.30 2024/09/04
+3.31 2024/09/06
 
 
 =head1 AUTHOR
