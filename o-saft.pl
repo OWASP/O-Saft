@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.159 24/09/06 12:36:21"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.161 24/09/06 19:00:38"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -377,7 +377,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.159"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.161"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6154,7 +6154,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.159");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.161");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7218,6 +7218,8 @@ while ($#argv >= 0) {
     #{ COMMANDS
     my $p = qr/[._-]/;  # characters used as separators in commands keys
                         # this will always be used as $p? below
+        # TODO: build general RegEx to replace .,- in command name by _
+        #       this would make many checks below obsolete or simplify them
     trace_arg("command? $arg");
     $arg =~ s/^,/+/;    # allow +command and ,command
     # The following sequence of conditions is important: commands which are an
@@ -7332,11 +7334,21 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+sig(key)?$p?enc(?:ryption)?$/)    { $arg = '+sig_encryption'; } # alias:
     if ($arg =~ /^\+sig(key)?$p?enc(?:ryption)?_known/){$arg = '+sig_enc_known';  } # alias:
     if ($arg =~ /^\+server$p?(?:temp)?$p?key$/)       { $arg = '+dh_parameter';   } # alias:
+    if ($arg =~ /^\+master$p?key$/)                   { $arg = '+master_key';     }
     if ($arg =~ /^\+master$p?secret$/)                { $arg = '+master_secret';  }
     if ($arg =~ /^\+extended$p?master$p?secret$/)     { $arg = '+master_secret';  } # alias:
-    if ($arg =~ /^\+reneg/)             { $arg = '+renegotiation';  } # alias:
-    if ($arg =~ /^\+resum/)             { $arg = '+resumption';     } # alias:
+    if ($arg =~ /^\+session$p?id$/)                   { $arg = '+session_id';     }
+    if ($arg =~ /^\+session$p?protocol$/)             { $arg = '+session_protocol'; } # lazy usage
+    if ($arg =~ /^\+session$p?lifetime$/)             { $arg = '+session_lifetime'; } # lazy usage
+    if ($arg =~ /^\+session$p?random$/)               { $arg = '+session_random'; } # lazy usage
+    if ($arg =~ /^\+session$p?ticket$/)               { $arg = '+session_ticket'; } # lazy usage
+    if ($arg =~ /^\+session$p?timeout$/)              { $arg = '+session_timeout';} # lazy usage
+    if ($arg =~ /^\+session$p?startdate$/)            { $arg = '+session_startdate';} # lazy usage
+    if ($arg =~ /^\+session$p?starttime$/)            { $arg = '+session_starttime';} # lazy usage
+    if ($arg =~ /^\+reneg$/)            { $arg = '+renegotiation';  } # alias:
+    if ($arg =~ /^\+resum$/)            { $arg = '+resumption';     } # alias:
     if ($arg =~ /^\+reused?$/i)         { $arg = '+resumption';     } # alias:
+    if ($arg =~ /^\+resumption$p?psk$/i){ $arg = '+resumption_psk'; }
     if ($arg =~ /^\+commonName$/i)      { $arg = '+cn';             } # alias:
     if ($arg =~ /^\+cert(?:ificate)?$/i){ $arg = '+pem';            } # alias:
     if ($arg =~ /^\+issuer$p?X509$/i)   { $arg = '+issuer';         } # alias:
@@ -7363,6 +7375,7 @@ while ($#argv >= 0) {
     if ($arg eq '+check_sni'){@{$cfg{'do'}} =  @{$cfg{'cmd-sni--v'}};           next; }
     if ($arg eq '+protocols'){@{$cfg{'do'}} = (@{$cfg{'cmd-prots'}});           next; }
 #    if ($arg =~ /^\+next$p?prot(?:ocol)s$/) { @{$cfg{'do'}}= (@{$cfg{'cmd-prots'}}); next; }
+if ($arg =~ /^\+resum/)  { _dbx "0 ARG $arg"; }
     if ($arg =~ /^\+(.*)/)  {   # all  other commands
         my $val = $1;
         trace_arg("command+ $val");
@@ -7372,6 +7385,7 @@ while ($#argv >= 0) {
             $cfg{'exec'} = 1;
             next;
         }
+if ($arg =~ /^\+resum/)  { _dbx "1 ARG $arg"; }
         $val = lc($val);                # be greedy to allow +BEAST, +CRIME, etc.
         push(@{$cfg{'done'}->{'arg_cmds'}}, $val);
         if ($val eq 'sizes')    { push(@{$cfg{'do'}}, @{$cfg{'cmd-sizes'}});   next; }
