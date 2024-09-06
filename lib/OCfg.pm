@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.68 24/09/06 09:06:30";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.69 24/09/06 16:30:19";
 our $VERSION    =  "24.09.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -2330,7 +2330,7 @@ our %cfg = (    # main data structure for configuration
                          sigkey_value pubkey_value modulus
                          subject_hash issuer_hash
                          ocsp_public_hash ocsp_subject_hash
-                         master_key session_id session_ticket
+                         master_key resumption_psk session_id session_ticket
                          ext_authorityid ext_subjectkeyid
                        )],      # fingerprint, sigkey_value are special
                                 # no need to convert modulus_exponent, serial
@@ -3567,7 +3567,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.68"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.69"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3613,7 +3613,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.68 2024/09/06
+3.69 2024/09/06
 
 =head1 AUTHOR
 
