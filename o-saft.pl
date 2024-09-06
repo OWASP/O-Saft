@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.161 24/09/06 19:00:38"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.162 24/09/06 19:05:16"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -377,7 +377,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.161"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.162"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6154,7 +6154,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.161");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.162");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7375,7 +7375,6 @@ while ($#argv >= 0) {
     if ($arg eq '+check_sni'){@{$cfg{'do'}} =  @{$cfg{'cmd-sni--v'}};           next; }
     if ($arg eq '+protocols'){@{$cfg{'do'}} = (@{$cfg{'cmd-prots'}});           next; }
 #    if ($arg =~ /^\+next$p?prot(?:ocol)s$/) { @{$cfg{'do'}}= (@{$cfg{'cmd-prots'}}); next; }
-if ($arg =~ /^\+resum/)  { _dbx "0 ARG $arg"; }
     if ($arg =~ /^\+(.*)/)  {   # all  other commands
         my $val = $1;
         trace_arg("command+ $val");
@@ -7385,7 +7384,6 @@ if ($arg =~ /^\+resum/)  { _dbx "0 ARG $arg"; }
             $cfg{'exec'} = 1;
             next;
         }
-if ($arg =~ /^\+resum/)  { _dbx "1 ARG $arg"; }
         $val = lc($val);                # be greedy to allow +BEAST, +CRIME, etc.
         push(@{$cfg{'done'}->{'arg_cmds'}}, $val);
         if ($val eq 'sizes')    { push(@{$cfg{'do'}}, @{$cfg{'cmd-sizes'}});   next; }
