@@ -35,7 +35,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_oman   = "@(#) OMan.pm 3.66 24/09/05 00:08:46";
+my  $SID_oman   = "@(#) OMan.pm 3.67 24/09/06 21:21:05";
 our $VERSION    = "24.09.24";
 
 use Exporter qw(import);
@@ -801,7 +801,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.66'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.67'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2149,7 +2149,7 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         foreach my $key (sort(keys(%{$cfg{'cipherranges'}}))) {
             next if ($key =~ m/(full|huge|long|safe)/i);
 #print "key=$key";
-            my @list = eval($cfg{'cipherranges'}->{$key} || "");
+            my @list = eval($cfg{'cipherranges'}->{$key} || ""); ## no critic qw(BuiltinFunctions::ProhibitStringyEval)
             $sizes{$key} = scalar(@list); 
         }
         $pod .= _man_foot(16);
@@ -2759,7 +2759,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.66 2024/09/05
+3.67 2024/09/06
 
 
 =head1 AUTHOR
