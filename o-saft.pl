@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.158 24/09/06 09:41:48"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.159 24/09/06 12:36:21"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -377,7 +377,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.158"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.159"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -3334,6 +3334,7 @@ sub check_dh        {
         $checks{'logjam'}->{val} =  $txt;
     }
     FIN:
+    $checks{'logjam'}->{val} =~ s/^\s*$//;  # cleanup superfluous spaces
     trace("check_dh() }");
     return;
 } # check_dh
@@ -4241,6 +4242,10 @@ sub check02102      {
     #! TR-02102-2 4.3 Zufallszahlen
         # these checks are not possible from remote
 
+    # cleanup superfluous spaces
+    $checks{'tr_02102+'}->{val} =~ s/^\s*$//;
+    $checks{'tr_02102-'}->{val} =~ s/^\s*$//;
+
     return;
 } # check02102
 
@@ -4345,6 +4350,9 @@ sub check03116      {
         # these checks are not possible from remote
 
     $checks{'tr_03116-'}->{val} .= $checks{'tr_03116+'}->{val};
+    # cleanup superfluous spaces
+    $checks{'tr_03116+'}->{val} =~ s/^\s*$//;
+    $checks{'tr_03116-'}->{val} =~ s/^\s*$//;
 
     return;
 } # check03116
@@ -4434,6 +4442,7 @@ sub check6125       {
         $val .= " <<7.3:altname $txt>>"   if ($txt =~ m!$cfg{'regex'}->{'isIDN'}!);
     }
     $checks{'rfc_6125_names'}->{val} = $val;
+    $checks{'rfc_6125_names'}->{val} =~ s/^\s*$//;  # cleanup superfluous spaces
 
     return;
 } # check6125
@@ -4608,6 +4617,7 @@ sub check7525       {
     # All checks for ciphers were done in _is_compliant() and already stored
     # in $checks{'rfc_7525'}. Because it may be a huge list, it is appended.
     $checks{'rfc_7525'}->{val} = $val . " " . $checks{'rfc_7525'}->{val};
+    $checks{'rfc_7525'}->{val} =~ s/^\s*$//;        # cleanup superfluous spaces
 
     return;
 } # check7525
@@ -6144,7 +6154,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.158");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.159");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
