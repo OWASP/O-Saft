@@ -41,7 +41,7 @@ use Data::Dumper qw(Dumper);
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_trace      = "@(#) OTrace.pm 3.42 24/09/04 09:04:07";
+my  $SID_trace      = "@(#) OTrace.pm 3.43 24/09/06 21:24:04";
 our $VERSION        = "24.09.24";
 
 our $prefix_trace   = "#". __PACKAGE__ . ":";
@@ -888,7 +888,7 @@ sub init_show   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
                         _ptype(\%cfg, $key);
                         $cfg{'time0'} = $t0;
                     } else {
-                        if ("RC-ARGV" eq $key) {
+                        if ("RC-ARGV" eq $key) { ## no critic qw(ControlStructures::ProhibitDeepNests) # severity 3 only
                             # dirty hack because values may contain whitespace
                             print(___K_V($key, _q_ARR(@{$cfg{'RC-ARGV'}})));
                         } else {
@@ -1228,7 +1228,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.42 2024/09/04
+3.43 2024/09/06
 
 =head1 AUTHOR
 
