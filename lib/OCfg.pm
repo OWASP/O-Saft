@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.69 24/09/06 16:30:19";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.70 24/09/06 21:30:43";
 our $VERSION    =  "24.09.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -2996,7 +2996,7 @@ Print warning message according configured settings.
 
 # wrappers should be in OText.pm, but they use settings from %cfg, hence here
 
-sub _dbx   { printf(STDERR "%s%s\n", $STR{DBX}, join(" ", @_)); return; }
+sub _dbx   { printf(STDERR "%s%s\n", $STR{DBX}, join(" ", @_)); return; } ## no critic qw(Subroutines::RequireArgUnpacking Subroutines::ProhibitUnusedPrivateSubroutines)
     #? print line for debugging (should be exported)
 
 sub hint   { 
@@ -3018,7 +3018,7 @@ sub hint   {
     return;
 } # hint
 
-sub warn   {
+sub warn   { ## no critic qw(Subroutines::ProhibitBuiltinHomonyms) # we want this name
     #? print warning if wanted; SEE Note:Message Numbers
     # don't print if (not _is_cfg_out('warning'));
     my @txt = @_;
@@ -3567,7 +3567,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.69"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.70"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3613,7 +3613,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.69 2024/09/06
+3.70 2024/09/06
 
 =head1 AUTHOR
 
