@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.157 24/09/06 08:52:32"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.158 24/09/06 09:41:48"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -377,7 +377,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.157"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.158"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -4175,10 +4175,12 @@ sub check02102      {
     #! TR-02102-2 3.3.2 Übergangsregelungen
         # cipher checks are already done in checkciphers()
 
+    # ugly hack for trailing space for some values below
+
     #! TR-02102-2 3.4.1 Session Renegotation
     $val = ($checks{'renegotiation'}->{val} ne "") ? $text{'no_reneg'} : "";
-    $checks{'tr_02102+'}->{val}.= $val;
-    $checks{'tr_02102-'}->{val}.= $val;
+    $checks{'tr_02102+'}->{val}.= "$val ";
+    $checks{'tr_02102-'}->{val}.= "$val ";
 
     #! TR-02102-2 3.4.2 Verkürzung der HMAC-Ausgabe
         # FIXME: cannot be tested because openssl does not suppot it (11/2016)
@@ -4195,7 +4197,7 @@ sub check02102      {
     #! TR-02102-2 3.4.4 Der Lucky 13-Angriff
     $val = $checks{'lucky13'}->{val};
     $val = ($val ne "") ? _get_text('insecure', "cipher $val; Lucky13") : "" ;
-    $checks{'tr_02102+'}->{val}.= $val;
+    $checks{'tr_02102+'}->{val}.= "$val ";
     # check for Lucky 13 in strict mode only (requires GCM)
 
     #! TR-02102-2 3.4.5 Die "Encrypt-then-MAC"-Erweiterung
@@ -4488,7 +4490,7 @@ sub check7525       {
 
     $val .= " DTLSv11" if ( $prot{'DTLSv11'}->{'cnt'} > 0);
     checkhttp($host, $port);    # need http_sts
-    $val .= _get_text('missing', 'STS') if ($checks{'hsts_sts'} eq "");
+    $val .= " " . _get_text('missing', 'STS') if ($checks{'hsts_sts'} eq "");
     # TODO: strict TLS checks are for STARTTLS only, not necessary here
 
     # 3.3.  Compression
@@ -4498,7 +4500,7 @@ sub check7525       {
     #    such attacks.
 
     if ($data{'compression'}->{val}($host) =~ /$cfg{'regex'}->{'nocompression'}/) {
-        $val .= $data{'compression'}->{val}($host);
+        $val .= " " . $data{'compression'}->{val}($host);
     }
 
     # 3.4.  TLS Session Resumption
@@ -4510,9 +4512,9 @@ sub check7525       {
     #    a reasonable duration (e.g., half as long as ticket key validity).
 
     if ($data{'resumption'}->{val}($host) eq "") {
-        $val .= _get_text('insecure', 'resumption');
-        $val .= _get_text('missing',  'session ticket') if ($data{'session_ticket'}->{val}($host) eq "");
-        $val .= _get_text('insecure', 'randomness of session') if ($checks{'session_random'}->{val} ne "");
+        $val .= " " . _get_text('insecure', 'resumption');
+        $val .= " " . _get_text('missing',  'session ticket') if ($data{'session_ticket'}->{val}($host) eq "");
+        $val .= " " . _get_text('insecure', 'randomness of session') if ($checks{'session_random'}->{val} ne "");
     }
     # TODO: session ticket must be random
     # FIXME: session ticket must be authenticated and encrypted
@@ -4521,14 +4523,14 @@ sub check7525       {
     #    ... both clients and servers MUST implement the renegotiation_info
     #    extension, as defined in [RFC5746].
 
-    $val .= _get_text('missing',  'renegotiation_info extension') if ($data{'tlsextensions'}->{val}($host, $port) !~ m/renegotiation info/);
-    $val .= _get_text('insecure', 'renegotiation') if ($data{'renegotiation'}->{val}($host)  eq "");
+    $val .= " " . _get_text('missing',  'renegotiation_info extension') if ($data{'tlsextensions'}->{val}($host, $port) !~ m/renegotiation info/);
+    $val .= " " . _get_text('insecure', 'renegotiation') if ($data{'renegotiation'}->{val}($host)  eq "");
 
     # 3.6.  Server Name Indication
     #    TLS implementations MUST support the Server Name Indication (SNI)
 
     checksni($host, $port);    # need sni
-    $val .= "<<SNI not supported>>" if ($checks{'sni'}->{val} eq "");
+    $val .= " <<SNI not supported>>" if ($checks{'sni'}->{val} eq "");
     # TODO: need a reliable check if SNI is supported
 
     # 4.  Recommendations: Cipher Suites
@@ -4557,9 +4559,9 @@ sub check7525       {
 
     check_dh($host, $port);     # need DH Parameter
     if ($data{'dh_parameter'}->{val}($host) =~ m/ECDH/) {
-        $val .= _get_text('insecure', "DH Parameter: $checks{'ecdh_256'}->{val}") if ($checks{'ecdh_256'}->{val} ne "");
+        $val .= " " . _get_text('insecure', "DH Parameter: $checks{'ecdh_256'}->{val}") if ($checks{'ecdh_256'}->{val} ne "");
     } else {
-        $val .= _get_text('insecure', "DH Parameter: $checks{'dh_2048'}->{val}")  if ($checks{'dh_2048'}->{val}  ne "");
+        $val .= " " . _get_text('insecure', "DH Parameter: $checks{'dh_2048'}->{val}")  if ($checks{'dh_2048'}->{val}  ne "");
         # TODO: $check...{val} may already contain "<<...>>"; remove it
     }
     # TODO: use OCfg::get_dh_paramter() for more reliable check
@@ -4568,8 +4570,8 @@ sub check7525       {
     #    Implementations MUST NOT use the Truncated HMAC extension, defined in
     #    Section 7 of [RFC6066].
 
-    $val .= _get_text('missing', 'truncated HMAC extension') if ($data{'tlsextensions'}->{val}($host, $port) =~ m/truncated.*hmac/i);
-    #$val .= _get_text('missing', 'session ticket extension') if ($data{'tlsextensions'}->{val}($host, $port) !~ m/session.*ticket/);
+    $val .= " " . _get_text('missing', 'truncated HMAC extension') if ($data{'tlsextensions'}->{val}($host, $port) =~ m/truncated.*hmac/i);
+    #$val .= " " . _get_text('missing', 'session ticket extension') if ($data{'tlsextensions'}->{val}($host, $port) !~ m/session.*ticket/);
     #$val .= _get_text('missing', 'session ticket lifetime extension') if ($data{'session_lifetime'}->{val}($host, $port) eq "");
 
     # 6.  Security Considerations
@@ -4581,7 +4583,7 @@ sub check7525       {
     #    name is discovered securely (for further discussion, see [DANE-SRV]
     #    and [DANE-SMTP]).
 
-    $val .=  $text{'EV_subject_host'} if ($checks{'hostname'}->{val} ne "");
+    $val .=  " " . $text{'EV_subject_host'} if ($checks{'hostname'}->{val} ne "");
 
     # 6.2.  AES-GCM
     # FIXME: implement
@@ -4598,10 +4600,10 @@ sub check7525       {
     #    OCSP [RFC6960]
     #    The OCSP stapling extension defined in [RFC6961]
 
-    $val .= _get_text('missing', 'OCSP') if ($checks{'ocsp_uri'}->{val}  ne "");
-    $val .= $checks{'ocsp_valid'}->{val};
-    $val .= _get_text('missing', 'CRL in certificate') if ($checks{'crl'}->{val} ne "");
-    $val .= $checks{'crl_valid'}->{val};
+    $val .= " " . _get_text('missing', 'OCSP') if ($checks{'ocsp_uri'}->{val}  ne "");
+    $val .= " " . $checks{'ocsp_valid'}->{val};
+    $val .= " " . _get_text('missing', 'CRL in certificate') if ($checks{'crl'}->{val} ne "");
+    $val .= " " . $checks{'crl_valid'}->{val};
 
     # All checks for ciphers were done in _is_compliant() and already stored
     # in $checks{'rfc_7525'}. Because it may be a huge list, it is appended.
@@ -6142,7 +6144,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.157");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.158");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
