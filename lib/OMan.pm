@@ -35,7 +35,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_oman   = "@(#) OMan.pm 3.67 24/09/06 21:21:05";
+my  $SID_oman   = "@(#) OMan.pm 3.68 24/09/07 11:46:09";
 our $VERSION    = "24.09.24";
 
 use Exporter qw(import);
@@ -801,7 +801,7 @@ sub _man_usr_value  {
 sub _man_get_version {
     # ugly, but avoids global variable elsewhere or passing as argument
     no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.67'; $v = _VERSION() if (defined &_VERSION);
+    my $v = '3.68'; $v = _VERSION() if (defined &_VERSION);
     return $v;
 } # _man_get_version
 
@@ -2195,7 +2195,6 @@ sub man_alias       {
     _man_dbx("man_alias() ..");
     my $pod = "\n" . _man_head(27, "Alias (regex)         ", "command or option   # used by ...");
     my $txt =  "";
-    my $p   = '[._-]'; # regex for separators as used in o-saft.pl
     my $fh  = undef;
     my $src = _get_filename($parent);   # need full path for $parent file here
     _man_dbx("man_alias: reading $src");
@@ -2212,7 +2211,7 @@ sub man_alias       {
             $regex =~ s/\$$//;      # remove trailing $
             $regex =~ s/\(\?:/(/g;  # remove ?: in all groups
             $regex =~ s/\[\+\]/+/g; # replace [+] with +
-            $regex =~ s/\$p\?/-/g;  # replace variable
+            $regex =~ s/_\?/-/g;    # replace placeholder; [.,_-] in o-saft.pl
             # check if alias is command or option
             if ($alias !~ m/^[+-]/) {
                 # look not like command or option, use comment
@@ -2759,7 +2758,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.67 2024/09/06
+3.68 2024/09/07
 
 
 =head1 AUTHOR
