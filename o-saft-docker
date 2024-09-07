@@ -1,7 +1,7 @@
 #!/bin/sh
 #?
 #? NAME
-#?       $0 - wrapper script to handle O-Saft in a Docker image
+#?       $0 - wrapper script to handle O-Saft in a container image
 #?
 #? SYNOPSIS
 #?       $0
@@ -29,40 +29,40 @@
 #?       -n      do not execute, just show what would be done
 #?       -v      be a bit verbose
 #?       +V      show own version (SID)
-#?       -id=ID  use Docker image ID (registry:tag); default: owasp/o-saft
-#?       -tag=23 use Docker image ID with tag; default: (empty)
+#?       -id=ID  use container image ID (registry:tag); default: owasp/o-saft
+#?       -tag=23 use container image ID with tag; default: (empty)
 #?       -local  use --network=host to allow container accessing the host
 #?               WARNING: see section  SECURITY  below also.
 #?       -OSAFT_VERSION=21.11.12  same as OSAFT_VERSION environment variable
-#?       --      pass all remaining parameters to o-saft.pl in Docker image
+#?       --      pass all remaining parameters to o-saft.pl in image
 #?
 #? QUICKSTART
 #?       The main purpose of this wrapper is to provide a very simple call of
-#?       o-saft.pl  in a running O-Saft Docker image. It is the default mode.
+#?       o-saft.pl in a started O-Saft container image.
 #?       Example:
 #?           $0 +info your.tld
 #?
 #? DESCRIPTION
-#?       This is a multipurpose wrapper to handle O-Saft in a Docker image.
+#?       This is a multipurpose wrapper to handle O-Saft in a container image.
 #?       It can operate in following modes:
-#?           build   - build the Docker image for O-Saft from Dockerfile
-#?           usage   - print the initial usage message for O-Saft in Docker
-#?           status  - show various information about O-Saft Docker image
-#?           rmi     - remove O-Saft Docker image(s)
-#?           apk     - add and commit packages in O-Saft Docker image
-#?           shell   - run a shell (/bin/sh) in Docker image
-#?           root    - run a shell (/bin/sh) as user root in Docker image
-#?           call    - run specified program with arguments in Docker image
-#?           cp      - copy file to /O-Saft directory in the Docker image
+#?           build   - build the container image for O-Saft from Dockerfile
+#?           usage   - print the initial usage message for O-Saft in container
+#?           status  - show various information about O-Saft container image
+#?           rmi     - remove O-Saft container image(s)
+#?           apk     - add and commit packages in O-Saft container image
+#?           shell   - run a shell (/bin/sh) in container image
+#?           root    - run a shell (/bin/sh) as user root in container image
+#?           call    - run specified program with arguments in container image
+#?           cp      - copy file to /O-Saft directory in the container image
 #            hacker  - show more information
-#?           gui     - start o-saft.tcl in the Docker image (display to host)
-#?           sshx    - start o-saft.tcl in the Docker image (tunnel X via ssh)
-#?           *       - anything else (default): run o-saft.pl in Docker image
+#?           gui     - start o-saft.tcl in container image (display to host)
+#?           sshx    - start o-saft.tcl in container image (tunnel X via ssh)
+#?           *       - anything else (default): run o-saft.pl in container
 #?
-#?       This wrapper expects, that the O-Saft Docker image has the name:
+#?       This wrapper expects, that the O-Saft container image has the name:
 #?           owasp/o-saft
-#?       If there are more Docker images with the same (registry) name, a tag
-#?       can be used to identify the image, see  -tag=TAG  option, i.e.
+#?       If there are more container images  with the same (registry) name, a
+#?       tag can be used to identify the image, see  -tag=TAG  option, i.e.
 #?           $0 -tag=17.07.17 +info your.tld
 #?       will use the name:  owasp/o-saft:17.07.17 .  The  -id=ID  option can
 #?       be used to redefine the (registry:tag) name to be used completely.
@@ -74,25 +74,28 @@
 #?
 #? TERMINOLOGY
 #?
+#?   container
+#?       The term "container" is used when either Docker or podman is meant.
+#?
 #?   Docker vs. docker
 #?       The term "Docker" is used when the Docker system in general is meant.
 #?       The term "docker" is used when the Docker client program is meant.
 #?
 #?   mode vs. command
 #?       The term "mode" is used for our script, which is similar to the term
-#?       "command" of Docker. This is to distinguish the commands herein from
-#?       those of Docker.
+#?       "command" of Docker or podman.  It distinguishes the commands herein
+#?       from those of Docker or podman.
 #?
-#?   "o-saft.pl in Docker image"
-#?       Means that the program defined by O-Saft Docker's ENTRYPOINT will be
-#?       executed. This can be  o-saft.pl  or  o-saft .
+#?   "o-saft.pl in container image"
+#?       Means that the program defined by O-Saft Docker's or podman's ENTRY-
+#?       POINT will be executed. This can be  o-saft.pl  or  o-saft .
 #?
 #? MODES
-#?       Modes are simply an alias  to call  docker  with the proper commands
-#?       and options for the  O-Saft Docker image. Most modes use the command
-#?       "docker run --rm ...".
-#?       This wrapper ensures that the proper O-Saft image within Docker will
-#?       be used by passing the correct  "repository:tag"  image id (default:
+#?       Modes are simply an alias  to call docker or podman  with the proper
+#?       commands and options for the  O-Saft container image. Most modes use
+#?       for example the command "docker run --rm ...".
+#?       This wrapper ensures that the proper  O-Saft container image will be
+#?       used by passing the correct  "repository:tag"  image id (default:
 #?       owasp/o-saft). This script will exit, if the image owasp/o-saft does
 #?       exist (to avoid automatic pull from Docker's repository).
 #?
@@ -100,8 +103,8 @@
 #?
 #?   default
 #?       In default mode,  all parameters given to this wrapper are passed to
-#?       o-saft.pl  in the Docker image. This means that for all the existing
-#?       calls, the name of the script (usually o-saft.pl) needs simply to be
+#?       o-saft.pl in the container image. Means that for all existing calls,
+#?       the name of the script (usually o-saft.pl) needs simply to be
 #?       replaced by  $0 . Example:
 #?           o-saft.pl +info your.tld
 #?       becomes
@@ -109,23 +112,22 @@
 #?       Please see  LIMITATIONS  below also.
 #?
 #?   gui
-#?       Start  o-saft.tcl in the Docker image with display to the host where
-#?       started.
+#?       Start  o-saft.tcl in the container image with display to the host.
 #?
 #?   sshx
-#?       Start  o-saft.tcl in the Docker image using ssh  to tunnel X  to the
+#?       Start o-saft.tcl in the container image using ssh to tunnel X to the
 #?       hosts display.
 #?
 #?   build
-#?       This mode builds the Docker image for O-Saft from the Dockerfile. If
-#?       ./Dockerfile is missing following will be used:
+#?       This mode builds the container image for O-Saft from the Dockerfile.
+#?       If ./Dockerfile is missing following will be used:
 #?           https://github.com/OWASP/O-Saft/raw/master/Dockerfile
 #?       See  ENVIONMENT VARIABLES below for supported environment variables.
 #?
 #?   apk
 #?   apt
-#?       Add and commit the specified packages in O-Saft Docker image.
-#?       Note that this creates a new layer for the O-Saft Docker image.
+#?       Add and commit the specified packages in O-Saft container image.
+#?       Note that this creates a new layer for the O-Saft container image.
 #?       For more advanced mode, please refer to  o-saft-docker-dev.
 #?       Uses  apk or apt  to add/install the package, depending on the mode.
 #?
@@ -134,11 +136,11 @@
 #?
 #?   usage
 #?       Print a brief purpose and usage of this script.
-#?       It is intended to be called from within the Docker image once, right
-#?       after the initial build (see Dockerfile).
+#?       This is intended to be called from  within the container image once,
+#?       right after the initial build (see Dockerfile).
 #?
 #?   shell
-#?       Start a shell in O-Saft Docker image.
+#?       Start a shell in O-Saft container image.
 #?       This is useful because the  ENTRYPOINT  in the image is  o-saft  or
 #?       o-saft.pl , which otherwise will always be executed.
 #?
@@ -146,7 +148,7 @@
 #?       Same as mode  shell, but login as user root.
 #?
 #?   cp
-#?       Copy file to /O-Saft directory in the Docker image.
+#?       Copy file to /O-Saft directory in the container image.
 #?
 #?   call
 #?       Execute specified program with given arguments.  The program must be
@@ -157,14 +159,14 @@
 #?           $0 call /usr/bin/env
 #?
 #?   inspect
-#?       Print information about O-Saft Docker image using inspect command.
+#?       Print information about O-Saft container image with inspect command.
 #?
 #?   status
-#?       Show various information about O-Saft Docker image.
+#?       Show various information about O-Saft container image.
 #?
 #? WARNING
 #?       It is highly recommended to  *not* use the created image as base for
-#?       other Docker images. Also,  do *not*  use openssl from the image for
+#?       other container images. Also do *not* use openssl from the image for
 #?       other purpose than O-Saft intends.
 #?
 #? SECURITY
@@ -246,20 +248,20 @@
 #? LIMITATIONS
 #?       The options  -n  -v  -id=ID  and  -h  must be specified  leftmost if
 #?       they should apply for this script.
-#?       These options can only be passed to  o-saft.pl  in the Docker image,
+#?       These options can only be passed to o-saft.pl in the container image
 #?       if they are preceeded by the  --  parameter.
 #?       The option  +VERSION  is not supported for this tool, it's passed to
-#?       the Docker image, use  +V  instead.
+#?       the container image, use  +V  instead.
 #?       Unknown parameters to this script will be treated as arguments to be
 #?       passed to o-saft.pl and will terminate internal argument scanning in
 #?       this script.
-#?       The script calls the program defined by the ENTRYPOINT in the Docker
-#?       image (which is most likely o-saft).
-#?       This script is not intended to call  o-saft.cgi in the Docker image.
+#?       The script calls the program defined by the  ENTRYPOINT in the
+#?       container image (which is most likely o-saft).
+#?       This script is not intended to call  o-saft.cgi in the container.
 #?       However, it is possible to do so:
 #?           $0 call o-saft.cgi --cgi [options and commands of o-saft.pl]
 #?
-#?       Using the GUI from the Docker image (for example with option gui)
+#?       Using the GUI from the container image (for example with mode gui)
 #?       may return errors like:
 #?           Authorization required, but no authorization protocol specified
 #?           application-specific initialization failed: couldn't connect to display ":0.0"
@@ -287,17 +289,17 @@
 #?       See  SYNOPSIS.
 #?
 #? SEE ALSO
-#?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
+#?       docker(1), podman(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 3.3 24/09/07 23:31:47
+#?       @(#) o-saft-docker 3.4 24/09/08 00:31:53
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID="3.3"
+SID="3.4"
 VERSION="${OSAFT_VERSION:-19.01.19}"
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
 registry=${o_saft_docker_name}; registry=${registry:-owasp/o-saft}
@@ -311,10 +313,11 @@ try=
 exe=o-saft.pl
 dockerfile="https://github.com/OWASP/O-Saft/raw/master/Dockerfile"
 docker=$(\command -v docker)
+podman=$(\command -v podman)
 
 check_image_name () {
 	#? check if image with configured registry:tag exists; exit otherwise
-	# This function should be called before most docker commands.
+	# This function should be called before most docker/podman commands.
 	# This tool does not allow automatic pull by default.
 	# Most (all?) Docker commands automatically try to pull the specified
 	# image if it does not exist.  More worse, while some Docker commands
@@ -392,8 +395,8 @@ EoDescription
 docker_hacker () {
 	cat << EoHacker
 
-	To use the GUI  o-saft.tcl  inside Docker, additionl packages need to
-	be installed. For Docker image based on alpine, following works:
+	To use the GUI  o-saft.tcl  inside the container, additionl packages
+	need to be installed. For Docker image based on alpine, following works:
 
 		$0 apk add tcl tk tklib xvfb
 
@@ -429,11 +432,11 @@ EoStatus
 		$try $docker image ls | \grep "$_id"
 	done;
 	echo
-	echo "# docker processes ..."
+	echo "# container processes ..."
 	$try $docker container ls -a
 
 	echo ""
-	echo "# O-Saft docker image ..."
+	echo "# O-Saft container image ..."
 	_id=`$0 call env | grep osaft_vm_build`
 	if [ -n "$_id" ]; then
 		echo "$_id"
@@ -594,6 +597,10 @@ while [ $# -gt 0 ]; do
 	  '-n')     try=echo; ;;
 	  '-v')     set -x  ; ;;
 	  '+V')     echo $SID ; exit 0; ;;
+	  -docker)  docker="$docker"  ; ;; # FIXME: fails with: $0 -podman -docker
+	  -podman)  docker="$podman"
+		    echo "**WARNING: podman not tested, may work ..."
+	            ;;
 	  -local)   network="--network=host"; ;;
 	  -tag=*)   tag="`expr "$1" ':' '-tag=\(.*\)'`"
 	            image_name="${registry}:$tag" 
