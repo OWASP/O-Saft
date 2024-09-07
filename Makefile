@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.46 24/08/28 11:10:30
+#?      @(#) Makefile 3.47 24/09/07 22:34:50
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-O-SID           = 3.46
+O-SID           = 3.47
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -109,7 +109,7 @@ SRC.php         = $(O-DIR.usr)/$(O-Project).php
 SRC.docker      = \
 		  $(O-Project)-docker \
 		  $(O-Project)-docker-dev \
-		  Dockerfile
+		  Dockerfile Dockerfile.openssl
 SRC.rc          = .$(SRC.pl)
 
 SRC.exe         = $(SRC.pl) $(SRC.gui) $(SRC.sh) $(O-Project)-docker
@@ -336,8 +336,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.46 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.46
+_INST.genbytext = generated data by Makefile 3.47 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.47
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-DIR.install)@'       \
 		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DIR.doc)@'              \
 		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-DIR.lib)@'              \
@@ -599,8 +599,8 @@ docs:       $(GEN.docs)
 standalone: $(GEN.src)
 stand-alone:$(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.46
-tar:     _INST.is_edit  = 3.46
+_INST.is_edit           = 3.47
+tar:     _INST.is_edit  = 3.47
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
@@ -638,7 +638,7 @@ docker.dev:
 	docker build --force-rm --rm \
 		--build-arg "OSAFT_VM_SRC_OSAFT=https://github.com/OWASP/O-Saft/archive/master.tar.gz" \
 		--build-arg "OSAFT_VERSION=$(_RELEASE)" \
-		-f Dockerfile -t owasp/o-saft .
+		-f Dockerfile -t owasp/o-saft:$(_RELEASE) .
 
 # TODO: docker.push  should depend on  docker.build  (above), but  docker.build
 #       is not a file and creates a Docker image; means that this target itself
