@@ -190,7 +190,7 @@
 #?       If the image is trustworthy (see before),  the tools executed in the
 #?       image may have security impacts. 
 #?       This script creates a Docker image for O-Saft. O-Saft is supposed to
-#?       check a target for  SSL/TLS related issues.  I. g. it doesn not harm
+#?       check a target for  SSL/TLS  related issues.  I. g. it does not harm
 #?       the target using  penetration or attacking techniques  (except check
 #?       for Heartbleed vulnerability). So o-saft.pl itself should not be any
 #?       security issue. However, to perform the checks, O-Saft recommends to
@@ -273,14 +273,14 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 3.1 24/09/07 23:00:54
+#?       @(#) o-saft-docker 3.2 24/09/07 23:21:12
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID="3.1"
+SID="3.2"
 VERSION="${OSAFT_VERSION:-19.01.19}"
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
 registry=${o_saft_docker_name}; registry=${registry:-owasp/o-saft}
@@ -289,6 +289,7 @@ entrypoint_pl='ENTRYPOINT ["perl", "/O-Saft/o-saft.pl"]';   # default ENTRYPOINT
 entrypoint_sh='ENTRYPOINT ["/O-Saft/o-saft"]';              # default ENTRYPOINT
 entry__cmd='CMD ["--norc", "--help=docker"]':               # default CMD
 [ -n "$tag" ] && image_name="${registry}:${tag}"
+network=                      # --network=host  for option -local
 try=
 exe=o-saft.pl
 dockerfile="https://github.com/OWASP/O-Saft/raw/master/Dockerfile"
@@ -311,14 +312,14 @@ check_image_name () {
 	# reports the image IDs only, duplicate image IDs may be returned.
 	# Images which are just tags, return the same image ID.  Hence we can
 	# simply filter them using "sort -u".
-	#dbx#  \docker image ls ${image_name} -q | \sort -u | \wc -w
-	is_id=`\docker image ls ${image_name} -q | \sort -u | \wc -w`
+	#dbx#  $docker image ls ${image_name} -q | \sort -u | \wc -w
+	is_id=`$docker image ls ${image_name} -q | \sort -u | \wc -w`
 	[ "${is_id}" -eq 1 ] && return; # found image, return
 
 	[ "${is_id}" -ne 1 ] && \
 		echo "**ERROR: given image '${image_name}' does not match found image(s)" # '${is_id}'"
 	if [ "${is_id}" -gt 1 ]; then
-		for tag in `\docker image ls ${image_name} | \awk '/^REPOSITORY/{next}{print $2}'` ; do
+		for tag in `$docker image ls ${image_name} | \awk '/^REPOSITORY/{next}{print $2}'` ; do
 			# varaiable tag is the same as the global one!
 			echo "#        consider using  option -id=${image_name}:$tag  or  -tag=$tag"
 		done
@@ -377,17 +378,17 @@ docker_hacker () {
 	To use the GUI  o-saft.tcl  inside Docker, additionl packages need to
 	be installed. For Docker image based on alpine, following works:
 
-		$0 apk add tcl tk xvfb
+		$0 apk add tcl tk tklib xvfb
 
 EoHacker
 }
 
 docker_inspect () {
-	$try \docker image inspect ${image_name}
+	$try $docker image inspect ${image_name}
 }
 
 docker_status () {
- 	image_id=`\docker image ls -q ${image_name}`
+ 	image_id=`$docker image ls -q ${image_name}`
 	cat << EoStatus
 # using environment ...
 #     OSAFT_VERSION      = $OSAFT_VERSION
@@ -405,14 +406,14 @@ docker_status () {
 EoStatus
 
 	# list matching images
-	$try \docker image ls ${registry}; # will be listed below again
+	$try $docker image ls ${registry}; # will be listed below again
 	# list related (tagged) images
-	for _id in  `\docker image ls -q ${registry}` ; do
-		$try \docker image ls | \grep "$_id"
+	for _id in  `$docker image ls -q ${registry}` ; do
+		$try $docker image ls | \grep "$_id"
 	done;
 	echo
 	echo "# docker processes ..."
-	$try \docker container ls -a
+	$try $docker container ls -a
 
 	echo ""
 	echo "# O-Saft docker image ..."
@@ -444,31 +445,31 @@ docker_build () {
 	[ -n "$OSAFT_VM_SRC_OPENSSL" ] && _arg4="--build-arg OSAFT_VM_SRC_OPENSSL=$OSAFT_VM_SRC_OPENSSL"
 	[ -n "$OSAFT_VM_SHA_OSAFT"   ] && _arg5="--build-arg OSAFT_VM_SHA_OSAFT=$OSAFT_VM_SHA_OSAFT"
 	# TODO: do we need more of these variables?
-	$try \docker image build -f ./Dockerfile --force-rm --rm -t ${image_name} \
+	$try $docker image build -f ./Dockerfile --force-rm --rm -t ${image_name} \
 		$_arg0 $_arg1 $_arg2 $_arg3 $_arg4 $_arg5 .	&& \
-	$try \docker image save  -o $_tar ${image_name}	&& \
-	$try \docker image rm    `$try docker image ls -q ${image_name}` && \
-	$try \docker image load  -i $_tar && \
+	$try $docker image save  -o $_tar ${image_name}	&& \
+	$try $docker image rm    `$try docker image ls -q ${image_name}` && \
+	$try $docker image load  -i $_tar && \
 	$try \rm                    $_tar && \
-	$try \docker image tag   ${image_name} o-saft	&& \
-	$try \docker image tag   ${image_name} ${image_name}:$OSAFT_VERSION
+	$try $docker image tag   ${image_name} o-saft	&& \
+	$try $docker image tag   ${image_name} ${image_name}:$OSAFT_VERSION
 }
 
 docker_osaft () {
 	# this is the command for the default mode, passing all parameters
 	# expects a proper ENTRYPOINT like /O-Saft/o-saft.pl in the image
-	$try \docker container run --rm -i  ${image_name} $@
+	$try $docker container run --rm -i  ${image_name} $@
 }
 
 docker_gui   () {
         # start GUI in docker with display to host
 	# --entrypoint= not really necessary if ENTRYPOINT=/O-Saft/o-saft
-	$try \docker container run --rm -i  --entrypoint=/O-Saft/o-saft.tcl \
+	$try $docker container run --rm -i  --entrypoint=/O-Saft/o-saft.tcl \
 		-e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix ${image_name} $@
 }
 
 docker_sshx  () {
-	_ssh=`\docker port ${image_name} 22`
+	_ssh=`$docker port ${image_name} 22`
 	if [ -z "${_ssh}" ]; then
 		echo "**ERROR: no ssh port available for '${image_name}'"
 	else
@@ -483,30 +484,30 @@ docker_sshx  () {
 docker_call ()  {
 	cmd="$1"
 	shift
-	$try \docker container run --rm -it --entrypoint=$cmd    ${image_name} $@
+	$try $docker container run --rm -it --entrypoint=$cmd    ${image_name} $@
 }
 
 docker_shell () {
-	$try \docker container run --rm -it --entrypoint=/bin/sh ${image_name}
+	$try $docker container run --rm -it --entrypoint=/bin/sh ${image_name}
 }
 
 docker_root ()  {
-	$try \docker container run --rm -it --entrypoint=/bin/sh --user root ${image_name}
+	$try $docker container run --rm -it --entrypoint=/bin/sh --user root ${image_name}
 }
 
 docker_cp   ()  {
 	_id="o-saft-cp"
 	# create a new container with a dummy command; exit if exists or fails
-	$try \docker container run   --name ${_id} ${image_name} +VERSION || exit 4
-	$try \docker container cp    $@     ${_id}:/O-Saft/
-	$try \docker container commit       ${_id} ${image_name}
-	$try \docker container rm           ${_id}
+	$try $docker container run   --name ${_id} ${image_name} +VERSION || exit 4
+	$try $docker container cp    $@     ${_id}:/O-Saft/
+	$try $docker container commit       ${_id} ${image_name}
+	$try $docker container rm           ${_id}
 	#
 	# if we need to reset the entrypoint:
-	# $try \docker container commit       \
+	# $try $docker container commit       \
 	#	--change='ENTRYPOINT ["perl","/O-Saft/o-saft.pl"]' \
 	# or:
-	# $try \docker container commit       \
+	# $try $docker container commit       \
 	#	--change='ENTRYPOINT ["/O-Saft/o-saft"]' \
 	#
 }
@@ -515,37 +516,37 @@ docker_apk  ()  {
 	_id="o-saft-apk"
 	# after commit the entrypoint is changed, hence the original one is
 	# set again with commit's --change option; unfortunately hardcoded
-	$try \docker container run -t --user root --entrypoint=/sbin/apk \
+	$try $docker container run -t --user root --entrypoint=/sbin/apk \
 				--name      ${_id} ${image_name} add --no-cache $@ \
 		|| exit 4
-	$try \docker container commit \
+	$try $docker container commit \
 		--change="${entrypoint_sh}" --change="${entry__cmd}" \
 					    ${_id} ${image_name}
-	$try \docker container rm           ${_id} 
+	$try $docker container rm           ${_id} 
 	return
 
 	# TODO: following more cleaner method does not work (reason yet unknown)
-	$try \docker container run  -d --name ${_id} ${image_name} +VERSION || exit 4
-	$try \docker container exec -t --user root ${_id} /sbin/apk add --no-cache $@
-	$try \docker container commit       ${_id} ${image_name}
-	$try \docker container rm           ${_id} 
+	$try $docker container run  -d --name ${_id} ${image_name} +VERSION || exit 4
+	$try $docker container exec -t --user root ${_id} /sbin/apk add --no-cache $@
+	$try $docker container commit       ${_id} ${image_name}
+	$try $docker container rm           ${_id} 
 }
 
 docker_apt  ()  {
 	_id="o-saft-apt"
-	$try \docker container run -t --user root --entrypoint=/usr/bin/apk \
+	$try $docker container run -t --user root --entrypoint=/usr/bin/apk \
 				--name      ${_id} ${image_name} install --no-cache $@ \
 		|| exit 4
-	$try \docker container commit \
+	$try $docker container commit \
 		--change="${entrypoint_sh}" --change="${entry__cmd}" \
 					    ${_id} ${image_name}
-	$try \docker container rm           ${_id} 
+	$try $docker container rm           ${_id} 
 }
 
 docker_rmi  ()  {
 	# parameters can only be the options for Docker's rmi command
 	#dbx# echo "# registry: ${registry} # image_name: ${image_name}"
-	_ids=`\docker image ls -q ${registry}` # ${image_name}
+	_ids=`$docker image ls -q ${registry}` # ${image_name}
 	echo "# image IDs to be deleted: $_ids "
 	# need to find all images,  including referenced images, this is done
 	# with "images" command, then extract all lines with matching IDs,
@@ -553,15 +554,15 @@ docker_rmi  ()  {
 	# Note: "docker images"  should return newest image on top, hence all
 	#       images which just represent a tag (alias) come first and will
 	#       be deleted first
-	\docker image ls | while read _any ; do
+	$docker image ls | while read _any ; do
 		for _id in $_ids ; do
 			_img=`echo "$_any" | \awk "/$_id/"'{print $3}'`
 			#dbx# echo "# ID  $_any : $_id : $_img"
 			[ -z "$_img" ] && continue  # other image
-			$try \docker image rm -f $@ $_img
+			$try $docker image rm -f $@ $_img
 		done
 	done
-	$try \docker image rm ${registry}
+	$try $docker image rm ${registry}
 }
 
 my_help ()      {
@@ -576,6 +577,7 @@ while [ $# -gt 0 ]; do
 	  '-n')     try=echo; ;;
 	  '-v')     set -x  ; ;;
 	  '+V')     echo $SID ; exit 0; ;;
+	  -local)   network="--network=host"; ;;
 	  -tag=*)   tag="`expr "$1" ':' '-tag=\(.*\)'`"
 	            image_name="${registry}:$tag" 
 	            ;;
