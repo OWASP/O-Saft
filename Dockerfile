@@ -65,6 +65,12 @@
 #?          OSAFT_VM_TAR_SOCKET
 #?              Name of archive file for IO-Socket-SSL.tgz (during build).
 #?
+#?          OSAFT_VM_TRACE
+#?              Additional first shell command in Docker's RUN. Can be used to
+#?              enable tracing of build process with:
+#?                  --build-arg OSAFT_VM_TRACE="set -x"
+#?              Default: (empty)
+#?
 #? ENVIRONMENT VARIABLES
 #?      The build image sets environment variables. They are mainly used for
 #?      documentation or by other programs to check for the right build.
@@ -120,6 +126,12 @@
 #?                  --build-arg "OSAFT_VM_SHA_OSAFT=caffee" \ 
 #?                  -f Dockerfile -t owasp/o-saft .
 #?
+#?      Build with from local o-saft.tgz file without checksum
+#?          docker build --force-rm --rm \ 
+#?                  --build-arg "OSAFT_VM_SRC_OSAFT=file:///path/to/o-saft.tgz" \ 
+#?                  --build-arg "OSAFT_VM_SHA_OSAFT=" \ 
+#?                  -f Dockerfile -t owasp/o-saft .
+#?
 #?      Build with development O-Saft download from github
 #?          docker build --force-rm --rm \ 
 #?                  --build-arg "OSAFT_VM_SRC_OSAFT=https://github.com/OWASP/O-Saft/archive/master.tar.gz" \ 
@@ -145,6 +157,7 @@ MAINTAINER Achim <achim@owasp.org>
 # Parameters passed to build
 	# OSAFT_VM_FROM must be defined again, otherwise its value is not available
 ARG     OSAFT_VM_FROM
+ARG     OSAFT_VM_TRACE
 ARG     OSAFT_VM_USER=osaft
 ARG     OSAFT_VM_SRC_OSAFT="https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz"
 ARG     OSAFT_VM_SHA_OSAFT="5f23bbed8d411d84faec29c0a5da07ca58a64702c98339c7e7739450f0f9161c"
@@ -172,7 +185,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
 	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) Dockerfile 3.1 24/09/07 14:04:29" \
+	SID="@(#) Dockerfile 3.2 24/09/07 22:04:12" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "Dockerfile $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
@@ -188,7 +201,8 @@ ENV     WORK_DIR	/
 WORKDIR	$WORK_DIR
 
 RUN \
-	#== Configure user
+	$OSAFT_VM_TRACE ; \
+	echo "#== Configure user" && \
 	if expr "X$OSAFT_VM_FROM" : Xdebian >/dev/null ; then \
 	    adduser --quiet --home ${OSAFT_DIR} ${OSAFT_VM_USER} ; \
 	    passwd  --delete ${OSAFT_VM_USER} ; \
@@ -197,14 +211,14 @@ RUN \
 	fi && \
 	mkdir -p ${OSAFT_DIR}			&& \
 	\
-	#== Configure apk (alpine) or apt (debian); default: apk
+	echo "#== Configure apk (alpine) or apt (debian); default: apk" && \
 	apt_exe=apk && \
 	apt_add=add && \
 	apt_del=del && \
 	opt_add=--no-cache && \
 	opt_del=--purge	\
 	packages_make="gcc make musl-dev linux-headers perl-dev" && \
-	packages="wget ncurses $OSAFT_VM_APT_INSTALL \
+	packages="curl ncurses $OSAFT_VM_APT_INSTALL \
 		$packages_make \
 		krb5-dev zlib-dev perl perl-readonly \
 		ca-certificates" && \
@@ -219,20 +233,20 @@ RUN \
 # fehltnoch: perl-dev
 	   packages_make="gcc make linux-headers-amd64" ; \
 		# ncurses-base ncurses-bin  already part of debian
-	   packages="wget $packages_make libkrb5-3 libkrb5-dev zlib1g-dev perl ca-certificates" ; \
+	   packages="curl $packages_make libkrb5-3 libkrb5-dev zlib1g-dev perl ca-certificates" ; \
 	   packages_dev="libgmp-dev lksctp-tools libsctp-dev" ; \
 	   packages_perl="libnet-dns-perl libnet-libidn-perl" ; \
 	fi && \
 	# perl-io-socket-ssl perl-net-ssleay build herein
 	\
-	#== Install required packages, development tools and libs
+	echo "#== Install required packages, development tools and libs" && \
 	#apk update && \   # no update needed and not wanted
 	if expr "X$OSAFT_VM_FROM" : Xdebian >/dev/null ; then \
 	    $apt_exe update ; \
 	fi && \
 	$apt_exe $apt_add $opt_add $packages	&& \
 	\
-	#== Workaround for docker/alpine (bug or race condition)
+	echo "#== Workaround for docker/alpine (bug or race condition)" && \
 	#   in some alpine versions, resolving a hostname fails, see
 	#   https://forums.docker.com/t/resolved-service-name-resolution-broken-on-alpine-and-docker-1-11-1-cs1/19307/23
 	#   as workaround we try to prefetch the name resolution;
@@ -243,12 +257,12 @@ RUN \
 	        echo -n "resolving $host ... " && ping -c 1 $host > /dev/null && echo SUCCESS || echo FAILDED ; \
 	    done; } && \
 	\
-	#== Pull, build and install enhanced openssl
+	echo "#== Pull, build and install enhanced openssl" && \
 	workaround_alpine_bug			&& \
 	$apt_exe $apt_add $opt_add $packages_dev && \
 	cd    $WORK_DIR				&& \
 	mkdir -p $BUILD_DIR ${OPENSSL_DIR}	&& \
-	wget --no-check-certificate $OSAFT_VM_SRC_OPENSSL -O $OSAFT_VM_TAR_OPENSSL && \
+	curl --insecure --location --silent $OSAFT_VM_SRC_OPENSSL -o $OSAFT_VM_TAR_OPENSSL && \
 	# check sha256 if there is one
 	[ -n "$OSAFT_VM_SHA_OPENSSL" ]		&& \
 		echo "$OSAFT_VM_SHA_OPENSSL  $OSAFT_VM_TAR_OPENSSL" | sha256sum -c ; \
@@ -301,18 +315,18 @@ RUN \
 	make depend && make && make report -i && make install	&& \
 		# make report most likely fails, hence -i
 	# simple test
-	echo -n "# number of ciphers ${OPENSSL_DIR}/bin/openssl: " && \
+	echo -n "#   number of ciphers ${OPENSSL_DIR}/bin/openssl: " && \
 	${OPENSSL_DIR}/bin/openssl ciphers -V ALL:COMPLEMENTOFALL:aNULL|wc -l && \
 	# cleanup
 	$apt_exe $apt_del $opt_del $packages_dev && \
 	cd    $WORK_DIR				&& \
 	rm   -rf $BUILD_DIR $OSAFT_VM_TAR_OPENSSL && \
 	\
-	#== Pull, build and install Net::SSLeay
+	echo "#== Pull, build and install Net::SSLeay" && \
 	workaround_alpine_bug			&& \
 	cd    $WORK_DIR				&& \
 	mkdir -p $BUILD_DIR			&& \
-	wget --no-check-certificate $OSAFT_VM_SRC_SSLEAY -O $OSAFT_VM_TAR_SSLEAY && \
+	curl --insecure --location --silent $OSAFT_VM_SRC_SSLEAY -o $OSAFT_VM_TAR_SSLEAY && \
 	# check sha256 if there is one
 	[ -n "$OSAFT_VM_SHA_SSLEAY" ]		&& \
 		echo "$OSAFT_VM_SHA_SSLEAY  $OSAFT_VM_TAR_SSLEAY" | sha256sum -c ; \
@@ -333,10 +347,10 @@ RUN \
 	cd    $WORK_DIR				&& \
 	rm   -rf $BUILD_DIR $OSAFT_VM_TAR_SSLEAY && \
 	\
-	#== Pull, build and install IO::Socket::SSL
+	echo "#== Pull, build and install IO::Socket::SSL" && \
 	workaround_alpine_bug			&& \
 	mkdir -p $BUILD_DIR			&& \
-	wget --no-check-certificate $OSAFT_VM_SRC_SOCKET -O $OSAFT_VM_TAR_SOCKET && \
+	curl --insecure --location --silent $OSAFT_VM_SRC_SOCKET -o $OSAFT_VM_TAR_SOCKET && \
 	# check sha256 if there is one
 	[ -n "$OSAFT_VM_SHA_SOCKET" ]		&& \
 		echo "$OSAFT_VM_SHA_SOCKET  $OSAFT_VM_TAR_SOCKET" | sha256sum -c ; \
@@ -349,10 +363,10 @@ RUN \
 	cd    $WORK_DIR				&& \
 	rm   -r $BUILD_DIR $OSAFT_VM_TAR_SOCKET && \
 	\
-	#== Pull and install O-Saft
+	echo "#== Pull and install O-Saft"	&& \
 	workaround_alpine_bug			&& \
 	cd    $WORK_DIR				&& \
-	wget --no-check-certificate $OSAFT_VM_SRC_OSAFT -O $OSAFT_VM_TAR_OSAFT	&& \
+	curl --insecure --location --silent $OSAFT_VM_SRC_OSAFT -o $OSAFT_VM_TAR_OSAFT	&& \
 	# check sha256 if there is one
 	[ -n "$OSAFT_VM_SHA_OSAFT" ]		&& \
 		echo "$OSAFT_VM_SHA_OSAFT  $OSAFT_VM_TAR_OSAFT" | sha256sum -c ; \
@@ -376,7 +390,7 @@ RUN \
 	chmod 666 ${OSAFT_DIR}/.o-saft.pl		&& \
 	rm    -f  ${OSAFT_VM_TAR_OSAFT}			&& \
 	\
-	#== Cleanup
+	echo "#== Cleanup" && \
 	$apt_exe $apt_del $opt_del $packages_make
 	    # do not delete  krb5-dev zlib-dev  because we need
 	    #  libkrb5.so.3, libk5crypto.so.3 and libz.so to run openssl
