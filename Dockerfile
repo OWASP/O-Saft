@@ -1,5 +1,8 @@
 #!/usr/bin/docker build --force-rm --rm -f
 
+#? DESCRIPTION
+#?      Dockerfile to build an image with o-saft.tgz using standard openssl.
+#?
 #? USAGE
 #?      This Dockerfile uses "buildargs" variables to build the Docker image.
 #?      For default settings, please use:  awk '/^ARG/{print $2}' Dockerfile
@@ -20,7 +23,7 @@
 #?          OSAFT_VM_APT_INSTALL
 #?              Additional packages  to be installed in the image.
 #?              Note that the package names depend on the used base image.
-#?              Tested packages are:  tcl  tk  xvfb  openssl
+#?              Default:  tcl  tk  xvfb
 #?
 #?          OSAFT_VM_SRC_OSAFT
 #?              URL to fetch o-saft.tgz archive.
@@ -32,38 +35,14 @@
 #?              https://github.com/OWASP/O-Saft/blob/master/Dockerfile  is the
 #?              most current version and contains proper checksums.
 #?
+#?          OSAFT_VM_SHA256URL
+#?              URL to fetch o-saft.tgz SHA256 checksum from archive.
+#?              The checksum returnes by this URL  will be compared to the one
+#?              given by  OSAFT_VM_SHA_OSAFT .
+#?              Default: https://raw.githubusercontent.com/OWASP/O-Saft/master/o-saft.tgz.sha256"
+#?
 #?          OSAFT_VM_TAR_OSAFT
 #?              Name of archive file for O-Saft (during build).
-#?
-#?          OSAFT_VM_SRC_OPENSSL
-#?              URL to fetch openssl.tgz archive.
-#?
-#?          OSAFT_VM_SHA_OPENSSL
-#?              SHA256 checksum for the openssl-1.0.2-chacha.tar.gz archive.
-#?
-#?          OSAFT_VM_TAR_OPENSSL
-#?              Name of archive file for OpenSSL (during build).
-#?
-#?          OSAFT_VM_DYN_OPENSSL
-#?              Build (link) mode of openssl executable: --static or --shared
-#?
-#?          OSAFT_VM_SRC_SSLEAY
-#?              URL to fetch Net-SSLeay.tar.gz archive.
-#?
-#?          OSAFT_VM_SHA_SSLEAY
-#?              SHA256 checksum for the Net-SSLeay.tar.gz archive.
-#?
-#?          OSAFT_VM_TAR_SSLEAY
-#?              Name of archive file for Net-SSLeay.tgz (during build).
-#?
-#?          OSAFT_VM_SRC_SOCKET
-#?              URL to fetch IO-Socket-SSL.tar.gz archive.
-#?
-#?          OSAFT_VM_SHA_SOCKET
-#?              SHA256 checksum for the IO-Socket-SSL.tar.gz archive.
-#?
-#?          OSAFT_VM_TAR_SOCKET
-#?              Name of archive file for IO-Socket-SSL.tgz (during build).
 #?
 #?          OSAFT_VM_TRACE
 #?              Additional first shell command in Docker's RUN. Can be used to
@@ -87,15 +66,9 @@
 #?              Version of installed OpenSSL
 #?          TERM
 #?              Prefered X-Terminal program.
-#?          LD_RUN_PATH
-#?              Additional paths for runtime loader, used while linking with
-#?              "ld -rpath=..."
-#?              Linking of openssl, libssl.so and SSLeay.so will use  -rpath
-#?              in LDFLAGS to ensure that the special library will be used.
-#?              Default:${OPENSSL_DIR}/lib
 #?          PATH
 #?              PATH for shell, set to:
-#?                  ${OSAFT_DIR}:${OSAFT_DIR}/usr:${OPENSSL_DIR}/bin:$PATH
+#?                  ${OSAFT_DIR}:${OSAFT_DIR}/usr:$PATH
 #?          WORK_DIR
 #?              Directory where to build the packages  (used for  Dockerfile's
 #?              WORKDIR  dierective.
@@ -115,21 +88,15 @@
 #?                  --build-arg "OSAFT_VM_FROM=debian:10.2-slim" \ 
 #?                  -f Dockerfile -t owasp/o-saft .
 #?
-#?      Build with base image alpine:3.6 and Tcl/Tk
+#?      Build with base image alpine:3.6 without Tcl/Tk
 #?          docker build --force-rm --rm \ 
 #?                  --build-arg "OSAFT_VM_FROM=alpine:3.6" \ 
-#?                  --build-arg "OSAFT_VM_APT_INSTALL=tcl tk xvfb" \ 
+#?                  --build-arg "OSAFT_VM_APT_INSTALL=" \ 
 #?                  -f Dockerfile -t owasp/o-saft .
 #?
 #?      Build with other SHA256 checksum for o-saft.tgz
 #?          docker build --force-rm --rm \ 
 #?                  --build-arg "OSAFT_VM_SHA_OSAFT=caffee" \ 
-#?                  -f Dockerfile -t owasp/o-saft .
-#?
-#?      Build with from local o-saft.tgz file without checksum
-#?          docker build --force-rm --rm \ 
-#?                  --build-arg "OSAFT_VM_SRC_OSAFT=file:///path/to/o-saft.tgz" \ 
-#?                  --build-arg "OSAFT_VM_SHA_OSAFT=" \ 
 #?                  -f Dockerfile -t owasp/o-saft .
 #?
 #?      Build with development O-Saft download from github
@@ -145,9 +112,6 @@
 #       Note that the base package alpine uses busybox as shell. This shell is
 #       very picky, in particular for the expr command.
 #
-#       Compiling erros with:
-#           https://cpan.metacpan.org/authors/id/C/CH/CHRISN/Net-SSLeay-1.94.tar.gz
-#           9d7be8a56d1bedda05c425306cc504ba134307e0c09bda4a788c98744ebcd95d
 
 ARG     OSAFT_VM_FROM=alpine:3.20
 
@@ -160,42 +124,32 @@ ARG     OSAFT_VM_FROM
 ARG     OSAFT_VM_TRACE
 ARG     OSAFT_VM_USER=osaft
 ARG     OSAFT_VM_SRC_OSAFT="https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz"
-ARG     OSAFT_VM_SHA_OSAFT="5f23bbed8d411d84faec29c0a5da07ca58a64702c98339c7e7739450f0f9161c"
+#ARG     OSAFT_VM_SHA_OSAFT="5f23bbed8d411d84faec29c0a5da07ca58a64702c98339c7e7739450f0f9161c"
+ARG     OSAFT_VM_SHA_OSAFT="3332af75f20933b4be4dd2e49c8d67cd505fc7856f4844211671e2fd304bbefb"
+ARG     OSAFT_VM_SHA256URL="https://raw.githubusercontent.com/OWASP/O-Saft/master/o-saft.tgz.sha256"
 ARG     OSAFT_VM_TAR_OSAFT="o-saft.tgz"
-ARG     OSAFT_VM_SRC_SSLEAY="http://search.cpan.org/CPAN/authors/id/M/MI/MIKEM/Net-SSLeay-1.85.tar.gz"
-ARG     OSAFT_VM_SHA_SSLEAY="9d8188b9fb1cae3bd791979c20554925d5e94a138d00414f1a6814549927b0c8"
-ARG     OSAFT_VM_TAR_SSLEAY="Net-SSLeay.tgz"
-ARG     OSAFT_VM_SRC_SOCKET="http://search.cpan.org/CPAN/authors/id/S/SU/SULLR/IO-Socket-SSL-2.052.tar.gz"
-ARG     OSAFT_VM_SHA_SOCKET="e4897a9b17cb18a3c44aa683980d52cef534cdfcb8063d6877c879bfa2f26673"
-ARG     OSAFT_VM_TAR_SOCKET="IO-Socket-SSL.tgz"
-ARG     OSAFT_VM_SRC_OPENSSL="https://github.com/PeterMosmans/openssl/archive/1.0.2-chacha.tar.gz"
-ARG     OSAFT_VM_SHA_OPENSSL="ad3d99ec091e403a3a7a678ddda38b392e3204515425827c53dc5baa92d61d67"
-ARG     OSAFT_VM_TAR_OPENSSL="openssl.tgz"
-ARG     OSAFT_VM_DYN_OPENSSL="--shared"
-#                             --static  not yet (2020) working 'cause of libkrb5
-ARG     OSAFT_VM_APT_INSTALL
-ARG     OSAFT_VERSION="undefined"
+ARG     OSAFT_VM_APT_INSTALL="tcl tk xvfb"
+ARG     OSAFT_VERSION="24.09.24"
+ARG     _SELF_="Dockerfile"
+#       _SELF_ for internal use only to make multiple references unique
 
 LABEL \
 	VERSION="$OSAFT_VERSION"	\
 	\
-	DESCRIPTION="Build O-Saft docker image (with Peter Mosman's openssl)"	\
-	SYNOPSIS="docker build --force-rm --rm -f ./Dockerfile -t owasp/o-saft:$OSAFT_VERSION -t owasp/o-saft ." \
+	DESCRIPTION="Build O-Saft docker image (with openssl 3.x)"	\
+	SYNOPSIS="docker build --force-rm --rm -f ./$_SELF_ -t owasp/o-saft:$OSAFT_VERSION -t owasp/o-saft:$OSAFT_VERSION ." \
 	DETAILS="Please see https://github.com/OWASP/O-Saft/raw/master/o-saft-docker" \
-	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
+	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/$_SELF_" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
-	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) Dockerfile 3.2 24/09/07 22:04:12" \
+	SID="@(#) Dockerfile 3.1 24/09/07 22:31:51" \
 	AUTHOR="Achim Hoffmann"	
 
-ENV     osaft_vm_build  "Dockerfile $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
+ENV     osaft_vm_build  "$_SELF_ $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
 ENV     OSAFT_DIR       /O-Saft
-ENV     OPENSSL_DIR     /openssl
-ENV     OPENSSL_VERSION  1.0.2-chacha
+ENV     OPENSSL_DIR     /usr/bin/openssl
+ENV     OPENSSL_VERSION 3.3.2
 ENV     TERM            xterm
-ENV     LD_RUN_PATH     ${OPENSSL_DIR}/lib
-ENV     PATH ${OSAFT_DIR}:${OSAFT_DIR}/usr:${OPENSSL_DIR}/bin:$PATH
-ENV     BUILD_DIR       /tmp_src
+ENV     PATH            ${OSAFT_DIR}:${OSAFT_DIR}/usr:$PATH
 ENV     WORK_DIR	/
 
 WORKDIR	$WORK_DIR
@@ -214,30 +168,18 @@ RUN \
 	echo "#== Configure apk (alpine) or apt (debian); default: apk" && \
 	apt_exe=apk && \
 	apt_add=add && \
-	apt_del=del && \
 	opt_add=--no-cache && \
-	opt_del=--purge	\
-	packages_make="gcc make musl-dev linux-headers perl-dev" && \
-	packages="curl ncurses $OSAFT_VM_APT_INSTALL \
-		$packages_make \
-		krb5-dev zlib-dev perl perl-readonly \
-		ca-certificates" && \
-	packages_dev="gmp-dev lksctp-tools-dev" && \
-	packages_perl="perl-net-dns perl-net-libidn perl-mozilla-ca" && \
+	packages="curl $OSAFT_VM_APT_INSTALL \
+		perl perl-readonly openssl \
+		perl-io-socket-ssl perl-net-ssleay perl-net-dns perl-net-libidn \
+		perl-mozilla-ca ca-certificates" && \
 	if expr "X$OSAFT_VM_FROM" : Xdebian >/dev/null ; then \
 	   apt_exe=apt-get	; \
 	   apt_add=install	; \
-	   apt_del=purge	; \
 	   opt_add=--yes	; \
-	   opt_del=--yes	; \
-# fehltnoch: perl-dev
-	   packages_make="gcc make linux-headers-amd64" ; \
-		# ncurses-base ncurses-bin  already part of debian
-	   packages="curl $packages_make libkrb5-3 libkrb5-dev zlib1g-dev perl ca-certificates" ; \
-	   packages_dev="libgmp-dev lksctp-tools libsctp-dev" ; \
-	   packages_perl="libnet-dns-perl libnet-libidn-perl" ; \
+	   packages="curl perl ca-certificates $OSAFT_VM_APT_INSTALL \
+	   	libio-socket-ssl-perl libnet-ssleay-perl libnet-dns-perl libnet-libidn-perl" ; \
 	fi && \
-	# perl-io-socket-ssl perl-net-ssleay build herein
 	\
 	echo "#== Install required packages, development tools and libs" && \
 	#apk update && \   # no update needed and not wanted
@@ -254,114 +196,8 @@ RUN \
 	workaround_alpine_bug() { \
 	    expr "X$OSAFT_VM_FROM" : Xdebian >/dev/null && return ; \
 	    for host in github.com codeload.github.com cpan.metacpan.org search.cpan.org cpan.metacpan.org ; do \
-	        echo -n "resolving $host ... " && ping -c 1 $host > /dev/null && echo SUCCESS || echo FAILDED ; \
+	        echo -n "#   resolving $host ... " && ping -c 1 $host > /dev/null && echo SUCCESS || echo FAILDED ; \
 	    done; } && \
-	\
-	echo "#== Pull, build and install enhanced openssl" && \
-	workaround_alpine_bug			&& \
-	$apt_exe $apt_add $opt_add $packages_dev && \
-	cd    $WORK_DIR				&& \
-	mkdir -p $BUILD_DIR ${OPENSSL_DIR}	&& \
-	curl --insecure --location --silent $OSAFT_VM_SRC_OPENSSL -o $OSAFT_VM_TAR_OPENSSL && \
-	# check sha256 if there is one
-	[ -n "$OSAFT_VM_SHA_OPENSSL" ]		&& \
-		echo "$OSAFT_VM_SHA_OPENSSL  $OSAFT_VM_TAR_OPENSSL" | sha256sum -c ; \
-	\
-	tar   -xzf $OSAFT_VM_TAR_OPENSSL -C $BUILD_DIR --strip-components=1	&& \
-	cd    $BUILD_DIR			&& \
-	# patch openssl.cnf for GOST
-	sed -i '/RANDFILE/a openssl_conf=openssl_def' apps/openssl.cnf	&& \
-	#   using echo instead of cat to avoid problems with stacked commands:
-	#   cat -> shell -> docker
-	(\
-	  echo 'openssl_conf=openssl_def'; \
-	  echo '[openssl_def]';		\
-	  echo 'engines=engine_section';\
-	  echo '[engine_section]';	\
-	  echo 'gost=gost_section';	\
-	  echo '[gost_section]';	\
-	  echo 'engine_id = gost';	\
-	  echo 'default_algorithms=ALL';\
-	  echo 'CRYPT_PARAMS=id-Gost28147-89-CryptoPro-A-ParamSet'; \
-	) >> apps/openssl.cnf			&& \
-	# config with all options, even if they are default
-	LDFLAGS="-rpath=$LD_RUN_PATH"   && export LDFLAGS	&& \
-		# see description for LD_RUN_PATH above
-	./config --prefix=${OPENSSL_DIR} --openssldir=${OPENSSL_DIR}/ssl	\
-		$OSAFT_VM_DYN_OPENSSL	\
-		--with-krb5-flavor=MIT --with-krb5-dir=/usr/include/krb5/ \
-		-fPIC zlib zlib-dynamic enable-zlib enable-npn sctp	\
-		enable-deprecated enable-weak-ssl-ciphers	\
-		enable-heartbeats enable-unit-test  enable-ssl-trace	\
-		enable-ssl3    enable-ssl3-method   enable-ssl2	\
-		enable-tls1    enable-tls1-method   enable-tls\
-		enable-tls1-1  enable-tls1-1-method enable-tlsext	\
-		enable-tls1-2  enable-tls1-2-method enable-tls1-2-client \
-		enable-dtls1   enable-dtls1-method	\
-		enable-dtls1-2 enable-dtls1-2-method	\
-		enable-md2     enable-md4   enable-mdc2	\
-		enable-rc2     enable-rc4   enable-rc5	\
-		enable-sha0    enable-sha1  enable-sha256 enable-sha512	\
-		enable-aes     enable-cms   enable-dh     enable-egd	\
-		enable-des     enable-dsa   enable-rsa    enable-rsax	\
-		enable-ec      enable-ec2m  enable-ecdh   enable-ecdsa	\
-		enable-blake2  enable-bf    enable-cast enable-camellia	\
-		enable-gmp     enable-gost  enable-GOST   enable-idea	\
-		enable-poly1305 enable-krb5 enable-rdrand enable-rmd160	\
-		enable-seed    enable-srp   enable-whirlpool	\
-		enable-rfc3779 enable-ec_nistp_64_gcc_128 experimental-jpake \
-		-DOPENSSL_USE_BUILD_DATE -DTLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES -DTEMP_GOST_TLS	\
-		&& \
-	make depend && make && make report -i && make install	&& \
-		# make report most likely fails, hence -i
-	# simple test
-	echo -n "#   number of ciphers ${OPENSSL_DIR}/bin/openssl: " && \
-	${OPENSSL_DIR}/bin/openssl ciphers -V ALL:COMPLEMENTOFALL:aNULL|wc -l && \
-	# cleanup
-	$apt_exe $apt_del $opt_del $packages_dev && \
-	cd    $WORK_DIR				&& \
-	rm   -rf $BUILD_DIR $OSAFT_VM_TAR_OPENSSL && \
-	\
-	echo "#== Pull, build and install Net::SSLeay" && \
-	workaround_alpine_bug			&& \
-	cd    $WORK_DIR				&& \
-	mkdir -p $BUILD_DIR			&& \
-	curl --insecure --location --silent $OSAFT_VM_SRC_SSLEAY -o $OSAFT_VM_TAR_SSLEAY && \
-	# check sha256 if there is one
-	[ -n "$OSAFT_VM_SHA_SSLEAY" ]		&& \
-		echo "$OSAFT_VM_SHA_SSLEAY  $OSAFT_VM_TAR_SSLEAY" | sha256sum -c ; \
-	\
-	tar   -xzf $OSAFT_VM_TAR_SSLEAY -C $BUILD_DIR --strip-components=1	&& \
-	# install additional packages for Net-SSLeay ...
-	$apt_exe $apt_add $opt_add $packages_perl && \
-	cd    $BUILD_DIR			&& \
-	perl -i.orig -pe 'if (m/^#define\s*REM_AUTOMATICALLY_GENERATED_1_09/){print "const SSL_METHOD * SSLv2_method()\n\nconst SSL_METHOD * SSLv3_method()\n\n";}' SSLeay.xs	&& \
-		# quick&dirty patch, results in warning, which can be ignored
-		# Warning: duplicate function definition 'SSLv2_method' detected in SSLeay.xs, line 4256
-	LDFLAGS="-rpath=$LD_RUN_PATH"   && export LDFLAGS	&& \
-	echo "n" | env OPENSSL_PREFIX=${OPENSSL_DIR} perl Makefile.PL \
-		INC=-I${OPENSSL_DIR}/include DEFINE=-DOPENSSL_BUILD_UNSAFE=1	&& \
-		# Makefile.PL asks for "network tests", hence pipe "n" as answer
-		# installation in (default) /usr/local, hence no PREFIX=
-	make && make test && make install	&& \
-	cd    $WORK_DIR				&& \
-	rm   -rf $BUILD_DIR $OSAFT_VM_TAR_SSLEAY && \
-	\
-	echo "#== Pull, build and install IO::Socket::SSL" && \
-	workaround_alpine_bug			&& \
-	mkdir -p $BUILD_DIR			&& \
-	curl --insecure --location --silent $OSAFT_VM_SRC_SOCKET -o $OSAFT_VM_TAR_SOCKET && \
-	# check sha256 if there is one
-	[ -n "$OSAFT_VM_SHA_SOCKET" ]		&& \
-		echo "$OSAFT_VM_SHA_SOCKET  $OSAFT_VM_TAR_SOCKET" | sha256sum -c ; \
-	\
-	tar   -xzf $OSAFT_VM_TAR_SOCKET -C $BUILD_DIR --strip-components=1	&& \
-	cd    $BUILD_DIR			&& \
-	echo "n" | perl Makefile.PL INC=-I${OPENSSL_DIR}/include	&& \
-	make && make -i test && make install	&& \
-		# make test sometimes fails (see Workaround above), hence -i
-	cd    $WORK_DIR				&& \
-	rm   -r $BUILD_DIR $OSAFT_VM_TAR_SOCKET && \
 	\
 	echo "#== Pull and install O-Saft"	&& \
 	workaround_alpine_bug			&& \
@@ -369,8 +205,14 @@ RUN \
 	curl --insecure --location --silent $OSAFT_VM_SRC_OSAFT -o $OSAFT_VM_TAR_OSAFT	&& \
 	# check sha256 if there is one
 	[ -n "$OSAFT_VM_SHA_OSAFT" ]		&& \
+		sha256=$(command curl --location --silent $OSAFT_VM_SHA256URL |awk '{print $1}') && \
+		[ "$sha256" != "$OSAFT_VM_SHA_OSAFT" ]	&& \
+			echo "#   WARNING: retrived checksum differs from given checksum for $OSAFT_VM_TAR_OSAFT" && \
+			echo "#   WARNING: adapt SAFT_VM_SHA_OSAFT in $_SELF_ or set it empty using --build-arg" && \
+			echo "#   $sha256" && \
+			echo "#   $OSAFT_VM_SHA_OSAFT" && \
 		echo "$OSAFT_VM_SHA_OSAFT  $OSAFT_VM_TAR_OSAFT" | sha256sum -c ; \
-	\
+		\
 	tar   -xzf ${OSAFT_VM_TAR_OSAFT}	&& \
 	# handle master directory from github, mv to ${OSAFT_DIR}
 	# checks fail sometimes, hence in a sub-shell
@@ -385,21 +227,18 @@ RUN \
 	chown -R ${OSAFT_VM_USER}:${OSAFT_VM_USER} ${OSAFT_DIR}/lib	&& \
 	chown -R ${OSAFT_VM_USER}:${OSAFT_VM_USER} ${OSAFT_DIR}/usr	&& \
 	chown    ${OSAFT_VM_USER}:${OSAFT_VM_USER} ${OSAFT_DIR}/.o-saft.pl && \
-	cp       ${OSAFT_DIR}/.o-saft.pl ${OSAFT_DIR}/.o-saft.pl-orig	&& \
-	perl -i.bak -pe "s:^#?\s*--openssl=.*:--openssl=${OPENSSL_DIR}/bin/openssl:;s:^#?\s*--openssl-cnf=.*:--openssl-cnf=${OPENSSL_DIR}/ssl/openssl.cnf:;s:^#?\s*--ca-path=.*:--ca-path=/etc/ssl/certs/:;s:^#?\s*--ca-file=.*:--ca-file=/etc/ssl/certs/ca-certificates.crt:" ${OSAFT_DIR}/.o-saft.pl && \
 	chmod 666 ${OSAFT_DIR}/.o-saft.pl		&& \
-	rm    -f  ${OSAFT_VM_TAR_OSAFT}			&& \
 	\
 	echo "#== Cleanup" && \
-	$apt_exe $apt_del $opt_del $packages_make
-	    # do not delete  krb5-dev zlib-dev  because we need
-	    #  libkrb5.so.3, libk5crypto.so.3 and libz.so to run openssl
+	rm   -rf  ./t Makefile tags CHANGES README.md Dockerfile* && \
+	rm    -f  ${OSAFT_VM_TAR_OSAFT}			&& \
+	echo ""
 
 WORKDIR $OSAFT_DIR
 USER    $OSAFT_VM_USER
 RUN     o-saft-docker usage
 
-ENTRYPOINT ["/O-Saft/o-saft"]
+ENTRYPOINT ["/O-Saft/o-saft.pl"]
 CMD     ["--norc",  "--help=docker"]
 
 # vim:set ft=dockerfile:
