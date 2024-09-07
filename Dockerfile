@@ -12,6 +12,7 @@
 #?                  (2017) alpine:3.6  alpine:edge  debian:stretch-slim debian
 #?                  (2018) alpine:3.8  debian
 #?                  (2019) alpine:3.10 debian:10.2-slim
+#?                  (2024) alpine:3.20
 #?
 #?          OSAFT_VM_USER
 #?              Username to be added in the build image.
@@ -88,7 +89,7 @@
 #?              Default:${OPENSSL_DIR}/lib
 #?          PATH
 #?              PATH for shell, set to:
-#?                  ${OSAFT_DIR}:${OSAFT_DIR}/contrib:${OPENSSL_DIR}/bin:$PATH
+#?                  ${OSAFT_DIR}:${OSAFT_DIR}/usr:${OPENSSL_DIR}/bin:$PATH
 #?          WORK_DIR
 #?              Directory where to build the packages  (used for  Dockerfile's
 #?              WORKDIR  dierective.
@@ -131,8 +132,12 @@
 # HACKER's Info
 #       Note that the base package alpine uses busybox as shell. This shell is
 #       very picky, in particular for the expr command.
+#
+#       Compiling erros with:
+#           https://cpan.metacpan.org/authors/id/C/CH/CHRISN/Net-SSLeay-1.94.tar.gz
+#           9d7be8a56d1bedda05c425306cc504ba134307e0c09bda4a788c98744ebcd95d
 
-ARG     OSAFT_VM_FROM=alpine:3.10
+ARG     OSAFT_VM_FROM=alpine:3.20
 
 FROM    $OSAFT_VM_FROM
 MAINTAINER Achim <achim@owasp.org>
@@ -167,7 +172,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/Dockerfile" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
 	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) Dockerfile 1.36 22/03/04 20:20:53" \
+	SID="@(#) Dockerfile 3.1 24/09/07 14:04:29" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "Dockerfile $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
@@ -176,7 +181,7 @@ ENV     OPENSSL_DIR     /openssl
 ENV     OPENSSL_VERSION  1.0.2-chacha
 ENV     TERM            xterm
 ENV     LD_RUN_PATH     ${OPENSSL_DIR}/lib
-ENV     PATH ${OSAFT_DIR}:${OSAFT_DIR}/contrib:${OPENSSL_DIR}/bin:$PATH
+ENV     PATH ${OSAFT_DIR}:${OSAFT_DIR}/usr:${OPENSSL_DIR}/bin:$PATH
 ENV     BUILD_DIR       /tmp_src
 ENV     WORK_DIR	/
 
@@ -362,7 +367,9 @@ RUN \
 	  exit 0 ; \
 	) && \
 	chown -R root:root   ${OSAFT_DIR}		&& \
-	chown -R ${OSAFT_VM_USER}:${OSAFT_VM_USER} ${OSAFT_DIR}/contrib	&& \
+	chown -R ${OSAFT_VM_USER}:${OSAFT_VM_USER} ${OSAFT_DIR}/doc	&& \
+	chown -R ${OSAFT_VM_USER}:${OSAFT_VM_USER} ${OSAFT_DIR}/lib	&& \
+	chown -R ${OSAFT_VM_USER}:${OSAFT_VM_USER} ${OSAFT_DIR}/usr	&& \
 	chown    ${OSAFT_VM_USER}:${OSAFT_VM_USER} ${OSAFT_DIR}/.o-saft.pl && \
 	cp       ${OSAFT_DIR}/.o-saft.pl ${OSAFT_DIR}/.o-saft.pl-orig	&& \
 	perl -i.bak -pe "s:^#?\s*--openssl=.*:--openssl=${OPENSSL_DIR}/bin/openssl:;s:^#?\s*--openssl-cnf=.*:--openssl-cnf=${OPENSSL_DIR}/ssl/openssl.cnf:;s:^#?\s*--ca-path=.*:--ca-path=/etc/ssl/certs/:;s:^#?\s*--ca-file=.*:--ca-file=/etc/ssl/certs/ca-certificates.crt:" ${OSAFT_DIR}/.o-saft.pl && \
