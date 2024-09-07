@@ -31,6 +31,8 @@
 #?       +V      show own version (SID)
 #?       -id=ID  use Docker image ID (registry:tag); default: owasp/o-saft
 #?       -tag=23 use Docker image ID with tag; default: (empty)
+#?       -local  use --network=host to allow container accessing the host
+#?               WARNING: see section  SECURITY  below also.
 #?       -OSAFT_VERSION=21.11.12  same as OSAFT_VERSION environment variable
 #?       --      pass all remaining parameters to o-saft.pl in Docker image
 #?
@@ -174,6 +176,21 @@
 #?
 #?       The known security types are:
 #?
+#?   Security of the host when access from within the container
+#?       Most likely the tools in the container cannot access the host or its
+#?       services directly. To enable access via network special options must
+#?       be used when starting the container, for example:
+#?           docker run --network:host ...
+#?       There're other ways to allow the container to talk to the host which
+#?       are not used by this script and so out of scope of this description.
+#?
+#?       However, there is the option   -local  which exposes the host to the
+#?       container using  --network=host . This is mainly intended for making
+#?       test with a server running on the host.
+#?       ####################################################################
+#?       ##   DO NOT USE THIS OPTION ON PRODUCTIVE OR SENSITIVE SYSTEMS.   ##
+#?       ####################################################################
+#?
 #?   Security of the created images
 #?       When creating Docker images, wether using  build, load or pull,  you
 #?       must trust the sources: the binary (load or pull) or the  Dockerfile
@@ -273,14 +290,14 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 3.2 24/09/07 23:21:12
+#?       @(#) o-saft-docker 3.3 24/09/07 23:31:47
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID="3.2"
+SID="3.3"
 VERSION="${OSAFT_VERSION:-19.01.19}"
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
 registry=${o_saft_docker_name}; registry=${registry:-owasp/o-saft}
@@ -458,13 +475,13 @@ docker_build () {
 docker_osaft () {
 	# this is the command for the default mode, passing all parameters
 	# expects a proper ENTRYPOINT like /O-Saft/o-saft.pl in the image
-	$try $docker container run --rm -i  ${image_name} $@
+	$try $docker container run --rm $network -i  ${image_name} $@
 }
 
 docker_gui   () {
         # start GUI in docker with display to host
 	# --entrypoint= not really necessary if ENTRYPOINT=/O-Saft/o-saft
-	$try $docker container run --rm -i  --entrypoint=/O-Saft/o-saft.tcl \
+	$try $docker container run --rm $network -i  --entrypoint=/O-Saft/o-saft.tcl \
 		-e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix ${image_name} $@
 }
 
@@ -484,15 +501,15 @@ docker_sshx  () {
 docker_call ()  {
 	cmd="$1"
 	shift
-	$try $docker container run --rm -it --entrypoint=$cmd    ${image_name} $@
+	$try $docker container run --rm $network -it --entrypoint=$cmd    ${image_name} $@
 }
 
 docker_shell () {
-	$try $docker container run --rm -it --entrypoint=/bin/sh ${image_name}
+	$try $docker container run --rm $network -it --entrypoint=/bin/sh ${image_name}
 }
 
 docker_root ()  {
-	$try $docker container run --rm -it --entrypoint=/bin/sh --user root ${image_name}
+	$try $docker container run --rm $network -it --entrypoint=/bin/sh --user root ${image_name}
 }
 
 docker_cp   ()  {
