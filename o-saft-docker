@@ -14,11 +14,14 @@
 #?       $0 rmi
 #?       $0 apk  package
 #?       $0 apt  package
-#?       $0 gui
 #?       $0 sshx
 #?       $0 call /path/to/program [arguments]
 #?       $0 cp   file-to-be-copied
-#?       $0 [options and commands of o-saft.pl]
+#?       $0 [OPTIONS] gui
+#?       $0 [OPTIONS] [options and commands of o-saft.pl]
+#?
+#?      Note that own options like -v -id= -tag= must be specified before any
+#?      other command or mode.
 #?
 #? OPTIONS
 #?       -h      got it
@@ -270,14 +273,14 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.51 24/09/07 13:14:41
+#?       @(#) o-saft-docker 3.1 24/09/07 23:00:54
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID="1.51"
+SID="3.1"
 VERSION="${OSAFT_VERSION:-19.01.19}"
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
 registry=${o_saft_docker_name}; registry=${registry:-owasp/o-saft}
