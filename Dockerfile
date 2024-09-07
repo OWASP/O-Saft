@@ -24,6 +24,7 @@
 #?              Additional packages  to be installed in the image.
 #?              Note that the package names depend on the used base image.
 #?              Default:  tcl  tk  xvfb
+#  tklib missing for alpine
 #?
 #?          OSAFT_VM_SRC_OSAFT
 #?              URL to fetch o-saft.tgz archive.
@@ -141,7 +142,7 @@ LABEL \
 	DETAILS="Please see https://github.com/OWASP/O-Saft/raw/master/o-saft-docker" \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/$_SELF_" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
-	SID="@(#) Dockerfile 3.1 24/09/07 22:31:51" \
+	SID="@(#) Dockerfile 3.2 24/09/08 00:01:20" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "$_SELF_ $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
