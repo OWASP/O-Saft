@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.162 24/09/06 19:05:16"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.163 24/09/07 11:49:49"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -377,7 +377,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.162"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.163"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6154,7 +6154,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.162");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.163");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6800,7 +6800,6 @@ while ($#argv >= 0) {
     #!#--------+------------------------+--------------------------+------------
     #!#           argument to check       what to do             what to do next
     #!#--------+------------------------+--------------------------+------------
-    if ($arg eq  '--trace--')         { _set_cfg_out('traceARG',1); next; } # for backward compatibility
     if ($arg =~ /^--trace.?CLI$/i)      {                           next; } # ignore, already handled
     if ($arg =~ /^--v(?:erbose)?$/)     { $cfg{'verbose'}++;        next; } # --v and --v=X allowed
     if ($arg =~ /^--?starttls$/i)       { $cfg{'starttls'} ="SMTP"; next; } # shortcut for  --starttls=SMTP
@@ -6816,18 +6815,19 @@ while ($#argv >= 0) {
     #} specials
 
     # normalise options with arguments:  --opt=name --> --opt name
+    trace_arg("opt=val? $arg");
     if ($arg =~ m/(^-[^=]*)=(.*)/) {
         $arg = $1;
         unshift(@argv, $2);
-        #_dbx("push to ARGV $2");
+        trace_arg("opt val  $arg $2");
     } # $arg now contains option only, no argument
 
     # normalise option strings:
     #    --opt-name     --> --optname
     #    --opt_name     --> --optname
     #    --opt.name     --> --optname
-    $arg =~ s/([a-zA-Z0-9])(?:[_.-])/$1/g if ($arg =~ /^-/);
-    #_dbx("normalised= $arg");
+    $arg =~ s/([a-zA-Z0-9])(?:[_.,-])/$1/g if ($arg =~ /^-/);
+    trace_arg("optnorm= $arg");
 
     # Following checks use exact matches with 'eq' or RegEx matches with '=~'
 
@@ -7209,19 +7209,29 @@ while ($#argv >= 0) {
                 # -x DAYS   # ssl-cert-check: -x ignored hence DAYS taken as host # FIXME
     #} --------+------------------------+---------------------------+----------
 
-    trace_arg("option= $arg") if ($arg =~ /^-/);
+    trace_arg("option=  $arg") if ($arg =~ /^-/);
     next if ($arg =~ /^-/); # all options handled, remaining are ignored
         # i.e. from sslscan: --no-renegotiation --no-compression ...
         # TODO: means that targets starting with '-' are not possible,
         #       however, such FQDN are illegal
 
     #{ COMMANDS
-    my $p = qr/[._-]/;  # characters used as separators in commands keys
-                        # this will always be used as $p? below
-        # TODO: build general RegEx to replace .,- in command name by _
-        #       this would make many checks below obsolete or simplify them
     trace_arg("command? $arg");
-    $arg =~ s/^,/+/;    # allow +command and ,command
+    #_dbx "usr= @{$cfg{'commands_usr'}}";
+    if ($arg =~ /^\+(.*)/)  {
+        my $val = $1;   # commands are used internally without + prefix
+        # user-defined commands must be passed literally, lazy usage (aliases)
+        # like missing characters or character variants [,._-] are not allowed
+        if (_is_member($val, \@{$cfg{'commands_usr'}}) == 1) {
+            trace_arg("cmdsusr= $val");
+            push(@{$cfg{'do'}}, @{$cfg{"cmd-$val"}});
+            next;
+        }
+    }
+    $arg =~ s/^,/+/;         # normalise: allow +command and ,command
+    $arg =~ s/([.,_-]+)/_/g; # normalise: +some-cmd --> +some_cmd; +a,b --> +a_b
+        # allows .,- characters used as separators in commands keys anywhere
+        # normalisation makes many checks below more simple: only  _?  is used
     # The following sequence of conditions is important: commands which are an
     # alias for another command are listed first. These aliases should contain
     # the comment  "# alias"  somewhere in the line, so it can be extracted by
@@ -7229,11 +7239,12 @@ while ($#argv >= 0) {
     # the command assigned to $arg should be enclosed in ' (single quote), see
     # lib/OMan.pm' OMan::man_alias() for more details.
     # You may read the lines as table with columns like:
+    trace_arg("command= $arg");
     #!#+---------+----------------------+---------------------------+-------------
     #!#           command to check       aliased to                  comment/traditional name
     #!#+---------+----------------------+---------------------------+-------------
     if ($arg =~ /^\+targets?$/)         { $arg = '+host';           } # alias: print host and DNS information
-    if ($arg =~ /^\+host$p/)            { $arg = '+host';           } # alias: until indiidual +host-* commands available
+    if ($arg eq  '+host_')              { $arg = '+host';           } # alias: until indiidual +host-* commands available
     # check protocol commands
     if ($arg eq  '+check')              { $check  = 1;              }
     if ($arg eq  '+info')               { $info   = 1;              } # needed 'cause +info and ..
@@ -7248,39 +7259,14 @@ while ($#argv >= 0) {
     if ($arg eq  '+tlsv10')             { $arg = '+tlsv1';          } # alias:
     if ($arg eq  '+dtlsv10')            { $arg = '+dtlsv1';         } # alias:
     # check cipher commands
-    if ($arg =~ /^\+ciphers?$p?adh$/i)  { $arg = '+cipher_adh';     } # alias:
-    if ($arg =~ /^\+ciphers?$p?cbc$/i)  { $arg = '+cipher_cbc';     } # alias:
-    if ($arg =~ /^\+ciphers?$p?des$/i)  { $arg = '+cipher_des';     } # alias:
-    if ($arg =~ /^\+ciphers?$p?edh$/i)  { $arg = '+cipher_edh';     } # alias:
-    if ($arg =~ /^\+ciphers?$p?exp$/i)  { $arg = '+cipher_exp';     } # alias:
-    if ($arg =~ /^\+ciphers?$p?export$/i){$arg = '+cipher_exp';     } # alias:
-    if ($arg =~ /^\+ciphers?$p?null$/i) { $arg = '+cipher_null';    } # alias:
-    if ($arg =~ /^\+ciphers?$p?rc4$/i)  { $arg = '+cipher_rc4';     } # alias:
-    if ($arg =~ /^\+ciphers?$p?weak$/i) { $arg = '+cipher_weak';    } # alias:
-    if ($arg =~ /^\+ciphers?$p?order$/i){ $arg = '+cipher_order';   } # alias:
-    if ($arg =~ /^\+ciphers?$p?strong/i){ $arg = '+cipher_strong';  } # alias:
-    if ($arg =~ /^\+ciphers?$p?pfs$/i)  { $arg = '+cipher_pfs';     } # alias:
-    if ($arg =~ /^\+ciphers?$p?pfsall$/i){$arg = '+cipher_pfsall';  } # alias:
-    if ($arg =~ /^\+ciphers?$p?selected/i){$arg= '+cipher_selected';} # alias:
-    if ($arg =~ /^\+ciphers$p?openssl$/i){$arg = '+ciphers_local';  } # alias: for backward compatibility
-    if ($arg =~ /^\+ciphers$p?local$/i) { $arg = '+ciphers_local';  } # alias:
-    if ($arg =~ /^\+ciphers?$p?preferr?ed/i){ $arg = '+cipher_default'; }
-    if ($arg =~ /^\+ciphers?$p?defaults?$/i){ $arg = '+cipher_default'; } # alias:
-    if ($arg =~ /^\+ciphers?$p?dh$/i)   { $arg = '+cipher_dh';      } # alias:
-    if ($arg =~ /^\+cipher--?v$/)       { $arg = '+cipher'; $cfg{'v_cipher'}++; } # alias: shortcut for: +cipher --cipher-v
-    if ($arg =~ /^\+adh$p?ciphers?/i)   { $arg = '+cipher_adh';     } # alias: backward compatibility < 17.06.17
-    if ($arg =~ /^\+cbc$p?ciphers?/i)   { $arg = '+cipher_cbc';     } # alias: backward compatibility < 17.06.17
-    if ($arg =~ /^\+des$p?ciphers?/i)   { $arg = '+cipher_des';     } # alias: backward compatibility < 17.06.17
-    if ($arg =~ /^\+edh$p?ciphers?/i)   { $arg = '+cipher_edh';     } # alias: backward compatibility < 17.06.17
-    if ($arg =~ /^\+exp$p?ciphers?/i)   { $arg = '+cipher_exp';     } # alias: backward compatibility < 17.06.17
-    if ($arg =~ /^\+export$p?ciphers?/i){ $arg = '+cipher_exp';     } # alias: backward compatibility < 17.06.17
-    if ($arg =~ /^\+null$p?ciphers?/i)  { $arg = '+cipher_null';    } # alias: backward compatibility < 17.06.17
-    if ($arg =~ /^\+weak$p?ciphers?/i)  { $arg = '+cipher_weak';    } # alias: backward compatibility < 17.06.17
-    if ($arg =~ /^\+order$p?ciphers?/i) { $arg = '+cipher_order';   } # alias: backward compatibility < 17.06.17
-    if ($arg =~ /^\+strong$p?ciphers?/i){ $arg = '+cipher_strong';  } # alias: backward compatibility < 17.06.17
-    if ($arg =~ /^\+selected$p?ciphers?/i){$arg= '+cipher_selected';} # alias: backward compatibility < 17.06.17
-    if ($arg =~ /^\+session$p?ciphers?/i) {$arg= '+cipher_selected';} # alias: backward compatibility < 17.06.17
-    if ($arg eq  '+selected')           { $arg = '+cipher_selected';} # alias: backward compatibility < 17.06.17
+    # TODO: Regex (.*)?  should be (.*)+  which is not working
+    $arg =~ s/^\+session_?(.*)?$/+session_$1/;  # # lazy usage
+    $arg =~ s/^\+ciphers?_?(.*)?$/+cipher_$1/   if ($arg !~ m/\+ciphers?$/);
+        # allow: ciphers_* ciphers_* and ciphers*  BUT not +cipher or +ciphers
+        # allow: *_ciphers *-ciphers and *ciphers
+    if ($arg =~ /^\+cipher_?openssl$/i) {$arg = '+ciphers_local';   } # alias: for backward compatibility
+    if ($arg =~ /^\+cipher_v$/)         { $arg = '+cipher'; $cfg{'v_cipher'}++; } # alias: shortcut for: +cipher --cipher-v
+    if ($arg =~ /^\+cipher_export$/)    { $arg = '+cipher_exp';     } # alias:
     if ($arg eq  '+adh')                { $arg = '+cipher_adh';     } # alias:
     if ($arg eq  '+cbc')                { $arg = '+cipher_cbc';     } # alias:
     if ($arg eq  '+des')                { $arg = '+cipher_des';     } # alias:
@@ -7290,77 +7276,71 @@ while ($#argv >= 0) {
     if ($arg eq  '+null')               { $arg = '+cipher_null';    } # alias:
     if ($arg eq  '+weak')               { $arg = '+cipher_weak';    } # alias:
     # alias commands for CVEs
-    if ($arg =~ /^[+]cve.?2009.?3555/i) { $arg = '+renegotiation';  } # alias:
-    if ($arg =~ /^[+]cve.?2011.?3389/i) { $arg = '+beast';          } # alias:
-    if ($arg =~ /^[+]cve.?2012.?4929/i) { $arg = '+crime';          } # alias:
-    if ($arg =~ /^[+]cve.?2013.?3587/i) { $arg = '+breach';         } # alias:
-    if ($arg =~ /^[+]cve.?2014.?0160/i) { $arg = '+heartbleed';     } # alias:
-    if ($arg =~ /^[+]cve.?2014.?0224/i) { $arg = '+ccs';            } # alias:
-    if ($arg =~ /^[+]cve.?2014.?3566/i) { $arg = '+poodle';         } # alias:
-    if ($arg =~ /^[+]cve.?2015.?0204/i) { $arg = '+freak';          } # alias:
-    if ($arg =~ /^[+]cve.?2016.?0703/i) { $arg = '+drown';          } # alias:
-    if ($arg =~ /^[+]cve.?2015.?4000/i) { $arg = '+logjam';         } # alias:
-    if ($arg =~ /^[+]cve.?2013.?2566/i) { $arg = '+rc4';            } # alias:
-    if ($arg =~ /^[+]cve.?2015.?2808/i) { $arg = '+rc4';            } # alias:
+    if ($arg =~ /^[+]cve_?2009_?3555/i) { $arg = '+renegotiation';  } # alias:
+    if ($arg =~ /^[+]cve_?2011_?3389/i) { $arg = '+beast';          } # alias:
+    if ($arg =~ /^[+]cve_?2012_?4929/i) { $arg = '+crime';          } # alias:
+    if ($arg =~ /^[+]cve_?2013_?3587/i) { $arg = '+breach';         } # alias:
+    if ($arg =~ /^[+]cve_?2014_?0160/i) { $arg = '+heartbleed';     } # alias:
+    if ($arg =~ /^[+]cve_?2014_?0224/i) { $arg = '+ccs';            } # alias:
+    if ($arg =~ /^[+]cve_?2014_?3566/i) { $arg = '+poodle';         } # alias:
+    if ($arg =~ /^[+]cve_?2014_?0204/i) { $arg = '+freak';          } # alias:
+    if ($arg =~ /^[+]cve_?2016_?0703/i) { $arg = '+drown';          } # alias:
+    if ($arg =~ /^[+]cve_?2016_?0800/i) { $arg = '+drown';          } # alias:
+    if ($arg =~ /^[+]cve_?2015_?4000/i) { $arg = '+logjam';         } # alias:
+    if ($arg =~ /^[+]cve_?2013_?2566/i) { $arg = '+rc4';            } # alias:
+    if ($arg =~ /^[+]cve_?2015_?2808/i) { $arg = '+rc4';            } # alias:
+    if ($arg =~ /^[+]cve_?2016_?2183/i) { $arg = '+sweet32';        } # alias:
     # check and info commands
     if ($arg eq  '+owner')              { $arg = '+subject';        } # alias:
     if ($arg eq  '+authority')          { $arg = '+issuer';         } # alias:
     if ($arg eq  '+expire')             { $arg = '+after';          } # alias:
     if ($arg eq  '+extension')          { $arg = '+extensions';     } # alias:
+    if ($arg eq  '+protocol')           { $arg = '+session_protocol'; } # alias: # NOTE different to +protocols
     if ($arg eq  '+sts')                { $arg = '+hsts';           } # alias:
     if ($arg eq  '+sigkey')             { $arg = '+sigdump';        } # alias:
-    if ($arg =~ /^\+sigkey$p?algorithm/i){$arg = '+signame';        } # alias:
-    if ($arg eq  '+protocol')           { $arg = '+session_protocol'; } # alias: # NOTE different to +protocols
-    if ($arg =~ /^\+selected$p?protocol/i){$arg= '+session_protocol'; } # alias:
-    if ($arg =~ /^\+rfc$p?2818$/i)      { $arg = '+rfc_2818_names'; } # alias:
-    if ($arg =~ /^\+rfc$p?2818$p?names/i){$arg = '+rfc_2818_names'; } # alias:
-    if ($arg =~ /^\+rfc$p?6125$/i)      { $arg = '+rfc_6125_names'; } # alias: # TODO until check is improved (6/2015)
-    if ($arg =~ /^\+rfc$p?6125$p?names/i){$arg = '+rfc_6125_names'; } # alias:
-    if ($arg =~ /^\+rfc$p?6797$/i)      { $arg = '+hsts';           } # alias:
-    if ($arg =~ /^\+rfc$p?7525$/i)      { $arg = '+rfc_7525';       } # alias:
+    if ($arg =~ /^\+sigkey_?algorithm/i){ $arg = '+signame';        } # alias:
+    if ($arg =~ /^\+selected_?protocol/i){$arg= '+session_protocol'; } # alias:
+    if ($arg =~ /^\+rfc_?2818$/i)       { $arg = '+rfc_2818_names'; } # alias:
+    if ($arg =~ /^\+rfc_?2818_?names/i) { $arg = '+rfc_2818_names'; } # alias:
+    if ($arg =~ /^\+rfc_?6125$/i)       { $arg = '+rfc_6125_names'; } # alias: # TODO until check is improved (6/2015)
+    if ($arg =~ /^\+rfc_?6125_?names/i) { $arg = '+rfc_6125_names'; } # alias:
+    if ($arg =~ /^\+rfc_?6797$/i)       { $arg = '+hsts';           } # alias:
+    if ($arg =~ /^\+rfc_?7525$/i)       { $arg = '+rfc_7525';       } # alias:
         # do not match +fingerprints  in next line as it may be in .o-saft.pl
-    if ($arg =~ /^\+fingerprint$p?(.{2,})$/)          { $arg = '+fingerprint_' . $1;} # alias:
-    if ($arg =~ /^\+fingerprint$p?sha$/i)             { $arg = '+fingerprint_sha1'; } # alais:
-    if ($arg =~ /^\+subject$p?altnames?/i)            { $arg = '+altname';          } # alias:
-    if ($arg =~ /^\+modulus$p?exponent$p?1$/)         { $arg = '+modulus_exp_1';    } # alias:
-    if ($arg =~ /^\+modulus$p?exponent$p?65537$/)     { $arg = '+modulus_exp_65537';} # alias:
-    if ($arg =~ /^\+modulus$p?exponent$p?size$/)      { $arg = '+modulus_exp_oldssl'; } # alias:
-    if ($arg =~ /^\+pubkey$p?enc(?:ryption)?$/)       { $arg = '+pub_encryption'; } # alias:
-    if ($arg =~ /^\+public$p?enc(?:ryption)?$/)       { $arg = '+pub_encryption'; } # alias:
-    if ($arg =~ /^\+pubkey$p?enc(?:ryption)?$p?known/){ $arg = '+pub_enc_known';  } # alias:
-    if ($arg =~ /^\+public$p?enc(?:ryption)?$p?known/){ $arg = '+pub_enc_known';  } # alias:
-    if ($arg =~ /^\+ocsp$p?public$p?hash$/)           { $arg = '+ocsp_public_hash'; }
-    if ($arg =~ /^\+ocsp$p?subject$p?hash$/)          { $arg = '+ocsp_subject_hash';}
-    if ($arg =~ /^\+sig(key)?$p?enc(?:ryption)?$/)    { $arg = '+sig_encryption'; } # alias:
-    if ($arg =~ /^\+sig(key)?$p?enc(?:ryption)?_known/){$arg = '+sig_enc_known';  } # alias:
-    if ($arg =~ /^\+server$p?(?:temp)?$p?key$/)       { $arg = '+dh_parameter';   } # alias:
-    if ($arg =~ /^\+master$p?key$/)                   { $arg = '+master_key';     }
-    if ($arg =~ /^\+master$p?secret$/)                { $arg = '+master_secret';  }
-    if ($arg =~ /^\+extended$p?master$p?secret$/)     { $arg = '+master_secret';  } # alias:
-    if ($arg =~ /^\+session$p?id$/)                   { $arg = '+session_id';     }
-    if ($arg =~ /^\+session$p?protocol$/)             { $arg = '+session_protocol'; } # lazy usage
-    if ($arg =~ /^\+session$p?lifetime$/)             { $arg = '+session_lifetime'; } # lazy usage
-    if ($arg =~ /^\+session$p?random$/)               { $arg = '+session_random'; } # lazy usage
-    if ($arg =~ /^\+session$p?ticket$/)               { $arg = '+session_ticket'; } # lazy usage
-    if ($arg =~ /^\+session$p?timeout$/)              { $arg = '+session_timeout';} # lazy usage
-    if ($arg =~ /^\+session$p?startdate$/)            { $arg = '+session_startdate';} # lazy usage
-    if ($arg =~ /^\+session$p?starttime$/)            { $arg = '+session_starttime';} # lazy usage
+    if ($arg =~ /^\+fingerprint_?(.{2,})$/)     { $arg = '+fingerprint_' . $1;} # alias:
+    if ($arg =~ /^\+fingerprint_?sha$/i)        { $arg = '+fingerprint_sha1'; } # alais:
+    if ($arg =~ /^\+subject_?altnames?/i)       { $arg = '+altname';          } # alias:
+    if ($arg =~ /^\+modulus_?exponent_?1$/)     { $arg = '+modulus_exp_1';    } # alias:
+    if ($arg =~ /^\+modulus_?exponent_?65537$/) { $arg = '+modulus_exp_65537';} # alias:
+    if ($arg =~ /^\+modulus_?exponent_?size$/)  { $arg = '+modulus_exp_oldssl'; } # alias:
+    if ($arg =~ /^\+pubkey_?enc(?:ryption)?$/)  { $arg = '+pub_encryption'; } # alias:
+    if ($arg =~ /^\+public_?enc(?:ryption)?$/)  { $arg = '+pub_encryption'; } # alias:
+    if ($arg =~ /^\+pubkey_?enc(?:ryption)?_?known/){ $arg = '+pub_enc_known';  } # alias:
+    if ($arg =~ /^\+public_?enc(?:ryption)?_?known/){ $arg = '+pub_enc_known';  } # alias:
+    if ($arg =~ /^\+ocsp_?public_?hash$/)       { $arg = '+ocsp_public_hash'; }
+    if ($arg =~ /^\+ocsp_?subject_?hash$/)      { $arg = '+ocsp_subject_hash';}
+    if ($arg =~ /^\+sig(key)?_?enc(?:ryption)?$/){$arg = '+sig_encryption'; } # alias:
+    if ($arg =~ /^\+sig(key)?_?enc(?:ryption)?_known/){$arg = '+sig_enc_known';  } # alias:
+    if ($arg =~ /^\+server_?(?:temp)?_?key$/)   { $arg = '+dh_parameter';   } # alias:
+    if ($arg =~ /^\+master_?key$/)              { $arg = '+master_key';     }
+    if ($arg =~ /^\+master_?secret$/)           { $arg = '+master_secret';  }
+    if ($arg =~ /^\+extended_?master_?secret$/) { $arg = '+master_secret';  } # alias:
     if ($arg =~ /^\+reneg$/)            { $arg = '+renegotiation';  } # alias:
     if ($arg =~ /^\+resum$/)            { $arg = '+resumption';     } # alias:
     if ($arg =~ /^\+reused?$/i)         { $arg = '+resumption';     } # alias:
-    if ($arg =~ /^\+resumption$p?psk$/i){ $arg = '+resumption_psk'; }
+    if ($arg =~ /^\+resumption_?psk$/i) { $arg = '+resumption_psk'; }
     if ($arg =~ /^\+commonName$/i)      { $arg = '+cn';             } # alias:
     if ($arg =~ /^\+cert(?:ificate)?$/i){ $arg = '+pem';            } # alias:
-    if ($arg =~ /^\+issuer$p?X509$/i)   { $arg = '+issuer';         } # alias:
-    if ($arg =~ /^\+subject$p?X509$/i)  { $arg = '+subject';        } # alias:
+    if ($arg =~ /^\+issuer_?X509$/i)    { $arg = '+issuer';         } # alias:
+    if ($arg =~ /^\+subject_?X509$/i)   { $arg = '+subject';        } # alias:
     if ($arg =~ /^\+sha2sig(?:nature)?$/){$arg = '+sha2signature';  } # alias:
-    if ($arg =~ /^\+sni$p?check$/)      { $arg = '+check_sni';      }
-    if ($arg =~ /^\+check$p?sni$/)      { $arg = '+check_sni';      }
-    if ($arg =~ /^\+ext$p?aia$/i)       { $arg = '+ext_authority';  } # alias: AIA is a common acronym ...
-    if ($arg =~ /^\+vulnerabilit(y|ies)/) {$arg= '+vulns';          } # alias:
+    if ($arg =~ /^\+sni_?check$/)       { $arg = '+check_sni';      }
+    if ($arg =~ /^\+check_?sni$/)       { $arg = '+check_sni';      }
+    if ($arg =~ /^\+ext_?aia$/i)        { $arg = '+ext_authority';  } # alias: AIA is a common acronym ...
+    if ($arg =~ /^\+vulnerabilit(y|ies)/){$arg = '+vulns';          } # alias:
     if ($arg =~ /^\+hpkp$/i)            { $arg = '+https_pins';     } # alias:
-    if ($arg =~ /^\+pkp$p?pins$/i)      { $arg = '+https_pins';     } # alias: +pkp_pins before 19.12.19
-    if ($arg =~ /^\+https?${p}body$/i)  { _set_cfg_out('http_body', 1); } # SEE Note:--https_body
+    if ($arg =~ /^\+pkp_?pins$/i)       { $arg = '+https_pins';     } # alias: +pkp_pins before 19.12.19
+    if ($arg =~ /^\+https?_body$/i)     { _set_cfg_out('http_body', 1); } # SEE Note:--https_body
     #!#+---------+----------------------+---------------------------+-------------
     #  +---------+----------------------+-----------------------+----------------
     #   command to check     what to do                          what to do next
@@ -7368,13 +7348,14 @@ while ($#argv >= 0) {
     # commands which cannot be combined with others
     if ($arg eq  '+host')   { push(@{$cfg{'do'}}, 'host');                      next; } # special
     if ($arg eq  '+info')   { @{$cfg{'do'}} = (@{$cfg{'cmd-info'}},    'info'); next; }
-    if ($arg eq  '+info--v'){ @{$cfg{'do'}} = (@{$cfg{'cmd-info--v'}}, 'info'); next; } # like +info ...
+    if ($arg eq  '+info_v') { @{$cfg{'do'}} = (@{$cfg{'cmd-info--v'}}, 'info'); next; } # +info--v like +info --v
     if ($arg eq  '+quick')  { @{$cfg{'do'}} = (@{$cfg{'cmd-quick'}},  'quick'); next; }
     if ($arg eq  '+check')  { @{$cfg{'do'}} = (@{$cfg{'cmd-check'}},  'check'); next; }
     if ($arg eq  '+vulns')  { @{$cfg{'do'}} = (@{$cfg{'cmd-vulns'}},  'vulns'); next; }
     if ($arg eq '+check_sni'){@{$cfg{'do'}} =  @{$cfg{'cmd-sni--v'}};           next; }
     if ($arg eq '+protocols'){@{$cfg{'do'}} = (@{$cfg{'cmd-prots'}});           next; }
-#    if ($arg =~ /^\+next$p?prot(?:ocol)s$/) { @{$cfg{'do'}}= (@{$cfg{'cmd-prots'}}); next; }
+#    if ($arg =~ /^\+next_?prot(?:ocol)s$/) { @{$cfg{'do'}}= (@{$cfg{'cmd-prots'}}); next; }
+    trace_arg("command- $arg");
     if ($arg =~ /^\+(.*)/)  {   # all  other commands
         my $val = $1;
         trace_arg("command+ $val");
@@ -7400,14 +7381,13 @@ while ($#argv >= 0) {
         if ($val eq 'lucky13')  { push(@{$cfg{'do'}}, @{$cfg{'cmd-lucky13'}}); next; }
         if ($val eq 'robot')    { push(@{$cfg{'do'}}, @{$cfg{'cmd-robot'}});   next; }
         if ($val eq 'sweet32')  { push(@{$cfg{'do'}}, @{$cfg{'cmd-sweet32'}}); next; }
-        if ($val =~ /tr$p?02102/){push(@{$cfg{'do'}}, qw(tr_02102+ tr_02102-));next; }
-        if ($val =~ /tr$p?03116/){push(@{$cfg{'do'}}, qw(tr_03116+ tr_03116-));next; }
-        if (_is_member($val, \@{$cfg{'commands_usr'}}) == 1) {
-            trace_arg("cmdsusr= $val");
-                                  push(@{$cfg{'do'}}, @{$cfg{"cmd-$val"}});    next; }
+        if ($val =~ /tr_?02102/){ push(@{$cfg{'do'}}, qw(tr_02102+ tr_02102-));next; }
+        if ($val =~ /tr_?03116/){ push(@{$cfg{'do'}}, qw(tr_03116+ tr_03116-));next; }
+        #_dbx "not= @{$cfg{'commands_notyet'}}";
         if (_is_member($val, \@{$cfg{'commands_notyet'}}) > 0) {
             OCfg::warn("044: command not yet implemented '$val' may be ignored");
         }
+        #_dbx "cmd= @{$cfg{'commands'}}";
         if (_is_member($val, \@{$cfg{'commands'}}) == 1) {
             trace_arg("command= $val");
             push(@{$cfg{'do'}}, lc($val));      # lc() as only lower case keys are allowed since 14.10.13
@@ -8503,6 +8483,10 @@ All following texts from here on are Annotations.
 
 
 =head2 Note:Documentation
+
+=head3 Since VERSION 24.09.24
+
+Most options and command for backward compatibility removed.
 
 =head3 Since VERSION 24.01.24
 
