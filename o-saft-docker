@@ -239,6 +239,14 @@
 #?       However, it is possible to do so:
 #?           $0 call o-saft.cgi --cgi [options and commands of o-saft.pl]
 #?
+#?       Using the GUI from the Docker image (for example with option gui)
+#?       may return errors like:
+#?           Authorization required, but no authorization protocol specified
+#?           application-specific initialization failed: couldn't connect to display ":0.0"
+#?       Then the calling host  does not allow connections from foreign hosts
+#?       to its X-Display. Use the  'xhost' or 'xauth'  to adjust permissions
+#?       properly to connect to the display.
+#?
 #? ENVIONMENT VARIABLES
 #?       Following environment variables can be used to pass settings to the
 #?       script (used for the build mode only):
@@ -262,14 +270,14 @@
 #?       docker(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 1.50 24/07/17 02:02:18
+#?       @(#) o-saft-docker 1.51 24/09/07 13:14:41
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID="1.50"
+SID="1.51"
 VERSION="${OSAFT_VERSION:-19.01.19}"
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
 registry=${o_saft_docker_name}; registry=${registry:-owasp/o-saft}
