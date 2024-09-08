@@ -35,7 +35,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_oman   = "@(#) OMan.pm 3.69 24/09/09 01:11:25";
+my  $SID_oman   = "@(#) OMan.pm 3.70 24/09/09 01:33:02";
 our $VERSION    = "24.09.24";
 
 use Exporter qw(import);
@@ -385,10 +385,12 @@ EoFUNC
   toggle_handler();                 // show "change schema" button if file:
   toggle_checked("q--header");      // want nice output
   toggle_checked("q--enabled");     // avoid huge cipher lists
+  toggle_checked("q--html4");       // is on bey default, switch off
   toggle_checked("q--html5");       // nice output in browser
   toggle_checked("o--header");      // .. also as option ..
   toggle_checked("o--enabled");     // .. also as option ..
-//toggle_checked("o--html5");       // TODO: noch nicht als Option da
+				    //toggle_checked("o--html5");       // TODO: noch nicht als Option da
+  toggle_checked("q--no-hints");    // disabled by default Hints in CGI-mode
   toggle_checked("q--no-dtlsv1");   // disabled by default because some targets hang
   toggle_checked("q--no-dtlsv11");  // ..
   toggle_checked("q--no-dtlsv12");  // ..
@@ -942,7 +944,8 @@ sub _man_cgi_simple {
                      no-dns dns no-cert BR
                      no-sni sni   BR
                      no-http http BR
-                     header  no-header  no-warnings html4 html5   BR
+                     header  no-header  no-warnings  no-hints     BR
+                     html4   html5  format=hex       BR
                      enabled disabled   legacy=owasp BR
                      traceKEY traceCMD  trace v     cgi-no-header BR
                  )) {
@@ -2750,7 +2753,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.69 2024/09/09
+3.70 2024/09/09
 
 
 =head1 AUTHOR
