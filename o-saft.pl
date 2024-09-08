@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.163 24/09/07 11:49:49"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.164 24/09/09 01:00:02"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -377,7 +377,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.163"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.164"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6154,7 +6154,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.163");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.164");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6462,6 +6462,7 @@ while ($#argv >= 0) {
     trace_arg("cli_arg= $arg");
     push(@{$dbx{argv}}, $arg) if (($arg !~ m/^--cfg[_-]/) && (($arg =~ m/^[+-]/) || ($typ ne "HOST")));
     push(@{$dbx{cfg}},  $arg) if  ($arg =~ m/^--cfg[_-]/);    # both aprox. match are sufficient for debugging
+    my $arg_orig = $arg;
 
     # First check for arguments of options.
     # Options are not case-sensitive.  Options may contain  .  and  -  and  _
@@ -7408,6 +7409,7 @@ while ($#argv >= 0) {
         next;
     }
 
+    $arg = $arg_orig;   # restore orignial argument (without any normalisation)
     trace_arg("host?    $arg");
     if ($typ eq 'HOST')     {   # host argument is the only one parsed here
         if ($arg !~ m/^[a-zA-Z0-9.-]+/){
