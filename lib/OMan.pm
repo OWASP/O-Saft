@@ -35,7 +35,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_oman   = "@(#) OMan.pm 3.68 24/09/07 11:46:09";
+my  $SID_oman   = "@(#) OMan.pm 3.69 24/09/09 01:11:25";
 our $VERSION    = "24.09.24";
 
 use Exporter qw(import);
@@ -798,23 +798,15 @@ sub _man_usr_value  {
     return $arg[1];
 } # _man_usr_value
 
-sub _man_get_version {
-    # ugly, but avoids global variable elsewhere or passing as argument
-    no strict; ## no critic qw(TestingAndDebugging::ProhibitNoStrict)
-    my $v = '3.68'; $v = _VERSION() if (defined &_VERSION);
-    return $v;
-} # _man_get_version
-
 sub _man_html_init  {
     #? initialise %html hash
-    my $tipp    = _man_get_version();   # get official version
     my $cgi_bin = _man_usr_value('user-action') || _man_usr_value('usr-action') || "/cgi-bin/o-saft.cgi";
         # get action from --usr-action= or set to default (defensive programming)
     # this function is called once, usually, hence it's save to modify %html directly
     $html{'action'}         =~ s/__HTML_cgi_bin__/$cgi_bin/g;
     $html{'form_anf'}       =~ s/__HTML_cgi_bin__/$cgi_bin/g;
     $html{'script_endcgi'}  =~ s/__HTML_cgi_bin__/$cgi_bin/g;
-    $html{'body_anf'}       =~ s/__HTML_version__/$tipp/g;
+    $html{'body_anf'}       =~ s/__HTML_version__/$version/g; # $version is global
     $html{'body_anf'}       =~ s/__HTML_title__/$html{'title'}/g;
     $html{'meta'}           =~ s/__HTML_title__/$html{'title'}/g;
     return;
@@ -2758,7 +2750,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.68 2024/09/07
+3.69 2024/09/09
 
 
 =head1 AUTHOR
