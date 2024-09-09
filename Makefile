@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.47 24/09/07 22:34:50
+#?      @(#) Makefile 3.48 24/09/09 21:45:04
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-O-SID           = 3.47
+O-SID           = 3.48
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -200,8 +200,8 @@ TEST.Makefiles.ssl = \
 SRC.Makefiles.ssl  = $(TEST.Makefiles.ssl:%=$(TEST.dir)/%)
 
 # documentation files
-O-DOC.odg       = o-saft_CLI_data_flow.odg \
-		  o-saft_GUI_data_flow.odg \
+O-DOC.odg       = o-saft_structure.odg \
+		  o-saft_structure-simple.odg \
 		  o-saft_docker.de.odg \
 		  o-saft_docker.en.odg
 SRC.odg         = $(O-DOC.odg:%=$(O-DIR.doc)/%)
@@ -306,7 +306,8 @@ EXE.office      = libreoffice
 # summary variables (mainly used for INSTALL.sh)
 _ALL.devtools.intern  += $(EXE.single)
 _ALL.devtools.extern  += sccs gpg sha256sum docker
-ALL.tools.optional     = aha perldoc pod2html pod2man pod2pdf pod2text pod2usage podman podviewer tkpod stty tput
+ALL.tools.optional     = aha perldoc pod2html pod2man pod2pdf pod2text pod2usage podviewer tkpod stty tput
+#                 podman removed because its most likely the container tool
 ALL.perlmodules = Carp \
 		  Net::DNS Net::SSLeay \
 		  IO::Socket::INET IO::Socket::SSL Socket \
@@ -336,8 +337,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.47 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.47
+_INST.genbytext = generated data by Makefile 3.48 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.48
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-DIR.install)@'       \
 		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DIR.doc)@'              \
 		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-DIR.lib)@'              \
@@ -599,8 +600,8 @@ docs:       $(GEN.docs)
 standalone: $(GEN.src)
 stand-alone:$(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.47
-tar:     _INST.is_edit  = 3.47
+_INST.is_edit           = 3.48
+tar:     _INST.is_edit  = 3.48
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
@@ -649,7 +650,7 @@ docker.push:
 	@$(O-TRACE.target)
 	docker push owasp/o-saft:latest
 
-.PHONY: pl cgi man pod html wiki standalone tar tmptar tmptgz cleantar cleantmp help
+.PHONY: pl cgi man pdf pod html wiki standalone tar tmptar tmptgz cleantar cleantmp help
 .PHONY: docker docker.rm docker.dev docker.push
 
 clean.gen:
