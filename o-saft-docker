@@ -280,7 +280,9 @@
 #?           OSAFT_VM_SRC_OPENSSL   - URL to openssl.tgz
 #?           OSAFT_VM_SHA_OSAFT     - checksum of o-saft.tgz
 #?           o_saft_docker_name     - contains an image registry name
+#?                                    same as -id=ID
 #?           o_saft_docker_tag      - contains an image tag
+#?                                    same as -tag=TAG
 #?
 #?       To get the build-in defaults use:
 #?           $0 status
@@ -292,22 +294,23 @@
 #?       docker(1), podman(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 3.4 24/09/08 00:31:53
+#?       @(#) o-saft-docker 3.5 24/09/20 18:02:40
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID="3.4"
-VERSION="${OSAFT_VERSION:-19.01.19}"
+SID="3.5"
+VERSION="${OSAFT_VERSION:-24.09.24}"
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
-registry=${o_saft_docker_name}; registry=${registry:-owasp/o-saft}
+registry=${o_saft_docker_name};
+registry=${registry:-owasp/o-saft}
 image_name="${registry}"
+[ -n "$tag" ] && image_name="${registry}:${tag}"
 entrypoint_pl='ENTRYPOINT ["perl", "/O-Saft/o-saft.pl"]';   # default ENTRYPOINT
 entrypoint_sh='ENTRYPOINT ["/O-Saft/o-saft"]';              # default ENTRYPOINT
 entry__cmd='CMD ["--norc", "--help=docker"]':               # default CMD
-[ -n "$tag" ] && image_name="${registry}:${tag}"
 network=                      # --network=host  for option -local
 try=
 exe=o-saft.pl
