@@ -1,7 +1,14 @@
-#!/usr/bin/docker build --force-rm --rm -f
+#!/usr/bin/docker build -t owasp/o-saft --force-rm --rm -f
 
 #? DESCRIPTION
 #?      Dockerfile to build an image with o-saft.tgz using standard openssl.
+#?      It's recommended to use docker's  --progress=plain  option also.
+#?
+#? SYNOPSIS
+#?      podman build -t owasp/o-saft --force-rm --rm -f ./Dockerfile .
+#?      docker build -t owasp/o-saft --force-rm --rm -f ./Dockerfile .
+#?      env DOCKER_BUILDKIT=1 \
+#?          docker build -t owasp/o-saft --force-rm --rm -f ./Dockerfile .
 #?
 #? USAGE
 #?      This Dockerfile uses "buildargs" variables to build the Docker image.
@@ -27,7 +34,8 @@
 #  tklib missing for alpine
 #?
 #?          OSAFT_VM_SRC_OSAFT
-#?              URL to fetch o-saft.tgz archive.
+#?              Full URL to fetch o-saft.tgz archive.
+#?              Uses local file if it is a filename without HTTP(S): schema.
 #?
 #?          OSAFT_VM_SHA_OSAFT
 #?              SHA256 checksum for the o-saft.tgz archive.
@@ -106,8 +114,34 @@
 #?                  --build-arg "OSAFT_VERSION=latest-development" \ 
 #?                  -f Dockerfile -t owasp/o-saft .
 #?
+#?      Build with local file o-saft.tgz without checksum
+#?          docker build --force-rm --rm \ 
+#?                  --build-arg "OSAFT_VM_SRC_OSAFT=o-saft.tgz" \ 
+#?                  --build-arg "OSAFT_VM_SHA_OSAFT=" \ 
+#?                  -f Dockerfile -t owasp/o-saft:local .
+#?
+#?      To debug (more precise: to trace) the build process, in particular the
+#?      The  RUN  command, use additionally:
+#?                  --build-arg "OSAFT_VM_TRACE="set -x "
+#?      or simply:
+#?                  --build-arg "OSAFT_VM_TRACE=1
+#?
 #?      Note that  o-saft-docker  searches for a Docker image  owasp/o-saft
 #?      so don't forget to tag at least one image with this name.
+#?
+#? LIMITATION
+#?      The environment variable  DOCKER_BUILDKIT=1  must be set to build from
+#?      this Dockerfile, otherwise docker bails out with an error like:
+#?          the --mount option requires BuildKit. Refer to https://.... \
+#?          to learn how to build images with BuildKit enabled.
+#?
+#?      This is only required if  OSAFT_VM_SRC_OSAFT  is set to a local file.
+#?      The syntax in Dockerfiles does not allow parameters conditionally for
+#?      the  RUN  command or using buildargs variables.
+#?      As workaround simply remove the  --mount=...  option from the command
+#?      RUN  in this file.
+#?      According Docker's documentation BuildKit is the default builder since
+#?      Docker Engine v23.0.
 #?
 # HACKER's Info
 #       Note that the base package alpine uses busybox as shell. This shell is
@@ -142,7 +176,7 @@ LABEL \
 	DETAILS="Please see https://github.com/OWASP/O-Saft/raw/master/o-saft-docker" \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/$_SELF_" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
-	SID="@(#) Dockerfile 3.2 24/09/08 00:01:20" \
+	SID="@(#) Dockerfile 3.3 24/09/21 00:22:01" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "$_SELF_ $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
@@ -155,8 +189,8 @@ ENV     WORK_DIR	/
 
 WORKDIR	$WORK_DIR
 
-RUN \
-	$OSAFT_VM_TRACE ; \
+RUN --mount=type=bind,readonly,target=/o,source=. \
+	[ -n "$OSAFT_VM_TRACE" ]  && set -x ; \
 	echo "#== Configure user" && \
 	if expr "X$OSAFT_VM_FROM" : Xdebian >/dev/null ; then \
 	    adduser --quiet --home ${OSAFT_DIR} ${OSAFT_VM_USER} ; \
@@ -189,29 +223,33 @@ RUN \
 	fi && \
 	$apt_exe $apt_add $opt_add $packages	&& \
 	\
-	echo "#== Workaround for docker/alpine (bug or race condition)" && \
 	#   in some alpine versions, resolving a hostname fails, see
 	#   https://forums.docker.com/t/resolved-service-name-resolution-broken-on-alpine-and-docker-1-11-1-cs1/19307/23
 	#   as workaround we try to prefetch the name resolution;
 	#   however, it is not bullet proof either ...
 	workaround_alpine_bug() { \
+	    echo "#== Workaround for docker/alpine (bug or race condition)" && \
 	    expr "X$OSAFT_VM_FROM" : Xdebian >/dev/null && return ; \
 	    for host in github.com codeload.github.com cpan.metacpan.org search.cpan.org cpan.metacpan.org ; do \
 	        echo -n "#   resolving $host ... " && ping -c 1 $host > /dev/null && echo SUCCESS || echo FAILDED ; \
 	    done; } && \
 	\
 	echo "#== Pull and install O-Saft"	&& \
-	workaround_alpine_bug			&& \
 	cd    $WORK_DIR				&& \
-	curl --insecure --location --silent $OSAFT_VM_SRC_OSAFT -o $OSAFT_VM_TAR_OSAFT	&& \
+	if [ "." = `dirname $OSAFT_VM_SRC_OSAFT` ]; then \
+		cp /o/$OSAFT_VM_SRC_OSAFT $OSAFT_VM_TAR_OSAFT ; \
+	else \
+		workaround_alpine_bug		&& \
+		curl --insecure --location --silent $OSAFT_VM_SRC_OSAFT -o $OSAFT_VM_TAR_OSAFT ; \
+	fi && \
 	# check sha256 if there is one
 	[ -n "$OSAFT_VM_SHA_OSAFT" ]		&& \
 		sha256=$(command curl --location --silent $OSAFT_VM_SHA256URL |awk '{print $1}') && \
 		[ "$sha256" != "$OSAFT_VM_SHA_OSAFT" ]	&& \
 			echo "#   WARNING: retrived checksum differs from given checksum for $OSAFT_VM_TAR_OSAFT" && \
 			echo "#   WARNING: adapt SAFT_VM_SHA_OSAFT in $_SELF_ or set it empty using --build-arg" && \
-			echo "#   $sha256" && \
-			echo "#   $OSAFT_VM_SHA_OSAFT" && \
+			echo "#   expected: $sha256" && \
+			echo "#   given:    $OSAFT_VM_SHA_OSAFT" && \
 		echo "$OSAFT_VM_SHA_OSAFT  $OSAFT_VM_TAR_OSAFT" | sha256sum -c ; \
 		\
 	tar   -xzf ${OSAFT_VM_TAR_OSAFT}	&& \
