@@ -294,14 +294,14 @@
 #?       docker(1), podman(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 3.5 24/09/20 18:02:40
+#?       @(#) o-saft-docker 3.6 24/09/20 21:16:22
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID="3.5"
+SID="3.6"
 VERSION="${OSAFT_VERSION:-24.09.24}"
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
 registry=${o_saft_docker_name};
@@ -617,8 +617,8 @@ done
 
 # don't run inside docker
 case "$1" in
-  'hacker') ;;
-  'usage')  ;;
+  'hacker') docker_hacker;  exit 0; ;;
+  'usage')  docker_usage;   exit 0; ;;
   *)        if [ -n "$osaft_vm_build" ]; then
 		echo "**ERROR: cannot run inside docker image; exit"
 		exit 1
@@ -632,8 +632,6 @@ esac
 # some modes do not need to check existing images
 case "$1" in
   'build')  ;;
-  'usage')  ;;
-  'hacker') ;;
   *)        check_image_name;   # may exit, see description there
 esac
 
@@ -645,7 +643,6 @@ while [ $# -gt 0 ]; do
 	shift
 	case "$mode" in
 	  'build')  docker_build;   exit 0; ;;
-	  'usage')  docker_usage;   exit 0; ;;
 	  'call')   docker_call $@; exit 0; ;;
 	  'sshx')   docker_sshx $@; exit 0; ;;
 	  'gui')    docker_gui  $@; exit 0; ;;
@@ -656,7 +653,6 @@ while [ $# -gt 0 ]; do
 	  'shell')  docker_shell;   exit 0; ;;
 	  'inspect')docker_inspect; exit 0; ;;
 	  'status') docker_status;  exit 0; ;;
-	  'hacker') docker_hacker;  exit 0; ;;
 #          -registry=*) registry=  # not supported, as this is for O-Saft only
           '--')     shift; break; ;;
           *)               break; ;;
