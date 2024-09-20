@@ -294,14 +294,14 @@
 #?       docker(1), podman(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 3.6 24/09/20 21:16:22
+#?       @(#) o-saft-docker 3.7 24/09/21 00:10:18
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID="3.6"
+SID="3.7"
 VERSION="${OSAFT_VERSION:-24.09.24}"
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
 registry=${o_saft_docker_name};
@@ -352,13 +352,15 @@ check_image_name () {
 
 docker_usage () {
 	_me=${0##*/}
-	# TODO: env|grep osaft_vm_build
-	_openssl="/openssl/bin/openssl";      # TODO: still hardcoded for docker
+	# openssl in docker image should be found using path there;
+        # for builds with Dockerfiel.openssl ist will be /openssl/bin/openssl
 	if [ -n "$osaft_vm_build" ]; then
-		_openssl="openssl"            # we're inside docker
+		echo "# $0 called inside docker: $osaft_vm_build"
+		_openssl="openssl"
 		_me=${0##*/}
 	else
-		_openssl="$0 call $_openssl"  # we're outside docker
+		echo "# $0 called outside docker"
+		_openssl="$0 call openssl"
 		_me=$0
 	fi
 	_ciphers=`$_openssl ciphers -V ALL:COMPLEMENTOFALL:aNULL | \wc -l`
@@ -376,16 +378,26 @@ docker_usage () {
 	or:
 		o-saft -docker +info your.tld
 
+EoDescription
+	tcl=$(\command -v wish)
+	cat << EoDescription
       # o-saft.tcl:
-	The GUI  o-saft.tcl  will only work inside Docker if the packages tcl
-	tk and xvfb are installed. However  o-saft.tcl  may be started on the
-        host and then use  o-saft.pl  from the Docker image.
-
 	# run on host:
+	However  o-saft.tcl  may be started on the host and then use o-saft.pl
+	from the Docker image:
 
 		o-saft.tcl --docker
+	or:
+		$_me gui
+		$_me gui +info your.tld
 
 	# run in Docker image
+	The GUI  o-saft.tcl  will only work inside Docker if the packages tcl
+	tk and xvfb are installed.
+
+EoDescription
+	[ -z "$tcl" ] && echo "                # wish not installed"
+	[ -n "$tcl" ] && cat << EoDescription
 
 		$0 apk tcl tk xvfb
 		$0 gui
@@ -487,6 +499,7 @@ docker_osaft () {
 docker_gui   () {
         # start GUI in docker with display to host
 	# --entrypoint= not really necessary if ENTRYPOINT=/O-Saft/o-saft
+echo "# network = $network"
 	$try $docker container run --rm $network -i  --entrypoint=/O-Saft/o-saft.tcl \
 		-e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix ${image_name} $@
 }
