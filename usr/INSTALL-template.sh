@@ -14,12 +14,12 @@
 #?      Here we go.
 #?
 #?      This script does nothing except printing some messages unless called
-#?      with an argument. The arguments are:
+#?      with an operation mode and an installation directory. The modes are:
 #?
-#?          /path/to/installation/directory
-#?                      - copy all necessary files into specified directory
 #?          --install   - copy all necessary files into default directory
-#?                        default if no other option given
+#?                        note that symbolic links cannot be copied and will
+#?                        replaced by the file in the installation directory
+#?                        default operation mode if no other mode given
 #?          --check     - check current installation
 #?          --clean     - move files not necessary to run O-Saft into subdir
 #?                        ./.files_to_be_removed
@@ -43,6 +43,11 @@
 #?          --check=podtools      - just check for tools to view POD files
 #?          --check=SID           - list SIDs and md5sum of installed files
 #?          --check=SID --changes - list SIDs and md5sum of changed files
+#?
+#?          /path/to/installation/directory
+#?                      - directory used for the operation
+#?                        copy all necessary files into this directory
+#?                        use data in that directory for checks
 #?
 #?      With --install  only warnings or errors are reported. Use option --v
 #?      to get a detailed report.
@@ -78,7 +83,7 @@
 #=#             o-saft.pl	24.09.24 /opt/o-saft/o-saft.pl
 #=#            o-saft.tcl	    3.31 /opt/o-saft/o-saft.tcl
 #=#                o-saft	     3.4 /opt/o-saft/o-saft
-#=#         o-saft-docker	     3.9 /opt/o-saft/o-saft-docker
+#=#         o-saft-docker	    3.13 /opt/o-saft/o-saft-docker
 #=# usr/o-saft-standalone.pl	24.09.24 usr/o-saft-standalone.pl
 #=#----------------------+---------------------------------------
 #=
@@ -335,7 +340,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.40 24/09/21 14:50:34"
+SID="@(#) INSTALL-template.sh 3.41 24/09/21 21:14:27"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -1352,7 +1357,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.40 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.41 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1376,7 +1381,7 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.40; $mode $src_txt $inst_directory ..."
+echo "# $0 3.41; $mode $src_txt $inst_directory ..."
     # always print internal SID, makes debugging simpler
     # do not use $SID, which is too noisy for make targets
 
