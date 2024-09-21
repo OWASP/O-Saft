@@ -340,7 +340,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.41 24/09/21 21:14:27"
+SID="@(#) INSTALL-template.sh 3.42 24/09/22 01:10:24"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -384,6 +384,7 @@ osaft_cgi="INSERTED_BY_MAKE_OSAFT_CGI"
 osaft_gui="INSERTED_BY_MAKE_OSAFT_GUI"
 osaft_rel="INSERTED_BY_MAKE_OSAFT_REL"
 osaft_one="INSERTED_BY_MAKE_OSAFT_STAND"
+osaft_sid="INSERTED_BY_MAKE_OSAFT_GETSID@"
 osaft_dock="INSERTED_BY_MAKE_OSAFT_DOCKER"
 doc_dir="INSERTED_BY_MAKE_DOC_DIR"
 lib_dir="INSERTED_BY_MAKE_LIB_DIR"
@@ -977,10 +978,10 @@ check_sids  () {
 	#echo_head "# check SIDs of installed files"
 	echo_head "# SID\tdate\ttime\tmd5sum\tfilename\tpath"
 	if [ 0 -eq $changes ]; then
-		\echo "$files_all_src" | t/get-SIDs.sh
+		\echo "$files_all_src" | $osaft_sid
 	else
 		# show diff only (tested with GNU diff only)
-		\echo "$files_all_src" | t/get-SIDs.sh | \diff $osaft_rel -
+		\echo "$files_all_src" | $osaft_sid | \diff $osaft_rel -
 	fi
 	echo_foot
 	echo_grey "# some files in doc/ t/ and usr/ don't have a SID"
@@ -1357,7 +1358,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.41 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.42 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1381,7 +1382,7 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.41; $mode $src_txt $inst_directory ..."
+echo "# $0 3.42; $mode $src_txt $inst_directory ..."
     # always print internal SID, makes debugging simpler
     # do not use $SID, which is too noisy for make targets
 
