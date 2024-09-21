@@ -15,6 +15,7 @@
 #?       $0 apk  package
 #?       $0 apt  package
 #?       $0 sshx
+#?       $0 what file
 #?       $0 call /path/to/program [arguments]
 #?       $0 cp   file-to-be-copied
 #?       $0 [OPTIONS] gui
@@ -60,6 +61,7 @@
 #            hacker  - show more information
 #?           gui     - start o-saft.tcl in container image (display to host)
 #?           sshx    - start o-saft.tcl in container image (tunnel X via ssh)
+#?           what    - get SID of specified file
 #?           *       - anything else (default): run o-saft.pl in container
 #?
 #?       This wrapper expects, that the O-Saft container image has the name:
@@ -120,6 +122,9 @@
 #?   sshx
 #?       Start o-saft.tcl in the container image using ssh to tunnel X to the
 #?       hosts display.
+#?
+#?   what
+#?       Extract SID of the specified file.
 #?
 #?   build
 #?       This mode builds the container image for O-Saft from the Dockerfile.
@@ -306,14 +311,14 @@
 #?       docker(1), podman(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 3.13 24/09/21 17:01:25
+#?       @(#) o-saft-docker 3.14 24/09/21 21:52:01
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID="3.13"
+SID="3.14"
 VERSION="${OSAFT_VERSION:-24.09.24}"
 ich=${0##*/}
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
@@ -708,6 +713,7 @@ while [ $# -gt 0 ]; do
 	  'build')  docker_build;   exit 0; ;;
 	  'call')   docker_call $@; exit 0; ;;
 	  'sshx')   docker_sshx $@; exit 0; ;;
+	  'what')   docker_call sed -n -e "s/.*\(@(#).*\)/\1/p" $@; exit 0; ;;
 	  'gui')    docker_gui  $@; exit 0; ;;
 	  'cp')     docker_cp   $@; exit 0; ;;
 	  'apk')    docker_apk  $@; exit 0; ;;
