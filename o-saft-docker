@@ -303,14 +303,14 @@
 #?       docker(1), podman(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 3.10 24/09/21 15:46:35
+#?       @(#) o-saft-docker 3.11 24/09/21 15:52:40
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID="3.10"
+SID="3.11"
 VERSION="${OSAFT_VERSION:-24.09.24}"
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
 registry=${o_saft_docker_name};
@@ -357,6 +357,7 @@ check_image_name () {
 		done
 	fi
 	exit 3;     # no image found, exit script
+	# return
 }
 
 docker_usage () {
@@ -414,6 +415,7 @@ EoDescription
 		$0 gui your.tld
 
 EoDescription
+	return
 }
 # TODO: alpine:3.8 misses 'tablelist' there seems to be no package 'tklib'
 
@@ -426,10 +428,12 @@ docker_hacker () {
 		$0 apk add tcl tk tklib xvfb
 
 EoHacker
+	return
 }
 
 docker_inspect () {
 	$try $docker image inspect ${image_name}
+	return
 }
 
 docker_status () {
@@ -473,6 +477,7 @@ EoStatus
 	else
 		echo "#     <<no build variable 'osaft_vm_build' found>>"
 	fi
+	return
 }
 
 docker_build () {
@@ -513,6 +518,7 @@ docker_osaft () {
 	# this is the command for the default mode, passing all parameters
 	# expects a proper ENTRYPOINT like /O-Saft/o-saft.pl in the image
 	$try $docker container run --rm $network -i  ${image_name} $@
+	return
 }
 
 docker_gui   () {
@@ -521,6 +527,7 @@ docker_gui   () {
 echo "# network = $network"
 	$try $docker container run --rm $network -i  --entrypoint=/O-Saft/o-saft.tcl \
 		-e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix ${image_name} $@
+	return
 }
 
 docker_sshx  () {
@@ -534,20 +541,24 @@ docker_sshx  () {
 		_ip=`\ip -4 -o addr | \awk '($2~/docker/){sub("/..","",$4);print $4}'`
 		$try \ssh user@${_id} -p ${_ssh} /O-Saft/o-saft.tcl
 	fi
+	return
 }
 
 docker_call ()  {
 	cmd="$1"
 	shift
 	$try $docker container run --rm $network -it --entrypoint=$cmd    ${image_name} $@
+	return
 }
 
 docker_shell () {
 	$try $docker container run --rm $network -it --entrypoint=/bin/sh ${image_name}
+	return
 }
 
 docker_root ()  {
 	$try $docker container run --rm $network -it --entrypoint=/bin/sh --user root ${image_name}
+	return
 }
 
 docker_cp   ()  {
@@ -565,6 +576,7 @@ docker_cp   ()  {
 	# $try $docker container commit       \
 	#	--change='ENTRYPOINT ["/O-Saft/o-saft"]' \
 	#
+	return
 }
 
 docker_apk  ()  {
@@ -585,6 +597,7 @@ docker_apk  ()  {
 	$try $docker container exec -t --user root ${_id} /sbin/apk add --no-cache $@
 	$try $docker container commit       ${_id} ${image_name}
 	$try $docker container rm           ${_id} 
+	return
 }
 
 docker_apt  ()  {
@@ -596,6 +609,7 @@ docker_apt  ()  {
 		--change="${entrypoint_sh}" --change="${entry__cmd}" \
 					    ${_id} ${image_name}
 	$try $docker container rm           ${_id} 
+	return
 }
 
 docker_rmi  ()  {
@@ -618,11 +632,13 @@ docker_rmi  ()  {
 		done
 	done
 	$try $docker image rm ${registry}
+	return
 }
 
 my_help ()      {
 	ich=${0##*/}
 	\sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
+	return
 }
 
 # first check for options
