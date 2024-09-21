@@ -34,6 +34,9 @@
 #?       -local  use --network=host to allow container accessing the host
 #?               WARNING: see section  SECURITY  below also.
 #?       -OSAFT_VERSION=24.09.24  same as OSAFT_VERSION environment variable
+#?       -OSAFT_VM_SRC_OSAFT=file same as OSAFT_VM_SRC_OSAFT environment variable
+#?       -OSAFT_VM_SHA_OSAFT=feed same as OSAFT_VM_SHA_OSAFT environment variable
+#                -OSAFT_VM_SRC_OSAFT= and -OSAFT_VM_SHA_OSAFT= needed for our make
 #?       --      pass all remaining parameters to o-saft.pl in image
 #?
 #? QUICKSTART
@@ -300,14 +303,14 @@
 #?       docker(1), podman(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 3.9 24/09/21 09:04:35
+#?       @(#) o-saft-docker 3.10 24/09/21 15:46:35
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID="3.9"
+SID="3.10"
 VERSION="${OSAFT_VERSION:-24.09.24}"
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
 registry=${o_saft_docker_name};
@@ -491,15 +494,19 @@ docker_build () {
 	[ -n "$OSAFT_VM_SRC_SOCKET"  ] && _arg3="--build-arg OSAFT_VM_SRC_SOCKET=$OSAFT_VM_SRC_SOCKET"
 	[ -n "$OSAFT_VM_SRC_OPENSSL" ] && _arg4="--build-arg OSAFT_VM_SRC_OPENSSL=$OSAFT_VM_SRC_OPENSSL"
 	[ -n "$OSAFT_VM_SHA_OSAFT"   ] && _arg5="--build-arg OSAFT_VM_SHA_OSAFT=$OSAFT_VM_SHA_OSAFT"
-	# TODO: do we need more of these variables?
+	# set environment for docker before v23
+	DOCKER_BUILDKIT=1 ; export DOCKER_BUILDKIT
 	$try $docker image build -f ./Dockerfile --force-rm --rm -t ${image_name} \
 		$_arg0 $_arg1 $_arg2 $_arg3 $_arg4 $_arg5 .	&& \
 	$try $docker image save  -o $_tar ${image_name}	&& \
 	$try $docker image rm    `$try docker image ls -q ${image_name}` && \
 	$try $docker image load  -i $_tar && \
 	$try \rm                    $_tar && \
+	[ "test" = "$tag" ] && return
+	# additional convenient registry tags if not -tag=test
 	$try $docker image tag   ${image_name} o-saft	&& \
 	$try $docker image tag   ${image_name} ${image_name}:$OSAFT_VERSION
+	return
 }
 
 docker_osaft () {
@@ -634,7 +641,9 @@ while [ $# -gt 0 ]; do
 	            image_name="${registry}:$tag" 
 	            ;;
 	  -id=*)    image_name="`expr "$1" ':' '-id=\(.*\)'`"; ;;
-	  -OSAFT_VERSION=*)     OSAFT_VERSION="`expr "$1" ':' '-OSAFT_VERSION=\(.*\)'`"; ;;
+	  -OSAFT_VERSION=*)      OSAFT_VERSION="`expr "$1" ':' '-OSAFT_VERSION=\(.*\)'`"; ;;
+	  -OSAFT_VM_SRC_OSAFT=*) OSAFT_VM_SRC_OSAFT="`expr "$1" ':' '-OSAFT_VM_SRC_OSAFT=\(.*\)'`"; ;;
+	  -OSAFT_VM_SHA_OSAFT=*) OSAFT_VM_SHA_OSAFT="`expr "$1" ':' '-OSAFT_VM_SHA_OSAFT=\(.*\)'`"; ;;
 	  *)        break;  ;;
 	esac
 	shift
