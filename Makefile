@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.48 24/09/09 21:45:04
+#?      @(#) Makefile 3.49 24/09/21 14:20:59
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-O-SID           = 3.48
+O-SID           = 3.49
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -301,11 +301,12 @@ EXE.pl          = $(SRC.pl)
 
 # other tools
 EXE.docker      = docker
+EXE.podman      = podman
 EXE.office      = libreoffice
 
 # summary variables (mainly used for INSTALL.sh)
 _ALL.devtools.intern  += $(EXE.single)
-_ALL.devtools.extern  += sccs gpg sha256sum docker
+_ALL.devtools.extern  += sccs gpg sha256sum docker podman
 ALL.tools.optional     = aha perldoc pod2html pod2man pod2pdf pod2text pod2usage podviewer tkpod stty tput
 #                 podman removed because its most likely the container tool
 ALL.perlmodules = Carp \
@@ -337,8 +338,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.48 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.48
+_INST.genbytext = generated data by Makefile 3.49 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.49
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-DIR.install)@'       \
 		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DIR.doc)@'              \
 		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-DIR.lib)@'              \
@@ -600,8 +601,8 @@ docs:       $(GEN.docs)
 standalone: $(GEN.src)
 stand-alone:$(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.48
-tar:     _INST.is_edit  = 3.48
+_INST.is_edit           = 3.49
+tar:     _INST.is_edit  = 3.49
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
