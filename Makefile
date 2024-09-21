@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.52 24/09/21 15:44:00
+#?      @(#) Makefile 3.53 24/09/21 16:12:36
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-O-SID           = 3.52
+O-SID           = 3.53
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -107,6 +107,7 @@ SRC.gui         = $(O-Project).tcl $(O-DIR.lib)/$(O-Project)-img.tcl
 SRC.cgi         = $(O-Project).cgi
 SRC.php         = $(O-DIR.usr)/$(O-Project).php
 SRC.docker      = \
+		  $(O-Project)-podman \
 		  $(O-Project)-docker \
 		  $(O-Project)-docker-dev \
 		  Dockerfile Dockerfile.openssl
@@ -296,6 +297,7 @@ EXE.dummy       = /bin/echo -n ""
 # internal used tools (paths hardcoded!)
 EXE.single      = $(O-DIR.usr)/gen_standalone.sh
 EXE.o_docker    = o-saft-docker
+EXE.o_podman    = o-saft-podman
 EXE.pl          = $(SRC.pl)
 #                   SRC.pl is used for generating a couple of data
 
@@ -338,8 +340,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.52 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.52
+_INST.genbytext = generated data by Makefile 3.53 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.53
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-DIR.install)@'       \
 		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DIR.doc)@'              \
 		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-DIR.lib)@'              \
@@ -601,8 +603,8 @@ docs:       $(GEN.docs)
 standalone: $(GEN.src)
 stand-alone:$(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.52
-tar:     _INST.is_edit  = 3.52
+_INST.is_edit           = 3.53
+tar:     _INST.is_edit  = 3.53
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
