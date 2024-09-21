@@ -87,8 +87,8 @@
 #?       from those of Docker or podman.
 #?
 #?   "o-saft.pl in container image"
-#?       Means that the program defined by O-Saft Docker's or podman's ENTRY-
-#?       POINT will be executed. This can be  o-saft.pl  or  o-saft .
+#?       Means that the program defined by O-Saft container's ENTRYPOINT will
+#?       be executed. This can be  o-saft.pl  or  o-saft .
 #?
 #? MODES
 #?       Modes are simply an alias  to call docker or podman  with the proper
@@ -170,11 +170,12 @@
 #?       other purpose than O-Saft intends.
 #?
 #? SECURITY
-#?       When working with Docker images, at least two types of security have
-#?       to be observed.
+#?       When working with containers not build with trusted tools under your
+#?       control (for example a downloaded Docker image), at least  two types
+#?       of security have to be observed.
 #?
-#?       It is rather difficult to create a secure Docker image, at least the
-#?       pulled files (Dockerfile, image, other sources) must be trusted.
+#?       It's rather difficult to create a secure container, the pulled files
+#?       (Dockerfile, image, other sources) must be trusted.
 #?
 #?       The known security types are:
 #?
@@ -188,33 +189,33 @@
 #?
 #?       However, there is the option   -local  which exposes the host to the
 #?       container using  --network=host . This is mainly intended for making
-#?       test with a server running on the host.
+#?       tests with a server running on the host.
 #?       ####################################################################
 #?       ##   DO NOT USE THIS OPTION ON PRODUCTIVE OR SENSITIVE SYSTEMS.   ##
 #?       ####################################################################
 #?
 #?   Security of the created images
-#?       When creating Docker images, wether using  build, load or pull,  you
-#?       must trust the sources: the binary (load or pull) or the  Dockerfile
-#?       (which may be fetched at runtime too) used to build the image.
+#?       When creating containers, wether using build, load or pull, you must
+#?       trust the sources: the binary (load or pull) or the fetched (at run-
+#?       time) Dockerfile used to build the image.
 #?
 #?       Update June/2018: Crypto-Miner in Docker images detected:
 #?           https://www.fortinet.com/blog/threat-research/yet-another-crypto-mining-botnet.html
 #?           https://kromtech.com/blog/security-center/cryptojacking-invades-cloud-how-modern-containerization-trend-is-exploited-by-attackers
 #?           https://sysdig.com/blog/detecting-cryptojacking/
-#?       That's why we prefer a transparent build of the Docker image. We re-
-#?       comment to build the Docker image for O-Saft using the Dockerfile.
+#?       That is why a transparent of the container build is prefered.  It is
+#?       recommended to build the container for O-Saft using the Dockerfile.
 #?
 #?   Security of the tools executed from within the image (docker run)
 #?       If the image is trustworthy (see before),  the tools executed in the
 #?       image may have security impacts. 
-#?       This script creates a Docker image for O-Saft. O-Saft is supposed to
-#?       check a target for  SSL/TLS  related issues.  I. g. it does not harm
-#?       the target using  penetration or attacking techniques  (except check
-#?       for Heartbleed vulnerability). So o-saft.pl itself should not be any
-#?       security issue. However, to perform the checks, O-Saft recommends to
-#?       install a special version of OpenSSL. This OpenSSL has functionality
-#?       enabled, which is known to be insecure (i. e. SSLv2, SSLv3).
+#?       The script creates a container for O-Saft which is supposed to check
+#?       a target for  SSL/TLS  related issues.  It does not  harm the target
+#?       using  penetration or attacking techniques  (except check Heartbleed
+#?       vulnerability). So o-saft.pl itself shouldn't be any security issue.
+#?       However, to perform the checks it's recommended to install a special
+#?       version of OpenSSL. This OpenSSL has functionality enabled, which is
+#?       known to be insecure (i. e. SSLv2, SSLv3).
 #?
 #?       That's why this script uses a transparent method to create an image.
 #?       
@@ -233,6 +234,9 @@
 #        documentation about  --message and/or -m  is ambigious.  Also passed
 #        comment text is mainly the same as Docker already reports with the
 #        "docker history IMAGE"  command in the  "CREATED BY" column.
+#
+#        podman instead of docker is used with option  -podman ,  which works
+#        flawless (09/2024).
 #
 # KNOWN PROBLEMS
 #        * Error when building docker image
@@ -294,14 +298,14 @@
 #?       docker(1), podman(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 3.7 24/09/21 00:10:18
+#?       @(#) o-saft-docker 3.8 24/09/21 02:01:50
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID="3.7"
+SID="3.8"
 VERSION="${OSAFT_VERSION:-24.09.24}"
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
 registry=${o_saft_docker_name};
@@ -353,13 +357,13 @@ check_image_name () {
 docker_usage () {
 	_me=${0##*/}
 	# openssl in docker image should be found using path there;
-        # for builds with Dockerfiel.openssl ist will be /openssl/bin/openssl
+        # for builds with Dockerfile.openssl ist will be /openssl/bin/openssl
 	if [ -n "$osaft_vm_build" ]; then
-		echo "# $0 called inside docker: $osaft_vm_build"
+		echo "# $0 called inside container: $osaft_vm_build"
 		_openssl="openssl"
 		_me=${0##*/}
 	else
-		echo "# $0 called outside docker"
+		echo "# $0 called outside container"
 		_openssl="$0 call openssl"
 		_me=$0
 	fi
@@ -370,8 +374,9 @@ docker_usage () {
 	$_openssl supports $_ciphers ciphers 
 
       # o-saft.pl:
-	O-Saft docker image is ready to run o-saft.pl, use:
+	O-Saft container is ready to run o-saft.pl, use:
 
+		podman run --rm -it ${image_name} +info your.tld
 		docker run --rm -it ${image_name} +info your.tld
 	or:
 		$_me  +info your.tld
@@ -609,10 +614,10 @@ my_help ()      {
 # first check for options
 while [ $# -gt 0 ]; do
 	case "$1" in
-	  '-h' | '-?' | '-help')  my_help;  exit 0; ;;
-	  '-n')     try=echo; ;;
-	  '-v')     set -x  ; ;;
-	  '+V')     echo $SID ; exit 0; ;;
+	  -h | -help | '-?' | '-/')  my_help;  exit 0; ;;
+	  -n)       try=echo; ;;
+	  -v | -x)  set -x  ; ;;
+	  +V)       echo $SID ; exit 0; ;;
 	  -docker)  docker="$docker"  ; ;; # FIXME: fails with: $0 -podman -docker
 	  -podman)  docker="$podman"
 		    echo "**WARNING: podman not tested, may work ..."
