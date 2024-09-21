@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.51 24/09/21 15:38:40
+#?      @(#) Makefile 3.52 24/09/21 15:44:00
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-O-SID           = 3.51
+O-SID           = 3.52
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -338,8 +338,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.51 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.51
+_INST.genbytext = generated data by Makefile 3.52 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.52
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-DIR.install)@'       \
 		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DIR.doc)@'              \
 		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-DIR.lib)@'              \
@@ -601,8 +601,8 @@ docs:       $(GEN.docs)
 standalone: $(GEN.src)
 stand-alone:$(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.51
-tar:     _INST.is_edit  = 3.51
+_INST.is_edit           = 3.52
+tar:     _INST.is_edit  = 3.52
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
@@ -622,6 +622,8 @@ docdata:    $(GEN.DOC.data)
 tcl.data:
 	@echo "**ERROR: ancient target; please use 'doc.data'"
 tcldata:    tcl.data
+
+.PHONY: pl cgi man pdf pod html wiki standalone tar tmptar tmptgz cleantar cleantmp help
 
 # docker targets use project's own script to build and remove the image
 # docker.test   - uses local Dockerfile and local $GEN.tgz to build an image
@@ -661,8 +663,19 @@ docker.push:
 	@$(O-TRACE.target)
 	docker push owasp/o-saft:latest
 
-.PHONY: pl cgi man pdf pod html wiki standalone tar tmptar tmptgz cleantar cleantmp help
 .PHONY: docker docker.rm docker.dev docker.push
+
+# targets for podman are the same as for docker
+podman.build:  OSAFT_VM_BUILDER = -podman
+podman.test:   OSAFT_VM_BUILDER = -podman
+podman.test.rm:OSAFT_VM_BUILDER = -podman
+podman.rm:     OSAFT_VM_BUILDER = -podman
+podman.test:  docker.test
+podman.build: docker.build
+podman.rm:    docker.rm
+podman.test.rm: docker.test.rm
+
+.PHONY: podman.build podman.rm podman.test podman.test.rm
 
 clean.gen:
 	@$(O-TRACE.target)
