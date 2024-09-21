@@ -306,14 +306,14 @@
 #?       docker(1), podman(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 3.12 24/09/21 16:14:31
+#?       @(#) o-saft-docker 3.13 24/09/21 17:01:25
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID="3.12"
+SID="3.13"
 VERSION="${OSAFT_VERSION:-24.09.24}"
 ich=${0##*/}
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
@@ -627,19 +627,25 @@ docker_rmi  ()  {
 	echo "# image IDs to be deleted: $_ids "
 	# need to find all images,  including referenced images, this is done
 	# with "images" command, then extract all lines with matching IDs,
-	# only these IDs are deleted
+	# only these IDs are deleted if their tag matches the -tag=* value
 	# Note: "docker images"  should return newest image on top, hence all
 	#       images which just represent a tag (alias) come first and will
 	#       be deleted first
 	$docker image ls | while read _any ; do
+		# expect lines like:
+		# REPOSITORY              TAG     IMAGE ID      CREATED         SIZE
+		# localhost/owasp/o-saft  test    355c01d5c842  27 minutes ago  93 MB
 		for _id in $_ids ; do
-			_img=`echo "$_any" | \awk "/$_id/"'{print $3}'`
+			_tag=`echo "$_any" | \awk '("'$_id'"==$3){print $2}'`
+			_img=`echo "$_any" | \awk '("'$_id'"==$3){print $3}'`
 			#dbx# echo "# ID  $_any : $_id : $_img"
+			[ -n "$tag" -a "$tag" != "$_tag" ] && continue  # wrong tag
 			[ -z "$_img" ] && continue  # other image
 			$try $docker image rm -f $@ $_img
 		done
 	done
-	$try $docker image rm ${registry}
+	# FIXME: $try $docker image rm ${registry}
+	#        probaly only necessary if no -tag= was given
 	return
 }
 
