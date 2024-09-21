@@ -6,7 +6,7 @@
 #?      make help.test.docker
 #?
 #? VERSION
-#?      @(#) Makefile.docker 3.16 24/09/21 17:03:21
+#?      @(#) Makefile.docker 3.17 24/09/21 21:43:16
 #?
 #? AUTHOR
 #?      19-dec-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.docker = targets for testing $(O-Project)-docker
 
-O-SID.docker       := 3.16
+O-SID.docker       := 3.17
 O-SELF.docker      := t/Makefile.docker
 ALL.includes       += $(O-SELF.docker)
 ALL.inc.type       += docker
@@ -58,7 +58,9 @@ LIST.docker.opts    = -help +V  inspect     status      usage   hacker
     # TODO: build apk rmi gui sshx shell root cp
 LIST.docker.call    = call=env  call=pwd    call=id     call=which=openssl \
 		      call=o-saft-docker    call=ls     call=ls=usr \
-		      call=openssl=ciphers=ALL,COMPLEMENTOFALL,aNULL
+		      call=openssl=ciphers=ALL,COMPLEMENTOFALL,aNULL \
+		      what=o-saft-docker-dev
+    #                 what with a file which usually does not change often
 LIST.docker.tool    = +VERSION  +version    +quit=--traceARG=localhost \
 		      -n=+cn=localhost      -local=+cn=localhost
 
