@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 3.7 24/07/27 19:37:38
+#?      @(#) Makefile.cmd 3.8 24/09/21 14:28:05
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-O-SID.cmd          := 3.7
+O-SID.cmd          := 3.8
 O-SELF.cmd         := t/Makefile.cmd
 ALL.includes       += $(O-SELF.cmd)
 ALL.inc.type       += cmd
@@ -66,7 +66,7 @@ HELP.cmd            = $(O-NL)\
 HELP.test.cmd.all   = # no special documentation yet
 
 # SEE Make:--ignore-output
-LIST.ignore-output-keys := master_key \
+LIST.ignore-output-keys := master_key resumption_psk \
 			   session_id session_id_ctx \
 			   session_startdate session_starttime \
 			   session_ticket sts_expired
