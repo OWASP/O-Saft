@@ -54,7 +54,7 @@
 # HACKER's INFO
 #
 #? VERSION
-#?      @(#) get-SIDs.sh 1.4 24/09/22 01:00:43
+#?      @(#) get-SIDs.sh 1.5 24/09/22 01:17:21
 #?
 #? AUTHOR
 #?      24-Jul-24 Achim Hoffmann
@@ -70,7 +70,7 @@ LC_COLLATE=C    # ensure that all tools behave as expected
 LANG=C          # ..
 dbx=
 try=
-osaftrel=usr/o-saft.rel     # default
+osaftrel=doc/o-saft.rel     # default
 rel_file=       # passed with --check=
 make_var=       # for example: ALL.src
 allfiles=
