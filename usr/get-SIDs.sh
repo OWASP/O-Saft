@@ -50,7 +50,7 @@
 # HACKER's INFO
 #
 #? VERSION
-#?      @(#) get-SIDs.sh 1.1 24/09/21 22:36:41
+#?      @(#) get-SIDs.sh 1.2 24/09/21 23:00:54
 #?
 #? AUTHOR
 #?      24-Jul-24 Achim Hoffmann
@@ -140,17 +140,19 @@ fi
 
 # remove non-existing files from list (md5sum and gawk complain if files are missing)
 for f in $allfiles; do
-	if [ -e "$f" -a ! -L "$f" ]; then
+	if [ -L "$f" ]; then
+		symlinks="$symlinks $f"
+	fi
+	if [ -e "$f" ]; then
 		in_files="$in_files $f"
 	else
-		if [ -L "$f" ]; then
-			symlinks="$symlinks $f"
-		else
-			missing="$missing $f"
-		fi
+		missing="$missing $f"
 	fi
 done
 
+_dbx "missing=$missing"
+_dbx "symlinks=$symlinks"
+_dbx "in_files=$in_files"
 # found files?
 [ -z "$in_files" ] && \echo "**ERROR   [$ich]: no specified file found; exit" >&2 && exit 2
 
@@ -161,14 +163,12 @@ if [ -n "$try" ]; then
 else
 	md5_arr=`\md5sum $in_files | \awk '{printf("md5[\"%s\"]=\"%s\";\n",$2,$1)}'`
 fi
-_dbx "missing=$missing"
-_dbx "symlinks=$symlinks"
-_dbx "in_files=$in_files"
 _dbx "md5_arr=$md5_arr"
 if [ -n "$try" ]; then
-	[ -n "$symlinks" ] && \echo "# symlinks: $missing"
+	[ -n "$symlinks" ] && \echo "# symlinks: $symlinks"
 	[ -n "$missing"  ] && \echo "# missing files: $missing"
 	\echo "gawk '...' $in_files | sort -f -k 5" && exit 0
+		# $md5_arr not printed as it may contain a huge list
 fi
 
 # print one line foreach file
@@ -228,17 +228,16 @@ fi
 			print "**WARNING: SID "f;
 		}
 	}' \
-	$in_files ;
+	$in_files ; # gawk
 
-  # print symlinks and missing files, if any
-  for f in $symlinks; do
-	\echo "**WARNING: ignore symlink $f"
-  done
   for f in $missing; do
 	\echo "**WARNING: missing file $f"
   done
 ) | \sort -f -k 6 | \sed -e '/^..WARNING:/s/SID/duplicate SID found in/'
     # sort field 6 which is the path and always there
+  # print symlinks and missing files, if any
+  [ -n "$symlinks" ] && \echo "**WARNING: symlinks '$symlinks'"
+  [ -n "$symlinks" ] && \echo "**WARNING: symlinks have SID=0 and the same md5sum as their target"
 
 exit
 
