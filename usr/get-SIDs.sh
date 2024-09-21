@@ -54,7 +54,7 @@
 # HACKER's INFO
 #
 #? VERSION
-#?      @(#) get-SIDs.sh 1.5 24/09/22 01:17:21
+#?      @(#) get-SIDs.sh 1.6 24/09/22 01:32:31
 #?
 #? AUTHOR
 #?      24-Jul-24 Achim Hoffmann
@@ -254,7 +254,12 @@ if [ -n "$rel_file" ]; then
 	else
 		for f in $in_files ; do
 			# only grep lines with exact 6 tab-separated fields
-			\awk -F"\t" "/$f"'$/{if(6==NF){print}}' $rel_file
+			# last field must match given file
+			# in awk  replace / by . ; . is meta character, that's ok
+			\awk -F"\t" '
+				BEGIN { f="'"$f"'"; gsub("/",".",f); }
+				($6~f){if(6==NF){print}}
+			' $rel_file
 		done
 	fi
 fi
