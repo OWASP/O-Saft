@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.50 24/09/21 14:36:59
+#?      @(#) Makefile 3.51 24/09/21 15:38:40
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-O-SID           = 3.50
+O-SID           = 3.51
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -338,8 +338,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.50 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.50
+_INST.genbytext = generated data by Makefile 3.51 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.51
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-DIR.install)@'       \
 		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DIR.doc)@'              \
 		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-DIR.lib)@'              \
@@ -601,8 +601,8 @@ docs:       $(GEN.docs)
 standalone: $(GEN.src)
 stand-alone:$(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.50
-tar:     _INST.is_edit  = 3.50
+_INST.is_edit           = 3.51
+tar:     _INST.is_edit  = 3.51
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
@@ -623,17 +623,27 @@ tcl.data:
 	@echo "**ERROR: ancient target; please use 'doc.data'"
 tcldata:    tcl.data
 
-# docker target uses project's own script to build and remove the image
+# docker targets use project's own script to build and remove the image
+# docker.test   - uses local Dockerfile and local $GEN.tgz to build an image
+# docker.build  - uses local Dockerfile and $GEN.tgz from github to build an image
+# OSAFT_VM_BUILDER is used here only to pass -podman option
+docker.test:
+	@$(O-TRACE.target)
+	$(EXE.o_docker) $(OSAFT_VM_BUILDER) \
+		-OSAFT_VM_SRC_OSAFT=$(GEN.tgz) -OSAFT_VM_SHA_OSAFT=" " \
+		-OSAFT_VERSION=$(_RELEASE) -tag=test build
 docker.build:
 	@$(O-TRACE.target)
-	$(EXE.o_docker) -OSAFT_VERSION=$(_RELEASE) build
-	$(EXE.o_docker) cp Dockerfile
-	$(EXE.o_docker) cp README.md
+	$(EXE.o_docker) $(OSAFT_VM_BUILDER) -OSAFT_VERSION=$(_RELEASE) build
+	$(EXE.o_docker) $(OSAFT_VM_BUILDER) cp Dockerfile
+	$(EXE.o_docker) $(OSAFT_VM_BUILDER) cp README.md
 docker: docker.build
 
+docker.test.rm:
+	$(EXE.o_docker) $(OSAFT_VM_BUILDER) -tag=test rmi
 docker.rm:
 	@$(O-TRACE.target)
-	$(EXE.o_docker) rmi
+	$(EXE.o_docker) $(OSAFT_VM_BUILDER) rmi
 
 docker.dev:
 	@$(O-TRACE.target)
