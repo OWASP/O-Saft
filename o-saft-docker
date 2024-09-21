@@ -227,6 +227,9 @@
 #?       same options with double  --  exist for  o-saft.pl. See  LIMITATIONS
 #?       below also.
 #
+#        anyname-docker is the same as calling: $0 -docker
+#        anyname-podman is the same as calling: $0 -podman
+#
 #        We do not use shortcut commands for docker like run, rmi, save, etc.
 #        because they are depricated according docker documentation (6/2016).
 #
@@ -303,15 +306,16 @@
 #?       docker(1), podman(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 3.11 24/09/21 15:52:40
+#?       @(#) o-saft-docker 3.12 24/09/21 16:14:31
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID="3.11"
+SID="3.12"
 VERSION="${OSAFT_VERSION:-24.09.24}"
+ich=${0##*/}
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
 registry=${o_saft_docker_name};
 registry=${registry:-owasp/o-saft}
@@ -326,6 +330,10 @@ exe=o-saft.pl
 dockerfile="https://github.com/OWASP/O-Saft/raw/master/Dockerfile"
 docker=$(\command -v docker)
 podman=$(\command -v podman)
+case "$ich" in
+  *-docker)     docker="$docker"; ;;
+  *-podman)     docker="$podman"; ;;
+esac
 
 check_image_name () {
 	#? check if image with configured registry:tag exists; exit otherwise
@@ -636,7 +644,6 @@ docker_rmi  ()  {
 }
 
 my_help ()      {
-	ich=${0##*/}
 	\sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
 	return
 }
