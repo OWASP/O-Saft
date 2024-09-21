@@ -30,7 +30,8 @@
 #?      --d         - print some data for debugging
 #?      --x         - use shell's  "set -x"
 #?      --make=VAR  - use list of files defined in variable VAR of Makefile
-#?      --check=REL - additionaly show line for file from from file REL
+#       --check     - additionaly show line for file from file usr/o-saft.rel
+#?      --check=REL - additionaly show line for file from file REL
 #?                    this options should be used with only one file argument
 #         simple implementation: it's up to the user to compare printed lines
 #?
@@ -53,7 +54,7 @@
 # HACKER's INFO
 #
 #? VERSION
-#?      @(#) get-SIDs.sh 1.3 24/09/21 23:25:52
+#?      @(#) get-SIDs.sh 1.4 24/09/22 01:00:43
 #?
 #? AUTHOR
 #?      24-Jul-24 Achim Hoffmann
@@ -69,6 +70,7 @@ LC_COLLATE=C    # ensure that all tools behave as expected
 LANG=C          # ..
 dbx=
 try=
+osaftrel=usr/o-saft.rel     # default
 rel_file=       # passed with --check=
 make_var=       # for example: ALL.src
 allfiles=
@@ -130,6 +132,7 @@ while [ $# -gt 0 ]; do
 	 --d | --debug | --dbx) dbx=echo; ;;
 	 -n | --n) try=echo;  ;;
 	 -x | --x) set -x;    ;;
+	--check)       rel_file="$osaftrel"   ; ;;
 	--check=*)     rel_file="`expr "$1" ':' '--check=\(.*\)'`";  ;;
 	--make=*)      make_var="`expr "$1" ':' '--make=\(.*\)'`";   ;;
 	 *)            allfiles="$allfiles $1"; ;;
