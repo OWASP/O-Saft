@@ -30,6 +30,9 @@
 #?      --d         - print some data for debugging
 #?      --x         - use shell's  "set -x"
 #?      --make=VAR  - use list of files defined in variable VAR of Makefile
+#?      --check=REL - additionaly show line for file from from file REL
+#?                    this options should be used with only one file argument
+#         simple implementation: it's up to the user to compare printed lines
 #?
 #? LIMITATIONS
 #?      Requires gawk.
@@ -50,7 +53,7 @@
 # HACKER's INFO
 #
 #? VERSION
-#?      @(#) get-SIDs.sh 1.2 24/09/21 23:00:54
+#?      @(#) get-SIDs.sh 1.3 24/09/21 23:25:52
 #?
 #? AUTHOR
 #?      24-Jul-24 Achim Hoffmann
@@ -66,6 +69,7 @@ LC_COLLATE=C    # ensure that all tools behave as expected
 LANG=C          # ..
 dbx=
 try=
+rel_file=       # passed with --check=
 make_var=       # for example: ALL.src
 allfiles=
 in_files=
@@ -126,6 +130,7 @@ while [ $# -gt 0 ]; do
 	 --d | --debug | --dbx) dbx=echo; ;;
 	 -n | --n) try=echo;  ;;
 	 -x | --x) set -x;    ;;
+	--check=*)     rel_file="`expr "$1" ':' '--check=\(.*\)'`";  ;;
 	--make=*)      make_var="`expr "$1" ':' '--make=\(.*\)'`";   ;;
 	 *)            allfiles="$allfiles $1"; ;;
 	esac
@@ -235,9 +240,21 @@ fi
   done
 ) | \sort -f -k 6 | \sed -e '/^..WARNING:/s/SID/duplicate SID found in/'
     # sort field 6 which is the path and always there
-  # print symlinks and missing files, if any
-  [ -n "$symlinks" ] && \echo "**WARNING: symlinks '$symlinks'"
-  [ -n "$symlinks" ] && \echo "**WARNING: symlinks have SID=0 and the same md5sum as their target"
+# print symlinks and missing files, if any
+[ -n "$symlinks" ] && \echo "**WARNING: symlinks '$symlinks'"
+[ -n "$symlinks" ] && \echo "**WARNING: symlinks have SID=0 and the same md5sum as their target"
+
+# --check=
+if [ -n "$rel_file" ]; then
+	if [ ! -e "$rel_file" ]; then
+		\echo "**WARNING: '$rel_file' does not exist; --check ignored"
+	else
+		for f in $in_files ; do
+			# only grep lines with exact 6 tab-separated fields
+			\awk -F"\t" "/$f"'$/{if(6==NF){print}}' $rel_file
+		done
+	fi
+fi
 
 exit
 
