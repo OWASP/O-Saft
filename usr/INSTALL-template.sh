@@ -53,14 +53,17 @@
 #=#             o-saft.pl	not found in PATH, consider adding /opt/o-saft to PATH
 #=#            o-saft.tcl	not found in PATH, consider adding /opt/o-saft to PATH
 #=#                o-saft	not found in PATH, consider adding /opt/o-saft to PATH
+#=#         o-saft-docker	not found in PATH, consider adding /opt/o-saft to PATH
 #=# ./usr/o-saft-standalone.pl	.
+#=#
 #=# Note: all found executables in PATH are listed
 #=#--------------------------------------------------------------
-#=
+#=#
 #=# check installation in /opt/o-saft
 #=#--------------------------------------------------------------
 #=# (warnings are ok if »git clone« will be used for development)
-#=   contrib/.o-saft.tcl	found; file from previous installation
+#=#       usr/.o-saft.tcl	found; file from previous installation
+#=#     o-saft-docker-dev	found; file for development
 #=#            Dockerfile	found; file for development
 #=#              Makefile	found; file for development
 #=#                    t/	found; file for development
@@ -72,11 +75,11 @@
 #=
 #=# check for used O-Saft programs (according $PATH)
 #=#----------------------+---------------------------------------
-#=#             o-saft.pl	24.01.24 /opt/o-saft/o-saft.pl
-#=#            o-saft.tcl	    3.18 /opt/o-saft/o-saft.tcl
-#=#                o-saft	     3.1 /opt/o-saft/o-saft
-#=#         o-saft-docker	    1.49 /opt/o-saft/o-saft-docker
-#=# usr/o-saft-standalone.pl	24.01.24 usr/o-saft-standalone.pl
+#=#             o-saft.pl	24.09.24 /opt/o-saft/o-saft.pl
+#=#            o-saft.tcl	    3.31 /opt/o-saft/o-saft.tcl
+#=#                o-saft	     3.4 /opt/o-saft/o-saft
+#=#         o-saft-docker	     3.9 /opt/o-saft/o-saft-docker
+#=# usr/o-saft-standalone.pl	24.09.24 usr/o-saft-standalone.pl
 #=#----------------------+---------------------------------------
 #=
 #=# check for installed O-Saft resource files
@@ -103,23 +106,27 @@
 #=
 #=# check for installed Perl modules (started in '$inst_directory')
 #=#----------------------+---------------------------------------
+#=#                  Carp	    1.52 /usr/lib/x86_64-linux-gnu/perl-base/Carp.pm
 #=#              Net::DNS	    1.36 /usr/local/share/perl/5.24.1/Net/DNS.pm
-#=#           Net::SSLeay	    1.94 /usr/local/lib/x86_64-linux-gnu/perl/5.24.1/Net/SSLeay.pm
+#=#           Net::SSLeay	    1.94 /usr/local/lib/x86_64-linux-gnu/perl/5.36/Net/SSLeay.pm
 #=#      IO::Socket::INET	    1.49 /usr/local/lib/x86_64-linux-gnu/perl-base/IO/Socket/INET.pm
-#=#                                      ancient module found, try installing newer version, at least  1.49
 #=#       IO::Socket::SSL	   2.081 /usr/share/perl5/IO/Socket/SSL.pm
+#=#                Socket	   2.033 /usr/lib/x86_64-linux-gnu/perl-base/Socket.pm
 #=#           Time::Local	    1.30 /usr/share/perl/5.24/Time/Local.pm
-#=#                  OCfg	24.01.24 lib/OCfg.pm
-#=#               Ciphers	24.01.24 lib/Ciphers.pm
-#=#         error_handler	24.01.24 lib/error_handler.pm
-#=#               SSLinfo	24.01.24 lib/SSLinfo.pm
-#=#              SSLhello	24.01.24 lib/SSLhello.pm
-#=#                 OData	24.01.24 lib/OData.pm
-#=#                  ODoc	24.01.24 lib/ODoc.pm
-#=#                  OMan	24.01.24 lib/OMan.pm
-#=#                 OText	24.01.24 lib/OText.pm
-#=#                OTrace	24.01.24 lib/OTrace.pm
-#=#                  OUsr	24.01.24 lib/OUsr.pm
+#=#                                      ancient module found, try installing newer version, at least  1.90
+#=#                Config	5.036000 /usr/lib/x86_64-linux-gnu/perl-base/Config.pm
+#=#          Math::BigInt	1.999830 /usr/share/perl/5.36/Math/BigInt.pm
+#=#                  OCfg	24.09.24 lib/OCfg.pm
+#=#               Ciphers	24.09.24 lib/Ciphers.pm
+#=#         error_handler	24.09.24 lib/error_handler.pm
+#=#               SSLinfo	24.09.24 lib/SSLinfo.pm
+#=#              SSLhello	24.09.24 lib/SSLhello.pm
+#=#                 OData	24.09.24 lib/OData.pm
+#=#                  ODoc	24.09.24 lib/ODoc.pm
+#=#                  OMan	24.09.24 lib/OMan.pm
+#=#                 OText	24.09.24 lib/OText.pm
+#=#                OTrace	24.09.24 lib/OTrace.pm
+#=#                  OUsr	24.09.24 lib/OUsr.pm
 #=#----------------------+---------------------------------------
 #=
 #=# summary of warnings from installed O-Saft (should be empty)
@@ -130,7 +137,7 @@
 #=
 #=# check for openssl executable in PATH
 #=#----------------------+---------------------------------------
-#=#               openssl	/usr/bin/openssl (OpenSSL 3.0.13 30 Jan 2024 (Library: OpenSSL 3.0.13 30 Jan 2024))
+#=#               openssl	/usr/bin/openssl (OpenSSL 3.0.14 4 Jun 2024 (Library: OpenSSL 3.0.14 4 Jun 2024))
 #=#----------------------+---------------------------------------
 #=
 #=# check for openssl executable used by O-Saft
@@ -145,15 +152,16 @@
 #=#               perldoc	/usr/bin/perldoc
 #=#              pod2html	/usr/bin/pod2html
 #=#               pod2man	/usr/bin/pod2man
+#=#               pod2pdf	/usr/bin/pod2pdf
 #=#              pod2text	/usr/bin/pod2text
 #=#             pod2usage	/usr/bin/pod2usage
 #=#                podman	missing
-#=#             podviewer	/usr/bin/podviewer
+#=#             podviewer	missing
 #=#                  stty	/bin/stty
 #=#                 tkpod	/usr/bin/tkpod
 #=#                  tput	/usr/bin/tput
 #=#
-#=# Note: podman is a tool to view pod files, it's not the container engine
+#=# Note: podman is a tool to view pod files, or it's a container engine
 #=#----------------------+---------------------------------------
 #=
 #=# check for contributed files (in /opt/o-saft/usr )
@@ -327,7 +335,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.39 24/08/27 11:06:56"
+SID="@(#) INSTALL-template.sh 3.40 24/09/21 14:50:34"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -359,7 +367,7 @@ text_old="ancient module found, try installing newer version, at least "
 text_one="missing, consider generating with »make standalone«"
 text_path="Note: all found executables in PATH are listed"
 text_prof="Note: Devel::DProf Devel::NYTProf and GraphViz2 may wrongly be missing"
-text_podm="Note: podman is a tool to view pod files, it's not the container engine"
+text_podm="Note: podman is a tool to view pod files, or it's a container engine"
 text_dev="file for development"
 text_alt="from previous installation"
 
@@ -906,8 +914,9 @@ check_summary   () {
 	if [ -e "$o" ]; then
 		echo "# testing $o in $inst_directory ...$tab"
 		cd "$inst_directory"
-		w=`$o +version 2>&1 | awk '/WARNING:/{print}'`
+		w=`$o +version --warning-ignore=150 2>&1 | awk '/WARNING:/{print}'`
 		[ -n "$w" ] && echo_yellow "$w"
+			# --warning-ignore=150 is contribution to openssl 3.x
 	fi
 	echo_foot
 	return
@@ -1343,7 +1352,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.39 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.40 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1367,7 +1376,7 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.39; $mode $src_txt $inst_directory ..."
+echo "# $0 3.40; $mode $src_txt $inst_directory ..."
     # always print internal SID, makes debugging simpler
     # do not use $SID, which is too noisy for make targets
 
