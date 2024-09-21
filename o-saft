@@ -27,7 +27,8 @@
 #?      -log    start o-saft.pl  with remaining arguments  and store result in
 #?              file, then start start o-saft.tcl loading this file
 #?              (option intended when system cannot exec other programs)
-#?      -docker start o-saft-docker with remaining arguments
+#?      -docker same as -podman bur uses docker instead of podman
+#?      -podman start o-saft-docker with remaining arguments
 #?      -id=*   passed to o-saft-docker
 #?      -tag=*  passed to o-saft-docker
 #       -prg="program"
@@ -79,7 +80,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 3.2 24/08/18 19:32:33
+#?      @(#) o-saft 3.3 24/09/21 02:03:45
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -97,6 +98,7 @@ prg=$dir/$ich.pl     # most likely ich=o-saft  ..
 gui=$dir/$ich.tcl
 cgi=$dir/$ich.cgi
 dok=$dir/$ich-docker
+pod=$dir/$ich-podman
 bunt=$usr/bunt.pl
     # all tools are prefix with the path $dir to avoid incomplete $PATH settings
     # then check (below) if tools exists, if not, remove path and rely on $PATH
@@ -104,6 +106,7 @@ bunt=$usr/bunt.pl
 [ ! -x "$gui" ]  && gui=$ich.tcl
 [ ! -x "$cgi" ]  && cgi=$ich.cgi
 [ ! -x "$dok" ]  && dok=$ich-docker
+[ ! -x "$pod" ]  && dok=$ich-docker # fallback
 
 try=
 args=           # argumets passed through (main --help)
@@ -113,9 +116,11 @@ post_args=
 such=
     # text to be searched for passed to post command, mainly used for -help=
 mode=cli        # cli, cgi, gui, log
+podman=         # set: use podman instead of docker
 docker=0        # cli or gui mode; cannot use $mode because it is needed for docker too
 docker_id=
 docker_tag=
+    # podman is similar to docker
 
 #dbx# echo "#################" >> /tmp/t.o-saft.log
 #dbx# [ -t 0 ] &&echo 0 STDIN  >> /tmp/t.o-saft.log
@@ -138,7 +143,7 @@ while [ $# -gt 0 ]; do
 EoT
             exit 0
             ;;
-        +VERSION)       echo "3.2"; exit 0; ;;
+        +VERSION)       echo "3.3"; exit 0; ;;
         -help=*)
             such="`expr "$1" ':' '-help=\(.*\)'`"
             args="--help"
@@ -153,12 +158,15 @@ EoT
             exit 0
             ;;
         -n      | --n)      try=echo    ; ;;
+        -v      | --v)                    ;;
+        -x      | --x)      set -x      ; ;;
         -cgi    | --cgi)    mode=cgi    ; ;;
         -cli    | --cli)    mode=cli    ; ;;
         -gui    | --gui)    mode=gui    ; ;;
         -tcl    | --tcl)    mode=gui    ; ;;
         -log    | --log)    mode=log    ; ;;
         -docker | --docker) docker=1    ; ;;
+        -podman | --podman) podman="-podman" ; ;; # will be passed to o-saft-docker
         -id*)           docker_id="$1"  ; ;;
         -tag*)          docker_tag="$1" ; ;;
         -colour | --colour) post="$bunt" ; ;;
@@ -188,19 +196,24 @@ EoT
     shift
 done
 
+# from here on 'podman' is the same as 'docker'
+if [ -n "$podman" ]; then
+    docker=1
+fi
+
 # Note: using $* (instead of $@) does not contain parsed options
-[ -n "$try" ] && echo "# docker=$docker, mode=$mode, post=$post, $*#"
+[ -n "$try" ] && echo "# docker=$docker, podman=$podman, mode=$mode, post=$post, $*#"
 
 # docker mode is special
 if [ $docker -eq 1 ]; then
     if [ -z "$osaft_vm_build" ]; then
-        echo $dok $docker_id $docker_tag -$mode -post=$post $*
+        echo $dok $docker_id $docker_tag $podman -$mode -post=$post $*
         [ -n "$try" ] && exit 0
-             $dok $docker_id $docker_tag -$mode -post=$post $*
+             $dok $docker_id $docker_tag $podman -$mode -post=$post $*
         exit $?
     fi
     #else
-    echo "**WARNING: option -docker ignored inside VM"
+    echo "**WARNING: option -docker|-podman ignored inside VM"
 fi
 
 # all other modes
@@ -229,5 +242,5 @@ exit $?
 
 
 # NOTE: $gui
-#       all parameters are passed to $gui, even they are not yet (2018) used
-#       properly, but most likely treated as hostname
+#       all parameters are passed to $gui, even they are not yet (since 2018)
+#       used properly, but most likely treated as hostname
