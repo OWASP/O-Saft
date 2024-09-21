@@ -30,10 +30,10 @@
 #?       -v      be a bit verbose
 #?       +V      show own version (SID)
 #?       -id=ID  use container image ID (registry:tag); default: owasp/o-saft
-#?       -tag=23 use container image ID with tag; default: (empty)
+#?       -tag=24 use container image ID with tag; default: (empty)
 #?       -local  use --network=host to allow container accessing the host
 #?               WARNING: see section  SECURITY  below also.
-#?       -OSAFT_VERSION=21.11.12  same as OSAFT_VERSION environment variable
+#?       -OSAFT_VERSION=24.09.24  same as OSAFT_VERSION environment variable
 #?       --      pass all remaining parameters to o-saft.pl in image
 #?
 #? QUICKSTART
@@ -236,7 +236,9 @@
 #        "docker history IMAGE"  command in the  "CREATED BY" column.
 #
 #        podman instead of docker is used with option  -podman ,  which works
-#        flawless (09/2024).
+#        flawless (09/2024). Note that the internal (shell) variable contain-
+#        ing the executable name of the container command is $docker, even if
+#        podman is used.
 #
 # KNOWN PROBLEMS
 #        * Error when building docker image
@@ -298,14 +300,14 @@
 #?       docker(1), podman(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 3.8 24/09/21 02:01:50
+#?       @(#) o-saft-docker 3.9 24/09/21 09:04:35
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID="3.8"
+SID="3.9"
 VERSION="${OSAFT_VERSION:-24.09.24}"
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
 registry=${o_saft_docker_name};
@@ -440,9 +442,11 @@ docker_status () {
 #     tag           = ${tag}
 #     registry:tag  = ${image_name}
 
-# docker image id for ${image_name} is  $image_id
+# images ...
+# $docker image ls -q ${image_name}
+#     docker image id for  ${image_name}  is  $image_id
 
-# docker images for   ${registry} ...
+# $docker image ls ${registry}
 EoStatus
 
 	# list matching images
@@ -453,15 +457,18 @@ EoStatus
 	done;
 	echo
 	echo "# container processes ..."
+	echo "# $docker container ls -a"
 	$try $docker container ls -a
 
 	echo ""
-	echo "# O-Saft container image ..."
+	echo "# O-Saft container build ..."
+	_id=`$0 -n call env`
+	echo "# $_id"
 	_id=`$0 call env | grep osaft_vm_build`
 	if [ -n "$_id" ]; then
-		echo "$_id"
+		echo "#     $_id"
 	else
-		echo "<<no build variable 'osaft_vm_build' found>>"
+		echo "#     <<no build variable 'osaft_vm_build' found>>"
 	fi
 }
 
