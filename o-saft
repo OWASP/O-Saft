@@ -27,7 +27,7 @@
 #?      -log    start o-saft.pl  with remaining arguments  and store result in
 #?              file, then start start o-saft.tcl loading this file
 #?              (option intended when system cannot exec other programs)
-#?      -docker same as -podman bur uses docker instead of podman
+#?      -docker same as -podman but uses docker instead of podman
 #?      -podman start o-saft-docker with remaining arguments
 #?      -id=*   passed to o-saft-docker
 #?      -tag=*  passed to o-saft-docker
@@ -80,7 +80,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 3.3 24/09/21 02:03:45
+#?      @(#) o-saft 3.4 24/09/21 08:11:53
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -143,7 +143,7 @@ while [ $# -gt 0 ]; do
 EoT
             exit 0
             ;;
-        +VERSION)       echo "3.3"; exit 0; ;;
+        +VERSION)       echo "3.4"; exit 0; ;;
         -help=*)
             such="`expr "$1" ':' '-help=\(.*\)'`"
             args="--help"
