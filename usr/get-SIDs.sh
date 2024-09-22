@@ -54,7 +54,7 @@
 # HACKER's INFO
 #
 #? VERSION
-#?      @(#) get-SIDs.sh 1.6 24/09/22 01:32:31
+#?      @(#) get-SIDs.sh 1.7 24/09/22 12:03:26
 #?
 #? AUTHOR
 #?      24-Jul-24 Achim Hoffmann
@@ -117,8 +117,14 @@ trap _abort 2 15
 if [ ! -t 0 ]; then
 	while read line; do
 		[  -z "$line" ]                 && continue
-		\expr "$line" : "^#" >/dev/null && continue # ignore comments
+		\expr "$line" : "# " >/dev/null && continue # ignore comments
 	 	allfiles="$allfiles $line"
+			# RegEx should be "^#" instead of "# "
+			# but busybox's expr complains then with:
+			#  expr: warning: '^#': using '^' as the first character
+			#  of a basic regular expression is not portable; it is ignored
+			# "# " seems to match at beginning of line too, but not
+			# at other positions (9/2024)
 	done
 fi
 
