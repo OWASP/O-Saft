@@ -20,7 +20,7 @@
 #?                        note that symbolic links cannot be copied and will
 #?                        replaced by the file in the installation directory
 #?                        default operation mode if no other mode given
-#?          --check     - check current installation
+#?          --check     - check current installation; see  --check=*  also
 #?          --clean     - move files not necessary to run O-Saft into subdir
 #?                        ./.files_to_be_removed
 #                This is the behaviour of the old  INSTALL-devel.sh  script.
@@ -340,7 +340,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.43 24/09/22 01:12:38"
+SID="@(#) INSTALL-template.sh 3.44 24/09/22 12:21:46"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -1358,18 +1358,21 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.43 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.44 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
 done
 
 if [ -n "$osaft_vm_build" ]; then
-	if [ "$mode" != "check" ]; then
+	case "$mode" in
+	  check)    ;; # check is ok
+	  --check*) ;; # all --check* are ok
+	  *)
 	    echo "**ERROR: 001: found 'osaft_vm_build=$osaft_vm_build'"
 	    echo_red "**ERROR: 002: inside docker only --check possible; exit"
 	    exit 6
-	fi
+	esac
 fi
 
 if [ -n "$new_dir" ]; then
@@ -1382,9 +1385,8 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.43; $mode $src_txt $inst_directory ..."
+echo "# $0 3.44; $mode $src_txt $inst_directory ..."
     # always print internal SID, makes debugging simpler
-    # do not use $SID, which is too noisy for make targets
 
 # check for lock-file, should only exist on author's system
 if [ -e "$src_directory/$lock" -o -e "$inst_directory/$lock" ]; then
