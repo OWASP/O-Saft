@@ -17,7 +17,7 @@
 #?       $0 sshx
 #?       $0 what file
 #?       $0 call /path/to/program [arguments]
-#?       $0 cp   file-to-be-copied
+#?       $0 cp   file-to-be-copied [file-destination]
 #?       $0 [OPTIONS] gui
 #?       $0 [OPTIONS] [options and commands of o-saft.pl]
 #?
@@ -57,7 +57,8 @@
 #?           shell   - run a shell (/bin/sh) in container image
 #?           root    - run a shell (/bin/sh) as user root in container image
 #?           call    - run specified program with arguments in container image
-#?           cp      - copy file to /O-Saft directory in the container image
+#?           cp      - copy file to /O-Saft directory in the container image,
+#?                     then commit changes
 #            hacker  - show more information
 #?           gui     - start o-saft.tcl in container image (display to host)
 #?           sshx    - start o-saft.tcl in container image (tunnel X via ssh)
@@ -156,7 +157,8 @@
 #?       Same as mode  shell, but login as user root.
 #?
 #?   cp
-#?       Copy file to /O-Saft directory in the container image.
+#?       Copy file to  /O-Saft directory in the container image, then commits
+#?       changes. Only a single file can be copied.
 #?
 #?   call
 #?       Execute specified program with given arguments.  The program must be
@@ -311,14 +313,14 @@
 #?       docker(1), podman(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 3.14 24/09/21 21:52:01
+#?       @(#) o-saft-docker 3.15 24/09/22 12:42:38
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID="3.14"
+SID="3.15"
 VERSION="${OSAFT_VERSION:-24.09.24}"
 ich=${0##*/}
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
@@ -575,10 +577,12 @@ docker_root ()  {
 }
 
 docker_cp   ()  {
-	_id="o-saft-cp"
+	src="$1"
+	dst="${2-.}"
+	_id="o-saft-cp" # temporary container ID
 	# create a new container with a dummy command; exit if exists or fails
 	$try $docker container run   --name ${_id} ${image_name} +VERSION || exit 4
-	$try $docker container cp    $@     ${_id}:/O-Saft/
+	$try $docker container cp    $src   ${_id}:/O-Saft/$dst
 	$try $docker container commit       ${_id} ${image_name}
 	$try $docker container rm           ${_id}
 	#
