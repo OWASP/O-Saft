@@ -340,7 +340,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.44 24/09/22 12:21:46"
+SID="@(#) INSTALL-template.sh 3.45 24/09/22 12:25:18"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -976,7 +976,8 @@ check_podtools  () {
 check_sids  () {
 	[ "check" = "$mode" ] || echo_info "check_sids() ..."
 	#echo_head "# check SIDs of installed files"
-	echo_head "# SID\tdate\ttime\tmd5sum\tfilename\tpath"
+	echo_head "# SID	date	time	md5sum	filename	path"
+		# must use literal TAB instead of \t (problem in BusyBox)
 	if [ 0 -eq $changes ]; then
 		\echo "$files_all_src" | $osaft_sid
 	else
@@ -1358,7 +1359,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.44 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.45 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1385,7 +1386,7 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.44; $mode $src_txt $inst_directory ..."
+echo "# $0 3.45; $mode $src_txt $inst_directory ..."
     # always print internal SID, makes debugging simpler
 
 # check for lock-file, should only exist on author's system
