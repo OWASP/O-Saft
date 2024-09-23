@@ -340,7 +340,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.46 24/09/23 11:52:07"
+SID="@(#) INSTALL-template.sh 3.47 24/09/23 13:13:09"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -398,51 +398,59 @@ osaft_libdir="INSERTED_BY_MAKE_OSAFT_LIBDIR"
 
 osaft_modules="
 	INSERTED_BY_MAKE_OSAFT_MODULES
-	"
+"
 
 files_contrib="
 	INSERTED_BY_MAKE_CONTRIB
-	"
+"
 
 files_install="
 	INSERTED_BY_MAKE_OSAFT
-	"
+"
 
 files_install_cgi="
 	INSERTED_BY_MAKE_OSAFT_INSTCGI
-	"
+"
 
 files_install_doc="
 	INSERTED_BY_MAKE_OSAFT_DOC
-	"
+"
 
 files_install_dev="
 	INSERTED_BY_MAKE_DEV_FILES
-	"
+"
 
 files_all_src="
 	INSERTED_BY_MAKE_ALL_SRC
-	"
+"
+
+files_develop="
+	INSERTED_BY_MAKE_DEV_OTHER
+"
+
+files_info="
+	INSERTED_BY_MAKE_DEV_INFO
+"
 
 tools_intern="
 	INSERTED_BY_MAKE_DEVTOOLSINT
-	"
+"
 
 tools_extern="
 	INSERTED_BY_MAKE_DEVTOOLSEXT
-	"
+"
 
 tools_modules="
 	INSERTED_BY_MAKE_DEVMODULES
-	"
+"
 
 tools_optional="
 	INSERTED_BY_MAKE_TOOLS_OPT
-	"
+"
 
 tools_other="
 	INSERTED_BY_MAKE_TOOLS_OTHER
-	"
+"
 
 # INSERTED_BY_MAKE }
 
@@ -455,7 +463,7 @@ files_ancient="
 	o-saft-dbx.pm o-saft-lib.pm o-saft-man.pm o-saft-usr.pm osaft.pm
 	checkAllCiphers.pl INSTALL-devel.sh .perlcriticrc o-saft_bench
 	contrib/.o-saft.tcl contrib/o-saft.cgi
-	"
+"
 
 # first, dirty hack to make tests in development mode possible
 # remember the inserted "" to avoid substitutions here
@@ -476,11 +484,7 @@ files_not_installed="
 	$usr_dir/install_perl_modules.pl   $usr_dir/install_openssl.sh
 	$usr_dir/INSTALL-template.sh
 	$doc_dir/*graph-annotations.*      $doc_dir/*graph-sub-call*
-	"
-
-files_develop="o-saft-docker-dev Dockerfile Makefile t/ $usr_dir/critic.sh"
-
-files_info="CHANGES README o-saft.tgz"
+"
 
 # HARDCODED }
 
@@ -1359,7 +1363,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.46 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.47 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1387,7 +1391,7 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.46; $mode $src_txt $inst_directory ..."
+echo "# $0 3.47; $mode $src_txt $inst_directory ..."
     # always print internal SID, makes debugging simpler
 
 # check for lock-file, should only exist on author's system
