@@ -80,7 +80,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 3.5 24/09/23 11:34:13
+#?      @(#) o-saft 3.6 24/09/24 00:29:42
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -142,7 +142,7 @@ while [ $# -gt 0 ]; do
 EoT
             exit 0
             ;;
-        +VERSION)       echo "3.5"; exit 0; ;;
+        +VERSION)       echo "3.6"; exit 0; ;;
         -help=*)
             suchen="`expr "$1" ':' '-help=\(.*\)'`"
             args="--help"
@@ -203,7 +203,6 @@ fi
 
 # Note: using $* (instead of $@) does not contain parsed options
 [ -n "$try" ] && echo "# docker=$docker, podman=$podman, dok=$dok, mode=$mode, post=$post, $*#"
-exit;
 
 # docker mode is special
 if [ $docker -eq 1 ]; then
