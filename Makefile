@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.55 24/09/22 01:08:10
+#?      @(#) Makefile 3.56 24/09/23 16:57:52
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-O-SID           = 3.55
+O-SID           = 3.56
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -117,6 +117,7 @@ SRC.exe         = $(SRC.pl) $(SRC.gui) $(SRC.sh) $(O-Project)-docker
 
 SRC.make        = Makefile
 SRC.misc        = README.md CHANGES
+SRC.misc.dev    = o-saft-docker-dev Dockerfile Dockerfile.openssl
 SRC.inst        = $(O-DIR.usr)/INSTALL-template.sh
 SRC.testssl.unused  = $(O-DIR.usr)/Dockerfile.mbedtls $(O-DIR.usr)/Dockerfile.wolfssl
 
@@ -258,6 +259,7 @@ GEN.docs        = $(GEN.pod) $(GEN.html) $(GEN.cgi.html) $(GEN.text) $(GEN.wiki)
 ALL.Makefiles   = $(SRC.make) $(SRC.Makefiles)
 ALL.devfiles    = \
 		  $(SRC.misc) \
+		  $(SRC.misc.dev) \
 		  $(SRC.test) \
 		  $(SRC.make) \
 		  $(SRC.Makefiles) \
@@ -334,6 +336,8 @@ _INST.osaft_cgi = $(sort $(SRC.php) $(GEN.cgi.html))
 _INST.osaft_doc = $(sort $(GEN.pod) $(GEN.man) $(GEN.html))
 _INST.usr       = $(sort $(ALL.usr))
 _INST.osaft     = $(sort $(ALL.osaft))
+_INST.dev_info  = $(sort $(SRC.misc) $(GEN.tgz))
+_INST.devother  = $(sort $(SRC.misc.dev))
 _INST.devfiles  = $(sort $(ALL.devfiles))
 _INST.devtools  = $(sort $(ALL.devtools))
 _INST.tools_int = $(sort $(_ALL.devtools.intern))
@@ -341,8 +345,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.55 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.55
+_INST.genbytext = generated data by Makefile 3.56 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.56
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-DIR.install)@'       \
 		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DIR.doc)@'              \
 		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-DIR.lib)@'              \
@@ -351,6 +355,8 @@ EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-DIR.install)@'       \
 		  -e 's@INSERTED_BY_MAKE_LOG_DIR@$(TEST.logdir)@'            \
 		  -e 's@INSERTED_BY_MAKE_ALL_SRC@$(ALL.src)@'                \
 		  -e 's@INSERTED_BY_MAKE_CONTRIB@$(_INST.usr)@'              \
+		  -e 's@INSERTED_BY_MAKE_DEV_INFO@$(_INST.dev_info)@'        \
+		  -e 's@INSERTED_BY_MAKE_DEV_OTHER@$(_INST.devother)@'       \
 		  -e 's@INSERTED_BY_MAKE_DEV_FILES@$(_INST.devfiles)@'       \
 		  -e 's@INSERTED_BY_MAKE_TOOLS_OTHER@$(_INST.tools_other)@'  \
 		  -e 's@INSERTED_BY_MAKE_TOOLS_OPT@$(_INST.tools_opt)@'      \
@@ -605,8 +611,8 @@ docs:       $(GEN.docs)
 standalone: $(GEN.src)
 stand-alone:$(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.55
-tar:     _INST.is_edit  = 3.55
+_INST.is_edit           = 3.56
+tar:     _INST.is_edit  = 3.56
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
