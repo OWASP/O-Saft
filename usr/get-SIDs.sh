@@ -54,7 +54,7 @@
 # HACKER's INFO
 #
 #? VERSION
-#?      @(#) get-SIDs.sh 1.8 24/09/23 11:06:23
+#?      @(#) get-SIDs.sh 1.9 24/09/23 11:12:54
 #?
 #? AUTHOR
 #?      24-Jul-24 Achim Hoffmann
@@ -81,6 +81,10 @@ missing=
 
 #_____________________________________________________________________________
 #________________________________________________________________ functions __|
+_error_exit  () {
+	\echo "**ERROR   [$ich]: $*; exit" >&2
+	exit 2
+}
 _abort       () {
 	\echo "**ERROR   [$ich]: canceled by user" >&2
 	exit 1024
@@ -149,7 +153,7 @@ done
 # get files
 [ -n "$make_var" ] && _get_files "$make_var"
 if [ -z "$allfiles" ]; then
-	[ -z "$try" ] && \echo "**ERROR   [$ich]: no files specified; exit" >&2 && exit 2
+	[ -z "$try" ] && _error_exit "no files specified"
 fi
 
 # remove non-existing files from list (md5sum and gawk complain if files are missing)
@@ -168,12 +172,12 @@ _dbx "missing=$missing"
 _dbx "symlinks=$symlinks"
 _dbx "in_files=$in_files"
 # found files?
-[ -z "$in_files" ] && \echo "**ERROR   [$ich]: no specified file found; exit" >&2 && exit 2
+[ -z "$in_files" ] && _error_exit "no specified file found"
 
 gawk=$(  \command -v gawk)
 md5sum=$(\command -v md5sum)
-[ -z "$gawk"     ] && \echo "**ERROR   [$ich]: gawk missing; exit"   >&2 && exit 2
-[ -z "$md5sum"   ] && \echo "**ERROR   [$ich]: md5sum missing; exit" >&2 && exit 2
+[ -z "$gawk"     ] && _error_exit "gawk missing"
+[ -z "$md5sum"   ] && _error_exit "md5sum missing"
 
 # get md5sum for each file and store in array for awk: md5["file"]="cafe";
 if [ -n "$try" ]; then
