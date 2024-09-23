@@ -328,7 +328,7 @@
 #
 #? DEPENDENCIES
 #?      Following tools are required for proper functionality:
-#?          awk, cat, perl, sed, tr, which, /bin/echo
+#?          awk, cat, perl, sed, tr, /bin/echo
 #?
 #? VERSION
 # added with --help
@@ -340,7 +340,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.49 24/09/23 14:41:55"
+SID="@(#) INSTALL-template.sh 3.51 24/09/23 18:06:48"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -546,9 +546,9 @@ echo_foot   () {
 	fi
 }
 echo_label  () {
-	perl -le "printf'# %21s%c','$@',0x09"  # use perl instead of echo for formatting
+	\perl -le "printf'# %21s%c','$@',0x09"  # use perl instead of echo for formatting
 	[ 0 -eq $_break ] && return
-	perl -le 'printf"\n\t"'             # use additional line
+	\perl -le 'printf"\n\t"'                # use additional line
 }
 # for escape sequences, shell's built-in echo must be used
 echo_yellow () {
@@ -604,7 +604,7 @@ check_commands  () {
 check_development () {
 	# $1 is -d -e -f or -L ; $2 is name of directory, file, link, ...
 	# use own label instead of echo_label
-	perl -le "printf'# %25s%c','$2',0x09"
+	\perl -le "printf'# %25s%c','$2',0x09"
 	if [ $1 "$2" ]; then
 		echo_green  "OK"
 	else 
@@ -703,7 +703,7 @@ check_tools () {
 	echo_head "# check for O-Saft programs found via environment variable PATH"
 	_cnt=0
 	_gui=0
-	for p in `echo $PATH|tr ':' ' '` ; do
+	for p in `echo $PATH|\tr ':' ' '` ; do
 		for o in $all_exe perl wish ; do
 			exe="$p/$o"
 			echo_info "check $p/$o .."
@@ -779,7 +779,7 @@ check_self  () {
 		e=$(\command -v $o)
 		if [ -n "$e" ] ; then
 			v=`$o $_opt`
-			_txt=`echo "$v $e"|awk '{printf("%8s %s",$1,$2)}'`
+			_txt=`echo "$v $e"|\awk '{printf("%8s %s",$1,$2)}'`
 			echo_green "$_txt"
 		else
 			err=`expr $err + 1`
@@ -795,7 +795,7 @@ check_rc    () {
 	echo_head "# check for installed O-Saft resource files"
 	# currently no version check
 	_cnt=0
-	for p in `echo $HOME $PATH|tr ':' ' '` ; do
+	for p in `echo $HOME $PATH|\tr ':' ' '` ; do
 		_rc="$p/$osaft_exerc"
 		echo_info "check rc  $_rc .."
 		if [ -e "$_rc" ]; then
@@ -807,7 +807,7 @@ check_rc    () {
 	_rc="$HOME/$osaft_guirc"
 	echo_info "check rc  $_rc .."
 	if [ -e "$_rc" ]; then
-		v=`awk '/RCSID/{print $3}' $_rc | tr -d '{};'`
+		v=`\awk '/RCSID/{print $3}' $_rc|\tr -d '{};'`
 		echo_label "$_rc" && echo_green  "$v"
 		_txt="ancient"
 	else
@@ -841,7 +841,7 @@ check_usr   () {
 check_perl  () {
 	[ "check" = "$mode" ] || echo_info "check_perl() ..."
 	echo_head "# check for important Perl modules used by installed O-Saft"
-	for p in `echo $inst_directory $PATH|tr ':' ' '` ; do
+	for p in `echo $inst_directory $PATH|\tr ':' ' '` ; do
 		o="$p/$osaft_exe"
 		[ -e "$o" ] || continue
 		# NOTE: output format is slightly different, 'cause **WARNINGs are printed too
@@ -881,8 +881,8 @@ check_modules   () {
 		echo_info "check $m .."
 		echo_label "$m"
 		text_cpan="»cpan $m«"
-		v=`perl -I $osaft_libdir -M$m -le 'printf"%8s",$'$m'::VERSION' 2>/dev/null`
-		p=`perl -I $osaft_libdir -M$m -le 'my $idx='$m';$idx=~s#::#/#g;printf"%s",$INC{"${idx}.pm"}' 2>/dev/null`
+		v=`\perl -I $osaft_libdir -M$m -le 'printf"%8s",$'$m'::VERSION' 2>/dev/null`
+		p=`\perl -I $osaft_libdir -M$m -le 'my $idx='$m';$idx=~s#::#/#g;printf"%s",$INC{"${idx}.pm"}' 2>/dev/null`
 		if [ -n "$v" ]; then
 			if check_pm "$m" ; then c="green"; fi
 			case "$m" in
@@ -901,11 +901,11 @@ check_modules   () {
 					# 1.25 seems to be newer than 1.230 which is newer than 1.90
 					c="green";
 				else
-					c=`echo $expect $v | perl -anle '($e=$F[0])=~s#(\d+)#sprintf"%05d",$1#ge;($v=$F[1])=~s#(\d+)#sprintf"%05d",$1#ge;print (($e > $v) ? "red" : "green")'`; 
+					c=`echo $expect $v | \perl -anle '($e=$F[0])=~s#(\d+)#sprintf"%05d",$1#ge;($v=$F[1])=~s#(\d+)#sprintf"%05d",$1#ge;print (($e > $v) ? "red" : "green")'`; 
 				fi
 				;;
 		  	*) # our own modules
-		     	c=`echo $expect $v | perl -anle '($e=$F[0])=~s#(\d+)#sprintf"%05d",$1#ge;($v=$F[1])=~s#(\d+)#sprintf"%05d",$1#ge;print (($e > $v) ? "red" : "green")'`; ;;
+		     	c=`echo $expect $v | \perl -anle '($e=$F[0])=~s#(\d+)#sprintf"%05d",$1#ge;($v=$F[1])=~s#(\d+)#sprintf"%05d",$1#ge;print (($e > $v) ? "red" : "green")'`; ;;
 		   	# NOTE: need to compare for example: 1.23 > 1.230
 		   	# Comparing version strings is tricky,  best method would be
 		   	# to use Perl's Version module.  But this script should work
@@ -936,7 +936,7 @@ check_summary   () {
 	if [ -e "$o" ]; then
 		echo "# testing $o in $inst_directory ...$tab"
 		cd "$inst_directory"
-		w=`$o +version --warning-ignore=150 2>&1 | awk '/WARNING:/{print}'`
+		w=`$o +version --warning-ignore=150 2>&1 | \awk '/WARNING:/{print}'`
 		[ -n "$w" ] && echo_yellow "$w"
 			# --warning-ignore=150 is contribution to openssl 3.x
 	fi
@@ -947,13 +947,13 @@ check_summary   () {
 check_openssl   () {
 	[ "check" = "$mode" ] || echo_info "check_openssl() ..."
 	echo_head "# check for openssl executable in PATH"
-	echo_label "openssl" && echo_green "`which openssl`" "(`openssl version`)" \
+	echo_label "openssl" && echo_green "$(\command -v openssl) (`openssl version`)" \
 		|| echo_yellow "missing"
 	# TODO: error when openssl older than 0x01000000 has no SNI
 	echo_foot
 	#
 	echo_head "# check for openssl executable used by O-Saft"
-	for p in `echo $inst_directory $PATH|tr ':' ' '` ; do
+	for p in `echo $inst_directory $PATH|\tr ':' ' '` ; do
 		echo_info "check $p .."
 		o="$p/$osaft_exe"
 		r="$p/.$osaft_exe"
@@ -970,8 +970,8 @@ check_openssl   () {
 			(
 			cd "$p" # ensure that $r is used
 			$o --no-warn +version >/dev/null && \
-			openssl=`$o --no-warn +version 2>/dev/null | awk '/external executable/{if(3==NF){print $NF}}'` && \
-			version=`$o --no-warn +version 2>/dev/null | awk '/external executable/{if(4<NF){sub(/^.*  O/,"");print}}'` && \
+			openssl=`$o --no-warn +version 2>/dev/null | \awk '/external executable/{if(3==NF){print $NF}}'` && \
+			version=`$o --no-warn +version 2>/dev/null | \awk '/external executable/{if(4<NF){sub(/^.*  O/,"");print}}'` && \
 			echo_label "$o" && echo_green "$openssl ($version)" || echo_red "missing"
 			)
 		fi
@@ -1073,7 +1073,7 @@ mode_checkdev () {
 	for m in $tools_modules ; do
 		echo_label "$m"
 		# NOTE: -I . used to ensure that local ./Net is found
-		v=`perl -I . -M$m -le 'printf"%8s",$'$m'::VERSION' 2>/dev/null`
+		v=`\perl -I . -M$m -le 'printf"%8s",$'$m'::VERSION' 2>/dev/null`
 		if [ -n "$v" ]; then
 			echo_green  "$v"
 		else 
@@ -1192,7 +1192,7 @@ mode_openssl () {
 	if [ $status -eq 0 ]; then
 		[ -n "$optv" ] && echo_green "# building openssl completed."
 	else
-		cat << EoT
+		\cat << EoT
 # $build_openssl uses its default settings. To check the settings, use:
 #     $0 --openssl --n
 # If other configurations should be used, please use directly:
@@ -1293,7 +1293,7 @@ mode_expected () {
 
 mode_usage () {
 	echo_info "mode_usage() ..."
-	cat << EoUsage
+	\cat << EoUsage
 
 # O-Saft does not need a specific installation.  It may be used from this
 # directory right away.
@@ -1379,7 +1379,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.49 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.51 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1407,7 +1407,7 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.49; $mode $src_txt $inst_directory ..."
+echo "# $0 3.51; $mode $src_txt $inst_directory ..."
     # always print internal SID, makes debugging simpler
 
 # check for lock-file, should only exist on author's system
@@ -1430,26 +1430,31 @@ case $mode in
 	expected)   mode_expected; ;;
 	cgi)        mode_cgi     ; ;;
  	# parts of check; allow any separator for --check= beside =
-	--check?sid)           check_sids      ; ;;
-	--check?SID)           check_sids      ; ;;
-	--check?sids)          check_sids      ; ;;
-	--check?SIDs)          check_sids      ; ;;
-	#--check?ssl)           check_ssl       ; ;;
-	#--check?dev)           check_dev       ; ;;
-	#--check?doc)           check_doc       ; ;;
-	#--check?limit)         check_limit     ; ;;
-	--check?tool)          check_tools     ; ;;
-	--check?tools)         check_tools     ; ;;
-	--check?self)          check_self      ; ;;
-	--check?perl)          check_perl      ; ;;
-	--check?modules)       check_modules   ; ;;
-	--check?rc)            check_rc        ; ;;
-	--check?inst)          check_inst      ; ;;
-	--check?summary)       check_summary   ; ;;
-	--check?openssl)       check_openssl   ; ;;
-	--check?pod)           check_podtools  ; ;;
-	--check?podtools)      check_podtools  ; ;;
-	--check?usr)           check_usr       ; ;;
+	--check*)
+		cd $inst_directory # all checks done in the installation directory
+		case $mode in
+		--check?sid)        check_sids      ; ;;
+		--check?SID)        check_sids      ; ;;
+		--check?sids)       check_sids      ; ;;
+		--check?SIDs)       check_sids      ; ;;
+		#--check?ssl)        check_ssl       ; ;;
+		#--check?dev)        check_dev       ; ;;
+		#--check?doc)        check_doc       ; ;;
+		#--check?limit)      check_limit     ; ;;
+		--check?tool)       check_tools     ; ;;
+		--check?tools)      check_tools     ; ;;
+		--check?self)       check_self      ; ;;
+		--check?perl)       check_perl      ; ;;
+		--check?modules)    check_modules   ; ;;
+		--check?rc)         check_rc        ; ;;
+		--check?inst)       check_inst      ; ;;
+		--check?summary)    check_summary   ; ;;
+		--check?openssl)    check_openssl   ; ;;
+		--check?pod)        check_podtools  ; ;;
+		--check?podtools)   check_podtools  ; ;;
+		--check?usr)        check_usr       ; ;;
+		esac
+		;;
 	*)          err=5; echo_red "**ERROR: 060: unknow mode  $mode; exit"; ;;
 esac
 
