@@ -340,7 +340,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.48 24/09/23 14:04:26"
+SID="@(#) INSTALL-template.sh 3.49 24/09/23 14:41:55"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -849,8 +849,8 @@ check_perl  () {
 		for m in $perl_modules ; do
 			echo_info "check $m .."
 			echo_label "$m"
-			w=`$o --no-warn +version 2>&1        | awk '/(ERROR|WARNING).*'$m'/{print}'`
-			v=`$o --no-warn +version 2>/dev/null | awk '($1=="'$m'"){printf"%8s %s",$2,$3}'`
+			w=`$o --no-warn +version 2>&1        | \awk '/(ERROR|WARNING).*'$m'/{print}'`
+			v=`$o --no-warn +version 2>/dev/null | \perl -alne 'printf("%8s %s",$F[1],join(" ",@F[2..@F-1])) if $F[0] eq "'$m'"'`
 			if [ -n "$w" ]; then
 				# ERROR in $w most likely means that $m is not found by
 				# perl, then $v is empty
@@ -1379,7 +1379,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.48 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.49 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1407,7 +1407,7 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.48; $mode $src_txt $inst_directory ..."
+echo "# $0 3.49; $mode $src_txt $inst_directory ..."
     # always print internal SID, makes debugging simpler
 
 # check for lock-file, should only exist on author's system
