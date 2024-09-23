@@ -109,7 +109,7 @@
 #=#           Time::Local	    1.28 /usr/share/perl/5.24/Time/Local.pm
 #=#----------------------+---------------------------------------
 #=
-#=# check for installed Perl modules (started in '$inst_directory')
+#=# check for installed Perl modules (started in »$inst_directory«)
 #=#----------------------+---------------------------------------
 #=#                  Carp	    1.52 /usr/lib/x86_64-linux-gnu/perl-base/Carp.pm
 #=#              Net::DNS	    1.36 /usr/local/share/perl/5.24.1/Net/DNS.pm
@@ -169,7 +169,7 @@
 #=# Note: podman is a tool to view pod files, or it's a container engine
 #=#----------------------+---------------------------------------
 #=
-#=# check for contributed files (in /opt/o-saft/usr )
+#=# check for contributed files (in »/opt/o-saft/usr«)
 #=#----------------------+---------------------------------------
 #=#     Cert-beautify.awk	/opt/o-saft/usr/Cert-beautify.awk
 #=#      Cert-beautify.pl	/opt/o-saft/usr/Cert-beautify.pl
@@ -340,7 +340,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.47 24/09/23 13:13:09"
+SID="@(#) INSTALL-template.sh 3.48 24/09/23 14:04:26"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -494,7 +494,7 @@ build_openssl="$usr_dir/install_openssl.sh"
 all_exe="$osaft_exe $osaft_gui $osaft_sh $osaft_dock $osaft_one"
     # checking INSTALL.sh (myself) is pointless, somehow ...
 
-_line='----------------------+-----------------'
+_line='----------------------+--------+--------'
 _cols=0
 \command -v \tput >/dev/null && _cols=`\tput cols`
 if [ 0 -lt $_cols ]; then
@@ -593,6 +593,7 @@ check_pm    () {
 
 check_commands  () {
 	for c in $* ; do
+		echo_info "check prog $c .."
 		echo_label "$c"
 		is=$(\command -v $c)
 		[ -n "$is" ] && echo_green "$is" || echo_red "missing"
@@ -616,6 +617,7 @@ check_development () {
 check_exec  () {
 # TODO: this is a variant of check_development(), should be implemented there
 	for c in $* ; do
+		echo_info "check exec $c .."
 		echo_label "$c"
 		[ -x "$c" ] && echo_green "OK" || echo_red "not executable"
 		[ -x "$c" ] || err=`expr $err + 1`
@@ -676,7 +678,7 @@ check_md5   () {
 	# TODO: md5sum useless for converted files, as it differs always
 	_rel=$1
 	_dst=$2
-	[ -e "$_dst" ] || echo_yellow "**WARNING: missing '$_dst'; checksum ignored"
+	[ -e "$_dst" ] || echo_yellow "**WARNING: missing »$_dst«; checksum ignored"
 	[ -e "$_dst" ] || return
 	name=${_dst##*/}   # filename without path because / causes problem in awk
 	[ ! -e "$_rel" ] && return  # warning already printed
@@ -689,7 +691,7 @@ check_md5   () {
 	newsum=`\md5sum $_dst` # compute m5sum of installed file
 	newsum=${newsum%% *}   # remove trailing filename
 	#dbx# echo "# $name : $md5sum : $newsum."
-	[ "$md5sum" = "$newsum" ] || echo_red "# wrong checksum $newsum for '$_dst'"
+	[ "$md5sum" = "$newsum" ] || echo_red "# wrong checksum $newsum for »$_dst«"
 	[ "$md5sum" = "$newsum" ] || err=`expr $err + 1`
 	return
 } # check_md5
@@ -704,6 +706,7 @@ check_tools () {
 	for p in `echo $PATH|tr ':' ' '` ; do
 		for o in $all_exe perl wish ; do
 			exe="$p/$o"
+			echo_info "check $p/$o .."
 			if [ -e "$exe" ]; then
 				_cnt=`expr $_cnt + 1`
 				echo_label "$exe" && echo_green "$p"
@@ -736,16 +739,19 @@ check_inst  () {
 	_cnt=0
 	# err=`expr $err + 1` ; # errors not counted here
 	for f in $dirs__ancient ; do
+		echo_info "check $f .."
 		[ -d "$f" ] && echo_label  "$f" \
 			    && echo_yellow "found; directory $text_alt" \
 			    && _cnt=`expr $_cnt + 1`
 	done
 	for f in $files_ancient ; do
+		echo_info "check $f .."
 		[ -e "$f" ] && echo_label  "$f" \
 			    && echo_yellow "found; file $text_alt" \
 			    && _cnt=`expr $_cnt + 1`
 	done
 	for f in $files_develop $files_info ; do
+		echo_info "check $f .."
 		[ -e "$f" ] && echo_label  "$f" \
 			    && echo_yellow "found; $text_dev" \
 			    && _cnt=`expr $_cnt + 1`
@@ -762,6 +768,7 @@ check_self  () {
 	for o in $all_exe ; do
 		# $osaft_cgi cannot be checked here because it behaves different
 		_opt="+VERSION"
+		echo_info "check self $o .."
 		[ "o-saft-docker" = $o ] && _opt="+V" # has no own +VERSION, see source there
 		if [ "o-saft.tcl" = $o ]; then
 			[ -z "$osaft_gui" ] && \
@@ -790,13 +797,15 @@ check_rc    () {
 	_cnt=0
 	for p in `echo $HOME $PATH|tr ':' ' '` ; do
 		_rc="$p/$osaft_exerc"
+		echo_info "check rc  $_rc .."
 		if [ -e "$_rc" ]; then
 			_cnt=`expr $err + 1`
-			echo_label "$_rc" && echo_yellow "will be used when started in $p only"
+			echo_label "$_rc" && echo_yellow "will be used when started in »$p« only"
 		fi
 	done
 	[ 0 -eq $_cnt ] && echo_yellow "$rc not found"
 	_rc="$HOME/$osaft_guirc"
+	echo_info "check rc  $_rc .."
 	if [ -e "$_rc" ]; then
 		v=`awk '/RCSID/{print $3}' $_rc | tr -d '{};'`
 		echo_label "$_rc" && echo_green  "$v"
@@ -811,13 +820,14 @@ check_rc    () {
 
 check_usr   () {
 	[ "check" = "$mode" ] || echo_info "check_usr() ..."
-	echo_head "# check for contributed files (in $inst_directory/$usr_dir )"
+	echo_head "# check for contributed files (in »$inst_directory/$usr_dir«)"
 	for c in $files_contrib $osaft_one ; do
 		_skip=0
 		for f in $files_not_installed $files_develop ; do
 			[ "$f" = "$c" ] && _skip=1
 		done
 		[ $_skip -eq 1 ] && continue
+		echo_info "check $c .."
 		_c=${c##*/}
 		echo_label "$_c" #&& echo_green "$openssl"
 		c="$inst_directory/$c"
@@ -837,6 +847,7 @@ check_perl  () {
 		# NOTE: output format is slightly different, 'cause **WARNINGs are printed too
 		echo "# testing $o ...$tab"
 		for m in $perl_modules ; do
+			echo_info "check $m .."
 			echo_label "$m"
 			w=`$o --no-warn +version 2>&1        | awk '/(ERROR|WARNING).*'$m'/{print}'`
 			v=`$o --no-warn +version 2>/dev/null | awk '($1=="'$m'"){printf"%8s %s",$2,$3}'`
@@ -865,8 +876,9 @@ check_perl  () {
 
 check_modules   () {
 	[ "check" = "$mode" ] || echo_info "check_modules() ..."
-	echo_head "# check for installed Perl modules (started in $inst_directory )"
+	echo_head "# check for installed Perl modules (started in »$inst_directory« )"
 	for m in $perl_modules $osaft_modules ; do
+		echo_info "check $m .."
 		echo_label "$m"
 		text_cpan="»cpan $m«"
 		v=`perl -I $osaft_libdir -M$m -le 'printf"%8s",$'$m'::VERSION' 2>/dev/null`
@@ -942,6 +954,7 @@ check_openssl   () {
 	#
 	echo_head "# check for openssl executable used by O-Saft"
 	for p in `echo $inst_directory $PATH|tr ':' ' '` ; do
+		echo_info "check $p .."
 		o="$p/$osaft_exe"
 		r="$p/.$osaft_exe"
 		if [ -x "$o" ]; then
@@ -949,7 +962,7 @@ check_openssl   () {
 			if [ "t" = `basename $_pwd` -a ".." = "$p" ]; then
 				# contribution to our make
 				o="${_pwd%/*}/$osaft_exe"  # full path
-				echo_yellow "**WARNING: call in development directory t/.. assumed; using '$o'"
+				echo_yellow "**WARNING: call in development directory t/.. assumed; using »$o«"
 			fi
 			# first call program to check if it is starting properly
 			# if it fails with a status, the corresponding error is printed
@@ -1024,11 +1037,12 @@ mode_check  () {
 } # mode_check
 
 mode_checkdev () {
-	echo "#mode_checkdev() ..."
+	echo "# mode_checkdev() ..."
 	# does not use echo_info(), because text always printed
 	echo      "# check system for development usage ..."
 	echo_head "# check setup for development ..."
-	for f in Makefile CHANGES README.md; do
+	for f in $files_info $files_develop; do
+		echo_info "check file $f .."
 		d="$inst_directory/$f"
 		check_development -f $d
 	done
@@ -1036,10 +1050,12 @@ mode_checkdev () {
 	check_development -d $d
 	for d in $doc_dir $lib_dir $usr_dir; do
 		d="$inst_directory/$tst_dir/$d"
+		echo_info "check link $d .."
 		check_development -L $d
 	done
 	for f in $files_install_dev; do
 		d="$inst_directory/$f"  # $f already contains $tst_dir
+		echo_info "check file $f .."
 		check_development -f $d
 	done
 	echo_head "# check for own tools used with/in make targets"
@@ -1090,7 +1106,7 @@ mode_install () {
 		# with --n continue, so we see what would be done
 	fi
 	if [ ! -e "$src_directory/$osaft_rel" ]; then
-		echo_yellow "**WARNING: missing '$src_directory/$osaft_rel'; checksum ignored"
+		echo_yellow "**WARNING: missing »$src_directory/$osaft_rel«; checksum ignored"
 	fi
 
 	files="$files_install $files_install_cgi $files_install_doc $files_contrib $osaft_one"
@@ -1139,8 +1155,8 @@ mode_install () {
 			|| echo_red "**ERROR: 044: copying $f failed" \
 			&& check_md5 "$src_directory/$osaft_rel" "$_dst"
 		done
-		# wrong installed (needs to be adapted in Makefile)
-		for f in Makefile CHANGES README.md; do
+		# wrong installed
+		for f in Makefile $files_info; do
 			$try \mv "$inst_directory/$tst_dir/$f" "$inst_directory/"
 		done
 	fi
@@ -1363,7 +1379,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.47 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.48 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1391,7 +1407,7 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.47; $mode $src_txt $inst_directory ..."
+echo "# $0 3.48; $mode $src_txt $inst_directory ..."
     # always print internal SID, makes debugging simpler
 
 # check for lock-file, should only exist on author's system
