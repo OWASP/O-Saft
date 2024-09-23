@@ -54,7 +54,7 @@
 # HACKER's INFO
 #
 #? VERSION
-#?      @(#) get-SIDs.sh 1.11 24/09/23 17:48:08
+#?      @(#) get-SIDs.sh 3.1 24/09/23 17:49:49
 #?
 #? AUTHOR
 #?      24-Jul-24 Achim Hoffmann
