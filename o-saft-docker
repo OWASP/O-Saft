@@ -318,14 +318,14 @@
 #?       docker(1), podman(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 3.16 24/09/23 10:46:06
+#?       @(#) o-saft-docker 3.17 24/09/23 16:57:02
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID="3.16"
+SID="3.17"
 VERSION="${OSAFT_VERSION:-24.09.24}"
 ich=${0##*/}
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
@@ -607,7 +607,7 @@ docker_update ()  {
 	tmp=/tmp/$ich.$$.$USER
 	_id="o-saft-upd" # temporary container ID
 	# executing multiple commands in a container is a pain, hence update
-	# is done as follows:
+	# is done as follows (other variants see VERSION 3.16):
 	#       unpack the tarball on the host which create O-Saft directory
 	#       copy O-Saft directory to container
 	#       commit changes in container
@@ -626,25 +626,9 @@ docker_update ()  {
 	$try $docker container commit       ${_id} ${image_name}
 	$try $docker container rm           ${_id}
 	$try \rm -rf $tmp
+	docker_call INSTALL.sh --check=SID --changes
+	    # compares SID of files with those in o-saft.rel; should be empty
 	return
-	# failed variant 1
-	#    $docker container run   --name ${_id} ${image_name} +VERSION || exit 4
-	#    $docker container cp    $src   ${_id}:/O-Saft/$tgz
-	#    $docker container start        ${_id}
-	#    $docker container exec   -it   ${_id} tar -C / -xf $tgz
-	#    $docker container exec   -it   ${_id} rm $tgz
-	#    $docker container exec   -it   ${_id} osaft_vm_build='"$osaft_vm_build ; U"'
-	#    $docker container commit       ${_id} ${image_name}
-	#    $docker container stop         ${_id}
-	#    $docker container rm           ${_id}
-	# failed variant 2
-	#    $docker container run   --name ${_id} ${image_name} +VERSION || exit 4
-	#    $docker container cp    $src   ${_id}:/O-Saft/$tgz
-	#    $docker container run --user root --entrypoint=tar ${_id} -C / -xf $tgz
-	#    $docker container run --user root --entrypoint=rm  ${_id} $tgz
-	#    $docker container run --user root --entrypoint=sh  ${_id} osaft_vm_build='"$osaft_vm_build ; U"'
-	#    $docker container commit       ${_id} ${image_name}
-	#    $docker container rm           ${_id}
 }
 
 docker_apk  ()  {
