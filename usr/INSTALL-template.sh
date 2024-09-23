@@ -217,12 +217,14 @@
 #=#-------------------+--------------------- not part of output }
 #?
 #? OPTIONS
-#?      --h     got it
-#       --help  got it
-#?      --n     do not execute, just show (ignored for  --check)
-#?      --i     ignore error while installing;  default: exit with status 4
-#?      --v     print verbose information about performed actions
-#?      -x      debug using shell's "set -x"
+#?      --h     - got it
+#       --help  - got it
+#?      --help update
+#?      --help=update   - just print description about CHECKS and UPDATES
+#?      --n     - do not execute, just show (ignored for  --check)
+#?      --i     - ignore error while installing; default: exit with status 4
+#?      --v     - print verbose information about performed actions
+#?      -x      - debug using shell's "set -x"
 #?      --check --checkdev --clean --cgi --expected --install --openssl
 #?                      - these are commands, see  DESCRIPTION  above
 #?      --force         - install  RC-FILEs  .o-saft.pl  and  .o-saft.tcl in
@@ -266,6 +268,61 @@
 #?      directory.
 #?          env OSAFT_DIR=/some/dir $0 --install
 #?          env OSAFT_DIR=. $0 --check
+#?
+#? CHECKS, UPDATES
+#?   Abstract
+#?      This script can be used to check or update the current installation.
+#?      Checking or updating the installation works best if the installation
+#?      is just the directory provided by the tarball (o-saft.tgz usually).
+#?      This directory is  O-Saft  (/O-Saft in a container).  For simplicity
+#?      following examples mainly use  .  for that directory.
+#?
+#?   Checksum
+#?      Checksums (more precise cryptographic hashes) are used for the files
+#?      of the tool and the tarball used for installation.
+#?
+# critical files
+#      o-saft.tgz    - https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz
+#      +its checksum - https://raw.githubusercontent.com/OWASP/O-Saft/master/o-saft.tgz.sha256
+#                      also mentioned in: Dockerfile, README.md
+#      o-saft.rel    - part of o-saft.tgz, hence verified by that
+#                      https://github.com/OWASP/O-Saft/blob/master/doc/o-saft.rel
+#                      will only be updated there when new version at github is released
+#?      TBD ...
+#?
+#?   Checks
+#?      For checks please refer to the operation modes --check*  above.
+#?
+#?   Check examples
+#?      # check SIDs and checksums of all installed files:
+#?          $0 . --check=SID --changes
+#?      - should return an empty list like:
+#?          # ./INSTALL.sh 3.52; --check=SID  . ...
+#?
+#?          # SID   date    time    md5sum   filename    path
+#?          #----------------------+--------+-------------------------------
+#?          #----------------------+--------+-------------------------------
+#?
+#?      - lines are listed these files have been modified after installtion.
+#?
+#?      # check SIDs and checksums of a single files:
+#?          usr/get-SIDs.sh --check .o-saft.pl
+#?      - should return something like:
+#?          # 1.115 24/09/06 23:42:42 771cf961dc1004d88f24011945c5d021 .o-saft.pl .o-saft.pl
+#?          # 1.115 24/09/06 23:42:42 771cf961dc1004d88f24011945c5d021 .o-saft.pl .o-saft.pl
+#?      - the md5sum in both lines must be identical, otherwise the file has
+#?        been modified after installtion.
+#?
+#?   Updates
+#      When updating files from github (or other sources), any check of SID
+#      or checksum should report differences, at least the checksum.
+#
+#      Updating from a tarball from github should not report checksum diffs.
+#?
+#?      TBD ...
+#?
+#?   Update examples
+#?      TBD ...
 #?
 #? EXAMPLES
 #?      $0
@@ -340,7 +397,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.51 24/09/23 18:06:48"
+SID="@(#) INSTALL-template.sh 3.52 24/09/23 20:53:35"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -573,6 +630,18 @@ echo_error  () {
 		echo_red   "failed , $1 error(s) detected"
 	fi
 	return
+}
+_help       () {
+	# $1 is start of scope to be printed, if equal NAME then print all
+	anf=$1
+	end='^#? *[A-Z][A-Z]'
+	shift
+	[ "$anf" = "NAME" ] && end='^ *$'
+	\sed -n -e "/^#? *${anf}/,/${end}/p" $0 | \
+	\sed -n -e "s/\$0/$ich/g" \
+		-e '/^#?/s/#?//p' \
+		-e "/VERSION$/a\      $SID"
+	exit 0
 }
 
 check_pm    () {
@@ -1336,15 +1405,22 @@ EoUsage
 new_dir=
 while [ $# -gt 0 ]; do
 	case "$1" in
-	 '-h' | '--h' | '--help' | '-?' | '/?')
-		\sed -n -e "s/\$0/$ich/g" \
-			-e '/^#?/s/#?//p' \
-			-e "/VERSION$/a\      $SID" $0
+	  -h | --h | --help* | '-?' | '/?')
+		[ "$1" = "--help" ] && shift  # allow: --help update
+		case "$1" in
+		  --help=CHECK)  _help CHECK; ;;
+		  --help=check)  _help CHECK; ;;
+		  --help=UPDATE) _help CHECK; ;;
+		  --help=update) _help CHECK; ;;
+		  CHECK | check) _help CHECK; ;;
+		  UPDATE|update) _help CHECK; ;;
+		  *)             _help NAME ; ;;
+		esac
 		exit 0
 		;;
-	 '-n' | '--n')          optn="--n"; try=echo; ;;
-	 '-v' | '--v')          optv=1;         ;;
-	 '-x' | '--x')          set -x;         ;;
+	  '-n' | '--n')         optn="--n"; try=echo; ;;
+	  '-v' | '--v')         optv=1;         ;;
+	  '-x' | '--x')         set -x;         ;;
 	  '--cgi')              mode=cgi;       ;;
 	  '--check')            mode=check;     ;;
 	  '--clean')            mode=cleanup;   ;;
@@ -1379,7 +1455,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.51 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.52 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1407,7 +1483,7 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.51; $mode $src_txt $inst_directory ..."
+echo "# $0 3.52; $mode $src_txt $inst_directory ..."
     # always print internal SID, makes debugging simpler
 
 # check for lock-file, should only exist on author's system
