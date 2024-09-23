@@ -340,7 +340,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.45 24/09/22 12:25:18"
+SID="@(#) INSTALL-template.sh 3.46 24/09/23 11:52:07"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -1359,7 +1359,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.45 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.46 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1378,6 +1378,7 @@ fi
 
 if [ -n "$new_dir" ]; then
 	# new dir given, implies --install
+	[ -z "$mode" ] && mode="install"
 	inst_directory="$new_dir"
 fi
 clean_directory="$inst_directory/$clean_directory"
@@ -1386,7 +1387,7 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.45; $mode $src_txt $inst_directory ..."
+echo "# $0 3.46; $mode $src_txt $inst_directory ..."
     # always print internal SID, makes debugging simpler
 
 # check for lock-file, should only exist on author's system
