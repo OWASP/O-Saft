@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.35 24/09/05 11:19:59
+# SID   @(#) help.txt 3.36 24/09/23 21:01:50
 
 NAME
 
@@ -4184,9 +4184,7 @@ DEPENDENCIES
 INSTALLATION
 
         The tool can be installed in any path. It just requres the modules as
-        described in  DEPENDENCIES  above. However, it's recommended that the
-        modules  SSLhello  and  SSLinfo  are found  in the directory  './lib'
-        where  '$0'  is installed.
+        described in  DEPENDENCIES  above.
 
         For security reasons, most modern libraries  disabled or even removed
         insecure or "dirty" functionality.  As the purpose of this tool is to
@@ -4490,6 +4488,15 @@ INSTALLATION
         be provided due to licence problems.
         Also note that using  stand-alone executable have not been tested the
         same way as the  $0  itself. Use them at your own risk.
+
+
+UPDATES
+
+        The script  INSTALL.sh  provides some functionality for  checking and
+        updating the installtion. For details please see:
+
+              INSTALL.sh --help
+              INSTALL.sh --help=update
 
 
 ABOUT CGI
