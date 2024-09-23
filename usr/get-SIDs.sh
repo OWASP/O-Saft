@@ -54,7 +54,7 @@
 # HACKER's INFO
 #
 #? VERSION
-#?      @(#) get-SIDs.sh 1.7 24/09/22 12:03:26
+#?      @(#) get-SIDs.sh 1.8 24/09/23 11:06:23
 #?
 #? AUTHOR
 #?      24-Jul-24 Achim Hoffmann
@@ -81,19 +81,19 @@ missing=
 
 #_____________________________________________________________________________
 #________________________________________________________________ functions __|
-_abort  () {
+_abort       () {
 	\echo "**ERROR   [$ich]: canceled by user" >&2
 	exit 1024
 }
-_dbx    () {
+_dbx         () {
 	[ -n "$dbx" ] && \echo "#dbx [$ich]: $*"
 	return
 }
-_warn   () {
+_warn        () {
 	\echo "**WARNING [$ich]: $*" >&2
 	return
 }
-_get_files () {
+_get_files   () {
 	# use make to get list of files; sets variable allfiles
 	_var=$1
 	if [ -e ./Makefile ]; then
@@ -170,12 +170,17 @@ _dbx "in_files=$in_files"
 # found files?
 [ -z "$in_files" ] && \echo "**ERROR   [$ich]: no specified file found; exit" >&2 && exit 2
 
+gawk=$(  \command -v gawk)
+md5sum=$(\command -v md5sum)
+[ -z "$gawk"     ] && \echo "**ERROR   [$ich]: gawk missing; exit"   >&2 && exit 2
+[ -z "$md5sum"   ] && \echo "**ERROR   [$ich]: md5sum missing; exit" >&2 && exit 2
+
 # get md5sum for each file and store in array for awk: md5["file"]="cafe";
 if [ -n "$try" ]; then
 	q='"'
-	\echo    "md5sum $in_files |  awk '{printf(${q}md5[\"%s\"]=\"%s\";\\\n${q},\$2,\$1)}'"
+	\echo    "md5sum $in_files |  gawk '{printf(${q}md5[\"%s\"]=\"%s\";\\\n${q},\$2,\$1)}'"
 else
-	md5_arr=`\md5sum $in_files | \awk '{printf("md5[\"%s\"]=\"%s\";\n",$2,$1)}'`
+	md5_arr=`$md5sum $in_files | $gawk '{printf("md5[\"%s\"]=\"%s\";\n",$2,$1)}'`
 fi
 _dbx "md5_arr=$md5_arr"
 if [ -n "$try" ]; then
@@ -205,7 +210,7 @@ fi
 #     @(#) my.file 1.245 19/11/19 12:23:42',
 #
 (
-  \gawk '
+  $gawk '
 	BEGIN {
 	'"$md5_arr"'
 	}
@@ -262,7 +267,7 @@ if [ -n "$rel_file" ]; then
 			# only grep lines with exact 6 tab-separated fields
 			# last field must match given file
 			# in awk  replace / by . ; . is meta character, that's ok
-			\awk -F"\t" '
+			$gawk -F"\t" '
 				BEGIN { f="'"$f"'"; gsub("/",".",f); }
 				($6~f){if(6==NF){print}}
 			' $rel_file
