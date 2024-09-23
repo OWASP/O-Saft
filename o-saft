@@ -80,7 +80,7 @@
 #       avoid conflicts with same option for  o-saft.pl .
 #
 #? VERSION
-#?      @(#) o-saft 3.4 24/09/21 08:11:53
+#?      @(#) o-saft 3.5 24/09/23 11:34:13
 #?
 #? AUTHOR
 #?      17-dec-17 Achim Hoffmann
@@ -98,7 +98,7 @@ prg=$dir/$ich.pl     # most likely ich=o-saft  ..
 gui=$dir/$ich.tcl
 cgi=$dir/$ich.cgi
 dok=$dir/$ich-docker
-pod=$dir/$ich-podman
+pod=$dir/$ich-podman # not used, just for documentation (see $podman below also)
 bunt=$usr/bunt.pl
     # all tools are prefix with the path $dir to avoid incomplete $PATH settings
     # then check (below) if tools exists, if not, remove path and rely on $PATH
@@ -109,18 +109,17 @@ bunt=$usr/bunt.pl
 [ ! -x "$pod" ]  && dok=$ich-docker # fallback
 
 try=
-args=           # argumets passed through (main --help)
-post="cat"      # default, avoids special handling if -post= missing
-post_args=
-    # aguments passed to post command, mainly used for -help=
-such=
-    # text to be searched for passed to post command, mainly used for -help=
+args=           # argumets passed through (mainly --help)
 mode=cli        # cli, cgi, gui, log
-podman=         # set: use podman instead of docker
+post="cat"      # default, avoids special handling if -post= missing
+post_args=      # aguments passed to post command, mainly used for -help=
+suchen=         # text to be searched for passed to post command, mainly used for -help=
+podman=         # set to -podman : use podman instead of docker
 docker=0        # cli or gui mode; cannot use $mode because it is needed for docker too
 docker_id=
 docker_tag=
-    # podman is similar to docker
+# podman is similar to docker, it just differs herein with the  -podman  option
+# all variables are named docker* (for historical reason) even if podman used
 
 #dbx# echo "#################" >> /tmp/t.o-saft.log
 #dbx# [ -t 0 ] &&echo 0 STDIN  >> /tmp/t.o-saft.log
@@ -143,9 +142,9 @@ while [ $# -gt 0 ]; do
 EoT
             exit 0
             ;;
-        +VERSION)       echo "3.4"; exit 0; ;;
+        +VERSION)       echo "3.5"; exit 0; ;;
         -help=*)
-            such="`expr "$1" ':' '-help=\(.*\)'`"
+            suchen="`expr "$1" ':' '-help=\(.*\)'`"
             args="--help"
             post=egrep
             post_args="--color -i -C 3 "
@@ -199,10 +198,12 @@ done
 # from here on 'podman' is the same as 'docker'
 if [ -n "$podman" ]; then
     docker=1
+    # dok=$pod  # not set because $pod is a symlink to $dok and my be missing
 fi
 
 # Note: using $* (instead of $@) does not contain parsed options
-[ -n "$try" ] && echo "# docker=$docker, podman=$podman, mode=$mode, post=$post, $*#"
+[ -n "$try" ] && echo "# docker=$docker, podman=$podman, dok=$dok, mode=$mode, post=$post, $*#"
+exit;
 
 # docker mode is special
 if [ $docker -eq 1 ]; then
@@ -227,12 +228,12 @@ case "$mode" in
              # dirty hack: passing $* to $gui as it assumes they behave the
              # same way there as for $prg
          ;;
-    *)   echo "$prg $docker_id $docker_tag $* $args | $post $post_args  $such"
+    *)   echo "$prg $docker_id $docker_tag $* $args | $post $post_args  $suchen"
          [ -n "$try" ] && exit 0
-         # some shell behave strange when quotes are needed (for $such here)
-         # hence different command lines are needed wether $such is empty or not
-         if [ -n "$such" ]; then
-               $prg $docker_id $docker_tag $* $args | $post $post_args "$such"
+         # some shell behave strange when quotes are needed (for $suchen here)
+         # hence different command lines are needed wether $suchen is empty or not
+         if [ -n "$suchen" ]; then
+               $prg $docker_id $docker_tag $* $args | $post $post_args "$suchen"
          else
                $prg $docker_id $docker_tag $* $args | $post $post_args
          fi
