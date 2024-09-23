@@ -54,7 +54,7 @@
 # HACKER's INFO
 #
 #? VERSION
-#?      @(#) get-SIDs.sh 1.10 24/09/23 17:34:56
+#?      @(#) get-SIDs.sh 1.11 24/09/23 17:48:08
 #?
 #? AUTHOR
 #?      24-Jul-24 Achim Hoffmann
@@ -110,6 +110,28 @@ _get_files   () {
 		fi
 	else
 		_warn "Makefile missing, option '--make=$_var' ignored" >&2
+	fi
+	return
+}
+_get_rel     () {
+	_rel_file="$1"
+	shift           # all remaining are filenames
+	[ $# -lt 1 ] && return  # empty list
+	if [ ! -e "$_rel_file" ]; then
+		\echo "**WARNING: '$_rel_file' does not exist; --check ignored"
+	else
+		for f in $@ ; do
+			# only grep lines with exact 6 tab-separated fields
+			# last field must match given file at end,  it is a match
+			# in awk because variables cannot be used like /varname/,
+			# also: if the RegEx to be matched is a variable, is must
+			# not be enclosed in //
+			# in awk  replace / by . ; . is meta character, that's ok
+			$gawk -F"\t" '
+				BEGIN { f="'"$f"'"; gsub("/",".",f); r=sprintf("%s$",f);}
+				($6~r){if(6==NF){print}}
+			' $_rel_file
+		done
 	fi
 	return
 }
@@ -171,11 +193,10 @@ done
 _dbx "missing=$missing"
 _dbx "symlinks=$symlinks"
 _dbx "in_files=$in_files"
-# found files?
-[ -z "$in_files" ] && _error_exit "no specified file found"
-
+# found files? then gawk and md5sum are required
 gawk=$(  \command -v gawk)
 md5sum=$(\command -v md5sum)
+[ -z "$in_files" ] && _error_exit "no specified file found"
 [ -z "$gawk"     ] && _error_exit "gawk missing"
 [ -z "$md5sum"   ] && _error_exit "md5sum missing"
 
@@ -263,29 +284,13 @@ fi
 [ -n "$symlinks" ] && \echo "**WARNING: symlinks have SID=0 and the same md5sum as their target"
 
 # --check=
-if [ -n "$rel_file" ]; then
-	if [ ! -e "$rel_file" ]; then
-		\echo "**WARNING: '$rel_file' does not exist; --check ignored"
-	else
-		for f in $in_files ; do
-			# only grep lines with exact 6 tab-separated fields
-			# last field must match given file at end,  it is a match
-			# in awk because variables cannot be used like /varname/,
-			# also: if the RegEx to be matched is a variable, is must
-			# not be enclosed in //
-			# in awk  replace / by . ; . is meta character, that's ok
-			$gawk -F"\t" '
-				BEGIN { f="'"$f"'"; gsub("/",".",f); r=sprintf("%s$",f);}
-				($6~r){if(6==NF){print}}
-			' $rel_file
-		done
-	fi
-fi
+
+_get_rel $rel_file $in_files
 
 exit
 
 # simplified version of above awk
-#  awk '/@\(#)/{sub(/^.*@/,"");;sub(/".*/,"");if($0~/[,;]/){next}f=FILENAME;sub(/.*\//,"",f);if($2!=f){next};if(5==NF){print}}' $in_files
+#  gawk '/@\(#)/{sub(/^.*@/,"");;sub(/".*/,"");if($0~/[,;]/){next}f=FILENAME;sub(/.*\//,"",f);if($2!=f){next};if(5==NF){print}}' $in_files
 
 
 
