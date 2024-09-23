@@ -54,7 +54,7 @@
 # HACKER's INFO
 #
 #? VERSION
-#?      @(#) get-SIDs.sh 1.9 24/09/23 11:12:54
+#?      @(#) get-SIDs.sh 1.10 24/09/23 17:34:56
 #?
 #? AUTHOR
 #?      24-Jul-24 Achim Hoffmann
@@ -269,11 +269,14 @@ if [ -n "$rel_file" ]; then
 	else
 		for f in $in_files ; do
 			# only grep lines with exact 6 tab-separated fields
-			# last field must match given file
+			# last field must match given file at end,  it is a match
+			# in awk because variables cannot be used like /varname/,
+			# also: if the RegEx to be matched is a variable, is must
+			# not be enclosed in //
 			# in awk  replace / by . ; . is meta character, that's ok
 			$gawk -F"\t" '
-				BEGIN { f="'"$f"'"; gsub("/",".",f); }
-				($6~f){if(6==NF){print}}
+				BEGIN { f="'"$f"'"; gsub("/",".",f); r=sprintf("%s$",f);}
+				($6~r){if(6==NF){print}}
 			' $rel_file
 		done
 	fi
