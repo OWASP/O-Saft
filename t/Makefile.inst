@@ -6,7 +6,7 @@
 #?      make help.test.inst
 #?
 #? VERSION
-#?      @(#) Makefile.inst 3.11 24/09/22 09:04:46
+#?      @(#) Makefile.inst 3.12 24/09/23 20:55:11
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.inst = targets for testing INSTALL.sh
 
-O-SID.inst         := 3.11
+O-SID.inst         := 3.12
 O-SELF.inst        := t/Makefile.inst
 ALL.includes       += $(O-SELF.inst)
 ALL.inc.type       += inst
@@ -98,8 +98,8 @@ testcmd-inst-INSTALL.sh_%.log:      EXE.log-filtercmd  = awk '\
 # perform complete installation from .tgz
 # the target would fail if $(EXE.INSTALL) exits with status, hence /bin/true
 # to ensure the generated directory is removed at end;
-# no -l for ls to avoid avoid diff with testarg-inst-INSTALL.sh-from-tgz.log
-testarg-inst-INSTALL.sh-from-tgz: $(GEN.tgz)
+# no -l for ls to avoid avoid diff with testarg-inst-INSTALL.sh_from-tgz.log
+testarg-inst-INSTALL.sh_from-tgz: $(GEN.tgz)
 	@mkdir -p $(O-DIR.tmp)/i
 	@cp $(GEN.tgz) $(O-DIR.tmp)/i/
 	@cd     $(O-DIR.tmp)/i && \
@@ -121,7 +121,7 @@ ALL.test.inst      += \
 	testarg-inst-INSTALL.sh_--install--useenv \
 	testarg-inst-INSTALL.sh_--install--instdev \
 	testarg-inst-INSTALL.sh_--simulate-vm \
-	testarg-inst-INSTALL.sh-from-tgz
+	testarg-inst-INSTALL.sh_from-tgz
 
 # targets for install_openssl.sh
 testarg-inst-usr-install_openssl_%:     EXE.pl    = ../$(EXE.install_openssl)
