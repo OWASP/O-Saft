@@ -18,6 +18,7 @@
 #?       $0 what file
 #?       $0 call /path/to/program [arguments]
 #?       $0 cp   file-to-be-copied [file-destination]
+#?       $0 update file
 #?       $0 [OPTIONS] gui
 #?       $0 [OPTIONS] [options and commands of o-saft.pl]
 #?
@@ -59,6 +60,10 @@
 #?           call    - run specified program with arguments in container image
 #?           cp      - copy file to /O-Saft directory in the container image,
 #?                     then commit changes
+#?           update  - unpack file, copy to conatiner's / directory, commit
+#?                     WARNING:  experimental implementation,  breaks UID:GID
+#?                     of copied file in container
+#                      file must be tarball .tar or .tgz, or .zip
 #            hacker  - show more information
 #?           gui     - start o-saft.tcl in container image (display to host)
 #?           sshx    - start o-saft.tcl in container image (tunnel X via ssh)
@@ -313,14 +318,14 @@
 #?       docker(1), podman(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 3.15 24/09/22 12:42:38
+#?       @(#) o-saft-docker 3.16 24/09/23 10:46:06
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID="3.15"
+SID="3.16"
 VERSION="${OSAFT_VERSION:-24.09.24}"
 ich=${0##*/}
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
@@ -596,6 +601,52 @@ docker_cp   ()  {
 	return
 }
 
+docker_update ()  {
+	src="$1"
+	tgz="${src##*/}"
+	tmp=/tmp/$ich.$$.$USER
+	_id="o-saft-upd" # temporary container ID
+	# executing multiple commands in a container is a pain, hence update
+	# is done as follows:
+	#       unpack the tarball on the host which create O-Saft directory
+	#       copy O-Saft directory to container
+	#       commit changes in container
+	#       delete O-Saft directory on host
+	# TODO: strange behaviour in docker and podman:
+	#       docker: copied files and directory have UID:GID of local system
+	#       podman: copied files and directory have UID:GID o-saft
+	#       option "--user root" works with podman only
+	$try \mkdir $tmp || exit 3
+	    # mkdir alredy printed error message
+	$try \tar -C $tmp -xf $tgz
+	# create a new container with a dummy command; exit if exists or fails
+	$try $docker container run   --name ${_id} ${image_name} +VERSION || exit 4
+	$try $docker container cp $tmp/O-Saft ${_id}:/
+	    # podman cp --overwrite # should be used
+	$try $docker container commit       ${_id} ${image_name}
+	$try $docker container rm           ${_id}
+	$try \rm -rf $tmp
+	return
+	# failed variant 1
+	#    $docker container run   --name ${_id} ${image_name} +VERSION || exit 4
+	#    $docker container cp    $src   ${_id}:/O-Saft/$tgz
+	#    $docker container start        ${_id}
+	#    $docker container exec   -it   ${_id} tar -C / -xf $tgz
+	#    $docker container exec   -it   ${_id} rm $tgz
+	#    $docker container exec   -it   ${_id} osaft_vm_build='"$osaft_vm_build ; U"'
+	#    $docker container commit       ${_id} ${image_name}
+	#    $docker container stop         ${_id}
+	#    $docker container rm           ${_id}
+	# failed variant 2
+	#    $docker container run   --name ${_id} ${image_name} +VERSION || exit 4
+	#    $docker container cp    $src   ${_id}:/O-Saft/$tgz
+	#    $docker container run --user root --entrypoint=tar ${_id} -C / -xf $tgz
+	#    $docker container run --user root --entrypoint=rm  ${_id} $tgz
+	#    $docker container run --user root --entrypoint=sh  ${_id} osaft_vm_build='"$osaft_vm_build ; U"'
+	#    $docker container commit       ${_id} ${image_name}
+	#    $docker container rm           ${_id}
+}
+
 docker_apk  ()  {
 	_id="o-saft-apk"
 	# after commit the entrypoint is changed, hence the original one is
@@ -720,6 +771,7 @@ while [ $# -gt 0 ]; do
 	  'what')   docker_call sed -n -e "s/.*\(@(#).*\)/\1/p" $@; exit 0; ;;
 	  'gui')    docker_gui  $@; exit 0; ;;
 	  'cp')     docker_cp   $@; exit 0; ;;
+	  'update') docker_update $@; exit 0; ;;
 	  'apk')    docker_apk  $@; exit 0; ;;
 	  'rmi')    docker_rmi  $@; exit 0; ;;
 	  'root')   docker_root;    exit 0; ;;
