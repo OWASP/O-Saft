@@ -180,7 +180,7 @@ ARG     OSAFT_VM_DYN_OPENSSL="--shared"
 #                             --static  not yet (2020) working 'cause of libkrb5
 ARG     OSAFT_VM_APT_INSTALL
 ARG     OSAFT_VERSION="undefined"
-ARG     _SELF_="Dockerfile.openssl"
+ARG     _SELF_="Pո^"
 #       _SELF_ for internal use only to make multiple references unique
 
 LABEL \
@@ -192,7 +192,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/$_SELF_" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
 	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) Dockerfile.openssl 3.3 24/09/07 22:27:53" \
+	SID="@(#) Pո^ 3.4 24/09/24 13:18:18" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "$_SELF_ $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
@@ -225,7 +225,7 @@ RUN \
 	opt_add=--no-cache && \
 	opt_del=--purge	\
 	packages_make="gcc make musl-dev linux-headers perl-dev" && \
-	packages="curl ncurses $OSAFT_VM_APT_INSTALL \
+	packages="curl ncurses $OSAFT_VM_APT_INSTALL gawk virt-what \
 		$packages_make \
 		krb5-dev zlib-dev perl perl-readonly \
 		ca-certificates" && \
