@@ -69,14 +69,16 @@ or read the source ;-)
 
 | Module               | Version |
 |:---------------------|:--------|
-| `Net::SSLeay`        | (prefered >= 1.51, recommended 1.85)     |
-| `IO::Socket::SSL`    | (prefered >= 1.37, recommended 2.002)    |
-| `IO::Socket::INET`   | (prefered >= 2.31)  |
-| `Net::DNS`           | (prefered >= 0.65, for --mx option only) |
+| `Net::SSLeay`        | (prefered >= 1.51, recommended 1.94)     |
+| `IO::Socket::SSL`    | (prefered >= 1.37, recommended 2.081)    |
+| `IO::Socket::INET`   | (prefered >= 2.49)  |
+| `Net::DNS`           | (prefered >= 1.36, for --mx option only) |
 
 It can be executed from within the unpacked or cloned directory,
 installation is not necessary. However, a  `INSTALL.sh`  script will be
 provided, which can be called as follows:
+
+Own modules are all installed in  `./lib` .
 
 ```
   INSTALL.sh /path/to/install
@@ -89,8 +91,6 @@ For more details on installation, please see:
 
 There're no dependencies to other Perl modules for `checkAllCiphers.pl`
 so the test of all ciphers will work with it.
-The modules  `SSLinfo`,  `SSLhello`  beside som others, are part of the tool
-and should be installed in  `./lib` .
 
 Following files are optional:
 
@@ -131,7 +131,7 @@ Get Docker Image (latest stable release)
 
 ## VERSION
 
-**24.06.24**
+**24.09.24**
 
 The version of the tarball `o-saft.tgz` represents the version listed on top
 herein. All other files in the repository may be ahead of this tarball version.
@@ -141,7 +141,7 @@ SHA256 checksum of [o-saft.tgz](https://github.com/OWASP/O-Saft/raw/master/o-saf
 3f3eb35982717931cd23f384b378c77c07b0ce75fa5341ede574a3e153c9b48d
 ```
 
-[//]: # (above checksum for version 23.11.23)
+[//]: # (above checksum for version 24.06.24)
 <!--
 # comment not rendered in HTML
 -->
@@ -162,11 +162,6 @@ It will be updated with each new version (release).
 
 ### Older version
 
-Version 24.01.24 is a major redesign (refactoring) of the project. The top
-directory now contains the main tools only. All modules, documentation and
-(user) contributed tools are in sub-directories.
-These changes are also reflected in the directories available at github.
-
 If older versions should be used, please get the correspondig `o-saft.tgz`
 from github's releases, see:
-   [https://github.com/OWASP/O-Saft/releases](https://github.com/OWASP/O-Saft/releases) (as of January 2024).
+   [https://github.com/OWASP/O-Saft/releases](https://github.com/OWASP/O-Saft/releases) (as of September 2024).
