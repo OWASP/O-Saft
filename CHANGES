@@ -1,12 +1,120 @@
 
-Version: 24.??.24
+Version: 24.09.24
 ### NOTE
+    This release is a major redesign of some functionality of the project.
+
+    * some legacy options have been removed
+    * bugs fixed reported as [issue](https://github.com/OWASP/O-Saft/issues)
+    * many bugs which occurred rarely (special combination of options) are fixed
+    * using openssl for detecting ciphers must be enabled by options
+    * handles openssl 3.x
+    * handles DTLS 1.2
+    * Dockerfile build with openssl provided by alpine:3.20 (is default now)
+    * Dockerfile builds image for Docker or Podman
+    * new Dockerfile.openssl to build image with own openssl 1.0.2-chacha
+    * new commands and options for o-saft-docker (supports Podman)
+    * SBOM o-saft.rel added which contains SIDs and sha256sums
+    * --v behaves as a simple "info"-option
+    * tracing improved in general
+    * improved INSTALL.sh with --check* options (for example checking SBOM)
+    * usr/o-saft-standalone.pl mainly working without perl warnings
+    * documentation addapted to changed and new functionality
+    * more descriptive documentation according cipher, cipher ranges etc.
+
 ### BUGFIX
+    * usr/INSTALL-template.sh BF: must use literal TAB instead of \t in echo (problem in BusyBox)
+    * usr/get-SIDs.sh: BF: using expr on STDIN improved (bug with BusyBox v1.36.1)
+    * o-saft.pl: BF: check_dh() called if +logjam given (instead of +check)
+    * o-saft.pl: BF: normalise command only, not assigned value (was a problem with +test* commands only)
+    * o-saft.pl: BF: don't print command-line for option --help=gen* (used in make context only)
+    * o-saft.pl: BF: print SSLv2 in "Ciphers: Summary"
+    * o-saft.pl: BF: detect POODLE for TLSv1 (issue 146)
+    * o-saft.pl: BF: +cbc, +edh, +adh check cipher suite constant names also (issue 144)
+    * o-saft.pl: BF: avoid "Use of uninitialized value $v in scalar chomp .." (issue 14
+    * o-saft.pl: BF: avoid "Undefined subroutine &SSLinfo::do_ssl_open ..." for some cipher check commands like +cbs (issue 140)
     * o-saft.pl: BF: print <<undef>> for unknown cipher suite found with +cipher
     * o-saft.pl: BF: bare word after qr// removed (error in modern perl)
+    * o-saft.tcl: BF: pass +commands and --option to o-saft.pl (issue 153)F: bare word after qr// removed (error in modern perl)
+    * o-saft-docker: BF: argument hacker and usage do not need docker executable
+    * lib/SSLhello.pm: BF: use binmode(.., ":raw") to avoid perl error: send() isn't allowed on :utf8 handles (in stand-alone mode)
+    * lib/SSLinfo.pm: BF: avoid printing undefined value (issue 141)
+    * lib/OTrace.pm: BF: use pre Perl 5.22 RegEx syntax (issue 142)
+    * lib/OCfg.pm: BF: avoid Perl warning about regex match in hint()
+    * lib/OCfg.pm: BF: 0x03005600 (TLS_FALLBACK_SCSV) added to 'range'->'rfc'
+    * lib/OCfg.pm: BF: cipher_adh cipher_null added to cfg{need-chsckssl} (issue 140)
+    * lib/OMan.pm: BF: use correct version when generating -cgi.html
+    * lib/OMan.pm: BF: --help=command lists all commands from RC-file
     * lib/OMan.pm: BF: bare word after qr// removed (error in modern perl)
+    * HTML-table.awk: BF: HTML syntax corrected
+    * HTML-simple.awk: BF: HTML syntax corrected
+    * usr/XML-value.awk: BF: XML syntax corrected
+    * usr/XML-attribute.awk: BF: XML syntax corrected
+    * t/Makefile.mod: BF: definition of SRC.pm adapted to Makefile
     * t/Makefile.testssl: ET: target examples corrected
+    * usr/INSTALL-template.sh BF: special handling when called by make in own test directory
+    * Makefile: BF: use ./$SRC.pl when generating own help files
 ### CHANGES
+    * usr/get-SIDs.sh: EF: check for gawk and md5sum; exit if missing
+    * Dockerfile: EF: using docker BuildKit; OSAFT_VM_SRC_OSAFT can be local file
+    * Dockerfile: EF: uses standard openssl
+    * usr/INSTALL-template.sh ED: new documentation section CHECKS, UPDATES
+    * usr/INSTALL-template.sh EF: allow all --check* option in container image
+    * usr/INSTALL-template.sh EF: installation with --cgi improved
+    * usr/INSTALL-template.sh EF: --install checks md5sum of installed files
+    * usr/INSTALL-template.sh EF: --check=SIDs and --check=SID --changes implemented
+    * usr/INSTALL-template.sh EF: --checkdev improved (checks execute permissions)
+    * usr/INSTALL-template.sh EF: INSTALL.sh.lock implemented
+    * usr/INSTALL-template.sh EF: each part of --check can be checked individually with --check*
+    * usr/install_openssl.sh: EF: use Net-SSLeay-1.94.tar.gz
+    * t/Makefile.dev: ET: TEST.tmpdir, TEST.tmp.rc added
+    * t/Makefile.warnings: ET: TEST.tmp.rc removed (now in Makefile.inc)
+    * t/Makefile.inc: ET: TEST.tmpdir, TEST.tmp.rc added
+    * t/Makefile*: ET: all O-*.dir renamed to O-DIR.*
+    * t/Makefile*: ET: option --trace-CLI removed; now passed via OSAFT_OPTIONS=--trace-CLI
+    * t/Makefile: ET: target testcmd-test.internal improved
+    * t/Makefile: ET: include Makefile.inst
+    * t/Makefile: ET: do not set PATH in recursive makeT: option --trace-CLI removed; now passed via OSAFT_OPTIONS=--trace-CLI
+    * Makefile: ET: podman.* targets added
+    * Makefile: ET: target docker.test added
+    * Makefile: ET: variable TEST.Makefiles completed
+    * lib/Ciphers.pm: EF: is_valid_key() handles keys for internal use also
+    * lib/OTrace.pm: EF: --trace print environment variables
+    * lib/OTrace.pm: EF: use OCfg, use OData, use Ciphers (partial fix for issue 137)
+    * lib/OData.pm: EF: use OCfg included; _init_checks_val() implemented (partial fix for issue 137)
+    * lib/OCfg.pm: EF: resumption_psk added to cfg{data_hex}
+    * lib/OCfg.pm: EF: h2-16 added for ALPN, NPN
+    * lib/OCfg.pm: EF: define and export _dbx(); @EXPORT_OK improved; define warn(), hint()
+    * lib/OCfg.pm: EF: cipherrange and cipherpattern 'openssl' added
+    * lib/OCfg.pm: EF: some RegEx simplified
+    * lib/OCfg.pm: EF: hint for Lucky13 added
+    * lib/OCfg.pm: EF: initialisation and export improved (partial fix for issue 137)
+    * lib/ODoc.pm: EF: use full qualified $OCfg:: (partial fix for issue 137)
+    * lib/OMan.pm: EF: man_warnings() prints used file with --v
+    * lib/OMan.pm: EF: --help=command lists internal defined summary commands also
+    * lib/OMan.pm: EF: "use Ciphers" improved (partial fix for issue 137)
+    * o-saft-docker: EF: option -name=pattern for kill operation added
+    * o-saft-docker: EF: update implemented
+    * o-saft-docker: EF: options -OSAFT_VM_SRC_OSAFT= and -OSAFT_VM_SHA_OSAFT= added
+    * o-saft-docker: ED: documentation improved (note about xhost and xauth)
+    * .o-saft.pl: ED: description improved; description added to all redefined commands
+    * o-saft.tcl: EF: options --v behaves like in o-saft.pl
+    * o-saft.tcl: EF: +info results are show as Text, not TK-table (issue 154)
+    * o-saft.tcl: EF: "Start" button added to layout=tablet (for simple usage)
+    * o-saft.tcl: EF: check for version number improved (hack for use of OSAFT_OPTIONS=--trace-CLI with make)
+    * o-saft.pl: EF: EF: parsing commands and options unified
+    * o-saft.pl: EF: _dbx() defined in OCfg.pm
+    * o-saft.pl: EF: --cipherrange=openssl implemented
+    * o-saft.pl: EF: -ciphermode= not supported for +cipher-dh
+    * o-saft.pl: EF: own openssl instead of SSLinfo::do_openssl() for +cipher
+    * o-saft.pl: EF: check Net::SSLeay<1.92
+    * o-saft.pl: EF: handle all --help* options/commands after reading all arguments
+    * o-saft.pl: ED: texts improved for "Ciphers: Summary"; for --version output
+    * o-saft.pl: EF: abort execution when using invalid/unknown ciphers with --cipher=
+    * o-saft.pl: EF: individual _is_ssl_*() now in generic _is_vulnerable() and _is_compliant()
+    * o-saft.pl: EF: --v prints info when OSAFT_CONFIG, OSAFT_OPTIONS used
+    * o-saft.pl: EF: check ENV{'OSAFT_OPTIONS'} if command line should be printed
+    * o-saft.pl: EF: use shebang -CADSio; descriptions according Unicode, UTF-8 and binmode() adapted
+    * o-saft.pl: EF: use OCfg, use OData improved (partial fix for issue 137)
     * o-saft.pl: EF: die() doesn't print line number; keep make targets *.log happy
     * t/Makefile*: ED: _SID renamed to O-SID, _MYSELF* renamed to O-SELF*
     * t/Makefile.inc: ET: make file simplified
@@ -14,13 +122,35 @@ Version: 24.??.24
     * t/Makefile.cipher: ET: new target testarg-cipher-+cipher---test-missing_  
     * t/Makefile.cipher: ET: more targets for --cipher* options
     * lib/OTrace.pm: EF: __trac() support data type "Regexp"
+    * doc/help.txt: ED: section UPDATES added
+    * doc/help.txt: ED: new section "Individual check values"
+    * doc/help.txt: ED: description about checking/scanning ciphers improved
+    * doc/help.txt: ED: documentation about warnings and hints improved
+    * doc/help.txt: ED: more attacks added in section CHECKS
+    * doc/help.txt: ED: description for POODLE improved
+    * doc/help.txt: ED: KNOWN PROBLEM "Old, deprecated cipher suites" added
     * doc/glossary.txt: ED: formal changes ; more acronyms added
-    * doc/rfc.txt: ED: more RFCs added
+    * doc/rfc.txt: ED: more RFCs added; link for SSLv2 added
+    * usr/gen_standalone.sh: EF: sequence of included files from lilb/ changed; formal changes
     * usr/INSTALL-template.sh: EF: avoid error message if wish is missing
     * o-saft.pl: EF: +version prints own unique SID
     * o-saft-docker: EF: avoid errors if docker program missing
 ### NEW
+    * o-saft-docker: NF: kill command added
+    * Dockerfile.openssl: NF: renamed from Dockerfile
+    * t/Makefile.inst: NF: new Makefile.inst for testing INSTALL.sh
+    * .o-saft.pl: NF: resumption_psk added
+    * o-saft.pl: NF: check for BREACH vulnerability
+    * lib/Cipher.pm: NF: is_adh(), is_cbc(), is_edh() implemented
+    * lib/SSLinfo.pm: NF: exract HTTPS header Content-Encoding and Transfer-Encoding
+    * lib/SSLinfo.pm: ED: internal %CST renamed to %SSLINFO to avoid name conflicts
+    * lib/SSLinfo.pm: NF: resumption_psk implemented
+    * lib/OData.pm: NF: data{resumption_psk} added
+    * lib/OData.pm: NF: $data{https_content_enc} and $data{transfer_enc} add
+    * lib/OCfg.pm: NF: new regex->BREACH
     * lib/OCfg.pm: EF: cfg{cipherranges}{iana} added
+    * t/Makefile.mod: NT: new targets testing Cipher::is_* added
+    * t/Makefile.cipher: NT: new targets for cipher check command (like +adh) added
 
 Version: 24.06.24
 ### NOTE
@@ -60,6 +190,7 @@ Version: 24.06.24
     * usr/INSTALL-template.sh: EF: checking ancient files improved; checking ancient directories
     * usr/INSTALL-template.sh: EF: accept environment variable OSAFT_Dir as installation directory
     * usr/INSTALL-template.sh: EF: special handlicg for o-saft-docker
+    * t/Makefile.dev: ET: targets for testing INSTALL.sh moved to Makefile.inst
     * t/Makefile.cmd: ET: some targets use filter to remove random data in generated .log
     * Makefile: EF: EXE.docker renamed to EXE.o_docker; EXE.docker=docker added
     * Makefile: EF: target INSTALL.sh depends on Makefile.misc
