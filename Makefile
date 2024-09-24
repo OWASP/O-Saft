@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.59 24/09/24 14:55:04
+#?      @(#) Makefile 3.60 24/09/24 23:26:24
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-O-SID           = 3.59
+O-SID           = 3.60
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -345,8 +345,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.59 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.59
+_INST.genbytext = generated data by Makefile 3.60 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.60
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-DIR.install)@'       \
 		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DIR.doc)@'              \
 		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-DIR.lib)@'              \
@@ -499,6 +499,8 @@ _RELEASE    = $(shell perl -nle '/^\s*sub _VERSION/ && do { s/.*?"([^"]*)".*/$$1
 release.show:
 	@echo "Release: $(_RELEASE)"
 
+# release depends on $(GEN.tgz) which depends on $(GEN.rel)
+#   after generating $(GEN.tgz), describe what to do additionally on github
 release: $(GEN.tgz)
 	@$(O-TRACE.target)
 	mkdir -p $(_RELEASE)
@@ -508,12 +510,26 @@ release: $(GEN.tgz)
 	gpg --verify $(GEN.tgz).asc $(GEN.tgz)
 	mv $(GEN.tgz).asc $(_RELEASE)/
 	mv $(GEN.tgz)     $(_RELEASE)/
+	@chmod 444 $(_RELEASE)/$(GEN.tgz) $(_RELEASE)/$(GEN.tgz).asc $(_RELEASE)/$(GEN.tgz).sha256
+	@echo "#"
 	@echo "# don't forget:"
+	@echo "#   # upload to github:"
+	@echo "#   #   $(GEN.rel) $(GEN.tgz) $(GEN.tgz).sha256"
 	@echo "#   # change digest: sha256:... in README.md; upload to github"
 	@echo "#   # change digest: sha256:... in Dockerfile; upload to github"
+	@echo "#   # complete text in CHANGES; upload to github"
+	@echo "#   #   git comment: VERSION $(_RELEASE)"
 	@echo "#   make docker"
 	@echo "#   make test.docker"
 	@echo "#   make docker.push"
+	@echo "#   https://github.com/OWASP/O-Saft/releases"
+	@echo "#   #   [Draft a new release]"
+	@echo "#   #   Choose a tag: $(_RELEASE)"
+	@echo "#   #   Title: Version $(_RELEASE)"
+	@echo "#   #   [x] set as latest release"
+	@echo "#   #   add latest text from CHANGES"
+	@echo "#   #   [Publish release]"
+	@echo "#   scp $(GEN.rel) o-saft.pl: # then unpack file at o-saft.pl"
 # TODO: check if files are edited or missing
 
 # Generating a release file, containing all files with their SID.  Use external
@@ -615,8 +631,8 @@ docs:       $(GEN.docs)
 standalone: $(GEN.src)
 stand-alone:$(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.59
-tar:     _INST.is_edit  = 3.59
+_INST.is_edit           = 3.60
+tar:     _INST.is_edit  = 3.60
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
