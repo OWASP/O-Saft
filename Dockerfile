@@ -176,7 +176,7 @@ LABEL \
 	DETAILS="Please see https://github.com/OWASP/O-Saft/raw/master/o-saft-docker" \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/$_SELF_" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
-	SID="@(#) Dockerfile 3.4 24/09/22 01:46:18" \
+	SID="@(#) Dockerfile 3.5 24/09/24 13:17:12" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "$_SELF_ $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
@@ -204,7 +204,7 @@ RUN --mount=type=bind,readonly,target=/o,source=. \
 	apt_exe=apk && \
 	apt_add=add && \
 	opt_add=--no-cache && \
-	packages="curl $OSAFT_VM_APT_INSTALL gawk \
+	packages="curl $OSAFT_VM_APT_INSTALL gawk virt-what \
 		perl perl-readonly openssl \
 		perl-io-socket-ssl perl-net-ssleay perl-net-dns perl-net-libidn \
 		perl-mozilla-ca ca-certificates" && \
