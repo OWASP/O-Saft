@@ -159,8 +159,8 @@ ARG     OSAFT_VM_FROM
 ARG     OSAFT_VM_TRACE
 ARG     OSAFT_VM_USER=osaft
 ARG     OSAFT_VM_SRC_OSAFT="https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz"
-#ARG     OSAFT_VM_SHA_OSAFT="5f23bbed8d411d84faec29c0a5da07ca58a64702c98339c7e7739450f0f9161c"
-ARG     OSAFT_VM_SHA_OSAFT="3332af75f20933b4be4dd2e49c8d67cd505fc7856f4844211671e2fd304bbefb"
+#ARG     OSAFT_VM_SHA_OSAFT="3332af75f20933b4be4dd2e49c8d67cd505fc7856f4844211671e2fd304bbefb"
+ARG     OSAFT_VM_SHA_OSAFT="158e33ea4c1f27ac87da3555f811d01bbccdf1756f064d68c144f58aad02eb0e"
 ARG     OSAFT_VM_SHA256URL="https://raw.githubusercontent.com/OWASP/O-Saft/master/o-saft.tgz.sha256"
 ARG     OSAFT_VM_TAR_OSAFT="o-saft.tgz"
 ARG     OSAFT_VM_APT_INSTALL="tcl tk xvfb"
@@ -176,7 +176,7 @@ LABEL \
 	DETAILS="Please see https://github.com/OWASP/O-Saft/raw/master/o-saft-docker" \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/$_SELF_" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
-	SID="@(#) Dockerfile 3.5 24/09/24 13:17:12" \
+	SID="@(#) Dockerfile 3.6 24/09/24 22:48:20" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "$_SELF_ $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
