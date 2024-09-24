@@ -55,6 +55,7 @@
 #?           status  - show various information about O-Saft container image
 #?           rmi     - remove O-Saft container image(s)
 #?           apk     - add and commit packages in O-Saft container image
+#?           kill    - kill the running O-Saft container
 #?           shell   - run a shell (/bin/sh) in container image
 #?           root    - run a shell (/bin/sh) as user root in container image
 #?           call    - run specified program with arguments in container image
@@ -74,11 +75,12 @@
 #?           owasp/o-saft
 #?       If there are more container images  with the same (registry) name, a
 #?       tag can be used to identify the image, see  -tag=TAG  option, i.e.
-#?           $0 -tag=17.07.17 +info your.tld
-#?       will use the name:  owasp/o-saft:17.07.17 .  The  -id=ID  option can
+#?           $0 -tag=24.09.24 +info your.tld
+#?       will use the name:  owasp/o-saft:24.09.24 .  The  -id=ID  option can
 #?       be used to redefine the (registry:tag) name to be used completely.
 #?       For example:
 #?           owasp/o-saft:4711
+#?       See  ENVIONMENT VARIABLES  below also.
 #?
 #?       If any other mode than the default is used, please see  WARNING  and
 #?       SECURITY  below.
@@ -147,6 +149,10 @@
 #?
 #?   rmi
 #?       Remove all O-Saft images, including tagged images.
+#?
+#?   kill
+#?       Kill a running O-Saft container. Works only if exactly one container
+#?       is running.
 #?
 #?   usage
 #?       Print a brief purpose and usage of this script.
@@ -318,14 +324,14 @@
 #?       docker(1), podman(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 3.17 24/09/23 16:57:02
+#?       @(#) o-saft-docker 3.18 24/09/24 10:10:41
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID="3.17"
+SID="3.18"
 VERSION="${OSAFT_VERSION:-24.09.24}"
 ich=${0##*/}
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
@@ -693,6 +699,21 @@ docker_rmi  ()  {
 	return
 }
 
+docker_kill ()  {
+	#dbx# echo "# registry: ${registry} # image_name: ${image_name}"
+	_ids=`$docker container ls -q --filter ancestor=${registry}`
+	set - $_ids
+	if [ 1 -eq $# ]; then
+		#dbx# echo "# image IDs to be killed: $_ids "
+		$try $docker container kill $_ids
+	else
+		# no $try here
+		$docker container ls --filter ancestor=${registry}
+		echo "**ERROR: more than one container found, none killed"
+	fi
+	return
+}
+
 my_help ()      {
 	\sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
 	return
@@ -739,6 +760,7 @@ esac
 # some modes do not need to check existing images
 case "$1" in
   'build')  ;;
+  'kill')   ;;                  # requires containers only
   *)        check_image_name;   # may exit, see description there
 esac
 
@@ -758,6 +780,7 @@ while [ $# -gt 0 ]; do
 	  'update') docker_update $@; exit 0; ;;
 	  'apk')    docker_apk  $@; exit 0; ;;
 	  'rmi')    docker_rmi  $@; exit 0; ;;
+	  'kill')   docker_kill $@; exit 0; ;;
 	  'root')   docker_root;    exit 0; ;;
 	  'shell')  docker_shell;   exit 0; ;;
 	  'inspect')docker_inspect; exit 0; ;;
