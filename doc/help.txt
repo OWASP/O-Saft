@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.36 24/09/23 21:01:50
+# SID   @(#) help.txt 3.37 24/09/25 00:03:18
 
 NAME
 
@@ -1703,6 +1703,14 @@ OPTIONS
           For the full list and details about the ranges, please see:
 
               $0 --header --help=range
+
+          Please keep additional memory usage of the ranges in mind, they are
+          approximately:
+          * 'SSLv2'   -   10 MB
+          * 'rfc'     -   20 MB
+          * 'huge'    -  150 MB
+          * 'safe'    -  700 MB
+          * 'full'    - 3500 MB
 
           If any  --cipher=CIPHER  is used,  --cipherrange=RANGE  is ignored.
           See  LIMITATIONS  also.
