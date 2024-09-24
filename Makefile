@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.58 24/09/24 13:14:05
+#?      @(#) Makefile 3.59 24/09/24 14:55:04
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-O-SID           = 3.58
+O-SID           = 3.59
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -345,8 +345,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.58 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.58
+_INST.genbytext = generated data by Makefile 3.59 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.59
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-DIR.install)@'       \
 		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DIR.doc)@'              \
 		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-DIR.lib)@'              \
@@ -615,8 +615,8 @@ docs:       $(GEN.docs)
 standalone: $(GEN.src)
 stand-alone:$(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.58
-tar:     _INST.is_edit  = 3.58
+_INST.is_edit           = 3.59
+tar:     _INST.is_edit  = 3.59
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
@@ -677,9 +677,12 @@ docker.dev:
 #       Docker image for the proper version.
 docker.push:
 	@$(O-TRACE.target)
-	docker push owasp/o-saft:latest
+	@$(EXE.o_docker) login -u osaft docker.io
+	$(EXE.o_docker) push owasp/o-saft:latest
+	@$(EXE.o_docker) logout
+#   # requires login, username is public, password needs to be passed on tty
 
-.PHONY: docker docker.rm docker.dev docker.push
+.PHONY: docker docker.rm docker.dev docker.test docker.push
 
 # targets for podman are the same as for docker
 podman.build:  OSAFT_VM_BUILDER = -podman
