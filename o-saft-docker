@@ -11,6 +11,7 @@
 #?       $0 root
 #?       $0 status
 #?       $0 inspect
+#?       $0 kill
 #?       $0 rmi
 #?       $0 apk  package
 #?       $0 apt  package
@@ -33,6 +34,8 @@
 #?       +V      show own version (SID)
 #?       -id=ID  use container image ID (registry:tag); default: owasp/o-saft
 #?       -tag=24 use container image ID with tag; default: (empty)
+#?       -name=pattern
+#?               use container name (used for kill mode only)
 #?       -local  use --network=host to allow container accessing the host
 #?               WARNING: see section  SECURITY  below also.
 #?       -OSAFT_VERSION=24.09.24  same as OSAFT_VERSION environment variable
@@ -152,7 +155,8 @@
 #?
 #?   kill
 #?       Kill a running O-Saft container. Works only if exactly one container
-#?       is running.
+#?       is running. The option --name=pattern  may be used to kill any other
+#?       running container.
 #?
 #?   usage
 #?       Print a brief purpose and usage of this script.
@@ -324,19 +328,20 @@
 #?       docker(1), podman(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 3.18 24/09/24 10:10:41
+#?       @(#) o-saft-docker 3.19 24/09/24 12:07:03
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID="3.18"
+SID="3.19"
 VERSION="${OSAFT_VERSION:-24.09.24}"
 ich=${0##*/}
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
 registry=${o_saft_docker_name};
 registry=${registry:-owasp/o-saft}
+kill_name=
 image_name="${registry}"
 [ -n "$tag" ] && image_name="${registry}:${tag}"
 entrypoint_pl='ENTRYPOINT ["perl", "/O-Saft/o-saft.pl"]';   # default ENTRYPOINT
@@ -700,16 +705,19 @@ docker_rmi  ()  {
 }
 
 docker_kill ()  {
-	#dbx# echo "# registry: ${registry} # image_name: ${image_name}"
-	_ids=`$docker container ls -q --filter ancestor=${registry}`
+	#dbx# echo "# registry: ${registry} # kill_name: ${kill_name}"
+	filter="ancestor=${registry}"
+	[ -n "$kill_name" ] && filter="name=$kill_name"
+	_ids=`$docker container ls -q --filter $filter`
 	set - $_ids
 	if [ 1 -eq $# ]; then
-		#dbx# echo "# image IDs to be killed: $_ids "
+		#dbx# echo "# container IDs to be killed: $_ids "
 		$try $docker container kill $_ids
 	else
+		[ -n "$kill_name" ] && filter="name=" # empty name is same as -a
 		# no $try here
-		$docker container ls --filter ancestor=${registry}
-		echo "**ERROR: more than one container found, none killed"
+		$docker container ls --filter $filter
+		echo "**ERROR: not exactly one container found, none killed"
 	fi
 	return
 }
@@ -734,7 +742,9 @@ while [ $# -gt 0 ]; do
 	  -tag=*)   tag="`expr "$1" ':' '-tag=\(.*\)'`"
 	            image_name="${registry}:$tag" 
 	            ;;
-	  -id=*)    image_name="`expr "$1" ':' '-id=\(.*\)'`"; ;;
+	  -id=*)    image_name="`expr "$1" ':' '-id=\(.*\)'`"   ; ;;
+	  -name=*)  kill_name="` expr "$1" ':' '-name=\(.*\)'`" ; ;;
+#	  kill=*)   kill_name="` expr "$1" ':' 'kill=\(.*\)'`" ; mode=kill; ;;
 	  -OSAFT_VERSION=*)      OSAFT_VERSION="`expr "$1" ':' '-OSAFT_VERSION=\(.*\)'`"; ;;
 	  -OSAFT_VM_SRC_OSAFT=*) OSAFT_VM_SRC_OSAFT="`expr "$1" ':' '-OSAFT_VM_SRC_OSAFT=\(.*\)'`"; ;;
 	  -OSAFT_VM_SHA_OSAFT=*) OSAFT_VM_SHA_OSAFT="`expr "$1" ':' '-OSAFT_VM_SHA_OSAFT=\(.*\)'`"; ;;
