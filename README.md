@@ -138,7 +138,7 @@ herein. All other files in the repository may be ahead of this tarball version.
 
 SHA256 checksum of [o-saft.tgz](https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz)
 ```
-3f3eb35982717931cd23f384b378c77c07b0ce75fa5341ede574a3e153c9b48d
+158e33ea4c1f27ac87da3555f811d01bbccdf1756f064d68c144f58aad02eb0e
 ```
 
 [//]: # (above checksum for version 24.06.24)
