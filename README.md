@@ -146,9 +146,9 @@ SHA256 checksum of [o-saft.tgz](https://github.com/OWASP/O-Saft/raw/master/o-saf
 # comment not rendered in HTML
 -->
 
-SHA256 checksum of docker image owasp/o-saft:latest and owasp/o-saft:18.11.18
+SHA256 checksum of docker image owasp/o-saft:latest and owasp/o-saft:24.09.24
 ```
-b85423d142c186c1cf10494aa0e993f6f2030ab769977aca9584d7d650421697
+sha256:20b7ce94aa01861b4b3ebd4944c39ee243fee7550e4303e45658703ff5d038b9
 ```
 
 NOTE that the checksums listed here are the previous versions if this
