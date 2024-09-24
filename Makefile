@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.56 24/09/23 16:57:52
+#?      @(#) Makefile 3.57 24/09/24 12:49:25
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-O-SID           = 3.56
+O-SID           = 3.57
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -345,8 +345,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.56 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.56
+_INST.genbytext = generated data by Makefile 3.57 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.57
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-DIR.install)@'       \
 		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DIR.doc)@'              \
 		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-DIR.lib)@'              \
@@ -577,6 +577,10 @@ HELP-gen.all    = generate most "generatable" file
 HELP-docker     = generate local docker image (release version) and add updated files
 HELP-docker.dev = generate local docker image (development version)
 HELP-docker.push= install local docker image at Docker repository
+HELP-docker.build = generate local docker image using '$(GEN.tgz)' from github
+HELP-docker.test  = generate local docker image using local '$(GEN.tgz)'
+HELP-docker.rm  = remove local docker image
+HELP-podman*    = same as corresponding docker* targets but uses Podman
 HELP-clean.tmp  = remove '$(O-DIR.tmp)'
 HELP-clean.tar  = remove '$(GEN.tgz)'
 HELP-clean.gen  = remove '$(ALL.gen)' '$(GEN.inst)' '$(GEN.tags)'
@@ -611,8 +615,8 @@ docs:       $(GEN.docs)
 standalone: $(GEN.src)
 stand-alone:$(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.56
-tar:     _INST.is_edit  = 3.56
+_INST.is_edit           = 3.57
+tar:     _INST.is_edit  = 3.57
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
@@ -644,6 +648,7 @@ docker.test:
 	$(EXE.o_docker) $(OSAFT_VM_BUILDER) \
 		-OSAFT_VM_SRC_OSAFT=$(GEN.tgz) -OSAFT_VM_SHA_OSAFT=" " \
 		-OSAFT_VERSION=$(_RELEASE) -tag=test build
+	@echo "consider calling: $(EXE.o_docker) tag owasp/o-saft:test owasp/o-saft:latest"
 docker.build:
 	@$(O-TRACE.target)
 	$(EXE.o_docker) $(OSAFT_VM_BUILDER) -OSAFT_VERSION=$(_RELEASE) build
