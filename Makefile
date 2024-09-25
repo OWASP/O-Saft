@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.60 24/09/24 23:26:24
+#?      @(#) Makefile 3.61 24/09/25 14:32:20
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-O-SID           = 3.60
+O-SID           = 3.61
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -208,6 +208,9 @@ O-DOC.odg       = o-saft_structure.odg \
 		  o-saft_docker.en.odg
 SRC.odg         = $(O-DOC.odg:%=$(O-DIR.doc)/%)
 O-SRC.web       = \
+		  favicon.ico \
+		  o-saft.ico \
+		  o-saft.svg \
 		  img.css \
 		  O-Saft_CLI-cipher.png \
 		  O-Saft_CLI-altname.png \
@@ -345,8 +348,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.60 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.60
+_INST.genbytext = generated data by Makefile 3.61 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.61
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-DIR.install)@'       \
 		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DIR.doc)@'              \
 		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-DIR.lib)@'              \
@@ -631,8 +634,8 @@ docs:       $(GEN.docs)
 standalone: $(GEN.src)
 stand-alone:$(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.60
-tar:     _INST.is_edit  = 3.60
+_INST.is_edit           = 3.61
+tar:     _INST.is_edit  = 3.61
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
