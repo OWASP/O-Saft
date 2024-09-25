@@ -30,8 +30,7 @@
 #?          OSAFT_VM_APT_INSTALL
 #?              Additional packages  to be installed in the image.
 #?              Note that the package names depend on the used base image.
-#?              Default:  tcl  tk  xvfb  font-noto
-#  tklib missing for alpine
+#?              Default:  tcl  tk  tk-lib  xvfb  font-noto
 #?
 #?          OSAFT_VM_SRC_OSAFT
 #?              Full URL to fetch o-saft.tgz archive.
@@ -164,6 +163,7 @@ ARG     OSAFT_VM_SHA_OSAFT="158e33ea4c1f27ac87da3555f811d01bbccdf1756f064d68c144
 ARG     OSAFT_VM_SHA256URL="https://raw.githubusercontent.com/OWASP/O-Saft/master/o-saft.tgz.sha256"
 ARG     OSAFT_VM_TAR_OSAFT="o-saft.tgz"
 ARG     OSAFT_VM_APT_INSTALL="tcl tk xvfb font-noto"
+#       tk-lib (alpine) or tklib (debian) must be set below
 ARG     OSAFT_VERSION="24.09.24"
 ARG     _SELF_="Dockerfile"
 #       _SELF_ for internal use only to make multiple references unique
@@ -176,12 +176,12 @@ LABEL \
 	DETAILS="Please see https://github.com/OWASP/O-Saft/raw/master/o-saft-docker" \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/$_SELF_" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
-	SID="@(#) Dockerfile 3.7 24/09/26 00:37:22" \
+	SID="@(#) Dockerfile 3.8 24/09/26 01:18:15" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "$_SELF_ $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
 ENV     OSAFT_DIR       /O-Saft
-ENV     OPENSSL_DIR     /usr/bin/openssl
+ENV     OPENSSL_DIR     /etc/ssl
 ENV     OPENSSL_VERSION 3.3.2
 ENV     TERM            xterm
 ENV     PATH            ${OSAFT_DIR}:${OSAFT_DIR}/usr:$PATH
@@ -201,6 +201,7 @@ RUN --mount=type=bind,readonly,target=/o,source=. \
 	mkdir -p ${OSAFT_DIR}			&& \
 	\
 	echo "#== Configure apk (alpine) or apt (debian); default: apk" && \
+	tklib=tk-lib && \
 	apt_exe=apk && \
 	apt_add=add && \
 	opt_add=--no-cache && \
@@ -209,12 +210,14 @@ RUN --mount=type=bind,readonly,target=/o,source=. \
 		perl-io-socket-ssl perl-net-ssleay perl-net-dns perl-net-libidn \
 		perl-mozilla-ca ca-certificates" && \
 	if expr "X$OSAFT_VM_FROM" : Xdebian >/dev/null ; then \
+	   tklib=tklib		; \
 	   apt_exe=apt-get	; \
 	   apt_add=install	; \
 	   opt_add=--yes	; \
 	   packages="curl perl ca-certificates $OSAFT_VM_APT_INSTALL \
 	   	libio-socket-ssl-perl libnet-ssleay-perl libnet-dns-perl libnet-libidn-perl" ; \
 	fi && \
+	[ -n "$OSAFT_VM_APT_INSTALL" ] && packages="$packages $tklib" && \
 	\
 	echo "#== Install required packages, development tools and libs" && \
 	#apk update && \   # no update needed and not wanted
