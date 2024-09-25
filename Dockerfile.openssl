@@ -25,7 +25,7 @@
 #?          OSAFT_VM_APT_INSTALL
 #?              Additional packages  to be installed in the image.
 #?              Note that the package names depend on the used base image.
-#?              Tested packages are:  tcl  tk  xvfb  openssl
+#?              Tested packages are:  tcl  tk  tklib  xvfb  openssl
 #?
 #?          OSAFT_VM_SRC_OSAFT
 #?              URL to fetch o-saft.tgz archive.
@@ -123,7 +123,7 @@
 #?      Build with base image alpine:3.6 and Tcl/Tk
 #?          docker build --force-rm --rm \ 
 #?                  --build-arg "OSAFT_VM_FROM=alpine:3.6" \ 
-#?                  --build-arg "OSAFT_VM_APT_INSTALL=tcl tk xvfb" \ 
+#?                  --build-arg "OSAFT_VM_APT_INSTALL=tcl tk tklib xvfb" \ 
 #?                  -f Dockerfile.openssl -t owasp/o-saft .
 #?
 #?      Build with other SHA256 checksum for o-saft.tgz
@@ -180,7 +180,7 @@ ARG     OSAFT_VM_DYN_OPENSSL="--shared"
 #                             --static  not yet (2020) working 'cause of libkrb5
 ARG     OSAFT_VM_APT_INSTALL
 ARG     OSAFT_VERSION="undefined"
-ARG     _SELF_="6àJW"
+ARG     _SELF_="H$Þ^"
 #       _SELF_ for internal use only to make multiple references unique
 
 LABEL \
@@ -192,7 +192,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/$_SELF_" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
 	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) 6àJW 3.5 24/09/24 22:49:51" \
+	SID="@(#) H$Þ^ 3.6 24/09/26 01:19:36" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "$_SELF_ $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
@@ -219,6 +219,7 @@ RUN \
 	mkdir -p ${OSAFT_DIR}			&& \
 	\
 	echo "#== Configure apk (alpine) or apt (debian); default: apk" && \
+	tklib=tk-lib && \
 	apt_exe=apk && \
 	apt_add=add && \
 	apt_del=del && \
@@ -232,6 +233,7 @@ RUN \
 	packages_dev="gmp-dev lksctp-tools-dev" && \
 	packages_perl="perl-net-dns perl-net-libidn perl-mozilla-ca" && \
 	if expr "X$OSAFT_VM_FROM" : Xdebian >/dev/null ; then \
+	   tklib=tklib		; \
 	   apt_exe=apt-get	; \
 	   apt_add=install	; \
 	   apt_del=purge	; \
@@ -244,6 +246,7 @@ RUN \
 	   packages_dev="libgmp-dev lksctp-tools libsctp-dev" ; \
 	   packages_perl="libnet-dns-perl libnet-libidn-perl" ; \
 	fi && \
+	[ -n "$OSAFT_VM_APT_INSTALL" ] && packages="$packages $tklib" && \
 	# perl-io-socket-ssl perl-net-ssleay build herein
 	\
 	echo "#== Install required packages, development tools and libs" && \
