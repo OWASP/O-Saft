@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 3.3 24/07/16 20:45:07
+# SID	@(#) glossary.txt 3.4 24/10/24 13:32:02
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -29,7 +29,7 @@ AEGIS-256	AEGIS cipher
 AEGIS-256X	AEGIS cipher
 AEGIS-256X2	AEGIS cipher
 AEGIS-256X4	AEGIS cipher
-AEM	Authenticated Encryption Mode aka Advanced Encryption Mode aka OCB3
+AEM	Authenticated Encryption Mode (aka Advanced Encryption Mode, aka OCB3)
 AES	Advanced Encryption Standard, symmetric block cipher
 AESCCM	AES with CCM
 AESCCM8	AES with CCM8
@@ -157,8 +157,8 @@ CRL	Certificate Revocation List
 CRYPTON	128-bit block cipher (1998)
 CRYPTREC	Cryptography Research and Evaluation Committees
 CRYSTALS	post-quantum hash function, signature
-CRYSTALS-Dilithium	post-quantum hash function, signature
-CRYSTALS-Kyber	post-quantum hash function, signature
+CRYSTALS-Dilithium	post-quantum hash function, signature (aka ML-DSA)
+CRYSTALS-Kyber	post-quantum hash function, signature (aka ML-KEM)
 CSP	Certificate Service Provider
 CSP 	Cryptographic Service Provider
 CSP  	Critical Security Parameter (used in FIPS 140-2)
@@ -169,7 +169,7 @@ CT	Certificate Transparency
 CTL	Certificate Trust Line
 CTR	Counter Mode (sometimes: CM; block cipher mode)
 CTS	Cipher Text Stealing
-Curve448	signature algorithm, aka Goldilocks (224 bit)
+Curve448	signature algorithm (aka Goldilocks (224 bit))
 Curve25519	signature algorithm by Dan J. Bernstein (ca. 128 bit)
 CWC	CWC Mode (Carter-Wegman + CTR mode; block cipher mode)
 CyaSSL	formerly name of wolfSSL
@@ -268,6 +268,7 @@ ElGamal	asymmetric block cipher
 ENCIPHER	synonym for encryption
 EME	ECB-mask-ECB
 EME 	Encoding Method for Encryption
+EME-OAEP 	Encoding Method for Encryption Optimal Asymmetric Encryption Padding
 EMS 	Extended Master Secret (sometimes)
 EMS 	Encrypted Master Secret
 ESNI	Encrypted Server Name Indication
@@ -296,6 +297,7 @@ FIPS186-3	FIPS Digital Signature Standard (DSS)
 FIPS197	FIPS Advanced Encryption Standard (AES)
 FIPS198-1	FIPS The Keyed-Hash Message Authentication Code (HMAC)
 FREAK	Factoring Attack on RSA-EXPORT Keys	(Exploit SSL/TLS)
+FrodoKEM	(key exchanged based on KEM?)
 FROST	Secure Hash Algorithm?
 FQDN	Fully-qualified Domain Name
 FSB	Fast Syndrome Based Hash
@@ -353,6 +355,7 @@ HPolyC	ChaCha stream cipher with Poly1305 and XChaCha12, XChaCha20
 HRSS	encryption algorithm
 HSM	Hardware Security Module
 HSR	Header + Secret + Random
+HSS	? hash function
 HSTS	HTTP Strict Transport Security
 HTOP	HMAC-Based One-Time Password
 IAPM	Integrity Aware Parallelizable Mode (block cipher mode of operation)
@@ -383,6 +386,7 @@ JH-512	see JH (512 bits)
 Jolkit-BC	tweakable block cipher
 JSSE	Java Secure Socket Extension
 KATAN	lightweight block cipher
+KAS2	?
 KASUMI	64-bit symmetric block cipher (successor of MISTY1, broken 2005)
 KLEIN	lightweight block cipher
 Keccak	hash function (Guido Bertoni, Joan Daemen, Michaël Peeters und Gilles Van Assche, 2012)
@@ -412,12 +416,14 @@ LFSR	Linear Feedback Shift Register
 LION	variable block-length symmetric block cipher (2007)
 LION 	hash function (2007)
 LLL	Lenstra–Lenstra–Lovász, lattice basis reduction algorithm
-LM hash	LAN Manager hash aka LanMan hash
+LM hash	LAN Manager hash (aka LanMan hash)
+LMS	? hash function
 LogJam	Attack to force server to downgrade to export ciphers	(Exploit SSL/TLS)
 Logjam	see LogJam
 LRA	Local Registration Authority
 LRW	Liskov, Rivest, and Wagner (block encryption)
 LSN	large-scale NAT (same as CGN)
+LWE	Learning with Errors
 Lucifer	block cipher (developed at IBM in the 1970s)
 Lucky13	Break SSL/TLS Protocol with ciphers using CBC-mode	(Exploit SSL/TLS)
 Lucky 13	Break SSL/TLS Protocol	(Exploit SSL/TLS)
@@ -426,9 +432,10 @@ Magenta	128-bit symmetric block cipher (Deutsche Telekom 1990, broken 1998)
 MANTIS	block cipher, low-latency variant of SKINNY
 MARS	128-bit symmetric block cipher (developed at IBM)
 MAC	Message Authentication Code
+McEliece	more exactly "Classic McEliece" (key exchanged based on KEM?)
 MCF	Modular Crypt Format
 MDC	Modification Detection Code
-MDC2	Modification Detection Code 2 aka Meyer-Schilling
+MDC2	Modification Detection Code 2 (aka Meyer-Schilling)
 MDC-2	same as MDC2
 MD2	Message Digest 2
 MD4	Message Digest 4
@@ -440,9 +447,12 @@ MGF	Mask Generation Function
 MIDORI	lightweight 64-, 128-bit block cipher (2015)
 Midori64	see MIDORI
 Midori128	see MIDORI
-MISTY	Mitsubishi Improved Security Technology aka Matsui, Ischikawa, Sorimachi, Yamagishi
+MISTY	Mitsubishi Improved Security Technology (aka Matsui, Ischikawa, Sorimachi, Yamagishi)
 MISTY1	64-bit symmetric block cipher (1995)
 MISTY2	?
+ML-DSA	post-quantum hash function
+ML-KEM	(key exchanged based on KEM?)
+MLS	Message Layer Security
 MPQS	Multiple Polynomial Quadratic Sieve
 MQV	Menezes-Qu-Vanstone (authentecated key agreement)
 MS-SSTP	see SSTP
@@ -460,18 +470,19 @@ nistp521	alias for P-521
 NLSv2	stream cipher
 nonce	(arbitrary) number used only once
 NPN	Next Protocol Negotiation
+NPTRNG	none-physical none-deterministic Random Number Generator
 NSS	Network Security Services
 NTG	none-Deterministic Random Generator
 NTLM	NT Lan Manager. Microsoft Windows challenge-response authentication method.
 NTRU	asymmetric cipher using lattice reduction (1996)
 NTRUEncrypt	alias for NTRU
-NOMORE	Numerous Occurrence MOnitoring & Recovery Exploit, aka RC4 NOMORE
+NOMORE	Numerous Occurrence MOnitoring & Recovery Exploit (aka RC4 NOMORE)
 NULL	no encryption
 NUMS	nothing up my sleeve numbers
 OAEP	Optimal Asymmetric Encryption Padding
 OCB	Offset Codebook Mode (block cipher mode of operation)
 OCB1	same as OCB
-OCB2	improved OCB aka AEM
+OCB2	improved OCB (aka AEM)
 OCB3	improved OCB2
 OCELOT1	stream cipher
 OCELOT2	stream cipher
@@ -480,7 +491,7 @@ OCSP stapling	formerly known as: TLS Certificate Status Request
 OFB	Output Feedback
 OFBx	Output Feedback x bit mode
 OID	Object Identifier
-OMAC	One-Key CMAC, aka CBC-MAC
+OMAC	One-Key CMAC (aka CBC-MAC)
 OMAC1	same as CMAC
 OMAC2	same as OMAC
 OPIE	One-time pad Password system
@@ -515,6 +526,7 @@ PFS	Perfect Forward Secrecy
 PFX	see PKCS#12 (Personal Information Exchange)
 PGP	Pretty Good Privacy
 PII	Personally Identifiable Information
+PIN	Personal Identification Number
 Picollo	lightweight block cipher
 PKCS	Public Key Cryptography Standards
 PKCS1	PKCS #1: RSA Encryption Standard
@@ -533,11 +545,12 @@ PKP	Public-Key-Pins
 PM	Policy Mappings (certificate extension)
 PMAC	Parallelizable MAC (by Phillip Rogaway)
 PMS	Pre-Master Secret
+POLYVAL	(polynomial used in GCM)
 Poly1305	Authenticator (MAC)
 Poly1305-AES	MAC (by D. Bernstein)
 POP	Proof of Possession
 POODLE	Padding Oracle On Downgraded Legacy Encryption	(Exploit SSL/TLS)
-PQC	Post-Quantum Crypto
+PQC	Post-Quantum Cryptography
 PRESENT	64-bit block symmetric cipher (2007)
 PRF	Pseudo-Random Function
 PRP	Pseudo-Random Permutation
@@ -556,6 +569,7 @@ PWKE	Pair-Wise Key Establishment Schemes Using Discrete Logarithm Cryptography
 QARMA	Qualcomm ARM Authenticator, lightweight 64-, 128-bit block cipher (2016)
 QARMA-64	see QARMA
 QARMA-128	see QARMA
+QKD	Quantum Key Distribution
 QUAD	80-bit key stream cipher (2002)
 QUIC	Quick UDP Internet Connection
 RA	Registration Authority (aka Registration CA)
@@ -670,6 +684,7 @@ SKIP	Message Skipping Attacks on TLS	(Exploit SSL/TLS)
 SKIP-TLS	see SKIP
 Skipjack	64-bit block cipher (part of the Fortezza) (1998, partially brocken)
 Sleeping POODLE	invalid padding with valid MAC (variant of POODLE exploit)
+SLH-DSA	Stateless hash-based signatures, post-quantum hash function, signature
 SLOTH	Security Losses from Obsolete and Truncated Transcript Hashes	(Exploit SSL/TLS)
 SM2	ShangMi authentication function
 SM3	ShangMi hash function
@@ -708,6 +723,7 @@ SPHINCS	Stateless hash-based signatures, post-quantum hash function, signature
 SPHINCS-256	alias for SPHINCS
 SPHINCS-SHAKE256	alias for SPHINCS
 SPHINCS-SHA-256	alias for SPHINCS
+SPHINCS+	SPHINCS (aka SLH-DSA)
 SPI	Security Parameters Index
 SPKI	Subject Public Key Infrastructure
 SPN	Substitution-Permutation Network
@@ -770,7 +786,7 @@ Twofish	128-bit symmetric block cipher (1998)
 UC 	Unified Capabilities
 UC	Unified Communications (SSL Certificate using SAN)
 UCC	Unified Communications Certificate (rarley used)
-UMAC	Message Authentication Code based on universal hashing; aka universal hashing MAC; optimized for 32-bit architectures
+UMAC	Message Authentication Code based on universal hashing (aka universal hashing MAC; optimized for 32-bit architectures)
 URI	Uniform Resource Identifier
 URL	Uniform Resource Locator
 VEST	Very Efficient Substitution Transposition, cipher with T-functions (2005, brocken 2007)
