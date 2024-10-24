@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 3.4 24/10/24 13:32:02
+# SID	@(#) glossary.txt 3.5 24/10/24 13:57:49
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -253,7 +253,10 @@ ECOH	Elliptic Curve only hash
 # ECRYPT	??
 ECSVDP-DH	Elliptic Curve Secret Value Derivation Primitive, Diffie-Hellman version
 Ed25519	alias for Curve25519
+Ed25519ctx	alias for ?
+Ed25519ph	alias for ?
 Ed448	alias for Curve448
+Ed448ph	alias for ?
 edwards25519	alias for Curve25519
 edwards448	alias for Curve448
 EdDSA	alias for signatures using public key and private key formats, like Curve448 and Curve25519
