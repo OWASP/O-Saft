@@ -1,5 +1,5 @@
 
-# SID	@(#) rfc.txt 1.21 24/08/07 22:34:29
+# SID	@(#) rfc.txt 1.22 24/10/24 13:58:41
 
 # number| title / description
 #------+----------------------------------------------------------------------+
@@ -202,5 +202,6 @@ url	http://tools.ietf.org/
 7932	Brotli Compressed Data Format
 9052	CBOR Object Signing and Encryption (COSE): Structures and Process
 9054	CBOR Object Signing and Encryption (COSE): Hash Algorithms
+9106	Argon2 Memory-Hard Function for Password Hashing and Proof-of-Work Applications
 9347	Aggregation and Fragmentation Mode for Encapsulating Security Payload (ESP) and Its Use for IP Traffic Flow Security (IP-TFS)
 
