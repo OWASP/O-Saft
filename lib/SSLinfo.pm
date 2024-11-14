@@ -49,7 +49,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.34 24/09/06 21:34:46";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.35 24/11/14 02:00:13";
 our $VERSION        =  "24.09.24";  # official verion number of this file
 
 BEGIN {
@@ -2825,6 +2825,15 @@ sub do_ssl_open($$$@) {
                         'Connection' => 'close',
                   )
                 );
+            if (not defined $response or not defined $_SSLinfo{'http_status'}) {
+                if (1.94 >= $Net::SSLeay::VERSION) {
+                    push(@{$_SSLinfo{'errors'}}, "do_ssl_open() HTTP failed; probably due to bug in Net::SSLeay::do_httpx3()");
+                }
+                $response =  "<<target did not return content for HTTP>>";
+                $_SSLinfo{'http_status'} = $response;
+                last;
+                #$response = ''; # avoid uninitialised value later
+            }
             # NOTE that get_http() returns all keys in %headers capitalised
             my $headers = "";   # for trace only
             foreach my $h (sort(keys %headers)) { $headers .= "$h: $headers{$h}\n"; }
