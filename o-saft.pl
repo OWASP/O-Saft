@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.164 24/09/09 01:00:02"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.165 24/11/14 02:03:25"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -377,7 +377,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.164"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.165"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1459,24 +1459,33 @@ sub _check_functions    {
         trace("$text_ssleay (OK)\tyes");
     }
 
-    trace(" check if Net::SSLeay support SSLv2 ...");
+    trace(" check if Net::SSLeay supports SSLv2 ...");
     if ($version_ssleay  < 1.86) {
         if (_is_cfg_ciphermode('ssleay')) {
             warn $STR{WARN}, "136: Net::SSLeay $version_ssleay < 1.86; does not support SSLv2;";
                 # SSLv2 will be disabled in _check_ssl_methods()
         }
     } else {
-        trace("$text_ssleay (OK)\tyes");
+        trace("$text_ssleay SSLv2\tyes");
     }
 
-    trace(" check if Net::SSLeay support TLSv13 ...");
+    trace(" check if Net::SSLeay supports TLSv13 ...");
     if ($version_ssleay  < 1.92) {
         if (_is_cfg_ciphermode('socket')) {
             warn $STR{WARN}, "137: Net::SSLeay $version_ssleay < 1.92; does not support TLSv13;";
                 # SSLv2 will be disabled in _check_ssl_methods()
         }
     } else {
-        trace("$text_ssleay (OK)\tyes");
+        trace("$text_ssleay TLSv13\tyes");
+    }
+
+    trace(" check if Net::SSLeay has buggy do_httpx3() ...");
+    if ($version_ssleay <= 1.94) {
+        if (_is_cfg_use('http')) {
+            OCfg::warn("138: Net::SSLeay $version_ssleay <= 1.94; may have buggy get_http() which results in missing data for some +check and +info commands");
+        }
+    } else {
+        trace("$text_ssleay good do_httpx3()\tyes");
     }
     #if ($version_ssleay  > 1.90) {
     #   does not support CTX_v2_new,and CTX_v3_new, only CTX_v23_new
@@ -4979,6 +4988,7 @@ sub checkhttp       {
     # collect information
     my $notxt = " "; # use a variable to make assignments below more human readable
     my $https_body    = $data{'https_body'}    ->{val}($host) || "";
+    my $http_status   = $data{'http_status'}   ->{val}($host);  # value may contain "<<...>>"
     my $http_sts      = $data{'http_sts'}      ->{val}($host) || ""; # value may be undefined, avoid Perl error
     my $http_location = $data{'http_location'} ->{val}($host) || ""; #
     my $hsts_equiv    = $data{'hsts_httpequiv'}->{val}($host) || ""; #
@@ -4994,8 +5004,9 @@ sub checkhttp       {
     }
 
     $checks{'breach'}       ->{val} = _is_vuln_breach($host, $port);
-    $checks{'hsts_is301'}   ->{val} = $data{'http_status'}->{val}($host) if ($data{'http_status'}->{val}($host) !~ /301/); # RFC 6797 requirement
-    $checks{'hsts_is30x'}   ->{val} = $data{'http_status'}->{val}($host) if ($data{'http_status'}->{val}($host) =~ /30[0235678]/); # not 301 or 304
+    $checks{'hsts_is301'}   ->{val} = $http_status if ($http_status !~ /301/); # RFC 6797 requirement
+    $checks{'hsts_is30x'}   ->{val} = $http_status if ($http_status =~ /30[0235678]/); # not 301 or 304
+    $checks{'hsts_is30x'}   ->{val} = $http_status if ($http_status =~ /^<</); # error from do_ssl_open()
     # perform checks
     # sequence important: first check if redirect to https, then check if empty
     $checks{'http_https'}   ->{val} = ($http_location !~ m/^\s*https:/) ? $http_location : "";
@@ -6154,7 +6165,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.164");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.165");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7649,7 +7660,7 @@ _check_modules()    if (0 < $do_checks);
 
 #| check for required functionality
 #| -------------------------------------
-_check_functions()  if (0 < $do_checks + _is_cfg_do('cipher') + _need_checkprot());
+_check_functions()  ;#if (0 < $do_checks + _is_cfg_do('cipher') + _need_checkprot());
     # more detailed checks on version numbers with proper warning messages
 
 #| check for proper openssl support
@@ -8125,16 +8136,27 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
                             (join(" ", @{$cfg{'version'}})),
                              join(" ", @{$cfg{'ciphers'}}))
            ) {
+# FIXME: do_ssl_open() also tries to connect http:// which may fail; this makes
+#        only some checks impossible but not all checks; i.e. WARNING 206
             my @errtxt = SSLinfo::errors($host, $port);
             if (0 < $#errtxt) {
                 trace(join("\n".$STR{ERROR}, @errtxt));
+# FIXME: folgender Fehler ist falsch, wenn nur Net::SSLeay::do_httpx3 fehlgeschlagen ist
                 OCfg::warn("205: Can't make a connection to '$host:$port'; target ignored");
                 OCfg::hint("205: use '--v' to show more information");
                 OCfg::hint("205: use '--socket-reuse' it may help in some cases");
                 OCfg::hint("205: use '--ignore-no-conn' to disable this check");
                 OCfg::hint("205: do not use '--no-ignore-handshake'") if ($cfg{'sslerror'}->{'ignore_handshake'} <= 0);
                 _trace_time("  test connection} failed");
-                goto CLOSE_SSL;
+                # quick&dirty workaround for buggy Net::SSLeay::do_httpx3(),
+                # see SSLinfo::do_ssl_open(); warning about ancient Net::SSLeay
+                # already written in ...
+                if (($data{'http_status'}->{val}($host) =~ /^<<target did not return/)
+                   and (1.94 >= $Net::SSLeay::VERSION)) {
+                    OCfg::hint("205: use Net::SSLeay newer than 1.94");
+                } else {
+                    goto CLOSE_SSL;
+                } 
             }
         }
         _trace_time("  connection open.");
