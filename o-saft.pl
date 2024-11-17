@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.165 24/11/14 02:03:25"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.168 24/11/17 23:42:24"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -106,7 +106,6 @@ sub _is_ARGV        { my $rex = shift; return (grep{/$rex/}  @ARGV); }  # case-s
 sub _is_argv        { my $rex = shift; return (grep{/$rex/i} @ARGV); }  # case-insensitive!
 sub _is_trace       { my $rex = shift; return (grep{/--(?:trace(?:=\d*)?$)/}   @ARGV); }
 sub _is_v_trace     { my $rex = shift; return (grep{/--(?:v|trace(?:=\d*)?$)/} @ARGV); }  # case-sensitive! because of --v
-    # return 1 if value in command-line arguments @ARGV
 
 our $make_text = "(OSAFT_MAKE exists)";
 our $time_text = $make_text;
@@ -114,7 +113,7 @@ our $time_text = $make_text;
 sub _vprint         {
     #? print information when --v is given
     my @txt = @_;
-    return if (0 >= _is_ARGV('(?:--v$)'));
+    return if not _is_ARGV('(?:--v$)');
     my %STR;    # dummy declaration to keep Perl's compile phase quiet
     printf("%s%s\n", $STR{'INFO'}||'**INFO: ', join(" ", @txt));
         # hardcoded '**INFO: ' is necessary in standalone mode only
@@ -126,7 +125,7 @@ sub _trace_time     {
     # read, %cfg is also not set, hence OTrace::trace_time not possible
     my @txt = @_;
     my $me  = $0; $me =~ s{.*?([^/\\]+)$}{$1};
-    return if (_is_argv('(?:--trace.?(?:time|cmd))') <= 0);
+    return if not _is_argv('(?:--trace.?(?:time|cmd))');
     my $now = 0;
     if (defined $time0) {
         $now = time();          # only set if called after $time0 is set
@@ -152,7 +151,7 @@ sub _trace_exit     {
     my $arg =  $txt;    # matches: --exit=INIT{
        $arg =~ s#^\s*##;# strip off leading left spaces
        $arg =~ s# .*##; # strip off anything right of a space
-    if (0 < _is_ARGV(qr/(([+,]|--)exit=\Q$arg\E).*/)) { # \Q because of meta chars in $arg
+    if (_is_ARGV(qr/(([+,]|--)exit=\Q$arg\E).*/)) { # \Q because of meta chars in $arg
         my $me  = $0; $me =~ s{.*?([^/\\]+)$}{$1};
         printf STDERR ("#${me}::_trace_exit --exit=$txt\n");
             # assumes that first word of $txt is argument of --exit
@@ -170,7 +169,7 @@ sub _trace_next     {
     my $arg =  $txt;
        $arg =~ s#^\s*##;
        $arg =~ s# .*##;
-    if (0 < _is_ARGV(qr/(([+,]|--)exit=\Q$arg\E).*/)) {
+    if (_is_ARGV(qr/(([+,]|--)exit=\Q$arg\E).*/)) {
         my $me  = $0; $me =~ s{.*?([^/\\]+)$}{$1};
         printf STDERR ("#${me}::_trace_next --exit=$txt\n");
         return 1;
@@ -292,12 +291,12 @@ sub _vprint_read    {
     # $cgi is not (yet) available, hence we use @ARGV to check for options
     # $cfg{'out'}->{'header'} is also not yet properly set, see LIMITATIONS also
     my ($fil, @txt) = @_;
-    return if (0 <  _is_argv('(?:--no.?header|--cgi)'));        # --cgi-exec or --cgi-trace
-    return if (0 >= _is_argv('(?:--v$|--trace|--warn)'));
-    if (0 >= _is_argv('(?:--trace[_.-]?(?:ARG|CMD|TIME|ME)$)')) {
-        return if (0 < _is_argv('(?:--trace[_.-]?CLI|KEY$)'));  # --trace-CLI or --trace-KEY
+    return if     _is_argv('(?:--no.?header|--cgi)');   # --cgi-exec or --cgi-trace
+    return if not _is_argv('(?:--v$|--trace|--warn)');
+    if (not _is_argv('(?:--trace[_.-]?(?:arg|cmd|time|me)$)')) {
+        return if _is_argv('(?:--trace[_.-]?cli|key$)');# --trace-CLI or --trace-KEY
     }
-    # print "read ..." also if only --trace* given
+    # print "read ..." also if only any --trace* given
     _tprint("read", $fil, "(@txt)") if _is_argv('(?:--trace)');
     _vprint("read", $fil, "(@txt)");
     return;
@@ -341,17 +340,19 @@ sub _load_file      {
 #_____________________________________________________________________________
 #________________________________________________________________ variables __|
 
-my  $arg    = "";
-my  @argv   = ();       # all options, including those from RC-FILE
+my $arg     = "";       # no special purpose, used in various loops
+my @argv    = ();       # all options, including those from RC-FILE
                         # will be used when ever possible instead of @ARGV
+my @rc_argv = "";       # all options read from RC-FILE
+my @dbx     = ();       # contains all debug options, like --trace --v --tests*
+                        # must be set from @argv not @ARGV to get values from
+                        # RC-FILE also, see below
 
-# some temporary variables used in main
+# some temporary variables used in main, they are mainly just shortcuts for
+# corresponding values in $cfg{}, used for better human readability
 my $host    = "";       # the host currently processed in main
 my $port    = "";       # the port currently used in main
 my $legacy  = "";       # the legacy mode used in main
-my $verbose = 0;        # verbose mode used in main; option --v
-   # above host, port, legacy and verbose are just shortcuts for corresponding
-   # values in $cfg{}, used for better human readability
 my $help    = "";       # set to argument if it begins with --help* or --h
 my $test    = "";       # set to argument if it begins with --test* or +test*
 my $info    = 0;        # set to 1 if +info
@@ -359,6 +360,7 @@ my $check   = 0;        # set to 1 if +check was used
 my $quick   = 0;        # set to 1 if +quick was used
 my $cmdsni  = 0;        # set to 1 if +sni  or +sni_check was used
 my $sniname = undef;    # will be set to $cfg{'sni_name'} as this changes for each host
+my $cgi     = _is_argv('(?:--cgi-?(?:exec|trace$))');   # 1: for --cgi-exec, --cgi-trace
 
 our %cmd = (
    # contains all OpenSSL related informations and settings
@@ -377,7 +379,7 @@ our %cmd = (
 ); # %cmd
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.165"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.168"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -546,18 +548,10 @@ our %text = (   # our instead of my required for --help=cfg-text --help=text
 
 ); # %text
 
-#| CGI
-#| -------------------------------------
-my  $cgi = 0;
-    $cgi = 1 if _is_argv('(?:--cgi-?(?:exec|trace$))');
-#if ($cfg{'me'} =~/\.cgi$/) { SEE Since VERSION 18.12.18
-    #die $STR{ERROR}, "020: CGI mode requires strict settings" if (_is_argv('--cgi=?') <= 0);
-#} # CGI
-
 #| read RC-FILE if any
 #| -------------------------------------
 _trace_info("RCFILE0 - RC-FILE start");
-if (0 < _is_argv('(?:--rc)')) {                 # (re-)compute default RC-File with full path
+if (_is_ARGV('(?:--rc)')) {                     # (re-)compute default RC-File with full path
     $cfg{'RC-FILE'} =  $0;                      # from directory where $0 found
     $cfg{'RC-FILE'} =~ s#($cfg{'me'})$#.$1#;
 }
@@ -571,16 +565,15 @@ if (defined $ENV{'OSAFT_CONFIG'}) {
         OCfg::warn("038: OSAFT_CONFIG '$ENV{'OSAFT_CONFIG'}' does not exist; no RC-FILE read");
     }
 }
-if (0 < _is_argv('(?:--rc=)')) {                # other RC-FILE given
+if (_is_ARGV('(?:--rc=)')) {                    # other RC-FILE given
     $cfg{'RC-FILE'} =  (grep{/--rc=.*/} @ARGV)[0];  # get value --rc=*
     $cfg{'RC-FILE'} =~ s#--rc=##;               # strip off --rc=
     # no check if file exists, will be done below
 }
 _tprint("RC-FILE: $cfg{'RC-FILE'}") if _is_trace();
-my @rc_argv = "";
-if (0 >= _is_argv('(?:--no.?rc)')) {            # only if not inhibited
+if (not _is_ARGV('(?:--no.?rc)')) {             # only if not inhibited
     # we do not use a function for following to avoid passing @argv, @rc_argv
-    OCfg::hint("use  --trace  to see complete settings") if _is_argv('(?:--v(?:=[0-9]+)?)');
+    OCfg::hint("use  --trace  to see complete settings") if _is_ARGV('(?:--v(?:=[0-9]+)?)');
     if (open(my $rc, '<:encoding(UTF-8)', "$cfg{'RC-FILE'}")) {
         push(@{$dbx{'files'}}, $cfg{'RC-FILE'});
         _vprint_read("$cfg{'RC-FILE'}", "RC-FILE done");
@@ -610,13 +603,13 @@ if (0 >= _is_argv('(?:--no.?rc)')) {            # only if not inhibited
         foreach my $val (@tmp_argv) {
             if ($val !~ m/^\s*([+,-]-?)/) {
                 OCfg::warn("040: invalid argument in RC-FILE '$val'; setting ignored");
-                @argv = grep{!/$val/} @argv;# remove from stored arguments
+                @argv = (grep{!/$val/} @argv);  # remove from stored arguments
                 # should be fixed: $val still in @rc_argv, which is stored
                 # in $cfg{'RC-ARGV'} later
                 next;
             }
-            $val =~ s/(--cfg[^=]*=[^=]*).*/$1/ if (0 >=_is_argv('(?:--trace)'));
-            _tprint("     $val") if (_is_trace());
+            $val =~ s/(--cfg[^=]*=[^=]*).*/$1/ if not _is_argv('(?:--trace)');
+            _tprint("     $val") if _is_trace();
             if ($val =~ m/--cfg[^=]*=[^=]*/) {
                 $val =~ s/--cfg[^=]*=([^=]*).*/+$1/;
                 push(@cfgs, $val);
@@ -644,16 +637,15 @@ if (defined $ENV{'OSAFT_OPTIONS'}) {
         # simply add to @argv, no checks
         # because of simple split(), only single words are possible as options
 }
-
 push(@argv, @ARGV); # from hereon "grep{/.../} @argv" is used instead of _is_argv()
-push(@ARGV, "--no-header") if ((grep{/--no-?header/} @argv)); # if defined in RC-FILE, needed in OCfg::warn()
+push(@ARGV, "--no-header") if (grep{/--no-?header/} @argv); # if defined in RC-FILE, needed in OCfg::warn()
+@dbx =  (grep{/--(?:trace|v$|exitcode.?v$|tests?)/} @argv); # may have --trace=./file
+push(@dbx, (grep{/^[+,](?:tests?)/} @argv));    # may have +test*
 
 #| read DEBUG-FILE, if any (source for trace and verbose)
 #| -------------------------------------
 my $err = "";
-my @dbx =  grep{/--(?:trace|v$|exitcode.?v$|tests?)/} @argv;  # may have --trace=./file
-push(@dbx, grep{/^[+,](?:tests?)/} @argv);  # may have +test*
-if (($#dbx >= 0) and (grep{/--cgi=?/} @argv) <= 0) {    # SEE Note:CGI mode
+if (scalar(@dbx) and not (grep{/--cgi=?/} @argv)) { # SEE Note:CGI mode
     $arg =  "lib/OTrace.pm";
     $arg =  $dbx[0] if ($dbx[0] =~ m#/#);
     $arg =~ s#[^=]+=##; # --trace=./myfile.pl
@@ -700,7 +692,7 @@ if (exists $INC{'lib/OTrace.pm'}) {
 
 #| read USER-FILE, if any (source with user-specified code)
 #| -------------------------------------
-if ((grep{/--(?:use?r)/} @argv) > 0) {  # must have any --usr option
+if ((grep{/--(?:use?r)/} @argv)) {  # must have any --usr option
     $err = _load_file("lib/OUsr.pm", "user module");
     if ($err ne "") {
         # continue without warning, it's already printed in "read ... " line
@@ -858,8 +850,8 @@ push(@{$cfg{'cmd-info--v'}}, 'dump');   # more information
 foreach my $key (keys %data) {
     push(@{$cfg{'cmd-info--v'}}, $key);
     next if (_is_cfg_intern($key));     # ignore aliases
-    next if ($key =~ m/^(ciphers)/   and $verbose == 0);# Client ciphers are less important
-    next if ($key =~ m/^modulus$/    and $verbose == 0);# same values as 'pubkey_value'
+    next if ($key =~ m/^(ciphers)/);    # Client ciphers are less important
+    next if ($key =~ m/^modulus$/ );    # same values as 'pubkey_value'
     push(@{$cfg{'cmd-info'}},    $key);
 }
 push(@{$cfg{'cmd-info--v'}}, 'info--v');
@@ -870,7 +862,7 @@ foreach my $key (qw(commands commands_cmd commands_usr commands_int cmd-info--v)
     # TODO: need to test if sorting of cmd-info--v should not be done for --no-rc
     @{$cfg{$key}} = sort(@{$cfg{$key}});    # only internal use
 }
-if (0 < _is_argv('(?:--no.?rc)')) {
+if (_is_ARGV('(?:--no.?rc)')) {
     foreach my $key (qw(do cmd-check cmd-info cmd-quick cmd-vulns)) {
         @{$cfg{$key}} = sort(@{$cfg{$key}});# may be redefined
     }
@@ -1062,7 +1054,7 @@ sub _set_cfg        {
     if (($arg =~ m|^[a-zA-Z0-9,._+#()\/-]+|) and (-f "$arg")) { # read from file
         # we're picky about valid filenames: only characters, digits and some
         # special chars (this should work on all platforms)
-        if ($cgi == 1) { # SEE Note:CGI mode
+        if (1 == $cgi) { # SEE Note:CGI mode
             # should never occur, defensive programming
             OCfg::warn("072: configuration files are not read in CGI mode; ignored");
             return;
@@ -2211,7 +2203,7 @@ sub _is_vuln_css    {
 
         # open our own connection and close it at end
 # TODO: does not work with socket from SSLinfo.pm
-    $cl = IO::Socket::INET->new(PeerAddr => "$host:$port", Timeout => $cfg{'timeout'}) or  do {
+    $cl = IO::Socket::INET->new(PeerAddr=>"$host:$port", Timeout=>$cfg{'timeout'}) or  do {
         OCfg::warn("331: _is_vuln_css: failed to connect: '$!'");
         return "failed to connect";
     };
@@ -2614,7 +2606,7 @@ sub _usesocket      {
             # SEE Note:Selected Protocol
             $version = $sslsocket->get_sslversion() if ($IO::Socket::SSL::VERSION > 1.964);
             $cipher  = $sslsocket->get_cipher();
-            $sslsocket->close(SSL_ctx_free => 1);
+            $sslsocket->close(SSL_ctx_free=>1);
             trace1("_usesocket: SSL version (for $ssl $ciphers): $version");
         }
     } else {    # eval failed: connect failed
@@ -5766,7 +5758,7 @@ sub printcipherpreferred {
         printf("=------+-------------------------------+-------------------------------\n");
     }
     foreach my $ssl (@{$cfg{'versions'}}) { # SEE Note:%prot
-        next if (($cfg{$ssl} == 0) and ($verbose <= 0));  # not requested with verbose only
+        next if (($cfg{$ssl} == 0) and ($cfg{'verbose'} <= 0)); # not requested with verbose only
         next if ($ssl =~ m/^SSLv2/);    # SSLv2 has no server selected cipher
         my $key = $ssl . $text{'separator'};
            $key = sprintf("[0x%x]", $prot{$ssl}->{hex}) if ($legacy eq 'key');
@@ -5806,7 +5798,7 @@ sub printprotocols      {
     }
     #   'PROT-LOW'      => {'txt' => "Supported ciphers with security LOW"},
     foreach my $ssl (@{$cfg{'versions'}}) { # SEE Note:%prot
-        next if (($cfg{$ssl} == 0) and ($verbose <= 0));   # not requested with verbose only
+        next if ((0 == $cfg{$ssl}) and (0 >= $cfg{'verbose'})); # not requested with verbose only
         my $cnt = scalar(@{$prot{$ssl}->{'ciphers_pfs'}});
         my $key = $ssl . $text{'separator'};
            $key = sprintf("[0x%x]", $prot{$ssl}->{hex}) if ($legacy eq 'key');
@@ -5814,7 +5806,7 @@ sub printprotocols      {
         my $cipher_pfs    = $prot{$ssl}->{'cipher_pfs'};
            # if protocol not supported, or disabled, or if something went wrong
            # then $cipher_pfs should be empty (even woth --v)
-        if ($cfg{'trace'} <= 0) {
+        if (0 >= $cfg{'trace'}) {
            # avoid internal strings, pretty print for humans
            $cipher_strong = "" if ($STR{UNDEF} eq $cipher_strong);
            $cipher_pfs    = "" if ($STR{UNDEF} eq $cipher_pfs);
@@ -5825,7 +5817,7 @@ sub printprotocols      {
            $cnt = 0;
         }
         $cipher_strong    = $text{'na_SSLv2'} if ($ssl =~ m/^SSLv2/);
-        if ($cfg{$ssl} == 0) {  # ($verbose <= 0) checked above
+        if (0 == $cfg{$ssl}) {  # ($cfg{'verbose'} <= 0) # checked above
            # alle values should be 0, so we can safely set rhese columns
            $cipher_strong =  _get_text('disabled', "'--no-$ssl'");
         }
@@ -6165,7 +6157,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.165");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.168");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6416,7 +6408,7 @@ sub printscores         {
     }
     print_line($legacy, $host, $port, 'checks', $scores{'checks'}->{txt}, $scores{'checks'}->{val});
     print_ruler();
-    if (_is_cfg_out('traceKEY') and (0 < $verbose)) {
+    if (_is_cfg_out('traceKEY') and (0 < $cfg{'verbose'})) {
         trace(" verbose score table");
         print "\n";
         printtable('score');
@@ -7476,7 +7468,6 @@ if ($cfg{'proxyhost'} ne "" && 0 == $cfg{'proxyport'}) {
     _trace_info("  USAGE   -");
     printusage_exit("$q--proxyhost=$cfg{'proxyhost'}$q requires also '--proxyport=NN'");
 }
-$verbose = $cfg{'verbose'};
 $legacy  = $cfg{'legacy'};
 if (_is_cfg_do('cipher') and (0 == $#{$cfg{'do'}})) {
     # +cipher does not need DNS and HTTP, may improve perfromance
@@ -7486,11 +7477,15 @@ if (_is_cfg_do('cipher') and (0 == $#{$cfg{'do'}})) {
     $cfg{'use'}->{'dns'}    = 0;
 }
 
+#TODO TODO TODO hier gibts noch kein @argv
+#TODO TODO TODO _dbx "argv: @argv";
+#TODO TODO TODO _dbx "no-head =" . (grep{/--no.?header/} @argv);
 if (_is_cfg_do('list')) {
     # our own command to list ciphers: uses header and TAB as separator
-    _set_cfg_out('header', 1)  if ((grep{/--no.?header/} @argv) <= 0);
-    $text{'separator'}  = "\t" if ((grep{/--(?:tab|sep(?:arator)?)/} @argv) <= 0); # tab if not set
+    _set_cfg_out('header', 1)  if (not grep{/--no.?header/} @argv);
+    $text{'separator'}  = "\t" if (not grep{/--(?:tab|sep(?:arator)?)/} @argv); # tab if not set
 }
+#TODO TODO TODO _dbx "cfg{'out'}->{'header'} = $cfg{'out'}->{'header'}";
 if (_is_cfg_do('pfs'))  { push(@{$cfg{'do'}}, 'cipher_pfsall') if (not _is_cfg_do('cipher_pfsall')); }
 
 if (_is_cfg_do('version') or (_is_cfg_use('mx')))             { $cfg{'need_netdns'}    = 1; }
@@ -7499,8 +7494,8 @@ if (_is_cfg_do('version') or (_is_cfg_do('sts_expired')) > 0) { $cfg{'need_timel
 $cfg{'connect_delay'}   =~ s/[^0-9]//g; # simple check for valid values
 
 if (_is_cfg_out('http_body')) { # SEE Note:ignore-out, SEE Note:--https_body
-    @{$cfg{'ignore-out'}} = grep{not /https_body/} @{$cfg{'ignore-out'}};
-    @{$cfg{'out'}->{'ignore'}} = grep{not /https_body/} @{$cfg{'out'}->{'ignore'}};
+    @{$cfg{'ignore-out'}}      = (grep{not /https_body/} @{$cfg{'ignore-out'}});
+    @{$cfg{'out'}->{'ignore'}} = (grep{not /https_body/} @{$cfg{'out'}->{'ignore'}});
 }
 
 if (_is_cfg_do('cipher_default')) {
@@ -7512,7 +7507,7 @@ if (_is_cfg_do('cipher_default')) {
 }
 
 # SEE Note:Testing, sort
-@{$cfg{'do'}} = sort(@{$cfg{'do'}}) if (0 < _is_argv('(?:--no.?rc)'));
+@{$cfg{'do'}} = sort(@{$cfg{'do'}}) if _is_ARGV('(?:--no.?rc)');
 # $cfg{'do'}} should not contain duplicate commands; SEE Note:Duplicate Commands
 @{$cfg{'commands_usr'}} = sort(@{$cfg{'commands_usr'}});  # those from RC-FILE
 
@@ -7660,7 +7655,7 @@ _check_modules()    if (0 < $do_checks);
 
 #| check for required functionality
 #| -------------------------------------
-_check_functions()  ;#if (0 < $do_checks + _is_cfg_do('cipher') + _need_checkprot());
+_check_functions()  if (not $test and (0 < $check + $info + $do_checks + _is_cfg_do('cipher') + _need_checkprot()));
     # more detailed checks on version numbers with proper warning messages
 
 #| check for proper openssl support
@@ -7682,14 +7677,13 @@ _trace_info("  CHECK9  - check configuration end");
 
 #| set additional defaults if missing
 #| -------------------------------------
-_set_cfg_out('header', 1) if(0 => $verbose);# verbose uses headers
-_set_cfg_out('header', 1) if(0 => grep{/\+(check|info|quick|cipher)$/} @argv); # see --header
-_set_cfg_out('header', 0) if(0 => grep{/--no.?header/} @argv);    # command-line option overwrites defaults above
-#cfg{'sni_name'}    = $host;    # see below: loop targets
-$sniname            = $cfg{'sni_name'}; # safe setting; may be undef
-if (not _is_cfg_use('http')) {          # was explicitly set with --no-http 'cause default is 1
-    # STS makes no sence without http
-    OCfg::warn("064: STS $text{'na_http'}") if(0 => (grep{/hsts/} @{$cfg{'do'}})); # check for any hsts*
+_set_cfg_out('header', 1) if $cfg{'verbose'};   # verbose uses headers
+_set_cfg_out('header', 1) if (grep{/\+(check|info|quick|cipher)$/} @argv); # see --header
+_set_cfg_out('header', 0) if (grep{/--no.?header/} @argv);  # command-line option overwrites defaults above
+if (not _is_cfg_use('http')) {
+    # was explicitly set with --no-http 'cause default is 1
+    # STS makes no sence without http, set N/A text for any hsts*
+    OCfg::warn("064: STS $text{'na_http'}") if (grep{/hsts/} @{$cfg{'do'}});
 }
 if (1 == $quick) {
     _set_cfg_out('enabled', 1);
@@ -7907,7 +7901,7 @@ OUsr::pre_host();
 _vprint("check all targets with commands +" . join(' +', @{$cfg{'do'}}));
 
 # run the appropriate SSL tests for each host (ugly code down here):
-$sniname  = $cfg{'sni_name'};           # safe value;  NOTE: may be undef!
+$sniname  = $cfg{'sni_name'};           # safe given value; NOTE: may be undef!
 my $idx   = 0;
 foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     next if (0 == @{$target}[0]);       # first entry contains default settings
@@ -7919,8 +7913,8 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     next if _trace_next("HOST0   - start $host:$port");
     # SNI must be set foreach host, but it's always the same name!
     if (_is_cfg_use('sni')) {
-        if (defined $sniname) {
-            if ($host ne $cfg{'sni_name'}) {
+        if (defined $sniname) {             # check given value
+            if ($host ne $cfg{'sni_name'}) {# use given value
                 OCfg::warn("069: hostname not equal SNI name; checks are done with '$host'");
             }
             $SSLinfo::sni_name  = $cfg{'sni_name'};
@@ -7937,7 +7931,6 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     $SSLinfo::target_url    =~ s:^\s*$:/:;      # set to / if empty
     _resetchecks();
     print_header(_get_text('out_target', "$host:$port"), "", "", $cfg{'out'}->{'header'});
-
     next if _trace_next("  DNS0    - start");
 
     #  gethostbyname() and gethostbyaddr() set $? on error, needs to be reset!
@@ -8967,7 +8960,7 @@ Here's an overview of the used global variables.
 
 Data structures with (mainly) static data:
 
-    %cmd        - configuration for external commands (like openssl)
+    %cmd        - configuration for external openssl command
     %text       - configuration for message texts
     %ciphers    - definition of our cipher suites
     %shorttexts - short texts (labels) for %data and %checks
@@ -9079,7 +9072,11 @@ The data to be sorted is for example:
 Command-line arguments are read after some other internal initialisations.
 Unfortunately sometimes options need to be checked before argument parsing
 is completed. Therfore following is needed: `(grep{/--trace)/} @ARGV)'.
-Such checks are implemented as simple functions and return grep's result.
+
+Such checks are implemented as  simple functions  which return  the number
+matches found by grep, in particular 0 if nothing matches.  This allows to
+use (for better human readability)  for example  `if (_is_argv(...))'  and
+`if (not _is_argv(...))'.
 
 
 =head2 Note:SSL protocol versions
