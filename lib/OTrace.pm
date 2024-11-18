@@ -41,7 +41,7 @@ use Data::Dumper qw(Dumper);
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_trace      = "@(#) OTrace.pm 3.44 24/11/18 01:29:47";
+my  $SID_trace      = "@(#) OTrace.pm 3.45 24/11/18 02:36:48";
 our $VERSION        = "24.09.24";
 
 our $prefix_trace   = "#". __PACKAGE__ . ":";
@@ -638,7 +638,7 @@ EoT
     # ugly code, but generic
     foreach my $v (sort(keys %main::)) {
         #print Dumper $v; # liefert den gesamten Hash
-        next if (not grep {/^(cfg|check|cipher|cmd|data|dbx|info|osaft|short|text)/} $v) ;
+        next if (not grep {/^(cfg|check|cipher|openssl|data|dbx|info|osaft|short|text)/} $v) ;
         next if (    grep {/^check(cipher|http)/} $v) ; # avoid "Segmentation fault"
         next if ("*{$main::{$v}}" !~ m/\*main::/);  # ignore CODE, Perl variables
         my $size = Devel::Size::total_size(\$main::{$v});
@@ -1228,7 +1228,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.44 2024/11/18
+3.45 2024/11/18
 
 =head1 AUTHOR
 
