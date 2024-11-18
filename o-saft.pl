@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.168 24/11/17 23:42:24"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.169 24/11/18 01:28:44"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -362,63 +362,63 @@ my $cmdsni  = 0;        # set to 1 if +sni  or +sni_check was used
 my $sniname = undef;    # will be set to $cfg{'sni_name'} as this changes for each host
 my $cgi     = _is_argv('(?:--cgi-?(?:exec|trace$))');   # 1: for --cgi-exec, --cgi-trace
 
-our %cmd = (
+our %openssl = (
    # contains all OpenSSL related informations and settings
     'timeout'       => "timeout",   # to terminate shell processes (timeout 1)
-    'openssl'       => "openssl",   # OpenSSL
-    'openssl3'      => "openssl",   # OpenSSL which supports TLSv1.3
+    'exe'           => "openssl",   # OpenSSL
+    'exe3'          => "openssl",   # OpenSSL which supports TLSv1.3
+    'external'      => 1,       # 1: use external openssl; default yes, except on Win32
+    'sclient'       => 1,       # 1: use openssl s_client; default yes, except on Win32
     'libs'          => [],      # where to find libssl.so and libcrypto.so
     'path'          => [],      # where to find openssl executable
-    'extopenssl'    => 1,       # 1: use external openssl; default yes, except on Win32
-    'extsclient'    => 1,       # 1: use openssl s_client; default yes, except on Win32
     'envlibvar'     => "LD_LIBRARY_PATH",       # name of environment variable
     'envlibvar3'    => "LD_LIBRARY_PATH",       # for OpenSSL which supports TLSv1.3
     'call'          => [],      # list of special (internal) function calls
                                 # see --call=METHOD option in description below
     'version'       => "",      # OpenSSL's version number, see OCfg::get_openssl_version
-); # %cmd
+); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.168"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.169"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
 %{$cfg{'done'}} = (             # internal administration
-        'targets'   => 0,
-        'dbxfile'   => 0,
-        'rc_file'   => 0,
-        'init_all'  => 0,
-        'ssl_failed'=> 0,       # local counter for SSL connection errors
-        'ssl_errors'=> 0,       # total counter for SSL connection errors
-        'arg_cmds'  => [],      # contains all commands given as argument
-         # all following need to be reset for each host, which is done in
-         # _resetchecks()  by matching the key against ^check or ^cipher
-        'default_get'   => 0,
-        'ciphers_all'   => 0,
-        'ciphers_get'   => 0,
-        'checkciphers'  => 0,   # not used, as it's called multiple times
-        'checkpreferred' => 0,
-        'check02102'=> 0,
-        'check03116'=> 0,
-        'check2818' => 0,
-        'check6125' => 0,
-        'check7525' => 0,
-        'checkdates'=> 0,
-        'checksizes'=> 0,
-        'checkbleed'=> 0,
-        'checkcert' => 0,
-        'checkprot' => 0,
-        'checkdest' => 0,
-        'checkhttp' => 0,
-        'checksstp' => 0,
-        'checksni'  => 0,
-        'checkssl'  => 0,
-        'checkalpn' => 0,
-        'checkdv'   => 0,
-        'checkev'   => 0,
-        'check_dh'  => 0,
-        'check_url' => 0,       # not used, as it's called multiple times
-        'check_certchars' => 0,
+    'targets'       => 0,
+    'dbxfile'       => 0,
+    'rc_file'       => 0,
+    'init_all'      => 0,
+    'ssl_failed'    => 0,       # local counter for SSL connection errors
+    'ssl_errors'    => 0,       # total counter for SSL connection errors
+    'arg_cmds'      => [],      # contains all commands given as argument
+     # all following need to be reset for each host, which is done in
+     # _resetchecks()  by matching the key against ^check or ^cipher
+    'default_get'   => 0,
+    'ciphers_all'   => 0,
+    'ciphers_get'   => 0,
+    'checkciphers'  => 0,       # not used, as it's called multiple times
+    'checkpreferred' => 0,
+    'check02102'    => 0,
+    'check03116'    => 0,
+    'check2818'     => 0,
+    'check6125'     => 0,
+    'check7525'     => 0,
+    'checkdates'    => 0,
+    'checksizes'    => 0,
+    'checkbleed'    => 0,
+    'checkcert'     => 0,
+    'checkprot'     => 0,
+    'checkdest'     => 0,
+    'checkhttp'     => 0,
+    'checksstp'     => 0,
+    'checksni'      => 0,
+    'checkssl'      => 0,
+    'checkalpn'     => 0,
+    'checkdv'       => 0,
+    'checkev'       => 0,
+    'check_dh'      => 0,
+    'check_url'     => 0,       # not used, as it's called multiple times
+    'check_certchars' => 0,
 );
 
 # TODO: move %text to OCfg or OText
@@ -870,16 +870,16 @@ if (_is_ARGV('(?:--no.?rc)')) {
 
 _trace_info("INIT    - RC-FILE merged");
 
-$cmd{'extopenssl'}  = 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
+$openssl{'external'}= 0 if ($^O =~ m/MSWin32/); # tooooo slow on Windows
 
 #| incorporate some environment variables
 #| -------------------------------------
 # all OPENSSL* environment variables are checked and assigned in o-saft-lib.pm
-$cmd{'openssl'}     = $cfg{'openssl_env'} if (defined $cfg{'openssl_env'});
+$openssl{'exe'}     = $cfg{'openssl_env'} if (defined $cfg{'openssl_env'});
 if (defined $ENV{'LIBPATH'}) {
     OCfg::hint("LIBPATH environment variable found, consider using '--envlibvar=LIBPATH'");
     # TODO: avoid hint if --envlibvar=LIBPATH in use
-    # $cmd{'envlibvar'} = $ENV{'LIBPATH'}; # don't set silently
+    # $openssl{'envlibvar'} = $ENV{'LIBPATH'}; # don't set silently
 }
 
 #_init_all();  # call delayed to prevent warning of prototype check with -w
@@ -957,7 +957,7 @@ sub _is_member      { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)}      @{$
 sub _is_cfg_do      { my  $is=shift;    return _is_member($is, \@{$cfg{'do'}});        }
 sub _is_cfg_intern  { my  $is=shift;    return _is_member($is, \@{$cfg{'commands_int'}}); }
 sub _is_cfg_hexdata { my  $is=shift;    return _is_member($is, \@{$cfg{'data_hex'}});  }
-sub _is_cfg_call    { my  $is=shift;    return _is_member($is, \@{$cmd{'call'}});      }
+sub _is_cfg_call    { my  $is=shift;    return _is_member($is, \@{$openssl{'call'}});  }
     # returns >0 if the given string is listed in $cfg{*}
 sub _is_cfg         { my  $is=shift;    return $cfg{$is};   }
 sub _is_cfg_ssl     { my  $is=shift;    return $cfg{$is};   }
@@ -1405,7 +1405,7 @@ sub _check_functions    {
     # NOTE: $cfg{'ssleay'}->{'can_sni'} set to 1 by default
 
     if (not defined $Net::SSLeay::VERSION) {# Net::SSLeay auto-loaded by IO::Socket::SSL
-        if ($cmd{'extopenssl'} == 0) {
+        if (0 == $openssl{'external'}) {
             die $STR{ERROR}, "014: Net::SSLeay not found, useless use of SSL advanced forensic tool\n";
         }
     } else {
@@ -1647,18 +1647,18 @@ sub _enable_sclient {
         if ($opt =~ m/^-(?:alpn|npn|curves)$/) {
             # no warning for external openssl, as -alpn or -npn is only used with +cipher
             if (_is_cfg_ciphermode('openssl')) {
-                OCfg::warn("144: openssl $cmd{'version'}: 's_client' does not support '$opt'; $txt") if ($txt ne "");
+                OCfg::warn("144: openssl $openssl{'version'}: 's_client' does not support '$opt'; $txt") if ($txt ne "");
             }
         }
         if ($opt =~ m/^-(?:no.?)?(?:dtls|tls|ssl)/) {
             # protocol options are important when checking for ciphers only
             # don't bother with warning if ciphers are not checked with openssl
             if (_is_cfg_ciphermode('openssl|socket')) {
-                OCfg::warn("145: openssl $cmd{'version'}: 's_client' does not support '$opt'; $txt") if ($txt ne "");
+                OCfg::warn("145: openssl $openssl{'version'}: 's_client' does not support '$opt'; $txt") if ($txt ne "");
             }
         }
         if ($opt eq '-tlsextdebug') {   # additional warning
-            OCfg::warn("146: openssl $cmd{'version'}: '-tlsextdebug' not supported; results for following commands may be wrong: +heartbeat, +heartbleed, +session_ticket, +session_lifetime");
+            OCfg::warn("146: openssl $openssl{'version'}: '-tlsextdebug' not supported; results for following commands may be wrong: +heartbeat, +heartbleed, +session_ticket, +session_lifetime");
         }
         # switch $opt {
         $cfg{'use'}->{'reconnect'}  = $val  if ($opt eq '-reconnect');
@@ -1669,15 +1669,15 @@ sub _enable_sclient {
         $cfg{'ca_file'}       = undef if ($opt =~ /^-CAfile/i);
         $cfg{'ca_path'}       = undef if ($opt =~ /^-CApath/i);
         # }
-        if (_is_cfg_use('npn') and ($cmd{'version'} gt "2.0")) {
+        if (_is_cfg_use('npn') and ($openssl{'version'} gt "2.0")) {
             # check and warning if -nextprotoneg with OPenSSL 3.x only
             # avoids warning:  Cannot supply -nextprotoneg with TLSv1.3
             $cfg{'use'}->{'npn'}    = 0; # see --help=TECHNIC
-            OCfg::warn("150: openssl $cmd{'version'}: cannot supply '-nextprotoneg' with TLSv1.3, hence globally disabled");
+            OCfg::warn("150: openssl $openssl{'version'}: cannot supply '-nextprotoneg' with TLSv1.3, hence globally disabled");
             OCfg::hint("150: $cfg{'hints'}->{'150'}") if _is_cfg_out('hint_cipher'); # SEE Note:hints
         }
     }
-    # TODO: remove commands, i.e. +s_client, +heartbleed, from $cmd{do}
+    # TODO: remove commands, i.e. +s_client, +heartbleed, from $cfg{do}
     #    -fallback_scsv: remove +scsv and +fallback
     trace("_enable_sclient() }");
     return;
@@ -1712,10 +1712,10 @@ sub _check_protocol {
 } # _check_protocol
 
 sub _reset_openssl  {
-    # reset all %cfg and %cmd settings according openssl executable
-    $cmd{'openssl'}     = "";
-    $cmd{'extopenssl'}  = 0;
-    $cmd{'extsclient'}  = 0;
+    # reset all %cfg and %openssl settings according openssl executable
+    $openssl{'exe'}      = "";
+    $openssl{'external'} = 0;
+    $openssl{'sclient'}  = 0;
     # TODO: SSLinfo not yet included ...
     #foreach my $opt (SSLinfo::s_client_get_optionlist()) {
     #    $cfg{'openssl'}->{$opt}[0] = 0;
@@ -1725,9 +1725,9 @@ sub _reset_openssl  {
 
 sub _check_openssl  {
     # check cpapbilities of openssl
-    return if ($cmd{'openssl'} eq "");  # already checked and warning printed
+    return if ($openssl{'exe'} eq "");  # already checked and warning printed
     trace("_check_openssl() {");
-    $SSLinfo::openssl = $cmd{'openssl'};# this version should be checked
+    $SSLinfo::openssl = $openssl{'exe'};# this version should be checked
     $SSLinfo::trace   = $cfg{'trace'};
         # safe to set $SSLinfo::* here,
         # will be redifined later, see: set defaults for SSLinfo
@@ -1737,7 +1737,7 @@ sub _check_openssl  {
         return;
     }
     if (not defined SSLinfo::s_client_check()) {
-        OCfg::warn("147: '$cmd{'openssl'}' not available; all openssl functionality disabled");
+        OCfg::warn("147: '$openssl{'exe'}' not available; all openssl functionality disabled");
         OCfg::hint("147: consider using '--openssl=/path/to/openssl'");
         _reset_openssl();
     }
@@ -1755,11 +1755,11 @@ sub _check_openssl  {
         _enable_sclient($opt);  # may print propper OCfg::warn()
         _check_protocol($opt) if (_is_cfg_ciphermode('openssl')); 
     }
-    if ($cmd{'version'} lt "1.0.2") {   # got $cmd{version} in _init_openssl()
-        OCfg::warn("142: ancient openssl $cmd{'version'}: using '-msg' option to get DH parameters");
+    if ($openssl{'version'} lt "1.0.2") {   # got $openssl{version} in _init_openssl()
+        OCfg::warn("142: ancient openssl $openssl{'version'}: using '-msg' option to get DH parameters");
         $cfg{'openssl_msg'} = '-msg' if (1 == $cfg{'openssl'}->{'-msg'}[0]);
     }
-    if ($cmd{'version'} gt "2.0") {
+    if ($openssl{'version'} gt "2.0") {
         if (_is_cfg_ciphermode('openssl|socket')) {
             if (_is_cfg_out('hint_cipher')) {
                 OCfg::hint("142: $cfg{'hints'}->{'openssl3'}");
@@ -1767,7 +1767,7 @@ sub _check_openssl  {
             }
         }
     }
-    if ($cmd{'version'} gt "2.0") {
+    if ($openssl{'version'} gt "2.0") {
     }
     # TODO: should check openssl with a real connection also
     trace("_check_openssl() }");
@@ -1779,19 +1779,19 @@ sub _init_opensslexe    {
     # i.g. we may rely on bare word  openssl  which then would be found using
     # $PATH, but it's better to have a clear definition right away because it
     # avoids errors
-    # $cmd{'openssl'} not passed as parameter, as it will be changed here
+    # $openssl{'exe'} not passed as parameter, as it will be changed here
     trace("_init_opensslexe() {");
     my $exe     = "";
     foreach my $p ("", split(/:/, $ENV{'PATH'})) { # try to find path
         # ""  above ensures that full path in $openssl will be checked
-        $exe = "$p/$cmd{'openssl'}";
+        $exe = "$p/$openssl{'exe'}";
         last if (-e $exe);
         $exe = "";
     }
     $exe =~ s#//#/#g;           # make a nice path (see first path "" above)
     if ($exe eq "" or $exe eq "/") {
         $exe = "";
-        OCfg::warn("149: no executable for '$cmd{'openssl'}' found; all openssl functionality disabled");
+        OCfg::warn("149: no executable for '$openssl{'exe'}' found; all openssl functionality disabled");
         OCfg::hint("149: consider using '--openssl=/path/to/openssl'");
         _reset_openssl();
     }
@@ -1801,12 +1801,12 @@ sub _init_opensslexe    {
 
 sub _init_openssldir    {
     # returns openssl-specific path for CAs; checks if OPENSSLDIR/certs exists
-    # resets cmd{'openssl'}, cmd{'extopenssl'} and cmd{'extsclient'} on error
+    # resets openssl{'exe'}, openssl{'external'} and openssl{'sclient'} on error
     # SEE Note:OpenSSL CApath
-    # $cmd{'openssl'} not passed as parameter, as it will be changed here
-    return "" if ($cmd{'openssl'} eq "");       # defensive programming
-    my $dir = qx("$cmd{'openssl'}" version -d); # get something like: OPENSSLDIR: "/usr/local/openssl"
-        # qx() should be safe here because `$cmd{'openssl'}' checked before
+    # $openssl{'exe'} not passed as parameter, as it will be changed here
+    return "" if ($openssl{'exe'} eq "");   # defensive programming
+    my $dir = qx("$openssl{'exe'}" version -d); # get something like: OPENSSLDIR: "/usr/local/openssl"
+        # qx() should be safe here because `$openssl{'exe'}' checked before
     chomp $dir;
         # if qx() above failed, we get: "Use of uninitialized value $dir in ..."
     my $status  = $?;
@@ -1842,8 +1842,8 @@ sub _init_openssldir    {
             OCfg::warn("148: 'openssl version -d' returned: '$openssldir' which does not contain certs/ ; ignored.");
         }
     }
-    if ($status != 0) {                 # on Windoze status may be 256
-        $cmd{'openssl'}    = "";
+    if (0 != $status) {                 # on Windoze status may be 256
+        $openssl{'exe'} = "";
         print $STR{WARN}, "004: perl returned status: '$status' ('" . ($status>>8) . "')\n";
             # no other warning here, see "some checks are missing" later,
             # this is to avoid bothering the user with warnings, when not used
@@ -1895,8 +1895,8 @@ sub _init_openssl       {
     # openssl executable only requrired for +cipher with --ciphermode=openssl
     # or for advanced check commands
     trace("_init_openssl() {");
-    $cmd{'openssl'} = _init_opensslexe();       # warnings already printed if empty
-    $cmd{'version'} = OCfg::get_openssl_version($cmd{'openssl'});
+    $openssl{'exe'}     = _init_opensslexe();   # warnings already printed if empty
+    $openssl{'version'} = OCfg::get_openssl_version($openssl{'exe'});
 
     if (not defined $cfg{'ca_path'}) {          # not passed as option, use default
         $cfg{'ca_path'} = _init_openssldir();   # warnings already printed if empty
@@ -1973,7 +1973,7 @@ sub _init_checks_val    {
         $checks{'sni'}      ->{val} = $text{'na_sni'}           if (not _is_cfg_use('sni'));
         $checks{'certfqdn'} ->{val} = $text{'na_sni'}           if (not _is_cfg_use('sni'));
         $checks{'heartbeat'}->{val} = $text{'na_tlsextdebug'}   if (not _is_cfg_use('extdebug'));
-    if (1 > $cmd{'extopenssl'}) {
+    if (1 > $openssl{'external'}) {
         foreach my $key (qw(sernumber len_sigdump len_publickey modulus_exp_1 modulus_exp_65537 modulus_exp_oldssl modulus_size_oldssl)) {
             $checks{$key}   ->{val} = $text{'na_openssl'};
         }
@@ -2637,8 +2637,8 @@ sub _useopenssl     {
     # TODO: $args .= "-curves " . join(":", @{$cfg{'ciphercurves'}});
     # do not use SSLinfo::do_openssl() here because it is a performance culprit
     # due to its compatibility for openssl 3.x
-    trace1("_useopenssl: echo | $cmd{'timeout'} $cfg{'timeout'} $cmd{'openssl'} s_client $args -connect $host:$port 2>&1");
-    my $data = qx(echo | $cmd{'timeout'} $cfg{'timeout'} $cmd{'openssl'} s_client $args -connect $host:$port 2>&1);
+    trace1("_useopenssl: echo | $openssl{'timeout'} $cfg{'timeout'} $openssl{'exe'} s_client $args -connect $host:$port 2>&1");
+    my $data = qx(echo | $openssl{'timeout'} $cfg{'timeout'} $openssl{'exe'} s_client $args -connect $host:$port 2>&1);
 
     # we may get for failure:
     #   New, (NONE), Cipher is (NONE)
@@ -3068,7 +3068,7 @@ sub ciphers_prot_openssl {
                 OCfg::warn("411: checked $ssl cipher '$c' does not match returned cipher '$supported'");
             }
         }
-        if (($c =~ /^(?:TLS(?:13)?)/) and (3 gt $cmd{'version'})) { ## no critic qw(ValuesAndExpressions::ProhibitMismatchedOperators)
+        if (($c =~ /^(?:TLS(?:13)?)/) and (3 gt $openssl{'version'})) { ## no critic qw(ValuesAndExpressions::ProhibitMismatchedOperators)
                 # NOTE: Perl 5.9's "version" module would be more accurate for "gt"
                 # some older OpenSSL 0.9x, 1.x are picky with modern cipher names
                 # operator "gt" can compare x.y.z too, see "man perldata";
@@ -3558,7 +3558,7 @@ sub check_nextproto {
         # TODO: need to check if ($cfg{'socket_reuse'} > 0); then do not call do_ssl_free
         SSLinfo::do_ssl_free($ctx, $ssl, $socket);
         #{
-        #TODO: if ($cfg(extopenssl) > 0)
+        #TODO: if (0 < $cfg(external))
         #my $data = SSLinfo::do_openssl("s_client -alpn $proto -connect", $host, $port, "");
         #my $np = grep{/^ALPN protocol:.*/} split("\n", $data);
         #my $data = SSLinfo::do_openssl("s_client -nextprotoneg $proto -connect", $host, $port, "");
@@ -4090,7 +4090,7 @@ sub checksizes      {
         #       than 20 octets. It should also be not a negative number.
         # It's assumed that a octet equals one byte.
 
-    if ($cmd{'extopenssl'} == 1) {
+    if (1 == $openssl{'external'}) {
         # TODO: find a better way to do this ugly check
         $value = $data{'modulus_len'}->{val}($host);
         $checks{'len_publickey'}->{val} = (($value =~ m/^\s*$/) ? 0 : $value);
@@ -5714,7 +5714,7 @@ sub printciphers_dh_openssl {
     # check if openssl is available must be done in caller
     my ($legacy, $host, $port) = @_;
     trace("printciphers_dh_openssl($legacy, $host, $port) {");
-    if ($cmd{'version'} lt "1.0.2") {   # yes Perl can do this check
+    if ($openssl{'version'} lt "1.0.2") {   # yes Perl can do this check
         require SSLhello;   # to parse output of '-msg'; ok here, as Perl handles multiple includes proper
             # SEE Note:Stand-alone
     }
@@ -6157,7 +6157,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.168");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.169");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6196,20 +6196,20 @@ sub printversion        {
 
     $SSLinfo::verbose = 0;  # do not set here; will not be used later
     print "= openssl =";
-    print "    external executable              " . (($cmd{'openssl'} eq "")  ? "<<executable not found>>" : $cmd{'openssl'});
-    print "    external executable (TLSv1.3)    " . (($cmd{'openssl3'} eq "") ? "<<executable not found>>" : $cmd{'openssl3'});
+    print "    external executable              " . (("" eq $openssl{'exe'})  ? "<<executable not found>>" : $openssl{'exe'});
+    print "    external executable (TLSv1.3)    " . (("" eq $openssl{'exe3'}) ? "<<executable not found>>" : $openssl{'exe3'});
     print "    external executable version      " . SSLinfo::do_openssl('version', '', '', '');
-    print "    used environment variable (name) " . $cmd{'envlibvar'};
-   #print "    used environment variable 3(name)" . $cmd{'envlibvar3'};
-    print "    environment variable (content)   " . ($ENV{$cmd{'envlibvar'}} || $STR{UNDEF});
-    print "    path to shared libraries         " . join(" ", @{$cmd{'libs'}});
-    if (scalar @{$cmd{'libs'}} > 0) {
+    print "    used environment variable (name) " . $openssl{'envlibvar'};
+   #print "    used environment variable 3(name)" . $openssl{'envlibvar3'};
+    print "    environment variable (content)   " . ($ENV{$openssl{'envlibvar'}} || $STR{UNDEF});
+    print "    path to shared libraries         " . join(" ", @{$openssl{'libs'}});
+    if (0 < scalar @{$openssl{'libs'}}) {
         foreach my $l (qw(libcrypto.a libcrypto.so libssl.a libssl.so)) {
-           foreach my $p (@{$cmd{'libs'}}) {
+           foreach my $p (@{$openssl{'libs'}}) {
                my $lib = "$p/$l";
                   $lib = "<<$p/$l not found>>" if (! -e $lib);
                print "    library                          " . $lib;
-               if ($cfg{'verbose'} > 1) {
+               if (1 < $cfg{'verbose'}) {
                    next if not -e "$lib";
                    print "#   strings '$lib' | grep 'part of OpenSSL')";
                    print   qx(strings "$lib" | grep 'part of OpenSSL');
@@ -6510,17 +6510,17 @@ while ($#argv >= 0) {
         if ($typ =~ m/^CFG/)        { _set_cfg(       $typ, $arg);  }
            # backward compatibility removed to allow mixed case texts;
            # until 16.01.31 lc($arg) was used for pre 14.10.13 compatibility
-        if ($typ eq 'LD_ENV')       { $cmd{'envlibvar'}   = $arg;   }
-        if ($typ eq 'LD_ENV3')      { $cmd{'envlibvar3'}  = $arg;   }
-        if ($typ eq 'OPENSSL')      { $cmd{'openssl'}     = $arg;   }
-        if ($typ eq 'OPENSSL3')     { $cmd{'openssl3'}    = $arg;   }
+        if ($typ eq 'LD_ENV')       { $openssl{'envlibvar'} = $arg; }
+        if ($typ eq 'LD_ENV3')      { $openssl{'envlibvar3'}= $arg; }
+        if ($typ eq 'OPENSSL')      { $openssl{'exe'}     = $arg;   }
+        if ($typ eq 'OPENSSL3')     { $openssl{'exe3'}    = $arg;   }
         if ($typ eq 'OPENSSL_CNF')  { $cfg{'openssl_cnf'} = $arg;   }
         if ($typ eq 'OPENSSL_FIPS') { $cfg{'openssl_fips'}= $arg;   }
         if ($typ eq 'VERBOSE')      { $cfg{'verbose'}     = $arg;   }
         if ($typ eq 'DO')           { push(@{$cfg{'do'}},   $arg);  } # treat as command,
-        if ($typ eq 'EXE')          { push(@{$cmd{'path'}}, $arg);  }
-        if ($typ eq 'LIB')          { push(@{$cmd{'libs'}}, $arg);  }
-        if ($typ eq 'CALL')         { push(@{$cmd{'call'}}, $arg);  }
+        if ($typ eq 'EXE')          { push(@{$openssl{'path'}}, $arg);  }
+        if ($typ eq 'LIB')          { push(@{$openssl{'libs'}}, $arg);  }
+        if ($typ eq 'CALL')         { push(@{$openssl{'call'}}, $arg);  }
         if ($typ eq 'SEP')          { $text{'separator'}  = $arg;   }
         if ($typ eq 'OPT')          { $cfg{'sclient_opt'}.= " $arg";}
         if ($typ eq 'TIMEOUT')      { $cfg{'timeout'}     = $arg;   }
@@ -6985,10 +6985,10 @@ while ($#argv >= 0) {
     if ($arg eq  '--openssl3')          { $typ = 'OPENSSL3';        }
     if ($arg =~  '--opensslco?nf')      { $typ = 'OPENSSL_CNF';     }
     if ($arg eq  '--opensslfips')       { $typ = 'OPENSSL_FIPS';    }
-    if ($arg eq  '--extopenssl')        { $cmd{'extopenssl'}= 1;    }
-    if ($arg eq  '--noopenssl')         { $cmd{'extopenssl'}= 0;    }
-    if ($arg eq  '--opensslsclient')    { $cmd{'extsclient'}= 1;    }
-    if ($arg eq  '--noopensslsclient')  { $cmd{'extsclient'}= 0;    }
+    if ($arg eq  '--extopenssl')        { $openssl{'external'} = 1; }
+    if ($arg eq  '--noopenssl')         { $openssl{'external'} = 0; }
+    if ($arg eq  '--opensslsclient')    { $openssl{'sclient'}  = 1; }
+    if ($arg eq  '--noopensslsclient')  { $openssl{'sclient'}  = 0; }
     if ($arg eq  '--alpn')              { _set_cfg_use('alpn',   1);}
     if ($arg eq  '--noalpn')            { _set_cfg_use('alpn',   0);}
     if ($arg eq  '--npn')               { _set_cfg_use('npn',    1);}
@@ -7570,17 +7570,17 @@ if (0 == $cfg{'exec'})  {
     # executable are located in the same directoy, therefore the directoy given
     # with  --lib will be added to the PATH environment variable too, it should
     # not harm.
-    if (($#{$cmd{'path'}} + $#{$cmd{'libs'}}) > -2) { # any of these is used
+    if (($#{$openssl{'path'}} + $#{$openssl{'libs'}}) > -2) { # any of these is used
         _vprint("calling $0 ...");
         #ENV{OPENSSL} no need to set again if already done when called
         my $chr = ($ENV{PATH} =~ m/;/) ? ";" : ":"; # set separator character (lazy)
-        my $lib = $ENV{$cmd{envlibvar}};            # save existing LD_LIBRARY_PATH
-        $ENV{PATH} = join($chr, @{$cmd{'path'}}, $ENV{PATH})  if ($#{$cmd{'path'}} >= 0); ## no critic qw(Variables::RequireLocalizedPunctuationVars)
-        $ENV{PATH} = join($chr, @{$cmd{'libs'}}, $ENV{PATH})  if ($#{$cmd{'libs'}} >= 0); ## no critic qw(Variables::RequireLocalizedPunctuationVars)
-        $ENV{$cmd{envlibvar}}  = join($chr, @{$cmd{'libs'}})  if ($#{$cmd{'libs'}} >= 0); ## no critic qw(Variables::RequireLocalizedPunctuationVars
-        $ENV{$cmd{envlibvar}} .= $chr . $lib if ($lib);
-        _vprint("exec: envlibvar=$cmd{envlibvar}");
-        _vprint("exec: $cmd{envlibvar}=" . ($ENV{$cmd{envlibvar}} || "")); # ENV may not exist
+        my $lib = $ENV{$openssl{envlibvar}};        # save existing LD_LIBRARY_PATH
+        $ENV{PATH} = join($chr, @{$openssl{'path'}}, $ENV{PATH})  if ($#{$openssl{'path'}} >= 0); ## no critic qw(Variables::RequireLocalizedPunctuationVars)
+        $ENV{PATH} = join($chr, @{$openssl{'libs'}}, $ENV{PATH})  if ($#{$openssl{'libs'}} >= 0); ## no critic qw(Variables::RequireLocalizedPunctuationVars)
+        $ENV{$openssl{envlibvar}}  = join($chr, @{$openssl{'libs'}})  if ($#{$openssl{'libs'}} >= 0); ## no critic qw(Variables::RequireLocalizedPunctuationVars
+        $ENV{$openssl{envlibvar}} .= $chr . $lib if ($lib);
+        _vprint("exec: envlibvar=$openssl{envlibvar}");
+        _vprint("exec: $openssl{envlibvar}=" . ($ENV{$openssl{envlibvar}} || "")); # ENV may not exist
         _vprint("exec: PATH=$ENV{PATH}");
         _vprint("exec: $0 +exec " . join(" ", @ARGV));
         _vprint("################################################") if _is_cfg_out('traceARG');
@@ -7660,7 +7660,7 @@ _check_functions()  if (not $test and (0 < $check + $info + $do_checks + _is_cfg
 
 #| check for proper openssl support
 #| -------------------------------------
-_vprint("  check openssl capabilities for '$cmd{'openssl'}'");
+_vprint("  check openssl capabilities for '$openssl{'exe'}'");
 _check_openssl();
      # openssl is used with option  --ciphermode=openssl  (most commands)
      # or for any +info or +check command, even the individual ones like +cn
@@ -7705,9 +7705,9 @@ _vprint("  initialise SSLinfo, SSLhello");
     $SSLinfo::prefix_verbose    = "$STR{'INFO'}  SSLinfo: ";
 #   $SSLinfo::prefix_trace      = ""; # set in module
     $SSLinfo::linux_debug       = $cfg{'linux_debug'};
-    $SSLinfo::use_openssl       = $cmd{'extopenssl'};
-    $SSLinfo::use_sclient       = $cmd{'extsclient'};
-    $SSLinfo::openssl           = $cmd{'openssl'};
+    $SSLinfo::use_openssl       = $openssl{'external'};
+    $SSLinfo::use_sclient       = $openssl{'sclient'};
+    $SSLinfo::openssl           = $openssl{'exe'};
     $SSLinfo::use_SNI           = $cfg{'use'}->{'sni'};
     $SSLinfo::use_alpn          = $cfg{'use'}->{'alpn'};
     $SSLinfo::use_npn           = $cfg{'use'}->{'npn'};
@@ -8024,7 +8024,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             OCfg::warn("405: option '--ciphermode=', not supported for '+cipher-dh'; option ignored");
             $cfg{'ciphermode'} = "intern";
         }
-        if (0 >= $cmd{'extopenssl'}) {   # TODO: as long as openssl necessary
+        if (0 >= $openssl{'external'}) {   # TODO: as long as openssl necessary
             OCfg::warn("408: OpenSSL disabled using '--no-openssl', can't check DH parameters; target ignored");
             next;
         }
@@ -8038,7 +8038,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             # get ciphers from openssl for any --ciphermode=
             # TODO: see CIPHER_RANGE also
             require SSLinfo;    # FIXME: dirty hack until we have lib/SSLtool.pm
-            $SSLinfo::openssl = $cmd{'openssl'};
+            $SSLinfo::openssl = $openssl{'exe'};
             @{$cfg{'cipher'}} = map({Ciphers::get_key($_)||"";} SSLinfo::cipher_openssl("@{$cfg{'cipher'}}"));
             trace(" openssl ciphers: " . scalar @{$cfg{'cipher'}});
         }
@@ -8155,7 +8155,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         _trace_time("  connection open.");
         my @errtxt = SSLinfo::errors($host, $port);
         if (0 < (grep{/\*\*ERROR/} @errtxt)) {
-            OCfg::warn("207: Errors occurred when using '$cmd{'openssl'}', some results may be wrong; errors ignored");
+            OCfg::warn("207: Errors occurred when using '$openssl{'exe'}', some results may be wrong; errors ignored");
             OCfg::hint("207: use '--v' to show more information");
             # do not print @errtxt because of multiple lines not in standard format
         }
@@ -8220,7 +8220,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     OUsr::pre_print();
 
     if (0 < $check) {
-        OCfg::warn("208: No openssl, some checks are missing") if (($^O =~ m/MSWin32/) and ($cmd{'extopenssl'} == 0));
+        OCfg::warn("208: No openssl, some checks are missing") if (($^O =~ m/MSWin32/) and (0 == $openssl{'external'}));
     }
 
     # for debugging only
@@ -8960,7 +8960,7 @@ Here's an overview of the used global variables.
 
 Data structures with (mainly) static data:
 
-    %cmd        - configuration for external openssl command
+    %openssl    - configuration for external openssl command
     %text       - configuration for message texts
     %ciphers    - definition of our cipher suites
     %shorttexts - short texts (labels) for %data and %checks
@@ -9153,7 +9153,7 @@ Known (9/2020) variables and texts with potential information disclosure:
     cfg{RC-ARGV}
     cfg{RC-FILE}
     cfg{regex}->{anon_output}
-    cmd{openssl}
+    openssl{openssl}
 
 
 =head2 Note:ignore-out
