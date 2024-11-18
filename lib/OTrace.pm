@@ -41,7 +41,7 @@ use Data::Dumper qw(Dumper);
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_trace      = "@(#) OTrace.pm 3.43 24/09/06 21:24:04";
+my  $SID_trace      = "@(#) OTrace.pm 3.44 24/11/18 01:29:47";
 our $VERSION        = "24.09.24";
 
 our $prefix_trace   = "#". __PACKAGE__ . ":";
@@ -793,7 +793,7 @@ sub target_show {
 } # target_show
 
 sub init_show   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
-    #? print important content of %cfg and %cmd hashes
+    #? print important content of %cfg and %openssl hashes
     #? more output if 1<trace; full output if 2<trace
     return if (0 >= $cfg{'trace'});
     local $\ = "\n";
@@ -853,10 +853,10 @@ sub init_show   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         _pline("SSLinfo }");
     }
 
-    _pline("%cmd {");
-    foreach my $key (sort(keys %::cmd)) { _ptype(\%::cmd, $key); }
+    _pline("%openssl {");
+    foreach my $key (sort(keys %::openssl)) { _ptype(\%::openssl, $key); }
     _p_k_v("# extopenssl", "1 # use openssl to check ciphers");
-    _pline("%cmd }");
+    _pline("%openssl }");
 
     if (1 < $cfg{'trace'}) {    # full information
         _pline("complete %cfg {");
@@ -1228,7 +1228,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.43 2024/09/06
+3.44 2024/11/18
 
 =head1 AUTHOR
 
