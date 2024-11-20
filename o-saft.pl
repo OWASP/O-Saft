@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.170 24/11/20 11:07:33"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.171 24/11/20 11:17:30"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -379,7 +379,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.170"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.171"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6157,7 +6157,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.170");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.171");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6457,7 +6457,7 @@ _init_all();   # initialise defaults in %checks (score, val); parts be done agai
 # we do not use any argument as key drectly, but always compare with the keys
 # and assign values using keys literally, like: $cfg{'key'} = $arg .
 
-_trace_info("ARGS0   - read command-line arguments");
+_trace_info("ARGS0   - command-line arguments start");
 my $typ = 'HOST';
 push(@argv, "");# need one more argument otherwise last --KEY=VALUE will fail
 while ($#argv >= 0) {
@@ -7554,7 +7554,7 @@ $ENV{'OPENSSL_FIPS'} = $cfg{'openssl_fips'} if (defined $cfg{'openssl_fips'}); #
 #_init_openssldir();    # called later for performance reasons
 trace_args();           # all arguments parsed; print with --traceARG
 _vprint_me();           # VERSION, ARGV, current timestamp
-_trace_info("ARGS9   - options and arguments completed");
+_trace_info("ARGS9   - command-line arguments end");
 
 OUsr::pre_exec();
 
