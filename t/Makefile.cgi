@@ -6,7 +6,7 @@
 #?      make help.test.cgi
 #?
 #? VERSION
-#?      @(#) Makefile.cgi 3.5 24/07/01 16:28:51
+#?      @(#) Makefile.cgi 3.6 24/11/20 11:08:27
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cgi  = targets for testing '$(SRC.cgi)' (mainly invalid arguments)
 
-O-SID.cgi          := 3.5
+O-SID.cgi          := 3.6
 O-SELF.cgi         := t/Makefile.cgi
 ALL.includes       += $(O-SELF.cgi)
 ALL.inc.type       += cgi
@@ -260,8 +260,8 @@ ALL.cgi.badchr  = $(shell awk -F: '/^testcmd-cgi-chr-/ {arr[$$1]=1}$(_EXE.print_
 #       not match pattern rule testarg-cgi-%
 testarg-cgi_with%:          EXE.pl      = ../$(SRC.cgi)
 testarg-cgi_with%:          TEST.init   =
-testarg-cgi_with-header:    TEST.init  += --cgi --exit=ARGS --with_HTTP_header --cgi-header
-testarg-cgi_without-header: TEST.init  += --cgi --exit=ARGS --with_HTTP_header --cgi-no-header
+testarg-cgi_with-header:    TEST.init  += --cgi --exit=ARGS1 --with_HTTP_header --cgi-header
+testarg-cgi_without-header: TEST.init  += --cgi --exit=ARGS1 --with_HTTP_header --cgi-no-header
 
 ALL.cgi.header  = testarg-cgi_with-header testarg-cgi_without-header
 
@@ -313,7 +313,7 @@ test.cgi.goodhosts:$(ALL.cgi.goodhosts)
 _TEST.cgi.log   = $(TEST.logdir)/test.cgi.log-$(TEST.today)
 # use 'make -i ...' because we have targets which fail, which is intended
 $(_TEST.cgi.log):
-	@echo "# Makefile.cgi 3.5: $(MAKE) test.cgi.log" > $@
+	@echo "# Makefile.cgi 3.6: $(MAKE) test.cgi.log" > $@
 	@$(MAKE) -i test.cgi >> $@ 2>&1
 
 # not yet needed: test.log-compare-hint
