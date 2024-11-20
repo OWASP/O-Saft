@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.169 24/11/18 01:28:44"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.170 24/11/20 11:07:33"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -379,7 +379,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.169"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.170"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6157,7 +6157,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.169");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.170");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6457,7 +6457,7 @@ _init_all();   # initialise defaults in %checks (score, val); parts be done agai
 # we do not use any argument as key drectly, but always compare with the keys
 # and assign values using keys literally, like: $cfg{'key'} = $arg .
 
-_vprint("read command-line arguments");
+_trace_info("ARGS0   - read command-line arguments");
 my $typ = 'HOST';
 push(@argv, "");# need one more argument otherwise last --KEY=VALUE will fail
 while ($#argv >= 0) {
@@ -7454,13 +7454,15 @@ while ($#argv >= 0) {
 
 } # while options and arguments
 
+_trace_info("ARGS1   - options and arguments read");
+
+local $\ = "\n";
+
 # exit if ($#{$cfg{'do'}} < 0); # no exit here, as we want some --v output
 
 #| prepare %cfg according options
 #| -------------------------------------
-_vprint("check command-line arguments");
-
-local $\ = "\n";
+_trace_info("ARGS2   - check options and arguments");
 
 # TODO: use cfg{'targets'} for proxy
 if ($cfg{'proxyhost'} ne "" && 0 == $cfg{'proxyport'}) {
@@ -7469,7 +7471,7 @@ if ($cfg{'proxyhost'} ne "" && 0 == $cfg{'proxyport'}) {
     printusage_exit("$q--proxyhost=$cfg{'proxyhost'}$q requires also '--proxyport=NN'");
 }
 $legacy  = $cfg{'legacy'};
-if (_is_cfg_do('cipher') and (0 == $#{$cfg{'do'}})) {
+if (_is_cfg_do('cipher') and (0 == scalar(@{$cfg{'do'}}))) {
     # +cipher does not need DNS and HTTP, may improve perfromance
     # HTTP may also cause errors i.e. for STARTTLS
     $cfg{'use'}->{'https'}  = 0;
@@ -7552,7 +7554,7 @@ $ENV{'OPENSSL_FIPS'} = $cfg{'openssl_fips'} if (defined $cfg{'openssl_fips'}); #
 #_init_openssldir();    # called later for performance reasons
 trace_args();           # all arguments parsed; print with --traceARG
 _vprint_me();           # VERSION, ARGV, current timestamp
-_trace_info("ARGS    - options and arguments completed");
+_trace_info("ARGS9   - options and arguments completed");
 
 OUsr::pre_exec();
 
