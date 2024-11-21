@@ -6,7 +6,7 @@
 #?      make help.test.exit
 #?
 #? VERSION
-#?      @(#) Makefile.exit 3.4 24/07/27 19:34:10
+#?      @(#) Makefile.exit 3.5 24/11/21 10:20:56
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.exit = targets for testing '$(SRC.pl)' --exit= option
 
-O-SID.exit         := 3.4
+O-SID.exit         := 3.5
 O-SELF.exit        := t/Makefile.exit
 ALL.includes       += $(O-SELF.exit)
 ALL.inc.type       += exit
@@ -52,14 +52,16 @@ HELP.test.exit.all  = # no special documentation yet
 #    $(EXE.pl) --header --no-rc --help=exit | awk '/^--exit/{print $1}'
 LIST.o-saft.pl--exit := \
 	--exit=invalid_label_to_show_failed-status \
-	--exit=BEGIN0   --exit=BEGIN9   --exit=INIT0    --exit=INIT --exit=INIT9 \
-	--exit=RCFILE0  --exit=RCFILE9  --exit=CONF0    --exit=CONF --exit=CONF9 \
+	--exit=BEGIN0   --exit=BEGIN9 \
+	--exit=INIT0    --exit=INIT     --exit=INIT9 \
+	--exit=RCFILE0  --exit=RCFILE9  --exit=CONF0    --exit=CONF9 \
+	--exit=ARGS0    --exit=ARGS1    --exit=ARGS2    --exit=ARGS9 \
 	--exit=LOAD0    --exit=LOAD9    --exit=CHECK0   --exit=CHECK9 \
-	--exit=WARN     --exit=ARGS     --exit=MAIN0    --exit=TARGETS0 \
-	--exit=HOST0    --exit=DNS0     --exit=DNS9     --exit=CONN0 --exit=CONN9 \
+	--exit=WARN     --exit=MAIN0    --exit=TARGETS0 --exit=HOST0 \
+	--exit=DNS0     --exit=DNS9     --exit=CONN0    --exit=CONN9 \
 	--exit=CIPHER0  --exit=SCAN     --exit=DH       --exit=CIPHER9 \
 	--exit=DATA0    --exit=DATA9    --exit=PREPARE0 --exit=PREPARE9 \
-	--exit=PRINT0   --exit=PRINT9   --exit=HOST9    --exit=TARGETS0 --exit=MAIN9
+	--exit=PRINT0   --exit=PRINT9   --exit=HOST9    --exit=TARGETS9 --exit=MAIN9
 
 # all targets are generated, see Makefile.gen; only one program: SRC.pl
 
