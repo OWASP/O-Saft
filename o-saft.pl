@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.171 24/11/20 11:17:30"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.172 24/11/22 16:26:51"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -379,7 +379,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.171"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.172"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1473,7 +1473,8 @@ sub _check_functions    {
 
     trace(" check if Net::SSLeay has buggy do_httpx3() ...");
     if ($version_ssleay <= 1.94) {
-        if (_is_cfg_use('http')) {
+        if (_is_cfg_use('http') and not _is_cfg_do('cipher')) {
+            # +cipher* do not allow other commands, hence no warning
             OCfg::warn("138: Net::SSLeay $version_ssleay <= 1.94; may have buggy get_http() which results in missing data for some +check and +info commands");
         }
     } else {
@@ -6157,7 +6158,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.171");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.172");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7458,20 +7459,48 @@ _trace_info("ARGS1   - options and arguments read");
 
 local $\ = "\n";
 
+#| early exit with help or usage, internal information commands
+#| -------------------------------------
 # exit if ($#{$cfg{'do'}} < 0); # no exit here, as we want some --v output
+if ($help !~ m/^\s*$/) {
+    # Handle anything with --help* or --h .  Done after reading all arguments
+    # because some information provided by --help= contain settings from %cfg
+    _trace_info("  HELP    - OMan::man_printhelp($help)");
+    trace_arg("handle help=$help");
+    my $_err = _load_file('lib/OMan.pm', "help module");
+    warn $STR{ERROR}, "009: $_err" if ("" ne $_err);
+    OMan::man_printhelp($help);
+    exit 0;
+}
+# NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
+if (_is_cfg_do('list'))     { _vprint("  list       "); printciphers_list('list'); exit 0; }
+if (_is_cfg_do('ciphers'))  { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
+if ($test) {
+    # dirty hack: don't need some warning for +test*
+    push(@{$cfg{out}->{'warnings_no_dups'}}, qw(049 150));
+    push(@{$cfg{out}->{'warnings_printed'}}, qw(049 150));
+} else {
+    # +test* and --test* don't need a command, hence not checked here
+    # TODO: use cfg{'targets'} for proxy
+    if ($cfg{'proxyhost'} ne "" && 0 == $cfg{'proxyport'}) {
+        my $q = "'";
+        _trace_info("  USAGE   - printusage_exit(proxyport)");
+        printusage_exit("$q--proxyhost=$cfg{'proxyhost'}$q requires also '--proxyport=NN'");
+        exit 0; # never reached
+    }
+    if (0 == scalar(@{$cfg{'do'}})) {
+        _trace_info("  USAGEcmd- printusage_exit(missing command)");
+        printusage_exit("no command given");
+        exit 0; # never reached
+    }
+}
 
 #| prepare %cfg according options
 #| -------------------------------------
 _trace_info("ARGS2   - check options and arguments");
 
-# TODO: use cfg{'targets'} for proxy
-if ($cfg{'proxyhost'} ne "" && 0 == $cfg{'proxyport'}) {
-    my $q = "'";
-    _trace_info("  USAGE   -");
-    printusage_exit("$q--proxyhost=$cfg{'proxyhost'}$q requires also '--proxyport=NN'");
-}
 $legacy  = $cfg{'legacy'};
-if (_is_cfg_do('cipher') and (0 == scalar(@{$cfg{'do'}}))) {
+if (_is_cfg_do('cipher') and (1 >= scalar(@{$cfg{'do'}}))) {
     # +cipher does not need DNS and HTTP, may improve perfromance
     # HTTP may also cause errors i.e. for STARTTLS
     $cfg{'use'}->{'https'}  = 0;
@@ -7512,17 +7541,6 @@ if (_is_cfg_do('cipher_default')) {
 @{$cfg{'do'}} = sort(@{$cfg{'do'}}) if _is_ARGV('(?:--no.?rc)');
 # $cfg{'do'}} should not contain duplicate commands; SEE Note:Duplicate Commands
 @{$cfg{'commands_usr'}} = sort(@{$cfg{'commands_usr'}});  # those from RC-FILE
-
-if ($help !~ m/^\s*$/) {
-    # Handle anything with --help* or --h .  Done after reading all arguments
-    # because some information provided by --help= contain settings from %cfg
-    _trace_info("  HELP    - OMan::man_printhelp($help)");
-    trace_arg("handle help=$help");
-    my $_err = _load_file('lib/OMan.pm', "help module");
-    warn $STR{ERROR}, "009: $_err" if ("" ne $_err);
-    OMan::man_printhelp($help);
-    exit 0;
-}
 
 if (2 == @{$cfg{'targets'}}) {
     # Exactly one host defined, check if --port was also given after --host .
@@ -7657,6 +7675,7 @@ _check_modules()    if (0 < $do_checks);
 
 #| check for required functionality
 #| -------------------------------------
+# TODO TODO TODO _check_functions --> _check_ssleay und if entspr. anpassen
 _check_functions()  if (not $test and (0 < $check + $info + $do_checks + _is_cfg_do('cipher') + _need_checkprot()));
     # more detailed checks on version numbers with proper warning messages
 
@@ -7804,27 +7823,18 @@ _trace_info("CONF9   - runtime configuration end");
 
 #| now all commands which do not make a connection
 #| -------------------------------------
-_vprint("check for no connection commands");
-# +test*  are not handled herein
+# check for no connection commands
+if (_is_cfg_do('version'))      { _vprint("  version    "); printversion(); exit 0; }
+if (_is_cfg_do('libversion'))   { _vprint("  libversion "); printopenssl(); exit 0; }
+# +test*  are not handled herein, requires modules loaded in _load_modules()
 if ($test =~ m/ciphers.*regex/) { _vprint("  test regex "); OCfg::test_cipher_regex(); exit 0; }
 if ($test !~ /^\s*$/)           { _vprint("  show any   "); OTrace::test_show($test);  exit 0; }
-# internal information commands
-# NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
-if (_is_cfg_do('list'))         { _vprint("  list       "); printciphers_list('list'); exit 0; }
-if (_is_cfg_do('ciphers'))      { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
-if (_is_cfg_do('version'))      { _vprint("  version    "); printversion();       exit 0; }
-if (_is_cfg_do('libversion'))   { _vprint("  libversion "); printopenssl();       exit 0; }
-if (_is_cfg_do('quit'))         { _vprint("  quit       "); printquit();          exit 0; }
+if (_is_cfg_do('quit'))         { _vprint("  quit       "); printquit();    exit 0; }
 
 if (($cfg{'trace'} + $cfg{'verbose'}) >  0) {   # +info command is special with --v
     @{$cfg{'do'}} = @{$cfg{'cmd-info--v'}} if (@{$cfg{'do'}} eq @{$cfg{'cmd-info'}});
 }
 trace_init() if _is_trace();  # call in printquit() also!
-
-if (0 > $#{$cfg{'do'}}) {
-    trace_exit();
-    printusage_exit("no command given");
-}
 
 trace_arg("commands=@{$cfg{'do'}}");
 
@@ -7849,7 +7859,8 @@ _vprint("check target arguments");
   # could do these checks earlier (after setting defaults), but we want
   # to keep all checks together for better maintenance
 printusage_exit("no target hosts given") if ($#{$cfg{'targets'}} <= 0); # does not make any sense
-if (_is_cfg_do('cipher_openssl') or _is_cfg_do('cipher_socket')) {
+if (_is_cfg_do('cipher')) {
+    # TODO: _is_cfg_do('cipher') does not cover all +cipher* commands
     if ($#{$cfg{'done'}->{'arg_cmds'}} > 0) {
         printusage_exit("additional commands in conjunction with '+cipher' are not supported; '+" . join(" +", @{$cfg{'done'}->{'arg_cmds'}}) ."'");
     }
