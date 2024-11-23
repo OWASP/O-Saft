@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.172 24/11/22 16:26:51"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.173 24/11/23 03:09:19"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -379,7 +379,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.172"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.173"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6158,7 +6158,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.172");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.173");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7663,20 +7663,19 @@ _load_modules();
 _trace_info("  LOAD9   - load modules end");
 _trace_info("  CHECK0  - check configuration start");
 
-my $do_checks = _is_cfg_do('cipher_openssl') + _is_cfg_do('cipher_socket');
+my $_checks = _need_netinfo() + _is_cfg_do('cipher_openssl') + _is_cfg_do('cipher_socket');
 
 _vprint("  check internals");
 #| check for required module versions
 #| -------------------------------------
-_check_modules()    if (0 < $do_checks);
+_check_modules()    if $_checks;
     # --ciphermode=intern does not need these checks
     # check done after loading our own modules because they may require
     # other common Perl modules too; we may have detailed warnings before
 
 #| check for required functionality
 #| -------------------------------------
-# TODO TODO TODO _check_functions --> _check_ssleay und if entspr. anpassen
-_check_functions()  if (not $test and (0 < $check + $info + $do_checks + _is_cfg_do('cipher') + _need_checkprot()));
+_check_functions()  if $_checks;
     # more detailed checks on version numbers with proper warning messages
 
 #| check for proper openssl support
