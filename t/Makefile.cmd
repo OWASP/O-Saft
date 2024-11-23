@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 3.8 24/09/21 14:28:05
+#?      @(#) Makefile.cmd 3.9 24/11/23 14:32:04
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-O-SID.cmd          := 3.8
+O-SID.cmd          := 3.9
 O-SELF.cmd         := t/Makefile.cmd
 ALL.includes       += $(O-SELF.cmd)
 ALL.inc.type       += cmd
@@ -150,6 +150,11 @@ testcmd-cmd-+info_%.log:            EXE.log-filtercmd  = awk -F: '\
     # expected and changed lines like:
     #   Target's Master-Key:                	0CAAF5CF1....
     #   Target's TLS Session Start Time locale:	Fri Nov  4 21:17:06 2022
+
+testcmd-cmd-+info--trace%.log:      EXE.log-filtercmd  = awk -F: '\
+	(/_ssleay_socket.*GLOB/)    {sub(/GLOB(.*)/,"GLOB($(TEST.logtxt))")}\
+	(/routines:SSL_CTX_set_cipher_list/)    {$$1="$(TEST.logtxt)"}\
+	{print}'
 
 ALL.testcmd    += \
 	testcmd-cmd-+ignored-keys_ \
