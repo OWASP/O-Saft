@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 3.9 24/11/23 14:32:04
+#?      @(#) Makefile.cmd 3.10 24/12/07 17:01:40
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-O-SID.cmd          := 3.9
+O-SID.cmd          := 3.10
 O-SELF.cmd         := t/Makefile.cmd
 ALL.includes       += $(O-SELF.cmd)
 ALL.inc.type       += cmd
@@ -140,6 +140,8 @@ testcmd-cmd-+quick--tracearg_%:     TEST.args  += +quick --trace-arg
 testcmd-cmd-+check--nossltls_%:     TEST.args  += +check --nosslv2 --nosslv3 --notlsv1 --notlsv11 --notlsv12 --notlsv13 $(LIST.no-out.opt)
     #    simulates a server not responding to ciphers
 
+testcmd-cmd-+check_%.log:           EXE.log-filtercmd  = awk -F: '\
+	($$1~/max-age < certificate/)   {sub(/\(.*\+/,"(OSAFT_MAKE +")}{print}'
 testcmd-cmd-+info_%.log:            EXE.log-filtercmd  = awk -F: '\
 	BEGIN{OFS=":"} \
 	($$1!~/Target.s/)  {print;next;} \
