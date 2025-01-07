@@ -6,7 +6,7 @@
 #?      make help.test.init
 #?
 #? VERSION
-#?      @(#) Makefile.init 3.5 24/08/18 16:05:22
+#?      @(#) Makefile.init 3.6 25/01/07 18:28:29
 #?
 #? AUTHOR
 #?      19-dez-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.init = targets for testing initialisations of o-saft.pl
 
-O-SID.init         := 3.5
+O-SID.init         := 3.6
 O-SELF.init        := t/Makefile.init
 ALL.includes       += $(O-SELF.init)
 ALL.inc.type       += init
@@ -40,7 +40,7 @@ HELP-test.init.log  = same as test.init but store output in '$(TEST.logdir)/'
 HELP-testarg-init-D = individual target(s) for testing
 
 LIST.init.cmds     := \
-	+info   +ciphers   +check  +checkciphers   +protocols  +vulns  +cert +cn
+	+info   +ciphers   +check  +checkciphers   +protocols  +vulns  +pem +cn
 
 LIST.init.opt0     :=
 LIST.init.opt1     := --no-http  --no-dns --no-sni
