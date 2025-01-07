@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.177 25/01/07 22:34:45"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.178 25/01/08 00:04:00"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -379,7 +379,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.177"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.178"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -3453,23 +3453,33 @@ sub check_url       {
     # got an URI, extract host, port and URL
        $uri =~ m#^\s*(?:(?:http|ldap)s?:)?//([^/]+)(/.*)?$#;
       #  NOTE: it's ok here
+    my $port=  80;
     my $host=  $1;                          ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
     my $url =  $2 || "/";                   ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
     return "" if not defined $host;         # wrong URI may be passed
        $host=~ m#^([^:]+)(?::[0-9]{1,5})?#;
        $host=  $1;                          ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
-    my $port=  $2 || 80;  $port =~ s/^://;  ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
+    if ($type eq 'ext_constraints') {       # must be https
+       $port=  $2 || 443;   ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
+    } else {
+       $port=  $2 ||  80;   ## no critic qw(RegularExpressions::ProhibitCaptureWithoutTest)
+    }
+       $port =~ s/^://;
     # TODO: add 'Authorization:'=>'Basic ZGVtbzpkZW1v',
     # NOTE: Net::SSLeay always sets  Accept:*/*
 
     trace2("check_url: use_http= " . _is_cfg_use('http'));
     trace2("check_url: get_http($host, $port, $url)");
-    my ($response, $status, %headers) = Net::SSLeay::get_http($host, $port, $url,
-            Net::SSLeay::make_headers(
-                'Host'       => $host,
-                'Connection' => 'close',
-            )
-    );
+    my ($response, $status, %headers);
+    if ($type eq 'ext_constraints') {       # must be https
+        ($response, $status, %headers) = Net::SSLeay::get_https($host, $port, $url,
+            Net::SSLeay::make_headers('Host' => $host, 'Connection' => 'close')
+        );
+    } else {
+        ($response, $status, %headers) = Net::SSLeay::get_http($host, $port, $url,
+            Net::SSLeay::make_headers('Host' => $host, 'Connection' => 'close')
+        );
+    }
     return "<<connection to '$host:$port$url' empty reply>>";
         # FIXME: Empty reply indicates that server accepts connection; reason unknown
     trace2("check_url: STATUS= $status");
@@ -6162,7 +6172,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.177");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.178");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7476,7 +7486,7 @@ if ($help !~ m/^\s*$/) {
     OMan::man_printhelp($help);
     exit 0;
 }
-if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.177"; exit 0; }
+if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.178"; exit 0; }
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))     { _vprint("  list       "); printciphers_list('list'); exit 0; }
 if (_is_cfg_do('ciphers'))  { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
