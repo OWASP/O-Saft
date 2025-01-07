@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.175 25/01/07 13:28:48"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.176 25/01/07 19:14:57"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -379,7 +379,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.175"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.176"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6160,7 +6160,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.175");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.176");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7372,6 +7372,7 @@ while ($#argv >= 0) {
             next;
         }
         $val = lc($val);                # be greedy to allow +BEAST, +CRIME, etc.
+        # check for summary commands, see OCfg.pm
         push(@{$cfg{'done'}->{'arg_cmds'}}, $val);
         if ($val eq 'sizes')    { push(@{$cfg{'do'}}, @{$cfg{'cmd-sizes'}});   next; }
         if ($val eq 'hsts')     { push(@{$cfg{'do'}}, @{$cfg{'cmd-hsts'}});    next; }
@@ -7387,6 +7388,7 @@ while ($#argv >= 0) {
         if ($val eq 'lucky13')  { push(@{$cfg{'do'}}, @{$cfg{'cmd-lucky13'}}); next; }
         if ($val eq 'robot')    { push(@{$cfg{'do'}}, @{$cfg{'cmd-robot'}});   next; }
         if ($val eq 'sweet32')  { push(@{$cfg{'do'}}, @{$cfg{'cmd-sweet32'}}); next; }
+        if ($val =~ /cert(?:ificate)?$/) { push(@{$cfg{'do'}}, @{$cfg{'cmd-cert'}}); next; }
         if ($val =~ /tr_?02102/){ push(@{$cfg{'do'}}, qw(tr_02102+ tr_02102-));next; }
         if ($val =~ /tr_?03116/){ push(@{$cfg{'do'}}, qw(tr_03116+ tr_03116-));next; }
         #_dbx "not= @{$cfg{'commands_notyet'}}";
@@ -7472,7 +7474,7 @@ if ($help !~ m/^\s*$/) {
     OMan::man_printhelp($help);
     exit 0;
 }
-if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.175"; exit 0; }
+if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.176"; exit 0; }
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))     { _vprint("  list       "); printciphers_list('list'); exit 0; }
 if (_is_cfg_do('ciphers'))  { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
