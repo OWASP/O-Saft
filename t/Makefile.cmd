@@ -6,7 +6,7 @@
 #?      make help.test.cmd
 #?
 #? VERSION
-#?      @(#) Makefile.cmd 3.10 24/12/07 17:01:40
+#?      @(#) Makefile.cmd 3.11 25/01/07 22:15:50
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.cmd  = targets for testing '$(SRC.pl)' commands and options
 
-O-SID.cmd          := 3.10
+O-SID.cmd          := 3.11
 O-SELF.cmd         := t/Makefile.cmd
 ALL.includes       += $(O-SELF.cmd)
 ALL.inc.type       += cmd
@@ -58,7 +58,7 @@ HELP.cmd            = $(O-NL)\
 \# Examples to execute group of similar targets:$(O-NL)\
 \#    $(MAKE_COMMAND) test.pattern-+info$(O-NL)\
 \#    $(MAKE_COMMAND) test.pattern-+check$(O-NL)\
-\#    $(MAKE_COMMAND) test.pattern-+summ$(O-NL)\
+\#    $(MAKE_COMMAND) test.pattern-+summary$(O-NL)\
 \#    $(MAKE_COMMAND) test.pattern-+vuln$(O-NL)\
 \#$(O-NL)\
 \# Some of the examples above use  localhost  as hostname by default.
@@ -81,7 +81,7 @@ LIST.cmd.withtrace := +quit +info  +check
     #   +cipher - # TODO
 LIST.cmd.cmd       := $(LIST.cmd.withtrace) +quick +vulns +http +hsts +sts
 LIST.cmd.vulns     := +BEAST +CRIME +DROWN +FREAK +POODLE +logjam +lucky13 +Sloth +Sweet32
-LIST.cmd.summ      := +bsi  +EV +TR-02102+ +ocsp  +preload +protocols +fingerprints +sizes +pfs +sni
+LIST.cmd.summary   := +bsi +certificate +EV +TR-02102+ +ocsp  +preload +protocols +fingerprints +sizes +pfs +sni
 LIST.cmd.trace-opt := --tracearg --tracekey --tracetime --traceme --trace --trace=2 --v
     # --trace* options used instead --trace-*; make nicer target names
     # Note that  --tracearg is same as --traceARG is same as --trace-ARG
@@ -95,7 +95,7 @@ ifndef cmd-targets-generated
     # hence $(subst =,-,$(arg)) is used to replace = by -
 
     # target foreach command
-    $(foreach cmd, $(LIST.cmd.cmd) $(LIST.cmd.vulns) $(LIST.cmd.summ),\
+    $(foreach cmd, $(LIST.cmd.cmd) $(LIST.cmd.vulns) $(LIST.cmd.summary),\
 	$(eval _target=$(_TEST.cmd)-$(subst =,-,$(cmd))) \
 	$(eval $(_target)_%:  TEST.args += $(cmd)) \
 	$(eval ALL.testcmd  += $(_target)_) \
