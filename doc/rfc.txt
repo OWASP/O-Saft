@@ -1,5 +1,5 @@
 
-# SID	@(#) rfc.txt 1.22 24/10/24 13:58:41
+# SID	@(#) rfc.txt 1.23 25/01/07 11:55:54
 
 # number| title / description
 #------+----------------------------------------------------------------------+
@@ -159,6 +159,7 @@ url	http://tools.ietf.org/
 6125	Representation and Verification of Domain-Based Application Service (PKIX) for TLS
 6797	HTTP Strict Transport Security (HSTS)
 6962	Certificate Transparency
+9162	Certificate Transparency Version 2.0
 6979	Deterministic Usage of the Digital Signature Algorithm (DSA) and Elliptic Curve Digital Signature Algorithm (ECDSA)
 7366	Encrypt-then-MAC for TLS and DTLS
 7457	Summarizing Known Attacks on TLS and DTLS
