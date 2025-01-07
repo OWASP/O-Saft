@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.70 24/09/06 21:30:43";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.71 25/01/07 13:27:41";
 our $VERSION    =  "24.09.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -2253,7 +2253,7 @@ our %cfg = (    # main data structure for configuration
                        ],
     'need-NL'       => [        # commands which need NL when printed
                                 # they should be available with +info --v only
-                        qw(certificate extensions pem pubkey sigdump text
+                        qw(extensions pem pubkey sigdump text
                          chain chain_verify ocsp_response_data)
                        ],
 
@@ -3567,7 +3567,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.70"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.71"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3613,7 +3613,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.70 2024/09/06
+3.71 2025/01/07
 
 =head1 AUTHOR
 
