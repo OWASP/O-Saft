@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 3.6 25/01/07 11:46:48
+# SID	@(#) glossary.txt 3.7 25/01/07 11:50:19
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -523,6 +523,7 @@ PC	Policy Constraints (certificate extension)
 PCBC	Propagating Cipher Block Chaining
 PCFB	Periodic Cipher Feedback Mode
 PCT	Private Communications Transport
+PDS	PKI Disclosure Statements (part of EV TLS certificates)
 PEM	Privacy Enhanced Mail
 PES	Proposed Encryption Standard
 PFS	Perfect Forward Secrecy
