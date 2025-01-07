@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.71 25/01/07 13:27:41";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.72 25/01/07 19:14:36";
 our $VERSION    =  "24.09.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -2238,6 +2238,20 @@ our %cfg = (    # main data structure for configuration
                         qw(after dates crl cipher_rc4 renegotiation
                            tr_02102+ tr_02102- tr_03116+ tr_03116-
                        )],
+    'cmd-cert'      => [        # commands for +certificate
+                        qw(
+                         certversion cn subject subject_hash issuer issuer_hash
+                         serial fingerprint fingerprint_type fingerprint_hash
+                         fingerprint_sha2   fingerprint_sha1 fingerprint_md5
+                         before after dates email signame sigkey_len sigkey_value
+                         pubkey_algorithm modulus_len pubkey_value modulus_exponent
+                         aux trustout extensions ext_authority ext_authorityid
+                         ext_cps ext_cps_cps ext_cps_policy ext_cps_notice
+                         ext_crl ext_constraints ext_certtype
+                         ext_subjectkeyid ext_keyusage ext_extkeyusage altname 
+                         cert_type ocspid ocsp_uri ocsp_public_hash selfsigned
+                         chain chain_verify verify error_verify error_depth
+                       )],
     'cmd-pfs'       => [qw(cipher_pfs cipher_pfsall session_random)],   # commands for +pfs
     'cmd-sni'       => [qw(sni hostname certfqdn)],  # commands for +sni
     'cmd-sni--v'    => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
@@ -3567,7 +3581,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.71"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.72"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3613,7 +3627,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.71 2025/01/07
+3.72 2025/01/07
 
 =head1 AUTHOR
 
