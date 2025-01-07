@@ -31,13 +31,13 @@
 #?      This description will be used with  --help=commands  option and in
 #?      the GUI.
 #? VERSION
-#?      @(#) .o-saft.pl 1.115 24/09/06 18:39:20
+#?      @(#) .o-saft.pl 1.116 25/01/07 13:37:05
 #? AUTHOR
 #?      13-dec-13 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-_SID.rc = 1.115; # our own SID required for Makefile and some tools
+_SID.rc = 1.116; # our own SID required for Makefile and some tools
 
 ###
 ### force to use private openssl
@@ -207,7 +207,7 @@ _SID.rc = 1.115; # our own SID required for Makefile and some tools
 ### redefine command +info
 ###
 ##? Redefinition of internal command with fixed instead of sorted order.
---cfg_cmd=info=certversion cn subject subject_hash issuer issuer_hash serial fingerprint fingerprint_type fingerprint_hash fingerprint_sha2 fingerprint_sha1 fingerprint_md5 before after dates email certificate sigdump signame sigkey_len sigkey_value pubkey pubkey_algorithm modulus_len pubkey_value modulus_exponent aux trustout ocspid ocsp_uri ocsp_public_hash ocsp_subject_hash selfsigned chain chain_verify extensions altname verify_altname verify_hostname verify error_verify compression expansion heartbeat master_secret resumption_psk resumption renegotiation srp krb5 psk_identity psk_hint ocsp_response alpns npns alpn npn next_protocols public_key_len dh_parameter master_key session_id session_id_ctx session_ticket session_lifetime session_startdate session_starttime fallback_protocol sslversion http_status http_location http_refresh http_sts https_server https_status https_location https_refresh https_content_enc https_transfer_enc https_alerts https_sts hsts_maxage hsts_subdom hsts_preload http_https hsts_is301 hsts_is30x hsts_redirect hsts_fqdn hsts_httpequiv hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxage18 sts_maxagexy https_pins info
+--cfg_cmd=info=certversion cn subject subject_hash issuer issuer_hash serial fingerprint fingerprint_type fingerprint_hash fingerprint_sha2 fingerprint_sha1 fingerprint_md5 before after dates email pem sigdump signame sigkey_len sigkey_value pubkey pubkey_algorithm modulus_len pubkey_value modulus_exponent aux trustout ocspid ocsp_uri ocsp_public_hash ocsp_subject_hash selfsigned chain chain_verify extensions altname verify_altname verify_hostname verify error_verify compression expansion heartbeat master_secret resumption_psk resumption renegotiation srp krb5 psk_identity psk_hint ocsp_response alpns npns alpn npn next_protocols public_key_len dh_parameter master_key session_id session_id_ctx session_ticket session_lifetime session_startdate session_starttime fallback_protocol sslversion http_status http_location http_refresh http_sts https_server https_status https_location https_refresh https_content_enc https_transfer_enc https_alerts https_sts hsts_maxage hsts_subdom hsts_preload http_https hsts_is301 hsts_is30x hsts_redirect hsts_fqdn hsts_httpequiv hsts_sts hsts_location hsts_refresh sts_maxage sts_subdom sts_maxage0d sts_maxage1d sts_maxage1m sts_maxage1y sts_maxage18 sts_maxagexy https_pins info
 # useless for +info ('cause aliases): issuer issuer_hash
 # included in +info to be printed with --v :
 #      certificate sigdump pubkey extensions ext_*
