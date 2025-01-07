@@ -18,7 +18,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odata  =  "@(#) OData.pm 3.31 24/09/06 16:20:11";
+my  $SID_odata  =  "@(#) OData.pm 3.32 25/01/07 23:18:42";
 our $VERSION    =  "24.09.24";
 
 use Exporter qw(import);
@@ -209,6 +209,7 @@ our %data   = (         # connection and certificate details
     'ext_extkeyusage'   => {'val' => sub { __SSLinfo('ext_extkeyusage',    $_[0], $_[1])}, 'txt' => "Certificate extensions Extended Key Usage"},
     'ext_certtype'      => {'val' => sub { __SSLinfo('ext_certtype',       $_[0], $_[1])}, 'txt' => "Certificate extensions Netscape Cert Type"},
     'ext_issuer'        => {'val' => sub { __SSLinfo('ext_issuer',         $_[0], $_[1])}, 'txt' => "Certificate extensions Issuer Alternative Name"},
+    'ext_qcstatements'  => {'val' => sub { __SSLinfo('ext_qcstatements',   $_[0], $_[1])}, 'txt' => "Certificate extensions qcStatements (QWAC)"},
     'ocsp_uri'          => {'val' => sub { SSLinfo::ocsp_uri(              $_[0], $_[1])}, 'txt' => "Certificate OCSP Responder URL"},
     'ocspid'            => {'val' => sub { __SSLinfo('ocspid',             $_[0], $_[1])}, 'txt' => "Certificate OCSP Hashes"},
     'ocsp_subject_hash' => {'val' => sub { __SSLinfo('ocsp_subject_hash',  $_[0], $_[1])}, 'txt' => "Certificate OCSP Subject Hash"},
@@ -716,6 +717,7 @@ our %shorttexts = (
     'ext_extkeyusage'=>"Extended Key Usage",
     'ext_certtype'  => "Netscape Cert Type",
     'ext_issuer'    => "Issuer Alternative Name",
+    'ext_qcstatements'  => "qcStatements",
     'fallback_protocol' => "Fallback SSL Protocol",
     'len_pembase64' => "Size PEM (base64)",
     'len_pembinary' => "Size PEM (binary)",
@@ -998,6 +1000,21 @@ sub __SSLinfo   { ## no critic qw(Subroutines::ProhibitExcessComplexity)
         #         CA Issuers - URI:http://crl.serverpass.telesec.de/crt/TeleSec_ServerPass_DE-2.cer
         #         CA Issuers - URI:ldap://ldap.serverpass.telesec.de/cn=TeleSec%20ServerPass%20DE-2,ou=T-Systems%20Trust%20Center,o=T-Systems%20International%20GmbH,c=de?cACertificate
         #
+        # Example cert-bund.de (01/2025)
+        #    X509v3 extensions:
+        #        ...
+        #        qcStatements: 
+        #             0000 - 30 81 d9 30 08 06 06 04-00 8e 46 01 01   0..0......F..
+        #             000d - 30 81 b7 06 06 04 00 8e-46 01 05 30 81   0.......F..0.
+        #             001a - ac 30 54 16 4e 68 74 74-70 73 3a 2f 2f   .0T.Nhttps://
+        #             0027 - 77 77 77 2e 64 2d 74 72-75 73 74 2e 6e   www.d-trust.n
+        #             0034 - 65 74 2f 69 6e 74 65 72-6e 65 74 2f 66   et/internet/f
+        #             0041 - 69 6c 65 73 2f 44 2d 54-52 55 53 54 5f   iles/D-TRUST_
+        #             004e - 50 4b 49 5f 44 69 73 63-6c 6f 73 75 72   PKI_Disclosur
+        #             005b - 65 5f 53 74 61 74 65 6d-65 6e 74 5f 64   e_Statement_d
+        #             0068 - 65 2e 70 64 66 13 02 64-65 30 54 16 4e   e.pdf..de0T.N
+        #        ...
+        #
         # handled in RegEx below which matches next extension, if any.
         $val .= " X509";# add string to match last extension also
         my $rex = '\s*(.*?)(?:X509|Authority|Netscape|CT Precertificate).*';
@@ -1019,6 +1036,18 @@ sub __SSLinfo   { ## no critic qw(Subroutines::ProhibitExcessComplexity)
         $val =~ s#.*?Extended Key Usage:$rex#$1#ms              if ($cmd eq 'ext_extkeyusage');
         $val =~ s#.*?Netscape Cert Type:$rex#$1#ms              if ($cmd eq 'ext_certtype');
         $val =~ s#.*?Issuer Alternative Name:$rex#$1#ms         if ($cmd eq 'ext_issuer');
+        $val =~ s#.*?qcStatements:$rex#$1#ms                    if ($cmd eq 'ext_qcstatements');
+        if ($cmd eq 'ext_qcstatements') {
+            # quick&dirty beautify data (see example above)
+            $val =~ s#^\s*[0-9a-f]{4}\s+-\s+\s*##imsg;  # remove leading numbering
+            $val =~ s#(?:[0-9a-f]{2}[ -])+##imsg;       # remove leading hex values
+            $val =~ s#\s+##imsg;                # remove remaining spaces and \n
+            # $val still contains some rubbish which is hard to deteced reliable 
+            # for example:
+            #    0T.Nhttps://some.tld/file1.pdf..de0T.Nhttps://some.tld/file2.pdf..
+            $val =~ s#0T[.]Nhttp# http#msg;     # try to split at URLs
+            $val =~ s#^[^ ]* ##msg;             # remove first word
+        }
         if ($cmd eq 'ext_crl') {
             $val =~ s#\s*Full Name:\s*##imsg;   # multiple occurrences possible
             $val =~ s#(\s*URI\s*:)# #msg;
@@ -1237,7 +1266,7 @@ _init();
 
 =head1 VERSION
 
-3.31 2024/09/06
+3.32 2025/01/07
 
 
 =head1 AUTHOR
