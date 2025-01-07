@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.174 24/11/23 23:58:20"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.175 25/01/07 13:28:48"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -379,7 +379,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.174"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.175"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6160,7 +6160,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.174");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.175");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7337,7 +7337,6 @@ while ($#argv >= 0) {
     if ($arg =~ /^\+reused?$/i)         { $arg = '+resumption';     } # alias:
     if ($arg =~ /^\+resumption_?psk$/i) { $arg = '+resumption_psk'; }
     if ($arg =~ /^\+commonName$/i)      { $arg = '+cn';             } # alias:
-    if ($arg =~ /^\+cert(?:ificate)?$/i){ $arg = '+pem';            } # alias:
     if ($arg =~ /^\+issuer_?X509$/i)    { $arg = '+issuer';         } # alias:
     if ($arg =~ /^\+subject_?X509$/i)   { $arg = '+subject';        } # alias:
     if ($arg =~ /^\+sha2sig(?:nature)?$/){$arg = '+sha2signature';  } # alias:
@@ -7473,7 +7472,7 @@ if ($help !~ m/^\s*$/) {
     OMan::man_printhelp($help);
     exit 0;
 }
-if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.174"; exit 0; }
+if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.175"; exit 0; }
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))     { _vprint("  list       "); printciphers_list('list'); exit 0; }
 if (_is_cfg_do('ciphers'))  { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
