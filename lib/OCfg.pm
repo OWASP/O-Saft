@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.72 25/01/07 19:14:36";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.73 25/01/07 23:43:11";
 our $VERSION    =  "24.09.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -2247,7 +2247,7 @@ our %cfg = (    # main data structure for configuration
                          pubkey_algorithm modulus_len pubkey_value modulus_exponent
                          aux trustout extensions ext_authority ext_authorityid
                          ext_cps ext_cps_cps ext_cps_policy ext_cps_notice
-                         ext_crl ext_constraints ext_certtype
+                         ext_crl ext_constraints ext_certtype ext_qcstatements
                          ext_subjectkeyid ext_keyusage ext_extkeyusage altname 
                          cert_type ocspid ocsp_uri ocsp_public_hash selfsigned
                          chain chain_verify verify error_verify error_depth
@@ -3581,7 +3581,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.72"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.73"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3627,7 +3627,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.72 2025/01/07
+3.73 2025/01/07
 
 =head1 AUTHOR
 
