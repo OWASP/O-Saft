@@ -18,7 +18,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odata  =  "@(#) OData.pm 3.32 25/01/07 23:18:42";
+my  $SID_odata  =  "@(#) OData.pm 3.33 25/01/09 11:35:48";
 our $VERSION    =  "24.09.24";
 
 use Exporter qw(import);
@@ -50,6 +50,11 @@ BEGIN {
 use OText       qw(%STR);
 use OCfg        qw(%cfg %prot _dbx);
         # 7/2024 ah: full qualified variable $OCfg:: needed; reason unknown
+
+#_____________________________________________________________________________
+#___________________________________________________ internal documentation __|
+
+# SEE Note:Data Structures
 
 #_____________________________________________________________________________
 #_____________________________________________________ public documentation __|
@@ -145,9 +150,10 @@ Same as %data with values only.
 #________________________________________________ public (export) variables __|
 
 # NOTE: do not change names of keys in %data and all %check_* as these keys
-#       are used in output with --trace-key
+#       are used in output with --trace-key (aka --show-key)
 
 # SEE Note:Data Structures
+
 our %info   = (         # keys are identical to %data
     'alpn'          => "",
     'npn'           => "",
@@ -349,8 +355,8 @@ our %check_cert = (  # certificate data
     'sha2signature' => {'txt' => "Certificate Private Key Signature SHA2"},
     'modulus_exp_1' => {'txt' => "Certificate Public Key Modulus Exponent <>1"},
     'modulus_size_oldssl' => {'txt' => "Certificate Public Key Modulus >16385 bits"},
-    'modulus_exp_65537' =>{'txt'=> "Certificate Public Key Modulus Exponent =65537"},
-    'modulus_exp_oldssl'=>{'txt'=> "Certificate Public Key Modulus Exponent >65537"},
+    'modulus_exp_65537' =>{'txt' => "Certificate Public Key Modulus Exponent =65537"},
+    'modulus_exp_oldssl'=>{'txt' => "Certificate Public Key Modulus Exponent >65537"},
     'pub_encryption'=> {'txt' => "Certificate Public Key with Encryption"},
     'pub_enc_known' => {'txt' => "Certificate Public Key Encryption known"},
     'sig_encryption'=> {'txt' => "Certificate Private Key with Encryption"},
@@ -361,6 +367,7 @@ our %check_cert = (  # certificate data
     'nonprint'      => {'txt' => "Certificate does not contain non-printable characters"},
     'crnlnull'      => {'txt' => "Certificate does not contain CR, NL, NULL characters"},
     'ev_chars'      => {'txt' => "Certificate has no invalid characters in extensions"},
+    'ext_qcstatements'  => {'txt' => "Certificate qcStatements (QWAC) has valid URL"},
 # TODO: SRP is a target feature but also named a `Certificate (TLS extension)'
 #    'srp'           => {'txt' => "Certificate has (TLS extension) authentication"},
     #------------------+-----------------------------------------------------
@@ -1145,7 +1152,7 @@ EoHelp
 
 sub _init_checks_val    {
     # set all default check values here
-    #trace("_init_checks_val() {");
+    #_trace("_init_checks_val() {");
     my %_text = ( # same as %main::text
         'undef'    => "<<undefined>>",
         'na_STS'   => "<<N/A as STS not set>>",
@@ -1156,7 +1163,7 @@ sub _init_checks_val    {
         $checks{$key}->{val}    = $_text{'undef'};
     }
 #### temporär }
-    foreach my $key (keys %checks) {
+    foreach my $key (sort keys %checks) {
         $checks{$key}->{val}    =  0 if ($key =~ m/$OCfg::cfg{'regex'}->{'cmd-sizes'}/);
         $checks{$key}->{val}    =  0 if ($key =~ m/$OCfg::cfg{'regex'}->{'SSLprot'}/);
     }
@@ -1186,12 +1193,13 @@ sub _init_checks_val    {
     )) {
         $checks{$key}->{val}        = "";
     }
-    #trace("_init_checks_val() }");
+    #_trace("_init_checks_val() }");
     return;
 } # _init_checks_val
 
 sub _init   {
     #? initialise variables
+    #_trace("_init() {");
 
     # construct %checks from %check_* and set 'typ'
     foreach my $key (keys %check_conn) { $checks{$key}->{txt} = $check_conn{$key}->{txt}; $checks{$key}->{typ} = 'connection'; }
@@ -1212,6 +1220,7 @@ sub _init   {
         $shorttexts{$key}  =        "Default $OCfg::prot{$ssl}->{txt} cipher";
     }
 
+    #_trace("_init() }");
     return;
 } # _init
 
@@ -1266,7 +1275,7 @@ _init();
 
 =head1 VERSION
 
-3.32 2025/01/07
+3.33 2025/01/09
 
 
 =head1 AUTHOR
