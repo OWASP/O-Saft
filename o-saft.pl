@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.178 25/01/08 00:04:00"; # version of this file
+our $SID_main   = "@(#) %M% %I% %E% %U%"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -253,6 +253,9 @@ use OData       qw(%checks   %data %check_cert %check_conn %check_dest %check_ht
                 # (%check_cert %check_conn %check_dest %check_http %check_size );
 use Ciphers     qw(%ciphers  %ciphers_desc %ciphers_notes $cipher_results);
 
+# for definition of above internal variables SEE Note:Data Structures
+# $0 +test-vars  # will show a quick overview 
+# Note that %checks is constructed at runtime from %check_*, see OData::_init
 
 #_____________________________________________________________________________
 #______________________________________ functions for trace, initialisation __|
@@ -379,7 +382,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.178"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/%I%"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1943,6 +1946,7 @@ sub _init_checks_val    {
     if (not _is_cfg_use('http')) {
         $checks{'crl_valid'} ->{val}= _get_text('disabled', "--no-http");
         $checks{'ocsp_valid'}->{val}= _get_text('disabled', "--no-http");
+        $checks{'ext_constraints'}->{val}= _get_text('disabled', "--no-http");
         foreach my $key (keys %checks) {
             $checks{$key}   ->{val} = $text{'na_http'} if (_is_member($key, \@{$cfg{'cmd-http'}}));
         }
@@ -3988,6 +3992,10 @@ sub checkcert       {
     $checks{'constraints'}->{val}   = $value if ($value !~ m/CA:FALSE/i);
     # TODO: more checks necessary:
     #    KeyUsage field must set keyCertSign and/or the BasicConstraints field has the CA attribute set TRUE.
+    $value = $data{'ext_constraints'}->{val}($host);
+        # data still may contain rubbish
+    $value =~ s#\.\.[^\s]/##mg;
+    $checks{'ext_constraints'}->{val}   = $value;
 
     check_certchars($host, $port);
 
@@ -6172,7 +6180,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.178");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "%I%");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7486,7 +7494,7 @@ if ($help !~ m/^\s*$/) {
     OMan::man_printhelp($help);
     exit 0;
 }
-if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.178"; exit 0; }
+if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "%I%"; exit 0; }
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))     { _vprint("  list       "); printciphers_list('list'); exit 0; }
 if (_is_cfg_do('ciphers'))  { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
@@ -8979,8 +8987,8 @@ we have:
 =head2 Note:Data Structures
 
 To make (programmer's) life simple,  complex data structures are avoided.
-Global variables are used (mostly defined in OCfg.pm). This should be ok,
-as there are no plans to run this tool in threaded mode.
+Global variables are used (defined in OCfg.pm and OData.pm).  This should
+be ok, as there are no plans to run this tool in threaded mode.
 Please see doc/coding.txt also.
 
 Here's an overview of the used global variables.
@@ -9000,20 +9008,43 @@ Data structures with runtime data:
                   collected and checked target (connection) data
                   collected and checked connection data
                   collected and checked length and count data
-    %info       - like %data, but for data which could not be retrieved
-                  from SSLinfo like HTTP vs. HTTPS checks
     %prot       - collected data per protocol (mainly from SSLinfo)
     %cipher_results - collected results as:  SSL=>cipher=>["yes|no","DH"]
+    %info       - like %data, but for data which could not be retrieved
+                  from SSLinfo like HTTP vs. HTTPS checks
+                  currently (2024) not used
 
 NOTE: all keys in %data and %checks must be unique 'cause of %shorttexts.
 NOTE: all keys in %checks  must be in lower case letters,  because generic
 conversion of +commands to keys. The keys related to protocol, i.e. SSLv3,
 TLSv11, etc. are mixed case.
 
+%data, %checks and %info roughly look like:
+
+    %hash = ( key1=>{txt=>"some text", val=>value-or-code}, ... );
+
+For exact definition see OCFG.pm, OData.pm or:
+
+    $0 +test-vars
+
 Note according perlish programming style:
 
     references to $arr->{'val') are most often simplified as $arr->{val) ,
     same applies to 'txt' and 'typ'.
+
+As mnemonic think as follows:
+
+    %cfg        - contains anything related to command line arguments
+    %data       - contains data reported with +info
+    %checks     - contains data reported with +check
+    %prot       - contains data per protocol, used in various checks
+    $cipher_results - contains data reported with +cipher
+
+See also:
+
+    $0 +test
+    $0 +test-init
+    $0 +test-vars
 
 =head3 Initialisation
 
