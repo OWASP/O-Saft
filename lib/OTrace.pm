@@ -41,7 +41,7 @@ use Data::Dumper qw(Dumper);
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_trace      = "@(#) OTrace.pm 3.46 25/01/09 10:34:34";
+my  $SID_trace      = "@(#) OTrace.pm 3.47 25/01/09 10:46:36";
 our $VERSION        = "24.09.24";
 
 our $prefix_trace   = "#". __PACKAGE__ . ":";
@@ -275,7 +275,7 @@ EoT
     # o-saft.tcl +test-o-saft  # just for completeness, not used here
     # NOTE: description above should be similar to those in
     #       doc/help.txt  <== 19aug24 gibts da nicht
-    return $data;
+    return;
 } # _test_help
 
 sub _test_avail {
@@ -1228,7 +1228,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.46 2025/01/09
+3.47 2025/01/09
 
 =head1 AUTHOR
 
