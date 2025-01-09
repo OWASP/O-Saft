@@ -18,7 +18,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odata  =  "@(#) OData.pm 3.34 25/01/09 14:02:42";
+my  $SID_odata  =  "@(#) OData.pm 3.35 25/01/09 15:57:17";
 our $VERSION    =  "24.09.24";
 
 use Exporter qw(import);
@@ -1024,7 +1024,7 @@ sub __SSLinfo   { ## no critic qw(Subroutines::ProhibitExcessComplexity)
         #
         # handled in RegEx below which matches next extension, if any.
         $val .= " X509";# add string to match last extension also
-        my $rex = '\s*(.*?)(?:X509|Authority|Netscape|CT Precertificate).*';
+        my $rex = '\s*(.*?)(?:X509|Authority|Netscape|CT Precertificate|qcStatements).*';
             # FIXME: the RegEx should match OIDs also
             # FIXME: otherwise OID extensions are added as value to the
             #        preceding extension, see example above (4/2016)
@@ -1043,9 +1043,9 @@ sub __SSLinfo   { ## no critic qw(Subroutines::ProhibitExcessComplexity)
         $val =~ s#.*?Extended Key Usage:$rex#$1#ms              if ($cmd eq 'ext_extkeyusage');
         $val =~ s#.*?Netscape Cert Type:$rex#$1#ms              if ($cmd eq 'ext_certtype');
         $val =~ s#.*?Issuer Alternative Name:$rex#$1#ms         if ($cmd eq 'ext_issuer');
-        $val =~ s#.*?qcStatements:$rex#$1#ms                    if ($cmd eq 'ext_qcstatements');
-        #if ($val =~ /qcStatements:/i) {}
-        if ($cmd eq 'ext_qcstatements') {
+        # need special condition for ext_qcstatements; otherwise it will contain wrong data
+        if (($val =~ m/qcStatements:/i) and ($cmd eq 'ext_qcstatements')) {
+            $val =~ s#.*?qcStatements:$rex#$1#ms;
             my $urls ="";
             # quick&dirty beautify data (see example above); only URLs needed
             $val =~ s#^\s*[0-9a-f]{4}\s+-\s+\s*##imsg;  # remove leading numbering
@@ -1283,7 +1283,7 @@ _init();
 
 =head1 VERSION
 
-3.34 2025/01/09
+3.35 2025/01/09
 
 
 =head1 AUTHOR
