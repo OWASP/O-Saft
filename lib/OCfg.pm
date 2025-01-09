@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.73 25/01/07 23:43:11";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.74 25/01/09 11:34:35";
 our $VERSION    =  "24.09.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -41,7 +41,8 @@ BEGIN {
     unshift(@INC, "lib")    if not (grep{/^lib$/}    @INC);
 
     # See NOTES below also.
-    our @EXPORT_OK  = qw( %cfg %dbx %data %data_oid %prot _dbx );
+    our @EXPORT_OK  = qw( %cfg %dbx %data %data_oid %prot %target_desc @target_defaults _dbx);
+    # only for debugging (+test-vars): %target_desc @target_defaults
     # not exported:       %info %prot_txt %shorttexts
 }
 
@@ -3581,7 +3582,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.73"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.74"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3627,7 +3628,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.73 2025/01/07
+3.74 2025/01/09
 
 =head1 AUTHOR
 
