@@ -41,7 +41,7 @@ use Data::Dumper qw(Dumper);
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_trace      = "@(#) OTrace.pm 3.47 25/01/09 10:46:36";
+my  $SID_trace      = "@(#) OTrace.pm 3.48 25/01/09 11:20:44";
 our $VERSION        = "24.09.24";
 
 our $prefix_trace   = "#". __PACKAGE__ . ":";
@@ -117,9 +117,9 @@ BEGIN { # mainly required for testing ...
 #-------------------------------------------------------------------------
 
 use OText        qw(%STR);
-use OCfg         qw(%cfg %dbx %data %prot);
-use OData        qw(%checks   %data %shorttexts);
-use Ciphers      qw(%ciphers %ciphers_desc %ciphers_notes $cipher_results);
+use OCfg         qw(%cfg %dbx %data %prot %target_desc @target_defaults _dbx);
+use OData        qw(%checks   %data %info %shorttexts);
+use Ciphers      qw(%ciphers  %ciphers_desc %ciphers_notes $cipher_results);
 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
@@ -659,7 +659,7 @@ EoT
 } # _test_memory
 
 sub __dump_var  {
-    #? print varable name and it's content using Data::Dumper()
+    #? (pretty) print varable name and it's content using Data::Dumper()
     #  unfortunately Data::Dumper is not able to print the name of the variable
     #  hence this cumbersome approach (see settings in calling function)
     my $type = shift;
@@ -702,9 +702,15 @@ sub _test_vars  {
 = Print initialised internal data structures using Perl's Data::Dumper.
 =
 EoT
+    #__dump_var('%', 'info');        # 1/2025: not working, reason yet unknown
+    #__dump_var('%', 'target_desc'); # 1/2025: not working, reason yet unknown
+    #__dump_var('@', 'target_defaults'); # 1/2025: not working, reason yet unknown
     __dump_var('$', 'cipher_results');
     __dump_var('%', 'ciphers');
     __dump_var('%', 'ciphers_desc');
+    __dump_var('%', 'dbx');
+    __dump_var('%', 'openssl');
+    __dump_var('%', 'text');
     __dump_var('%', 'prot');
     __dump_var('%', 'cfg');
     __dump_var('%', 'data');
@@ -1228,7 +1234,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.47 2025/01/09
+3.48 2025/01/09
 
 =head1 AUTHOR
 
