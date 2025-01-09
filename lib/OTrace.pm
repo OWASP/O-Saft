@@ -41,7 +41,7 @@ use Data::Dumper qw(Dumper);
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_trace      = "@(#) OTrace.pm 3.45 24/11/18 02:36:48";
+my  $SID_trace      = "@(#) OTrace.pm 3.46 25/01/09 10:34:34";
 our $VERSION        = "24.09.24";
 
 our $prefix_trace   = "#". __PACKAGE__ . ":";
@@ -353,7 +353,7 @@ EoT
 = like extensions, or are just for documentation like cps_valid.
 =
 = A short text should be available for  each command and for all data keys,
-# except for internal commands (columns intern) and following:
+= except for internal commands (columns intern) and following:
 =      cn_nosni, ext_*, valid_*
 =
 = Internal or summary commands:
@@ -1228,7 +1228,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.45 2024/11/18
+3.46 2025/01/09
 
 =head1 AUTHOR
 
