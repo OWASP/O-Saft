@@ -18,7 +18,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odata  =  "@(#) OData.pm 3.33 25/01/09 11:35:48";
+my  $SID_odata  =  "@(#) OData.pm 3.34 25/01/09 14:02:42";
 our $VERSION    =  "24.09.24";
 
 use Exporter qw(import);
@@ -724,7 +724,7 @@ our %shorttexts = (
     'ext_extkeyusage'=>"Extended Key Usage",
     'ext_certtype'  => "Netscape Cert Type",
     'ext_issuer'    => "Issuer Alternative Name",
-    'ext_qcstatements'  => "qcStatements",
+    'ext_qcstatements'  => "Certificate qcStatements",
     'fallback_protocol' => "Fallback SSL Protocol",
     'len_pembase64' => "Size PEM (base64)",
     'len_pembinary' => "Size PEM (binary)",
@@ -1044,16 +1044,24 @@ sub __SSLinfo   { ## no critic qw(Subroutines::ProhibitExcessComplexity)
         $val =~ s#.*?Netscape Cert Type:$rex#$1#ms              if ($cmd eq 'ext_certtype');
         $val =~ s#.*?Issuer Alternative Name:$rex#$1#ms         if ($cmd eq 'ext_issuer');
         $val =~ s#.*?qcStatements:$rex#$1#ms                    if ($cmd eq 'ext_qcstatements');
+        #if ($val =~ /qcStatements:/i) {}
         if ($cmd eq 'ext_qcstatements') {
-            # quick&dirty beautify data (see example above)
+            my $urls ="";
+            # quick&dirty beautify data (see example above); only URLs needed
             $val =~ s#^\s*[0-9a-f]{4}\s+-\s+\s*##imsg;  # remove leading numbering
             $val =~ s#(?:[0-9a-f]{2}[ -])+##imsg;       # remove leading hex values
             $val =~ s#\s+##imsg;                # remove remaining spaces and \n
-            # $val still contains some rubbish which is hard to deteced reliable 
+            # $val still contains some rubbish which is hard to detect reliable 
             # for example:
             #    0T.Nhttps://some.tld/file1.pdf..de0T.Nhttps://some.tld/file2.pdf..
-            $val =~ s#0T[.]Nhttp# http#msg;     # try to split at URLs
+            $val =~ s#0T[.]Nhttp# http#msg;     # try to separate URLs
             $val =~ s#^[^ ]* ##msg;             # remove first word
+            foreach my $url (split(" ", $val)) { 
+                $url =~ s#\.\.[^ ]{2}.*$##;     # remove trailing rubbisch
+                $urls .= " $url";
+            }
+            $urls =~ s#^\s*##; # remove superfluous space
+            $val = $urls;
         }
         if ($cmd eq 'ext_crl') {
             $val =~ s#\s*Full Name:\s*##imsg;   # multiple occurrences possible
@@ -1275,7 +1283,7 @@ _init();
 
 =head1 VERSION
 
-3.33 2025/01/09
+3.34 2025/01/09
 
 
 =head1 AUTHOR
