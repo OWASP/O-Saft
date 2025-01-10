@@ -17,10 +17,10 @@
 #?      http://www.opensource.apple.com/source/tcsh/tcsh-64/tcsh/complete.tcsh
 #?
 #? VERSION
-#?      @(#) tcsh_completion_o-saft 1.5 24/08/16 13:01:04
+#?      @(#) tcsh_completion_o-saft 1.6 25/01/10 16:46:35
 #?
 #? AUTHOR
-#?      14-dec-14 Achim Hoffmann
+#?      14. December 2014 Achim Hoffmann
 # ------------------------------------------------------------------------------
 
 complete o-saft \
