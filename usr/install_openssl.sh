@@ -168,10 +168,10 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#) î3nU 1.44 25/01/10 17:03:22
+#?      @(#) install_openssl.sh 1.45 25/01/10 17:04:38
 #?
 #? AUTHOR
-#?      18-jun-18 Achim Hoffmann
+#?      18. January 2018 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
@@ -404,7 +404,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  +VERSION)     echo 1.44 ; exit; ;; # for compatibility
+	  +VERSION)     echo 1.45 ; exit; ;; # for compatibility
 	  --version)    \sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0; exit 0; ;;
 	  -h | --h | --help | '-?' | '/?')
 		sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
