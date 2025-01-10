@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.38 25/01/10 16:40:54
+# SID   @(#) help.txt 3.39 25/01/10 19:30:33
 
 NAME
 
@@ -2810,6 +2810,11 @@ CHECKS
 
         Certificate extension Basic Constraints should be CA:FALSE.
 # otherwise someone can generate an intermediate cert
+
+      qcStatements
+
+        If Certificate extension qcStatements contains URLs they must have
+        schema https.
 
       OCSP, CRL, CPS
 
