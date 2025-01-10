@@ -7,29 +7,29 @@
 #?      $0 [<mode>] [<policy>] <files> [perlcritic optionen]
 #?
 #? OPTIONEN, Argumente
-#?      --h     - na sowas
-#?      --n     - nix machen, nur zeigen
-#?      --      - alle weiteren Argumenta an perlcritic übergeben
-#?      --v     - alias für:  --verbose 10
-#?      --all   - Aufruf von perlcritic für alle Quelldateien
-#?      --doc   - wird direkt an perlcritic durchgereicht
+#?      --h     na sowas
+#?      --n     nix machen, nur zeigen
+#?      --      alle weiteren Argumenta an perlcritic übergeben
+#?      --v     alias für:  --verbose 10
+#?      --all   Aufruf von perlcritic für alle Quelldateien
+#?      --doc   wird direkt an perlcritic durchgereicht
 #?      <mode>
-#?          only     - perlcritic mit  --verbose 10 --single-policy  aufrufen
-#?        --only     - Alias für  only
-#?          disabled - nur die Policys prüfen, die in .perlcritic disabled sind
-#?        --disabled - Alias für  disabled
+#?          only     perlcritic mit  --verbose 10 --single-policy  aufrufen
+#?        --only     Alias für  only
+#?          disabled nur die Policys prüfen, die in .perlcritic disabled sind
+#?        --disabled Alias für  disabled
 #?      <policy>
-#?        x::x       - jeder String, der min einmal  ::  enthält
+#?        x::x       jeder String, der min einmal  ::  enthält
 #?
 #?   Nützliche Optionen von perlcritic
 #?      -5 | -4 | -3 | -2 | -1
-#?                   - Severity-Level der Prüfung
-#?      --doc PATTERN- Beschreibung für PATTERN ausgeben
-#?      --noprofile  - .perlcriticrc ignorieren
-#?      --force      - ignoriere "## no critic" Annotationen im Source-Code
-#?      --nocolor    - Ausgabe nicht farblich markieren
-#?      --verbose 10 - gibt zu allen Findings die Beschreibung aus
-#?      --exclude PATTERN  - dieses PATTERN nicht prüfen
+#?                       Severity-Level der Prüfung
+#?      --doc PATTERN    Beschreibung für PATTERN ausgeben
+#?      --noprofile      .perlcriticrc ignorieren
+#?      --force          ignoriere "## no critic" Annotationen im Source-Code
+#?      --nocolor        Ausgabe nicht farblich markieren
+#?      --verbose 10     gibt zu allen Findings die Beschreibung aus
+#?      --exclude PATTERN  dieses PATTERN nicht prüfen
 #?
 #? BESCHREIBUNG
 #?      Wrapper-Script zum vereinfachten Aufruf von  perlcritic.
@@ -82,10 +82,10 @@
 #?      .perlcriticrc
 #?
 #? VERSION
-#?      @(#) critic.sh 1.7 22/04/20 10:12:47
+#?      @(#) critic.sh 1.8 25/01/10 16:57:43
 #?
 #? AUTHOR
-#?      06-apr-16 Achim Hoffmann
+#?      06. April 2016 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
