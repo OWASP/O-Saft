@@ -55,10 +55,10 @@
 #?      o-saft.pl
 #?
 #? VERSION
-#?      @(#) cipher_check.sh 1.1 17/07/14 22:23:42
+#?      @(#) cipher_check.sh 1.2 25/01/10 16:53:18
 #?
 #? AUTHOR
-#?      07-jul-17 Achim Hoffmann
+#?      07. July 2017 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
