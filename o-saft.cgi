@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-#!# Copyright (c) 2024, Achim Hoffmann
+#!# Copyright (c) 2025, Achim Hoffmann
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
@@ -141,7 +141,7 @@ For debugging only, call from command line:
 use strict;
 use warnings;
 
-my $SID_cgi = "@(#) o-saft.cgi 3.5 24/06/24 15:21:42";
+my $SID_cgi = "@(#) o-saft.cgi 3.6 25/01/10 16:35:53";
 my $VERSION = '24.06.24';
 my $me      = $0; $me     =~ s#.*/##;
 my $mepath  = $0; $mepath =~ s#/[^/\\]*$##;
@@ -237,7 +237,7 @@ if ($me =~/\.cgi$/) {
 	        my $_typ = $typ;    # check if force using text/html
 	           $_typ = 'html' if ($qs =~ m/--content-type=html/);
 		print "X-Cite: Perl is a mess. But that's okay, because the problem space is also a mess. Larry Wall\r\n";
-		print "X-O-Saft: OWASP – SSL advanced forensic tool 3.5\r\n";
+		print "X-O-Saft: OWASP – SSL advanced forensic tool 3.6\r\n";
 		print "Content-type: text/$_typ; charset=utf-8\r\n";# for --usr* only
 		print "\r\n";
 	}
