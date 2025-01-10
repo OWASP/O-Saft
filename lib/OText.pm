@@ -1,7 +1,7 @@
 #!/usr/bin/perl -CADSio
 ## PACKAGE {
 
-#!# Copyright (c) 2024, Achim Hoffmann
+#!# Copyright (c) 2025, Achim Hoffmann
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 package OText;
@@ -10,7 +10,7 @@ use strict;
 use warnings;
 use utf8;
 
-my  $SID_otext  =  "@(#) OText.pm 3.18 24/09/04 09:00:34";
+my  $SID_otext  =  "@(#) OText.pm 3.19 25/01/10 17:11:40";
 our $VERSION    =  "24.09.24";
 
 #_____________________________________________________________________________
@@ -141,7 +141,7 @@ Print data from given hash (used for --usage option).
 
 =head1 VERSION
 
-3.18 2024/09/04
+3.19 2025/01/10
 
 
 =head1 AUTHOR
