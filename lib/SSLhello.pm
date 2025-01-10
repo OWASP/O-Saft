@@ -3,7 +3,7 @@
 ## PACKAGE {
 # Filename : SSLhello.pm
 #!#############################################################################
-#!#                     Copyright (c) 2024, Torsten Gigler
+#!#                     Copyright (c) 2025, Torsten Gigler
 #!#             This module is part of the OWASP-Project 'o-saft'
 #!# It simulates the SSLhello packets to check SSL parameters like the ciphers
 #!#         indepenantly from any SSL library like Openssl or gnutls.
@@ -56,7 +56,7 @@ use utf8;
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
 #  because we use /x as needed for human readability
 
-my  $SID_sslhello = "@(#) SSLhello.pm 3.33 24/09/04 10:28:37";
+my  $SID_sslhello = "@(#) SSLhello.pm 3.34 25/01/10 17:14:45";
 our $VERSION    = "24.09.24";
 my  $SSLHELLO   = "SSLhello";
 
