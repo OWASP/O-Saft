@@ -32,14 +32,14 @@
 #?      Unfortunatelly some installations require interactive input.
 #?
 #? AUTHOR
-#?      17-feb-17 Achim Hoffmann
+#?      17. Februar 2017 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
 use strict;
 use warnings;
 use Cwd;
-my  $VERSION  = "@(#)  1.4 20/06/05 21:20:13";
+my  $VERSION  = "@(#) install_perl_modules.pl 1.5 25/01/10 16:49:44";
 my  $pwd      = cwd();
 my  $lib      = "$pwd";
     $lib      = "$pwd/lib" if ($pwd !~ m#/lib/?#);
