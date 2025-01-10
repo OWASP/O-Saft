@@ -204,7 +204,7 @@
 #=# default installation directory »/opt/o-saft« used
 #=
 #=#-------------------+--------------------- not part of output {
-#=# Note: above examples are from 2018, more modern (2024) versions are:
+#=# Note: above examples are from 2018, more modern (2025) versions are:
 #=#               openssl	  3.0.11
 #=#                  Perl	    5.38
 #=#         Tcl/Tk (wish)	  8.6.13/8.6.13
@@ -297,7 +297,7 @@
 #?      # check SIDs and checksums of all installed files:
 #?          $0 . --check=SID --changes
 #?      - should return an empty list like:
-#?          # ./INSTALL.sh 3.52; --check=SID  . ...
+#?          # ./INSTALL.sh 3.53; --check=SID  . ...
 #?
 #?          # SID   date    time    md5sum   filename    path
 #?          #----------------------+--------+-------------------------------
@@ -391,13 +391,13 @@
 # added with --help
 #?
 #? AUTHOR
-#?      16-sep-16 Achim Hoffmann
+#?      16 September 2016 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.52 24/09/23 20:53:35"
+SID="@(#) INSTALL-template.sh 3.53 25/01/10 16:45:01"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -1455,7 +1455,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.52 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.53 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1483,7 +1483,7 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.52; $mode $src_txt $inst_directory ..."
+echo "# $0 3.53; $mode $src_txt $inst_directory ..."
     # always print internal SID, makes debugging simpler
 
 # check for lock-file, should only exist on author's system
