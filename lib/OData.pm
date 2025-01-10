@@ -18,7 +18,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odata  =  "@(#) OData.pm 3.35 25/01/09 15:57:17";
+my  $SID_odata  =  "@(#) OData.pm 3.36 25/01/10 14:24:25";
 our $VERSION    =  "24.09.24";
 
 use Exporter qw(import);
@@ -326,6 +326,11 @@ our %checks = (
 ); # %checks
 
 our %check_cert = (  # certificate data
+    # some keys used in %data need different text for label in %checks, hence
+    # there must be another unique key in %checks; these different keys are:
+    #   ext_constraints   -> constraints
+    #   ext_qcstatements  -> qcstatements
+    #   ext_crl           -> crl
     #------------------+-----------------------------------------------------
     # key                     => label to be printed (description)
     #------------------+-----------------------------------------------------
@@ -351,7 +356,6 @@ our %check_cert = (  # certificate data
     'cps_valid'     => {'txt' => "Certificate has valid CPS URL"},
     'crl_valid'     => {'txt' => "Certificate has valid CRL URL"},
     'sernumber'     => {'txt' => "Certificate Serial Number size RFC 5280"},
-    'constraints'   => {'txt' => "Certificate Basic Constraints is false"},
     'sha2signature' => {'txt' => "Certificate Private Key Signature SHA2"},
     'modulus_exp_1' => {'txt' => "Certificate Public Key Modulus Exponent <>1"},
     'modulus_size_oldssl' => {'txt' => "Certificate Public Key Modulus >16385 bits"},
@@ -367,7 +371,8 @@ our %check_cert = (  # certificate data
     'nonprint'      => {'txt' => "Certificate does not contain non-printable characters"},
     'crnlnull'      => {'txt' => "Certificate does not contain CR, NL, NULL characters"},
     'ev_chars'      => {'txt' => "Certificate has no invalid characters in extensions"},
-    'ext_qcstatements'  => {'txt' => "Certificate qcStatements (QWAC) has valid URL"},
+    'constraints'   => {'txt' => "Certificate Basic Constraints is false"},
+    'qcstatements'  => {'txt' => "Certificate has valid qcStatements URL"},
 # TODO: SRP is a target feature but also named a `Certificate (TLS extension)'
 #    'srp'           => {'txt' => "Certificate has (TLS extension) authentication"},
     #------------------+-----------------------------------------------------
@@ -624,7 +629,6 @@ our %shorttexts = (
     'sloth'         => "Safe to SLOTH",
     'sweet32'       => "Safe to Sweet32",
     'scsv'          => "SCSV not supported",
-    'constraints'   => "Basic Constraints is false",
     'modulus_exp_1' => "Modulus Exponent <>1",
     'modulus_size_oldssl'  => "Modulus >16385 bits",
     'modulus_exp_65537' =>"Modulus Exponent =65537",
@@ -711,6 +715,8 @@ our %shorttexts = (
     'dh_2048'       => "DH Parameter >= 2048",
     'ecdh_256'      => "DH Parameter >= 256 (ECDH)",
     'ecdh_512'      => "DH Parameter >= 512 (ECDH)",
+    'constraints'   => "Basic Constraints is false",
+    'qcstatements'  => "qcStatements has valid URL",
     'ext_authority' => "Authority Information Access",
     'ext_authorityid'=>"Authority key Identifier",
     'ext_constraints'=>"Basic Constraints",
@@ -1283,7 +1289,7 @@ _init();
 
 =head1 VERSION
 
-3.35 2025/01/09
+3.36 2025/01/10
 
 
 =head1 AUTHOR
