@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.74 25/01/09 11:34:35";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.75 25/01/10 14:25:55";
 our $VERSION    =  "24.09.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -2240,6 +2240,7 @@ our %cfg = (    # main data structure for configuration
                            tr_02102+ tr_02102- tr_03116+ tr_03116-
                        )],
     'cmd-cert'      => [        # commands for +certificate
+                        # +info
                         qw(
                          certversion cn subject subject_hash issuer issuer_hash
                          serial fingerprint fingerprint_type fingerprint_hash
@@ -2252,7 +2253,24 @@ our %cfg = (    # main data structure for configuration
                          ext_subjectkeyid ext_keyusage ext_extkeyusage altname 
                          cert_type ocspid ocsp_uri ocsp_public_hash selfsigned
                          chain chain_verify verify error_verify error_depth
-                       )],
+                       ),
+                        # +check (already in +info above: +dates +ocsp_uri)
+                        qw(
+                         verify fp_not_md5 expired rootcert certfqdn wildhost wildcard
+                         selfsigned cps crl zlib lzo
+                         open_pgp cps_valid crl_valid qcstatements constraints
+                         sernumber modulus_exp_1
+                         modulus_size_oldssl modulus_exp_65537 modulus_exp_oldssl
+                         pub_encryption pub_enc_known sig_encryption sig_enc_known
+                         sha2signature  nonprint crnlnull
+                         len_pembase64 len_pembinary len_subject len_issuer
+                         len_cps len_crl len_crl_data len_ocsp len_oids
+                         len_publickey len_sigdump  len_altname len_chain
+                         len_sernumber cnt_wildcard cnt_altname cnt_chaindepth
+                       ),
+                        # not used (to many data):
+                        #    +dv +ev +ev+ +ev_chars +rfc_6125_names +rfc_2818_names
+                       ],
     'cmd-pfs'       => [qw(cipher_pfs cipher_pfsall session_random)],   # commands for +pfs
     'cmd-sni'       => [qw(sni hostname certfqdn)],  # commands for +sni
     'cmd-sni--v'    => [qw(sni cn altname verify_altname verify_hostname hostname wildhost wildcard)],
@@ -3582,7 +3600,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.74"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.75"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3628,7 +3646,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.74 2025/01/09
+3.75 2025/01/10
 
 =head1 AUTHOR
 
