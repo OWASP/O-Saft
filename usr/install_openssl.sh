@@ -7,12 +7,12 @@
 #?      $0 [OPTIONS]
 #?
 #? OPTIONS
-#?      --h - nice option
-#?      --i - ignore failed preconditions; continue always
-#?      --m - install all required Perl modules also
-#?      --n - do not execute, just show preconditions and where to install
-#?      --debian    - install required debian packages first
-#?      --list      - list required packages, modules, etc.
+#?      --h     nice option
+#?      --i     ignore failed preconditions; continue always
+#?      --m     install all required Perl modules also
+#?      --n     do not execute, just show preconditions and where to install
+#?      --debian    install required debian packages first
+#?      --list      list required packages, modules, etc.
 #?
 #? DESCRIPTION
 #?      Build special openssl based on  Peter Mosman's openssl.  Additionally
@@ -168,7 +168,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#) install_openssl.sh 1.43 24/09/04 13:31:36
+#?      @(#) î3nU 1.44 25/01/10 17:03:22
 #?
 #? AUTHOR
 #?      18-jun-18 Achim Hoffmann
@@ -404,7 +404,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  +VERSION)     echo 1.43 ; exit; ;; # for compatibility
+	  +VERSION)     echo 1.44 ; exit; ;; # for compatibility
 	  --version)    \sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0; exit 0; ;;
 	  -h | --h | --help | '-?' | '/?')
 		sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
