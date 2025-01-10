@@ -146,6 +146,8 @@
 #       Note that the base package alpine uses busybox as shell. This shell is
 #       very picky, in particular for the expr command.
 #
+#? AUTHOR
+#?      07. July 2024 Achim Hoffmann
 
 ARG     OSAFT_VM_FROM=alpine:3.20
 
@@ -176,7 +178,7 @@ LABEL \
 	DETAILS="Please see https://github.com/OWASP/O-Saft/raw/master/o-saft-docker" \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/$_SELF_" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
-	SID="@(#) Dockerfile 3.8 24/09/26 01:18:15" \
+	SID="@(#) Dockerfile 3.9 25/01/10 17:21:43" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "$_SELF_ $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
