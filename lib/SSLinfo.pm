@@ -2,7 +2,7 @@
 ## PACKAGE {
 
 #!#############################################################################
-#!#             Copyright (c) 2024, Achim Hoffmann
+#!#             Copyright (c) 2025, Achim Hoffmann
 #!#----------------------------------------------------------------------------
 #!# If this tool is valuable for you and we meet some day,  you can spend me an
 #!# O-Saft. I'll accept good wine or beer too :-). Meanwhile -- 'til we meet --
@@ -49,7 +49,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.35 24/11/14 02:00:13";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.36 25/01/10 17:14:24";
 our $VERSION        =  "24.09.24";  # official verion number of this file
 
 BEGIN {
