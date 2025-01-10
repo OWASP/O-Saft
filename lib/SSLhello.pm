@@ -56,7 +56,7 @@ use utf8;
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
 #  because we use /x as needed for human readability
 
-my  $SID_sslhello = "@(#) SSLhello.pm 3.34 25/01/10 17:14:45";
+my  $SID_sslhello = "@(#) SSLhello.pm 3.35 25/01/10 19:04:59";
 our $VERSION    = "24.09.24";
 my  $SSLHELLO   = "SSLhello";
 
@@ -6327,9 +6327,13 @@ L<error_handler>
 
 L<IO::Socket(1)>
 
+=head1 VERSION
+
+3.35 2025/01/10
+
 =head1 AUTHOR
 
-19-November-2014 Torsten Gigler
+19. November 2014 Torsten Gigler
 
 =cut
 
