@@ -1,7 +1,7 @@
 #!/usr/bin/perl -CADSio
 ## PACKAGE {
 
-#!# Copyright (c) 2024, Achim Hoffmann
+#!# Copyright (c) 2025, Achim Hoffmann
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 package OCfg;
@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.75 25/01/10 14:25:55";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.76 25/01/10 17:17:17";
 our $VERSION    =  "24.09.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -3600,7 +3600,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.75"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.76"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3646,7 +3646,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.75 2025/01/10
+3.76 2025/01/10
 
 =head1 AUTHOR
 
