@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.37 24/09/25 00:03:18
+# SID   @(#) help.txt 3.38 25/01/10 16:40:54
 
 NAME
 
@@ -2057,7 +2057,7 @@ OPTIONS
           For more details, please see  "perldoc -f binmode" .
           For the tools default behaviour, please SEE Perl:binmode()
 
-          Currently (in 2024), these options must be used before any   --help
+          Currently (in 2025), these options must be used before any   --help
           option.
 
       --win-CR
@@ -2508,7 +2508,7 @@ CHECKS
 
           $0 --test-ciphers-dump
 
-        Some values (limits) are currently (2024) hardcoded. Following values
+        Some values (limits) are currently (2025) hardcoded. Following values
         are used to report  'yes'  for the command:
 
           +sts_maxage0d	        STS max-age < 1 day
@@ -4002,7 +4002,7 @@ LIMITATIONS
 
       +resumption
 
-          Currently (2024) information  provided by openssl is used to verify
+          Currently (2025) information  provided by openssl is used to verify
           if the target supports resumption.  This information depends on the
           way how openssl manages to establishes a connection to the target. 
           Unfortunately, this behaviour is random for the same target,  means
