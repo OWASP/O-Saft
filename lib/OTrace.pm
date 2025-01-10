@@ -1,7 +1,7 @@
 #!/usr/bin/perl -CADSio
 ## PACKAGE {
 
-#!# Copyright (c) 2024, Achim Hoffmann
+#!# Copyright (c) 2025, Achim Hoffmann
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 package OTrace;
@@ -41,7 +41,7 @@ use Data::Dumper qw(Dumper);
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_trace      = "@(#) OTrace.pm 3.48 25/01/09 11:20:44";
+my  $SID_trace      = "@(#) OTrace.pm 3.49 25/01/10 17:11:11";
 our $VERSION        = "24.09.24";
 
 our $prefix_trace   = "#". __PACKAGE__ . ":";
@@ -1234,7 +1234,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.48 2025/01/09
+3.49 2025/01/10
 
 =head1 AUTHOR
 
