@@ -1,7 +1,7 @@
 #!/usr/bin/perl -CADSio
 ## PACKAGE {
 
-#!# Copyright (c) 2024, Achim Hoffmann
+#!# Copyright (c) 2025, Achim Hoffmann
 #!# This software is licensed under GPLv2.  Please see o-saft.pl for details.
 
 package ODoc;
@@ -17,7 +17,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.38 24/09/05 13:19:29";
+my  $SID_odoc   = "@(#) ODoc.pm 3.39 25/01/10 17:13:03";
 our $VERSION    = "24.09.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -629,7 +629,7 @@ lib/OText.pm
 
 =head1 VERSION
 
-3.38 2024/09/05
+3.39 2025/01/10
 
 
 =head1 AUTHOR
