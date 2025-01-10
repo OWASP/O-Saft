@@ -1,7 +1,7 @@
 #!/usr/bin/perl -CADSio
 ## PACKAGE {
 
-#!# Copyright (c) 2024, Achim Hoffmann
+#!# Copyright (c) 2025, Achim Hoffmann
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 package OData;
@@ -18,7 +18,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odata  =  "@(#) OData.pm 3.36 25/01/10 14:24:25";
+my  $SID_odata  =  "@(#) OData.pm 3.37 25/01/10 17:10:33";
 our $VERSION    =  "24.09.24";
 
 use Exporter qw(import);
@@ -1289,7 +1289,7 @@ _init();
 
 =head1 VERSION
 
-3.36 2025/01/10
+3.37 2025/01/10
 
 
 =head1 AUTHOR
