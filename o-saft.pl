@@ -1,7 +1,7 @@
 #!/usr/bin/perl -CADSio
 
 #!#############################################################################
-#!#             Copyright (c) 2024, Achim Hoffmann
+#!#             Copyright (c) 2025, Achim Hoffmann
 #!#----------------------------------------------------------------------------
 #!# If this tool is valuable for you and we meet some day,  you can spend me an
 #!# O-Saft. I'll accept good wine or beer too :-). Meanwhile -- 'til we meet --
@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.182 25/01/10 14:26:41"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.183 25/01/10 16:34:40"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -382,7 +382,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.182"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.183"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6182,7 +6182,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.182");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.183");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7496,7 +7496,7 @@ if ($help !~ m/^\s*$/) {
     OMan::man_printhelp($help);
     exit 0;
 }
-if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.182"; exit 0; }
+if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.183"; exit 0; }
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))     { _vprint("  list       "); printciphers_list('list'); exit 0; }
 if (_is_cfg_do('ciphers'))  { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
@@ -8514,7 +8514,7 @@ See  L<Documentation>  above and  L<Note:+test-*>  below and
 The annotations from here on describe behaviours, observations, and alike,
 which lead to special program logic.  The intention is to have one central
 place where to do the documentation.
-Up to now --2024-- this is an internal documentation only. It is available
+Up to now --2025-- this is an internal documentation only. It is available
 for the developer also with:
 
     perldoc o-saft.pl
@@ -9014,7 +9014,7 @@ Data structures with runtime data:
     %cipher_results - collected results as:  SSL=>cipher=>["yes|no","DH"]
     %info       - like %data, but for data which could not be retrieved
                   from SSLinfo like HTTP vs. HTTPS checks
-                  currently (2024) not used
+                  currently (2025) not used
 
 NOTE: all keys in %data and %checks must be unique 'cause of %shorttexts.
 NOTE: all keys in %checks  must be in lower case letters,  because generic
