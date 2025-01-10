@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # Filename : checkAllCiphers.pl
 #!#############################################################################
-#!#                    Copyright (c) 2024m Torsten Gigler 
+#!#                    Copyright (c) 2025, Torsten Gigler 
 #!#             This script is part of the OWASP-Project 'o-saft'
 #!#                  It's a simple wrapper the SSLhello.
 #!#----------------------------------------------------------------------------
@@ -35,7 +35,7 @@ use strict;
 use warnings;
 use Carp;                                           #replaces warn and die
 
-our $SID_check  = "@(#) 5×ÿY 3.4 24/06/19 11:05:00"; # version of this file
+our $SID_check  = "@(#) checkAllCiphers.pl 3.5 25/01/10 16:42:16"; # version of this file
 my  $VERSION    = "24.01.24";
 
 BEGIN {
