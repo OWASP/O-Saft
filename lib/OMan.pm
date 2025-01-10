@@ -1,7 +1,7 @@
 #!/usr/bin/perl -CADSio
 ## PACKAGE {
 
-#!# Copyright (c) 2024, Achim Hoffmann
+#!# Copyright (c) 2025, Achim Hoffmann
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 package OMan;
@@ -35,7 +35,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_oman   = "@(#) OMan.pm 3.70 24/09/09 01:33:02";
+my  $SID_oman   = "@(#) OMan.pm 3.71 25/01/10 17:13:42";
 our $VERSION    = "24.09.24";
 
 use Exporter qw(import);
@@ -2753,7 +2753,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.70 2024/09/09
+3.71 2025/01/10
 
 
 =head1 AUTHOR
