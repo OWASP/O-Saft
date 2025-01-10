@@ -2,7 +2,7 @@
 ## PACKAGE {
 # Filename: error_handler.pm
 #!#############################################################################
-#!#                     Copyright (c) 2024, Torsten Gigler
+#!#                     Copyright (c) 2025, Torsten Gigler
 #!#             This module is part of the OWASP-Project 'o-saft'.
 #!#  It's a simple library 'error_handler' which stores and optionally prints
 #!#              all classified errors for other parts of o-saft.
@@ -80,7 +80,7 @@ use strict;
 use warnings;
 use Carp;
 
-my  $SID_error  = "@(#) error_handler.pm 3.10 24/08/18 12:45:46";
+my  $SID_error  = "@(#) error_handler.pm 3.11 25/01/10 17:16:16";
 our $VERSION    = "24.01.24";
 
 use Exporter qw(import);
