@@ -65,7 +65,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.180 25/01/09 15:23:07"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.181 25/01/10 09:43:31"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -382,7 +382,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.180"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.181"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -3992,11 +3992,8 @@ sub checkcert       {
     $checks{'constraints'}->{val}   = $value if ($value !~ m/CA:FALSE/i);
     # TODO: more checks necessary:
     #    KeyUsage field must set keyCertSign and/or the BasicConstraints field has the CA attribute set TRUE.
-    $value = $data{'ext_constraints'}->{val}($host);
-        # data still may contain rubbish
-    $value =~ s#\.\.[^\s]/##mg;
-    $checks{'ext_constraints'}->{val}   = $value;
 
+    # URLs in qcStatements must be https://
     $value = $data{'ext_qcstatements'}->{val}($host);
     foreach my $url (split(" ", $value)) {
         $checks{'ext_qcstatements'}->{val} .= " $value" if $value !~ /^https/;
@@ -6185,7 +6182,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.180");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.181");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7499,7 +7496,7 @@ if ($help !~ m/^\s*$/) {
     OMan::man_printhelp($help);
     exit 0;
 }
-if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.180"; exit 0; }
+if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.181"; exit 0; }
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))     { _vprint("  list       "); printciphers_list('list'); exit 0; }
 if (_is_cfg_do('ciphers'))  { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
