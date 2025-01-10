@@ -1,7 +1,7 @@
 #!/usr/bin/perl -CADSio
 ## PACKAGE {
 
-#!# Copyright (c) 2024, Achim Hoffmann
+#!# Copyright (c) 2025, Achim Hoffmann
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 package Ciphers;
@@ -25,11 +25,12 @@ our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 # 0.02  0.00  0:00.02 100%  0k  8804k  # 12/2023
 # 0.03  0.00  0:00.03 100%  0k 10176k  # 01/2024
 # 0.04  0.00  0:00.05 100%  0k 10024k  # 07/2024
+# 0.04  0.00  0:00.05 100%  0k 10052k  # 01/2025
 
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.63 24/09/05 10:48:08";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.64 25/01/10 17:09:18";
 our $VERSION    = "24.09.24";   # official verion number of this file
 
 use Exporter qw(import);
@@ -1931,7 +1932,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.63 2024/09/05
+3.64 2025/01/10
 
 
 =head1 AUTHOR
