@@ -49,7 +49,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.36 25/01/10 17:14:24";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.37 25/01/10 19:03:34";
 our $VERSION        =  "24.09.24";  # official verion number of this file
 
 BEGIN {
@@ -4269,9 +4269,13 @@ L<Math::BigInt(3pm)>  (required if necessary only)
 
 L<Net::SSLeay(1)>
 
+=head1 VERSION
+
+3.37 2025/01/10
+
 =head1 AUTHOR
 
-08-aug-12 Achim Hoffmann
+08. August 2012 Achim Hoffmann
 
 =cut
 
