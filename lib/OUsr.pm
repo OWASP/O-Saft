@@ -1,7 +1,7 @@
 #!/usr/bin/perl -CADSio
 ## PACKAGE {
 
-#!# Copyright (c) 2024, Achim Hoffmann
+#!# Copyright (c) 2025, Achim Hoffmann
 #!# This  software is licensed under GPLv2. Please see o-saft.pl for details.
 
 package OUsr;
@@ -17,7 +17,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ousr       = "@(#) OUsr.pm 3.18 24/07/27 14:42:17";
+my  $SID_ousr       = "@(#) OUsr.pm 3.19 25/01/10 17:14:04";
 our $VERSION        = "24.06.24";   # changed only if fucntionality changed!
 
 
@@ -299,7 +299,7 @@ sub done    {}; # dummy to check successful include
 
 =head1 VERSION
 
-3.18 2024/07/27
+3.19 2025/01/10
 
 =head1 AUTHOR
 
