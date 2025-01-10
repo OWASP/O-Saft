@@ -10,7 +10,7 @@ use strict;
 use warnings;
 use utf8;
 
-my  $SID_otext  =  "@(#) OText.pm 3.19 25/01/10 17:11:40";
+my  $SID_otext  =  "@(#) OText.pm 3.20 25/01/10 19:10:42";
 our $VERSION    =  "24.09.24";
 
 #_____________________________________________________________________________
@@ -141,12 +141,12 @@ Print data from given hash (used for --usage option).
 
 =head1 VERSION
 
-3.19 2025/01/10
+3.20 2025/01/10
 
 
 =head1 AUTHOR
 
-22-feb-22 Achim Hoffmann
+22. February 2022 Achim Hoffmann
 
 =cut
 
@@ -158,7 +158,7 @@ sub print_pod   {
     my $file = shift;   # filename where to read POD from
     my $pack = shift;   # package name
     my $vers = shift;   # package version
-    printf("# %s %s\n", $pack, $vers);
+    printf("# %s %s\n", $pack, $vers) if not defined $ENV{'OSAFT_MAKE'}; # ugly hack
     if (eval {require Pod::Perldoc;}) {
         # pod2usage( -verbose => 1 );
         exit( Pod::Perldoc->run(args=>[$file]) );
