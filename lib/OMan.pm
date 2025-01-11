@@ -35,7 +35,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_oman   = "@(#) OMan.pm 3.71 25/01/10 17:13:42";
+my  $SID_oman   = "@(#) OMan.pm 3.72 25/01/11 11:59:17";
 our $VERSION    = "24.09.24";
 
 use Exporter qw(import);
@@ -67,7 +67,7 @@ my  $ich    = (caller(1))[1];           # tricky to get filename of myself when 
     $ich    = "OMan.pm"   if (not defined $ich); # sometimes it's empty :-((
     $ich    =~ s:.*/::;
 my  $version= "$SID_oman";              # version of myself
-    $version=~ s:^.{5}::;               # remove leading @(#) as already part of the *.txt files
+    $version=~ s:^.{5}::;               # remove leading '@(#)' as already part of the *.txt files
     $version=  ::_VERSION() if (defined &::_VERSION); # or parent's if available
 my  $cfg_header = 0;                    # we may be called from within parents BEGIN, hence no %cfg available
     $cfg_header = 1       if (0 < (grep{/^--header/} @ARGV));
@@ -2753,7 +2753,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.71 2025/01/10
+3.72 2025/01/11
 
 
 =head1 AUTHOR
