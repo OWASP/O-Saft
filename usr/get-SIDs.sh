@@ -25,14 +25,14 @@
 #?      All files given on command line, STDIN and Makefile are used.
 #?
 #? OPTIONS
-#?      --help      - nice option
-#?      --n         - don't execute, just show command
-#?      --d         - print some data for debugging
-#?      --x         - use shell's  "set -x"
-#?      --make=VAR  - use list of files defined in variable VAR of Makefile
-#       --check     - additionaly show line for file from file usr/o-saft.rel
-#?      --check=REL - additionaly show line for file from file REL
-#?                    this options should be used with only one file argument
+#?      --help      nice option
+#?      --n         don't execute, just show command
+#?      --d         print some data for debugging
+#?      --x         use shell's  "set -x"
+#?      --make=VAR  use list of files defined in variable VAR of Makefile
+#       --check     additionaly show line for file from file usr/o-saft.rel
+#?      --check=REL additionaly show line for file from file REL
+#?                  this options should be used with only one file argument
 #         simple implementation: it's up to the user to compare printed lines
 #?
 #? LIMITATIONS
@@ -54,7 +54,7 @@
 # HACKER's INFO
 #
 #? VERSION
-#?      @(#) get-SIDs.sh 3.2 25/01/10 16:51:03
+#?      @(#) get-SIDs.sh 3.3 25/01/11 11:45:11
 #?
 #? AUTHOR
 #?      24. July 2024 Achim Hoffmann
@@ -157,17 +157,19 @@ fi
 # scan arguments
 while [ $# -gt 0 ]; do
 	case "$1" in
-	 -h | --h | --help | '-?' | '/?')
+	  -h | --h | --help | '-?' | '/?')
 		\sed -n -e "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
 		exit 0
 		;;
-	 --d | --debug | --dbx) dbx=echo; ;;
-	 -n | --n) try=echo;  ;;
-	 -x | --x) set -x;    ;;
-	--check)       rel_file="$osaftrel"   ; ;;
-	--check=*)     rel_file="`expr "$1" ':' '--check=\(.*\)'`";  ;;
-	--make=*)      make_var="`expr "$1" ':' '--make=\(.*\)'`";   ;;
-	 *)            allfiles="$allfiles $1"; ;;
+	  --version)   \sed -ne '/^#. *@(#)/s/#? *//p' $0 ; exit 0; ;;
+	  -V | --V) \echo 3.3; exit 0; ;;
+	  -n | --n) try=echo ; ;;
+	  -x | --x) set -x   ; ;;
+	  --d | --debug | --dbx)   dbx=echo   ; ;;
+	  --check)     rel_file="$osaftrel"   ; ;;
+	  --check=*)   rel_file="${1#*=}"     ; ;;
+	  --make=*)    make_var="${1#*=}"     ; ;;
+	  *)           allfiles="$allfiles $1"; ;;
 	esac
 	shift
 done
