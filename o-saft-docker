@@ -328,14 +328,14 @@
 #?       docker(1), podman(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 3.19 24/09/24 12:07:03
+#?       @(#) o-saft-docker 3.20 25/01/20 18:18:08
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID="3.19"
+SID="3.20"
 VERSION="${OSAFT_VERSION:-24.09.24}"
 ich=${0##*/}
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
@@ -375,7 +375,9 @@ check_image_name () {
 	# reports the image IDs only, duplicate image IDs may be returned.
 	# Images which are just tags, return the same image ID.  Hence we can
 	# simply filter them using "sort -u".
-	#dbx#  $docker image ls ${image_name} -q | \sort -u | \wc -w
+	# -n does not need the image, just report commands.
+	[ -n "$try" ] && \
+	 echo "$docker image ls ${image_name} -q |  sort -u |  wc -w" && return
 	is_id=`$docker image ls ${image_name} -q | \sort -u | \wc -w`
 	[ "${is_id}" -eq 1 ] && return; # found image, return
 
