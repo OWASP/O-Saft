@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.39 25/01/10 19:30:33
+# SID   @(#) help.txt 3.40 25/02/01 10:39:44
 
 NAME
 
@@ -5239,7 +5239,6 @@ TODO
 
         * missing checks
           ** SSL_honor_cipher_order => 1
-          ** implement TLSv1.2 checks
           ** DNSEC and TLSA
           ** checkcert(): KeyUsage, keyCertSign, BasicConstraints
           ** DV and EV miss some minor checks; see checkdv() and checkev()
@@ -5258,7 +5257,6 @@ TODO
 
         * vulnerabilities
           ** Ticketbleed
-          ** complete TIME, BREACH check
           ** BEAST more checks, see: http://www.bolet.org/TestSSLServer/
 
         * verify CA chain:
@@ -5299,12 +5297,8 @@ TODO
 
         * internal
           ** move all configuration and code for command-line arguments to Arg.pm
-          ** use qr() for defining regex, see $cfg{'regex'}
           ** print_line() has ugly code for legacy=cipher
           ** "Label" texts are defined twice: o-saft.pl and Net::SSLeay
-          ** make a clear concept how to handle +CMD whether they report
-             checks or information (a.k.a %data vs. %check_*)
-             currently (2016) each single command returns all values
           ** client certificates not yet implemented in _usesocket() _useopenssl(),
              see t.client-cert.txt
           ** (nicht wichtig, aber sauber programmieren)
