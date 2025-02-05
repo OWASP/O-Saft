@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl -CADSio
 # Filename : checkAllCiphers.pl
 #!#############################################################################
 #!#                    Copyright (c) 2025, Torsten Gigler 
@@ -35,7 +35,7 @@ use strict;
 use warnings;
 use Carp;                                           #replaces warn and die
 
-our $SID_check  = "@(#) checkAllCiphers.pl 3.5 25/01/10 16:42:16"; # version of this file
+our $SID_check  = "@(#) ë#4X 3.6 25/02/05 14:23:18"; # version of this file
 my  $VERSION    = "24.01.24";
 
 BEGIN {
@@ -56,7 +56,7 @@ BEGIN {
 }
 
 use OText qw(%STR);
-use OCfg;
+use OCfg  qw(%cfg %dbx %prot _dbx);;
 use error_handler qw (%OERR);  # use internal error_handler, get all constants used for SSLHELLO, for subs the      full names will be used (includung error_handler-><sub>)$
 
 my  $me     = $0; $me     =~ s#.*(?:/|\\)##;
