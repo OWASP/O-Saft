@@ -56,7 +56,7 @@ use utf8;
 ## no critic qw(RegularExpressions::RequireExtendedFormatting)
 #  because we use /x as needed for human readability
 
-my  $SID_sslhello = "@(#) SSLhello.pm 3.35 25/01/10 19:04:59";
+my  $SID_sslhello = "@(#) SSLhello.pm 3.36 25/02/05 14:53:34";
 our $VERSION    = "24.09.24";
 my  $SSLHELLO   = "SSLhello";
 
@@ -1627,7 +1627,9 @@ sub printParameters {
     print _yprint("socket::SO_RCVTIMEO", $_so_rcvtimeo);
     my ($_dummy1, $_dummy2, $_protocol) = getprotobyname('tcp'); # is failsafer than '(getprotobyname('tcp'))[2]'
         if (! $_protocol) {
-            $_protocol = Socket::IPPROTO_TCP;
+            $_protocol = 6; # 6 = TCP
+               # using hardcoded 6 instead of Socket::IPPROTO_TCP to be
+               # compatible with ancient Perl libraries
         }
     print _yprint("socket::getprotobyname('tcp')", $_protocol);
     print __print($line);
@@ -2398,7 +2400,9 @@ sub openTcpSSLconnection ($$) {
                 alarm($alarmTimeout);                       # set Alarm for get-socket and set-socketoptions->timeout(s)
                 my ($_dummy1, $_dummy2, $_protocol) = getprotobyname('tcp'); # is failsafer than '(getprotobyname('tcp'))[2]'
                 if (! $_protocol) {
-                    $_protocol = Socket::IPPROTO_TCP;
+                    $_protocol = 6; # 6 = TCP
+                       # using hardcoded 6 instead of Socket::IPPROTO_TCP to be
+                       # compatible with ancient Perl libraries
                 }
                 socket($socket, Socket::PF_INET, Socket::SOCK_STREAM, $_protocol) or croak("Can't create a socket \'$!\' -> target $host:$port ignored ");
                 setsockopt($socket, Socket::SOL_SOCKET, Socket::SO_SNDTIMEO, pack('L!L!', $SSLhello::timeout, 0) ) or croak("Can't set socket Sent-Timeout \'$!\' -> target $host:$port ignored"); #L!L! => compatible to 32 and 64-bit
@@ -6329,7 +6333,7 @@ L<IO::Socket(1)>
 
 =head1 VERSION
 
-3.35 2025/01/10
+3.36 2025/02/05
 
 =head1 AUTHOR
 
