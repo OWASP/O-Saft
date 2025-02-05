@@ -35,7 +35,7 @@ use strict;
 use warnings;
 use Carp;                                           #replaces warn and die
 
-our $SID_check  = "@(#) ë#4X 3.6 25/02/05 14:23:18"; # version of this file
+our $SID_check  = "@(#) checkAllCiphers.pl 3.6 25/02/05 14:23:18"; # version of this file
 my  $VERSION    = "24.01.24";
 
 BEGIN {
