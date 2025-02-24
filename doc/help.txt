@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.40 25/02/01 10:39:44
+# SID   @(#) help.txt 3.41 25/02/24 10:53:50
 
 NAME
 
@@ -3548,6 +3548,33 @@ CUSTOMISATION
         letters.
 
         Examples in  '.$0'  are  +preload  and  +ciphercheck .
+
+
+CIPHER SUITES
+
+        This tool uses its own list of cipher suites (referred to as  ciphers
+        in this description). The definition of a cipher consist of following
+        attributes:
+            Hex Code            commonly referred to as cipher's hex key
+            Security            strength used in $0
+            Cipher Suite Name   the most commonly known name
+            OpenSSL Name        the name used by OpenSSL
+            Aliases             other known Cipher Suite Names
+            Constant Name       name of the constant usesd in various tools
+            OpenSSL Strength	the strength used by OpenSSL
+            Key Exchange        
+            Authentication      
+            Encryption Type     encryption algorithm
+            Encryption Size     key size in bits
+            Block Size          encryption block size
+            MAC/Hash Type       hashing algorithm
+            MAC/Hash Size       
+            PFS                 if cipher has Perfect Forward Secrecy
+            RFC(s)              list of RFCs for this cipher if any
+            Notes/Comments      additional comments
+        Please see also:
+            definition of %ciphers and %ciphers_desc in lib/Ciphers.pm
+            lib/Ciphers.pm description
 
 
 CIPHER NAMES
