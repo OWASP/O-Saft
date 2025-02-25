@@ -5,7 +5,7 @@
 #? SYNOPSIS
 #?      source lib/o-saft-img.tcl
 #? VERSION                                                                     
-#?      @(#) o-saft-img.tcl 3.3 25/01/10 17:23:38
+#?      @(#) o-saft-img.tcl 3.4 25/02/25 19:55:43
 #? AUTHOR
 #? Copyright (c) 2025, Achim Hoffmann
 #? This  software is licensed under GPLv2. Please see o-saft.pl for details.
@@ -14,7 +14,7 @@
 # -----------------------------------------------------------------------------
 set cfg(IMGSID) {16.09.09}; # initial SID, do not remove
 
-if {[tk windowingsystem] == "aqua"} {   # grrr, ugly check to avoid Tcl errors
+if {[string equal -nocase [tk windowingsystem] Aqua]} {
     package require Img;        # some Mac OS X require it                     
 }
 
