@@ -41,7 +41,7 @@ use Data::Dumper qw(Dumper);
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_trace      = "@(#) OTrace.pm 3.49 25/01/10 17:11:11";
+my  $SID_trace      = "@(#) OTrace.pm 3.50 25/02/26 17:26:59";
 our $VERSION        = "24.09.24";
 
 our $prefix_trace   = "#". __PACKAGE__ . ":";
@@ -269,6 +269,8 @@ sub _test_help  {
 =   +test-sslmap    constants for SSL protocols from Net::SSLeay
 =   +test-ssleay    information about Net::SSLeay capabilities
 =   +test-ciphers-* various ciphers listings; available with o-saft.pl only
+=                   * can be any of: alias, const rfcs, dump, show
+=                   for details, please see: lib/Ciphers.pm --help
 =  ----------------+----------------------------------------------
 =
 EoT
@@ -1234,7 +1236,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.49 2025/01/10
+3.50 2025/02/26
 
 =head1 AUTHOR
 
