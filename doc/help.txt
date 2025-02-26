@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.41 25/02/24 10:53:50
+# SID   @(#) help.txt 3.42 25/02/26 18:19:45
 
 NAME
 
@@ -2506,7 +2506,7 @@ CHECKS
         to report OpenSSL's rating.  To get these ratings, please use openssl
         directly. Following can be used to see the difference:
 
-          $0 --test-ciphers-dump
+          $0 +test-ciphers-dump
 
         Some values (limits) are currently (2025) hardcoded. Following values
         are used to report  'yes'  for the command:
@@ -3572,9 +3572,16 @@ CIPHER SUITES
             PFS                 if cipher has Perfect Forward Secrecy
             RFC(s)              list of RFCs for this cipher if any
             Notes/Comments      additional comments
+
+        The above texts are used in  o-saft.tcl's  information window,  while
+        the  +test-ciphers-*  commands use texts of the internal Perl hash.
+
         Please see also:
-            definition of %ciphers and %ciphers_desc in lib/Ciphers.pm
-            lib/Ciphers.pm description
+
+              $0 +test-ciphers-description
+              $0 +test-ciphers-dump
+              $0 +test-ciphers-show  # or any other  +test-ciphers-*
+              o-saft.tcl             # Cipher Suites
 
 
 CIPHER NAMES
