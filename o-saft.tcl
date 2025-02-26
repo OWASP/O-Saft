@@ -50,113 +50,14 @@ exec wish "$0" ${1+"$@"}
 #?      Any argument starting with  +  are considered a command for  o-saft.pl
 #?      and  o-saft.pl  will be started with all other  options,  commands and
 #?      targets and show the results in the GUI.
+#?      This means that following usage provides the same results:
+#?          o-saft.pl  +CMD --OPT ... target
+#?          $0 +CMD --OPT ... target
 #?
-#?   Result TAB
-#?      The results of  o-saft.pl  are shown in a new TAB. The format (layout)
-#?      of the result can be simple "text" or "table".  This can be configured
-#?      in the  Config menu  or  Options TAB.
-#?
-#?      The difference between the formats are:
-#?      "table"
-#?        The table consist of 4 columns: Nr, Label, Value and Comment. It can
-#?        be sorted according each. All Filters are applied to matching lines.
-#?        The  Filter  will hide the lines completely.
-#?        Saving the results will only save the visible lines. These lines are
-#?        saved in the order of the last sorting.
-#?        Some informational lines and all header lines (see  --header option)
-#?        from  o-saft.pl  are not shown and will not be saved.
-#?      "text"
-#?        In this format, the results are shown in the same format as returned
-#?        by  o-saft.pl. Lines cannot be sorted. The Filter is applied to each
-#?        matching line. The  Filter  will just remove the text,  but not hide
-#?        the lines.
-#?        Saving the result will save the complete text.
-#?
-#?   Help
-#?      All functionality is documented with balloon help on each checkbutton,
-#?      input field, button or table header line.
-#?
-#?   Examples for Filter
-#?      Match complete line containing Certificate:
-#?         r=1 e=0 #=0 RegEx=Certificate
-#?      Match word Target:
-#?         r=0 e=1 #=6 RegEx=Target
-#?      Match label text and emphase:
-#?         r=1 e=0 #=1 RegEx=^[A-Za-z][^:]*\s* Font=osaftHead
-#?
-#?   Configuration
-#?      Some parts of the GUI, for example widget fonts or widget label texts,
-#?      can be customised in  .o-saft.tcl , which  will be searched for in the
-#?      user's  HOME directory  and in the local directory.
-#?      A sample  .o-saft.tcl  can be generated with  --rc  option. Please see
-#?      there for details.
-#?
-#?   Buttons
-#?      By default, an image will be used for  most buttons.  Images look more
-#?      modern than the standard Tcl/Tk buttons. Tcl/Tk does not support round
-#?      edges, images as background, or different look for activated buttons.
-#?      The images are read from a separate file: o-saft-img.tcl . If the file
-#?      is missing, no images will be used, but the simple text.
-#?      For each button an image can be specified in o-saft-img.tcl , example:
-#?          set IMG(my-file) [image create photo -file path/to/your-file ]
-#?          set cfg_images(+info)  {my-file};   # where +info is your command
-#?
-#?   Help / Search
-#?      The  [?] button  or  "? Help" menu entry opens a new window containing
-#?      the complete documentation of O-Saft, the result of: o-saft.pl +help .
-#?      The documentation contains clickable links (in blue) to other sections
-#?      in the text. Patterns may be specified to be searched for in the text.
-#?      All texts matching the pattern are highligted.
-#?      Search can be done forward and backward to the current positions,  see
-#?      the  [<]  and  [>]  buttons at bottom of the window. Going to the next
-#?      or previous search result will then  highlight the  complete paragraph
-#?      containing the matched text.
-#?
-#?      When more than 5 matches are found,  an additional window will display
-#?      all matches as an overview. Click on a highligted match in this window
-#?      will show the paragraph containing the match in the help window.
-#?      When multiple "overview" windows are open, each handles its matches.
-#?
-#?      The search pattern can be used in following modes:
-#?        exact - use pattern as literal text
-#?        regex - use pattern as regular expression (proper syntax required)
-#?        smart - convert pattern to RegEx: each character may be optional
-#?        fuzzy - convert pattern to RegEx: each position may be optional
-#?      Example:
-#?        exact:  (adh|dha) - search for literal text  (adh|dha)
-#?        regex:  (adh|dha) - search for word  adh  or  word  dha
-#?        regex:  her.*list - search for text  her  followed by  list
-#?        regex:  (and      - fails, because of syntax error
-#?        smart:  and       - search for  and  or  a?nd  or  an?d  or  and?
-#?        fuzzy:  and       - search for  and  or  .?nd  or  a.?d  or  an.?
-#?
-#?      Note: RegEx are applied to lines only, pattern cannot span more than a
-#?            single line.
-#?      The pattern must have at least 4 characters, except for mode "exact".
-#?
-#?      The GUI contains various [?] buttons. Clicking such a button will show
-#?      the corresponding section in the help window (context sensitive).
-#?
-#?   Key bindings
-#?      Following key bindings are defined:
-#?        <ButtonPress>                 start browser with selected link
-#?        <Control-ButtonPress-1>       copy text to clipboard
-#?        <Shift-Control-ButtonPress-1> copy text to clipboard
-#?        <Control-v>      copy text from clipboard
-#?        <Control-c>      copy selected text to clipboard
-#?        q         (quit) terminate Window or program (not in main window)
-# ?
-# ?     Key bindings currently (2023) not used  because they can't be disabled
-# ?     in  entry or text  widgets then:
-# ?       !         show window with About text
-# ?       ?         show window with Help text
-# ?       c         show window ciphers
-# ?       d         show window tool settings (with --debug only)
-# ?       h         show window with Help text
-# ?       q         (quit) terminate Window or program
+#?      Please section  GUI  below for a brief description of the tool.
 #?
 #? OPTIONS
-#?   Options for information and help:
+#?   Options for information and help (this tool):
 #?      --h         print this text
 # ?                 --h  prints also the section HACKER's INFO
 #?      --help=opts print options (for compatibility with o-saft.pl)
@@ -226,6 +127,171 @@ exec wish "$0" ${1+"$@"}
 #?      +*          any option starting with +
 #?      --*         any other option starting with --
 # TODO: --post=PRG  --post=  parameter passed to o-saft
+#?
+#? GUI
+#?      All functionality is documented with balloon help on each checkbutton,
+#?      input field, button or table header line.
+#?      Unfortunately balloon help is not available on pulldown menues.
+#?
+#?      Functinality related to  o-saft.pl  is available in the main window.
+#?      Result TAB  (see below) will be used to show results from  o-saft.pl .
+#?      Often used commands and options for  o-saft.pl  are available in pull-
+#?      down menues.  Additionally own windows are provided for  all available
+#?      commands and options of  o-saft.pl .
+#?
+#?   ☰  (pullwon menu)
+#?      Contains at least:
+#?          All Command     same as Cmd (pullwon menu)
+#?          All Options     same as Opt (pullwon menu)
+#?          Config GUI      same as Config (pullwon menu)
+#?          Load Results    load results of  o-saft.pl  from file
+#?          Cipher Suites   show table with all cipher suites
+#?          About           show this help
+#?          Help            show help of o-saft.pl
+#?          Quit            bye, bye
+#?
+#?   Cmd (pullwon menu)
+#?       Contains some often used commands and a submenu with all commands.
+#?       Note that selecting any of the +commands here starts  o-saft.pl  with
+#?       that command immediately and shows result in a ne TAB.
+#?
+#?   Opt (pullwon menu)
+#?       Contains some often used options and a submenu with all options. They
+#?       will be used with next +commands or "Start" button.
+#?
+#?   Config (pullwon menu)
+#?       Provides some more configurations, each in its own window.
+#?
+#?   Start (button)
+#?       Calls  o-saft.pl  for specified targets. It should be used when other
+#?       +commands (see Cmd->All Commands menu) are selected.
+#?
+#?   "target" (entry field)
+#?       List of target to be checked.
+#?
+#?   Result TAB
+#?      The results of  o-saft.pl  are shown in a new TAB. The format (layout)
+#?      of the result can be simple "text" or "table".  This can be configured
+#?      in the  Config menu  or  Options TAB.
+#?
+#?      The difference between the formats are:
+#?      "table"
+#?        The table consist of 4 columns: Nr, Label, Value and Comment. It can
+#?        be sorted according each. All Filters are applied to matching lines.
+#?        The  Filter  will hide the lines completely.
+#?        Saving the results will only save the visible lines. These lines are
+#?        saved in the order of the last sorting.
+#?        Some informational lines and all header lines (see  --header option)
+#?        from  o-saft.pl  are not shown and will not be saved.
+#?      "text"
+#?        In this format, the results are shown in the same format as returned
+#?        by  o-saft.pl. Lines cannot be sorted. The Filter is applied to each
+#?        matching line. The  Filter  will just remove the text,  but not hide
+#?        the lines.
+#?        Saving the result will save the complete text.
+#?
+#?      Note that the +info command always uses "text" format".
+#?
+#?      Each Result TAB provides following Buttons: "Save", "STDOUT", "Filter"
+#?      and "Close TAB".
+#?
+#?      Tipp: if the results should look similar to those returned by o-saft.pl
+#?      use the "Filter" window and enable the "== CMT" checkbox.
+#?
+#?   Status
+#?      A scrollable text is available at bottom of the main window. All calls
+#?      to o-saft.pl with all +commands and -options will be shown there.  The
+#?      command are ready for C&P into a shell (if necessary).
+#?
+#?   Examples for Filter in Result TAB
+#?      Please see  "Config Filter" window and its ballon help.
+#?
+#?      Match complete line containing Certificate:
+#?         r=1 e=0 #=0 RegEx=Certificate
+#?      Match word Target:
+#?         r=0 e=1 #=6 RegEx=Target
+#?      Match label text and emphase:
+#?         r=1 e=0 #=1 RegEx=^[A-Za-z][^:]*\s* Font=osaftHead
+#?
+#?   Help / Search
+#?      Beside balloon help, please see   ☰   above.
+#?
+#?      The  [?] button  or  "? Help" menu entry opens a new window containing
+#?      the complete documentation of O-Saft, the result of: o-saft.pl +help .
+#?      The documentation contains clickable links (in blue) to other sections
+#?      in the text. Patterns may be specified to be searched for in the text.
+#?      All texts matching the pattern are highligted.
+#?      Search can be done forward and backward to the current positions,  see
+#?      the  [<]  and  [>]  buttons at bottom of the window. Going to the next
+#?      or previous search result will then  highlight the  complete paragraph
+#?      containing the matched text.
+#?
+#?      When more than 5 matches are found,  an additional window will display
+#?      all matches as an overview. Click on a highligted match in this window
+#?      will show the paragraph containing the match in the help window.
+#?      When multiple "overview" windows are open, each handles its matches.
+#?
+#?      The search pattern can be used in following modes:
+#?        exact - use pattern as literal text
+#?        regex - use pattern as regular expression (proper syntax required)
+#?        smart - convert pattern to RegEx: each character may be optional
+#?        fuzzy - convert pattern to RegEx: each position may be optional
+#?      Example:
+#?        exact:  (adh|dha) - search for literal text  (adh|dha)
+#?        regex:  (adh|dha) - search for word  adh  or  word  dha
+#?        regex:  her.*list - search for text  her  followed by  list
+#?        regex:  (and      - fails, because of syntax error
+#?        smart:  and       - search for  and  or  a?nd  or  an?d  or  and?
+#?        fuzzy:  and       - search for  and  or  .?nd  or  a.?d  or  an.?
+#?
+#?      Note: RegEx are applied to lines only, pattern cannot span more than a
+#?            single line.
+#?      The pattern must have at least 4 characters, except for mode "exact".
+#?
+#?      The GUI contains various [?] buttons. Clicking such a button will show
+#?      the corresponding section in the help window (context sensitive).
+#?
+#?   Key bindings
+#?      Following key bindings are defined:
+#?        <ButtonPress>                 start browser with selected link
+#?        <Control-ButtonPress-1>       copy text to clipboard
+#?        <Shift-Control-ButtonPress-1> copy text to clipboard
+#?        <Control-v>      copy text from clipboard
+#?        <Control-c>      copy selected text to clipboard
+#?        q         (quit) terminate Window or program (not in main window)
+# ?
+# ?     Key bindings currently (2023) not used  because they can't be disabled
+# ?     in  entry or text  widgets then:
+# ?       !         show window with About text
+# ?       ?         show window with Help text
+# ?       c         show window ciphers
+# ?       d         show window tool settings (with --debug only)
+# ?       h         show window with Help text
+# ?       q         (quit) terminate Window or program
+#?
+#? CONFIGURATION
+#?      Some parts of the GUI, for example widget fonts or widget label texts,
+#?      can be customised in  .o-saft.tcl , which  will be searched for in the
+#?      user's  HOME directory  and in the local directory.
+#?      A sample  .o-saft.tcl  can be generated with  --rc  option. Please see
+#?      there for details.
+#?
+#?      When started with any  -d  option, the Config pulldown menu provides a
+#?      "Config Tool" action which opens a window with some internal settings.
+#?
+#?   Buttons
+#?      By default, an image will be used for  most buttons.  Images look more
+#?      modern than the standard Tcl/Tk buttons. Tcl/Tk does not support round
+#?      edges, images as background, or different look for activated buttons.
+#?      The images are read from a separate file: o-saft-img.tcl . If the file
+#?      is missing, no images will be used, but the simple text.
+#?      For each button an image can be specified in o-saft-img.tcl , example:
+#?          set IMG(my-file) [image create photo -file path/to/your-file ]
+#?          set cfg_images(+info)  {my-file};   # where +info is your command
+#?
+#?   Layouts
+#?      Two layouts, "classic" and "tablet" are provided, see  "Change Layout"
+#?      to change it.
 #?
 #? DOCKER
 #?      This script can be used from within any Docker image. The host is then
@@ -585,7 +651,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 3.46 Spring Edition 2025
+#?      @(#) 3.47 Spring Edition 2025
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -773,10 +839,10 @@ if {![info exists argv0]} { set argv0 "o-saft.tcl" }   ;# if it is a tclet
 # NOTE that cfg() also contains all +commands and -options passed to o-saft.pl
 # they are extracted in osaft_exec(); so the array indexes must not start with
 # + or -
-set cfg(SID)    "@(#) o-saft.tcl 3.46 25/02/26 14:15:33"
+set cfg(SID)    "@(#) o-saft.tcl 3.47 25/02/26 19:41:38"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2025"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {3.46}
+set cfg(VERSION) {3.47}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -901,7 +967,7 @@ set myX(geoD)   "700x700"      ;# geometry and position of Cipher    window
 set myX(geoF)   "700x750"      ;# geometry and position of Filter    window
 set myX(geoT)   ""             ;# geometry and position of Tool Cfg  window (computed dynamically)
 set myX(minx)   700            ;# O-Saft  window min. width
-set myX(miny)   850            ;# O-Saft  window min. height
+set myX(miny)   750            ;# O-Saft  window min. height
 set myX(lenl)   15             ;# fixed width of labels in Options window
 set myX(rpad)   15             ;# right padding in the lower right corner
 set myX(padx)   5              ;# padding to right border
@@ -1156,7 +1222,7 @@ Select and configure options. All options are used for any command button.
     tabFILTER   {
 Configure filter for text markup: r, e and # specify how the RegEx should work;
 Forground, Background, Font and u  specify the markup to apply to matched text.
-Changes apply to next +command.
+Changes apply to Result TAB of next +command.
 }
     DESC_filter {-- CONFIGURATION texts used in Filter tab -------------------}
     t_key       {Unique key for regex}
@@ -1459,7 +1525,7 @@ proc self_write_rc      {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 3.46 25/02/26 14:15:33
+ #?      @(#) .o-saft.tcl generated by 3.47 25/02/26 19:41:38
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
