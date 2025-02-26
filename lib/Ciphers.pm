@@ -26,11 +26,12 @@ our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 # 0.03  0.00  0:00.03 100%  0k 10176k  # 01/2024
 # 0.04  0.00  0:00.05 100%  0k 10024k  # 07/2024
 # 0.04  0.00  0:00.05 100%  0k 10052k  # 01/2025
+# 0.04  0.00  0:00.05 100%  0k  9988k  # 02/2025
 
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.64 25/01/10 17:09:18";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.65 25/02/26 18:08:06";
 our $VERSION    = "24.09.24";   # official verion number of this file
 
 use Exporter qw(import);
@@ -1750,17 +1751,19 @@ sub _main   {
     my @argv = @_;
     push(@argv, "--help") if (0 > $#argv);
     my %usage = (
+        # texts should be same as or similar to POD's =head1 COMMANDS
         '# commands to show internal cipher tables' => {
-            'alias'     => '',
-            'const'     => '',
-            'dump'      => '',
-            'description' => '',
-            'openssl'  => '',
-            'rfc'      => '',
-            'simple'   => '',
-            'sort'     => '',
-            'ssltest'  => '',
-            'overview' => '',
+            'alias'     => 'alias(es) for cipher suite names',
+            'const'     => 'constants for cipher suite names',
+            'dump'      => 'all ciphers with internal data',
+            'rfc'       => 'RFCs for or related to cipher suite names',
+            'overview'  => 'overview of various (internal) checks according ciphers',
+            'description' => 'description of all data structures for ciphers',
+            'openssl'   => 'all ciphers in format like "openssl ciphers -V"',
+            'show'      => 'all ciphers as simple human readable format',
+            'simple'    => 'all ciphers as simple space-separated format',
+            'sort'      => 'all ciphers sorted according OWASP scoring',
+            'ssltest'   => 'all ciphers in format like "ssltest --list"',
         },
         # use alias to pass first argument to 'is_typ()'; for testing only
         "# commands to check cipher type\n# (all following call 'is_typ(TYP,KEY)')" => {
@@ -1787,13 +1790,14 @@ sub _main   {
     );
     # got arguments, do something special
     while (my $arg = shift @argv) {
-        if ($arg =~ m/^--?h(?:elp)?$/)  { OText::print_pod($0, __FILE__, $SID_ciphers); exit 0; }
-        if ($arg eq '--usage')          { OText::usage_show("", \%usage); exit 0; }
+        if ($arg eq '--h')      { print "please use: --usage or --help\n"; exit 0; }
+        if ($arg eq '--help')   { OText::print_pod($0, __FILE__, $SID_ciphers); exit 0; }
+        if ($arg eq '--usage')  { OText::usage_show("", \%usage); exit 0; }
         # ----------------------------- options
-        if ($arg eq '--trace')          { $OCfg::cfg{'trace'}++;   next; }
-        if ($arg eq '--v')              { $OCfg::cfg{'verbose'}++; next; }
+        if ($arg eq '--trace')  { $OCfg::cfg{'trace'}++;   next; }
+        if ($arg eq '--v')      { $OCfg::cfg{'verbose'}++; next; }
         # ----------------------------- commands
-        if ($arg =~ /^version$/)        { print "$SID_ciphers\n";  next; }
+        if ($arg eq 'version')  { print "$SID_ciphers\n";  next; }
         if ($arg =~ /^[-+]?V(ERSION)?$/){ $arg = "test-ciphers-version"; }
         $arg =~ s/^[+]//;   # allow leading + prefix
         $arg =~ s/^test.?ciphers[_.-]?//; # allow option without prefix +test-ciphers
@@ -1932,7 +1936,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.64 2025/01/10
+3.65 2025/02/26
 
 
 =head1 AUTHOR
