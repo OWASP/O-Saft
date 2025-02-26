@@ -31,6 +31,12 @@
 #!# "Program Code"  (file coding.txt) if you want to improve the program.
 
 ## {
+# NOTE: when started using "perl o-saft.pl ...",  Perl may complain with:
+#           Too late for "-CA" option at ...
+#       Workaround: remove -CADSio in shebang line and use it on command line.
+# NOTE: when started standalone, following Modules must be available in ./lib :
+#           OCfg.pm OData.pm Ciphers.pm OText.pm OMan.pm ODoc.pm doc/help.txt
+
 # NOTE: Perl's  `use' and `require' will be used for common and well known Perl
 #       modules only. All other modules, in particular our own ones, are loaded
 #       using an internal function, see _load_file().  All required modules are
@@ -65,7 +71,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.183 25/01/10 16:34:40"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.185 25/02/26 17:29:00"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -347,7 +353,7 @@ my $arg     = "";       # no special purpose, used in various loops
 my @argv    = ();       # all options, including those from RC-FILE
                         # will be used when ever possible instead of @ARGV
 my @rc_argv = "";       # all options read from RC-FILE
-my @dbx     = ();       # contains all debug options, like --trace --v --tests*
+my @dbx     = ();       # contains all debug options, like --trace* and --v
                         # must be set from @argv not @ARGV to get values from
                         # RC-FILE also, see below
 
@@ -382,7 +388,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.183"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.185"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6182,7 +6188,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.183");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.185");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6805,7 +6811,7 @@ while ($#argv >= 0) {
     # handled after parsing all arguments, which may contain more options
     # see testing $test near "no connection commands" below
     trace_arg("opt_--t? $arg");
-    if ($arg =~ /^(?:--|,)(test.*)$/)               { $arg  = "+$1"; }    # alias: same as +test*
+    if ($arg =~ /^(?:--|,)(test.*)$/)               { $arg  = "+$1"; }    # alias: --test* is same as +test*
     if ($arg =~ /^\+(test.*)/) {   # SEE Note:+test-*
         # handles also +test-* and +tests-*
         _vprint("test $arg");
@@ -6818,7 +6824,7 @@ while ($#argv >= 0) {
             $test = "$k";
         }
         _trace_info("  TEST    - prepare for test functions");
-        # some --test-* are special (need other data like %cfg)
+        # some +test-* are special (need other data like %cfg)
         $cfg{'need_netdns'}     = 1;
         $cfg{'need_timelocal'}  = 1;
         $cfg{'need_netinfo'}    = 1;
@@ -7496,7 +7502,7 @@ if ($help !~ m/^\s*$/) {
     OMan::man_printhelp($help);
     exit 0;
 }
-if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.183"; exit 0; }
+if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.185"; exit 0; }
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))     { _vprint("  list       "); printciphers_list('list'); exit 0; }
 if (_is_cfg_do('ciphers'))  { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
@@ -7505,7 +7511,7 @@ if ($test) {
     push(@{$cfg{out}->{'warnings_no_dups'}}, qw(049 150));
     push(@{$cfg{out}->{'warnings_printed'}}, qw(049 150));
 } else {
-    # +test* and --test* don't need a command, hence not checked here
+    # +test* doesn't need a command, hence not checked here
     if ($cfg{'proxyhost'} ne "" && 0 == $cfg{'proxyport'}) {
         my $q = "'";
         _trace_info("  USAGE   - printusage_exit(proxyport)");
@@ -9672,6 +9678,8 @@ exit right before the checks start.
 Until VERSION 19.12.21, only the options  --test-*  where supported. Using
 these options exited the program. This behaviour resulted in incomplete or
 misleading information.
+
+--test-* are still allowed as alias for +test-* .
 
 
 =head2 Note:hints
