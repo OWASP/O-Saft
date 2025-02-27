@@ -651,7 +651,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 3.50 Spring Edition 2025
+#?      @(#) 3.51 Spring Edition 2025
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -740,13 +740,49 @@ proc copy2clipboard {w shift} {
 #_____________________________________________________________________________
 #____________________________________________________________ configuration __|
 
+# ::TXTmap  define some general texts
+    # Following table defines texts used in error, warning and alike messages.
+    # For human readability, the texts are defined in a simple Tcl list  which
+    # will be converted to a Tcl dict. This just avoids clumsy Tcl dict code.
+    # If more key-value pairs are necessary,  simply add a column to  the list
+    # if a new key-value pair is needed in the dict.
+    # ::TXTmap avoids using "global TXTmap".
+set _dict_keys  [list \
+     key         text            icon] ;# TODO: icon not yet used ...
+#---------------+---------------+------------------------------
+set _dict_vals  [list \
+    {info        "**INFO:"       ::tk::icons::information } \
+    {error       "**ERROR:"      ::tk::icons::error       } \
+    {warning     "**WARNING:"    ::tk::icons::warning     } \
+    {hint        "!!Hint:"       ::tk::icons::information } \
+    {usage       "Usage:"        ::tk::icons::information } \
+    {dbx         "#dbx# "        {}  } \
+];#-------------+---------------+------------------------------
+
+foreach values $_dict_vals {
+    set key [lindex $values 0] ;# first value is key itself
+    lmap k [lreplace $_dict_keys 0 0] v [lreplace $values 0 0] {
+        #dbx# puts "dict set ::TXTmap $key $k $v"
+        dict set ::TXTmap $key $k "$v"
+    }
+}
+
+# functions to get above texts and values
+proc dict_txt:get   {i key} {
+    #? liefert Wert aus dict; leeren String wenn $i nicht existiert
+    if {![dict exists $::TXTmap $i]}      { return "" }
+    if {![dict exists $::TXTmap $i $key]} { return "" }
+    dict get $::TXTmap $i $key
+}; # dict_txt:get
+proc txt_text:get   {idx}   { dict_txt:get $idx text  }
+proc txt_icon:get   {idx}   { dict_txt:get $idx icon  }
+
 # some functions needed early
-proc pwarn        {txt} { puts stderr "**WARNING: $txt"; return }
+proc pwarn        {txt} { puts stderr "[txt_text:get warning] $txt"; return }
     #? output WARNING message
 
-proc perr         {txt} { puts stderr "**ERROR: $txt";   return }
+proc perr         {txt} { puts stderr "[txt_text:get error  ] $txt"; return }
     #? output ERROR message
-
 
 proc pinfo        {txt} {
     #? output INFO message
@@ -754,7 +790,7 @@ proc pinfo        {txt} {
     # $cfg(VERB) may not yet set, hence checking options
     if {![regexp -- {--(d|v|dbx|debug)( |$)} $argv]} { return }
         # Tcl's regexp needs ( |$) instead of a simple $ to match end of word
-    puts stderr "**INFO: $txt"
+    puts stderr "[txt_text:get info] $txt"
     return
 }; # pinfo
 
@@ -839,10 +875,10 @@ if {![info exists argv0]} { set argv0 "o-saft.tcl" }   ;# if it is a tclet
 # NOTE that cfg() also contains all +commands and -options passed to o-saft.pl
 # they are extracted in osaft_exec(); so the array indexes must not start with
 # + or -
-set cfg(SID)    "@(#) o-saft.tcl 3.50 25/02/27 18:19:24"
+set cfg(SID)    "@(#) o-saft.tcl 3.51 25/02/27 18:34:49"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2025"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {3.50}
+set cfg(VERSION) {3.51}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -1413,43 +1449,6 @@ _txt2arr [string map "
 #      ** columns must be separated by exactly one TAB **
 }]; # filter
 
-# ::TXTmap  define some general texts used in GUI
-    # Following table defines texts used in error, warning and alike messages.
-    # For human readability, the texts are defined in a simple Tcl list  which
-    # will be converted to a Tcl dict. This just avoids clumsy Tcl dict code.
-    # If more key-value pairs are necessary,  simply add a column to  the list
-    # if a new key-value pair is needed in the dict.
-    # ::TXTmap avoids using "global TXTmap".
-set _dict_keys  [list \
-     key         text            icon] ;# TODO: icon not yet used ...
-#---------------+---------------+------------------------------
-set _dict_vals  [list \
-    {info        "**INFO:"       ::tk::icons::information } \
-    {error       "**ERROR:"      ::tk::icons::error       } \
-    {warning     "**WARNING:"    ::tk::icons::warning     } \
-    {hint        "!!Hint:"       ::tk::icons::information } \
-    {usage       "Usage:"        ::tk::icons::information } \
-    {dbx         "#dbx# "        {}  } \
-];#-------------+---------------+------------------------------
-
-foreach values $_dict_vals {
-    set key [lindex $values 0] ;# first value is key itself
-    lmap k [lreplace $_dict_keys 0 0] v [lreplace $values 0 0] {
-        #dbx# puts "dict set ::TXTmap $key $k $v"
-        dict set ::TXTmap $key $k "$v"
-    }
-}
-
-# functions to get above texts and values
-proc dict_txt:get   {i key} {
-    #? liefert Wert aus dict; leeren String wenn $i nicht existiert
-    if {![dict exists $::TXTmap $i]}      { return "" }
-    if {![dict exists $::TXTmap $i $key]} { return "" }
-    dict get $::TXTmap $i $key
-}; # dict_txt:get
-proc txt_text:get   {idx}   { dict_txt:get $idx text  }
-proc txt_icon:get   {idx}   { dict_txt:get $idx icon  }
-
 # ::MSG  define dictionary for error. warning etx. texts used in GUI
 # Following dict simulates a message queue. Messages (mainly informational text
 # for the user) are simple added with a sequence number (idx). This sequence nr
@@ -1501,7 +1500,7 @@ proc _dbx   {level txt} {
     # [info frame -1];           # better
     catch { dict get [info frame -1] proc } me; # name of procedure or error
     if {[regexp {not known in dictionary} $me]} { set me "." }; # is toplevel
-    puts stderr "#dbx# \[$cfg(ICH)\]$me$txt"
+    puts stderr "[txt_text:get dbx]\[$cfg(ICH)\]$me$txt"
     return
 }; # _dbx
 
@@ -1575,7 +1574,7 @@ proc self_write_rc      {}  {
     _dbx 2 "{}{"
     global cfg argv0
     set qq {"} ;# dumm "
-    if [catch { set fid [open $argv0 r]} err] { puts "**ERROR: $err"; exit 2 }
+    if [catch { set fid [open $argv0 r]} err] { perr $err; exit 2 }
     # $rc_doc is used to define help text with the same syntax as used for this
     # file to avoid that it will be extracted with  --help  option, the text is
     # defined with a leading space in each line.
@@ -1600,7 +1599,7 @@ proc self_write_rc      {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 3.50 25/02/27 18:19:24
+ #?      @(#) .o-saft.tcl generated by 3.51 25/02/27 18:34:49
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
@@ -3483,7 +3482,7 @@ proc create_win   {parent title cmd} {
         if {[winfo exists $this.$name]} {
             # this occour if command/or option appears more than once in list
             # hence the warning is visible only in verbose mode
-            pinfo "**WARNING: create_win exists: $this.$name; ignored"
+            pinfo "create_win exists: $this.$name; ignored"
             continue
         }
         frame $this.$name              ;# create frame for command' or options' checkbutton
@@ -4645,7 +4644,7 @@ proc config_osaft {}    {
 ----
 $usage
 ----
-!!Hint:
+[txt_text:get hint]
 $hint"
     }
     _dbx 2 "}"
@@ -5108,7 +5107,7 @@ proc gui_main       {}  {
     # same as: dict for {key val} $::MSG ...
     foreach idx [msg_keys:get] {
         set txt [msg_text:get $idx]
-        set typ [txt_string:get [msg_type:get $idx]]
+        set typ [txt_text:get [msg_type:get $idx]]
         guistatus_set "$typ $txt"
     }
 
