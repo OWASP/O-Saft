@@ -651,7 +651,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see gui_set_readonly() for details.
 #.
 #? VERSION
-#?      @(#) 3.51 Spring Edition 2025
+#?      @(#) 3.52 Spring Edition 2025
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -769,13 +769,51 @@ foreach values $_dict_vals {
 
 # functions to get above texts and values
 proc dict_txt:get   {i key} {
-    #? liefert Wert aus dict; leeren String wenn $i nicht existiert
+    #? return value from dict; empty string if nothing exists
     if {![dict exists $::TXTmap $i]}      { return "" }
     if {![dict exists $::TXTmap $i $key]} { return "" }
     dict get $::TXTmap $i $key
 }; # dict_txt:get
 proc txt_text:get   {idx}   { dict_txt:get $idx text  }
 proc txt_icon:get   {idx}   { dict_txt:get $idx icon  }
+
+# ::MSG  define dictionary for error, warning etc. texts used in GUI
+    # Following dict simulates a message queue. Messages (mainly informational
+    # texts for the user) are simple added with a sequence number (idx).  This
+    # sequence number is used to print messages in order off their occourence.
+    # This message queue  is not necessary  for the core functionality of this
+    # script, it just provides a user-friendly collection of warnings, errors.
+    # The dict provides following data foreach entry (idx):
+# Messages       seq. nr key    value    # description (not part of dict)
+#---------------+-------+------+---------+--------------------------------
+dict set ::MSG   0       type   "mandatory: info, error, warning, hint"
+dict set ::MSG   0       text   "mandatory: message text"
+#---------------+-------+------+---------+--------------------------------
+# idx=0 above is for documentation only
+
+# functions to set and get the message queue MSG
+# ::MSG avoids using "global MSG"
+proc msg_type:set   {i txt} { dict set  ::MSG $i   type   $txt }
+proc msg_text:set   {i txt} { dict set  ::MSG $i   text   $txt }
+proc msg_type:get   {idx}   { dict get $::MSG $idx type        }
+proc msg_text:get   {idx}   { dict get $::MSG $idx text        }
+proc msg_keys:get   {}      { return [lrange [lsort -integer [dict keys $::MSG]] 1 end] }
+    #? return sorted list of indices (idx) without idx=0
+proc msg_keys:last  {}      { return [lindex [msg_keys:get] end] }
+    #? return last indices in MSG, returns "" if only idx=0 exists
+proc msg:append  {type txt} {
+    #? add new message $txt of type $type to message queue MSG
+    set last [msg_keys:last]
+    # incr handles unset variables but not empty ones, grrr
+    if {[regexp {^[0-9]+$} $last]} {
+        incr last
+    } else {
+        set  last 1
+    }
+    msg_type:set $last $type
+    msg_text:set $last $txt
+    return
+}; # msg:append
 
 # some functions needed early
 proc pwarn        {txt} { puts stderr "[txt_text:get warning] $txt"; return }
@@ -836,12 +874,7 @@ proc docker_args    {}      {
 proc _message     {icon title txt} {
     # print message, either with GUI or on STDERR
     global argv
-    set str "**: "
-    switch $icon {
-        info    { set str "**INFO:"    }
-        error   { set str "**ERROR:"   }
-        warning { set str "**WARNING:" }
-    }
+    set str [txt_text:get $icon]   ;# the identifier in $icon is the key in the dict also
     if {""!=[info commands tk_messageBox]} {
         if {![regexp -- {\+quit} $argv]} {
             # check in $argv because $cfg may not yet set
@@ -857,7 +890,7 @@ proc _message     {icon title txt} {
 
 proc _isexecutable {ex} {
     #? return 1 if $ex is executable, 0 otherwise
-    # uses "$exe -v" ... quick&dirty ('cause mainly used to check for perl)
+    # uses "$ex -v" ... quick&dirty ('cause mainly used to check for perl)
     catch { exec 2>@stdout {*}$ex -v } result exec_options
     set code   [dict get $exec_options -code]
     if {0==$code} { return 1 }
@@ -875,10 +908,10 @@ if {![info exists argv0]} { set argv0 "o-saft.tcl" }   ;# if it is a tclet
 # NOTE that cfg() also contains all +commands and -options passed to o-saft.pl
 # they are extracted in osaft_exec(); so the array indexes must not start with
 # + or -
-set cfg(SID)    "@(#) o-saft.tcl 3.51 25/02/27 18:34:49"
+set cfg(SID)    "@(#) o-saft.tcl 3.52 25/02/27 19:26:05"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2025"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {3.51}
+set cfg(VERSION) {3.52}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -1449,44 +1482,6 @@ _txt2arr [string map "
 #      ** columns must be separated by exactly one TAB **
 }]; # filter
 
-# ::MSG  define dictionary for error. warning etx. texts used in GUI
-# Following dict simulates a message queue. Messages (mainly informational text
-# for the user) are simple added with a sequence number (idx). This sequence nr
-# is later used to print the message in order off its occourence.
-# This message queue isn't necessary for the core functionality of this script,
-# it just provides a user-friendly collection of warnings, errors, etc..
-# The dict provides following data foreach entry (idx):
-# Messages       seq. nr key    value    # description (not part of dict)
-#---------------+-------+------+---------+--------------------------------
-dict set ::MSG   0       type   "mandatory: info, error, warning, hint"
-dict set ::MSG   0       text   "mandatory: message text"
-#---------------+-------+------+---------+--------------------------------
-# idx=0 above is for documentation only (and initial setting of MSG)
-
-# functions to set and get the message queue MSG
-# ::MSG avoids using "global MSG"
-proc msg_type:set   {i txt} { dict set  ::MSG $i   type   $txt }
-proc msg_text:set   {i txt} { dict set  ::MSG $i   text   $txt }
-proc msg_type:get   {idx}   { dict get $::MSG $idx type        }
-proc msg_text:get   {idx}   { dict get $::MSG $idx text        }
-proc msg_keys:get   {}      { return [lrange [lsort -integer [dict keys $::MSG]] 1 end] }
-    #? return sorted list of indices (idx) without idx=0
-proc msg_keys:last  {}      { return [lindex [msg_keys:get] end] }
-    #? return last indices in MSG, returns "" if only idx=0 exists
-proc msg:append  {type txt} {
-    #? add new message $txt of type $type to message queue MSG
-    set last [msg_keys:last]
-    # incr handles unset variables but not empty ones, grrr
-    if {[regexp {^[0-9]+$} $last]} {
-        incr last
-    } else {
-        set last 1
-    }
-    msg_type:set $last $type
-    msg_text:set $last $txt
-    return
-}; # msg:append
-
 #_____________________________________________________________________________
 #________________________________________________________________ functions __|
 
@@ -1599,7 +1594,7 @@ proc self_write_rc      {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 3.51 25/02/27 18:34:49
+ #?      @(#) .o-saft.tcl generated by 3.52 25/02/27 19:26:05
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
@@ -1722,9 +1717,9 @@ proc self_write_docs    {}  {
 #____________________________________________________________ early actions __|
 
 # To avoid loading and using Tk functionality, some actions are performed very
-# early, right before definige other variables and functions.
-# These are actions requested by options which only print ASCII data.
-# To fulfill these action, some data and some function are defined here.
+# early, right before defining other variables or functions. These are actions
+# requested by options which only print ASCII data.
+# To fulfill these actions, some data and some function are defined here.
 
 
 foreach arg $argv {
@@ -3865,7 +3860,7 @@ proc search_view  {w key}   {
     #? scroll given text widget according key
     _dbx 2 "{$w, $key}{"
     #dbx puts "search_view: {$w, $key} [$w yview]"
-    # Up and Down are handled automatically, usually, but not always, grrrr
+    # Up and Down are handled automatically, usually, but not always, grrr
     switch $key {
         Home    { $w see [$w index HELP-LNK-T.first] }
         Prior   { $w yview scroll -1  pages }
@@ -4774,7 +4769,7 @@ proc config_print {}    {
         set targets "$targets $host"
     }
     set packs {}
-    foreach key [lsort [list Img tablelist tooltip]] {
+    foreach key [lsort [list Img tablelist tooltip ttk::notebook]] {
         set spaces ""
         set i [string length $key]
         while {$i < 10} { append spaces " "; incr i; }
