@@ -35,7 +35,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_oman   = "@(#) OMan.pm 3.72 25/01/11 11:59:17";
+my  $SID_oman   = "@(#) OMan.pm 3.73 25/02/27 09:25:52";
 our $VERSION    = "24.09.24";
 
 use Exporter qw(import);
@@ -1245,7 +1245,7 @@ sub _man_doc_opt    {
     my ($typ, $sep, $format) = @_;  # format is POD or opt
     my  $url  = "";
     my  @txt  = _get_file($typ);
-    my  $opt;
+    my  $opt  = "";
     # ODoc::*::get()  returns one line for each term;  format is:
     #   term followd by TAB (aka \t) followed by description text
     foreach my $line (@txt) {
@@ -2753,7 +2753,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.72 2025/01/11
+3.73 2025/02/27
 
 
 =head1 AUTHOR
