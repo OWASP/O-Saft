@@ -261,6 +261,13 @@
 #?      --gnuenv        - change #! (shebang) lines to  #!/usr/bin/env -S
 #?                        Involves  --install --useenv .
 #?                        Applies the change to shebang lines with arguments.
+#?      --noargs        - remove arguments from #! (shebang) lines
+#?                        Option is ignored when  --useenv  or  --gnuenv  is
+#?                        also used. Applies to  .pl  and  .pm  files only.
+#?                        Note that this always result in a warning for each
+#?                        changed file:  **WARNING: wrong checksum ...
+#                         Useful to remove for example -CADSio  which causes
+#                         Perl to exit when used like:  perl o-saft.pl ...
 #?
 #?      Please see  doc/concepts.txt  for details about /usr/bin/env .
 #?      It's up to the user then, which solution fits better.
@@ -299,7 +306,7 @@
 #?      # check SIDs and checksums of all installed files:
 #?          $0 . --check=SID --changes
 #?      - should return an empty list like:
-#?          # ./INSTALL.sh 3.55; --check=SID  . ...
+#?          # ./INSTALL.sh 3.56; --check=SID  . ...
 #?
 #?          # SID   date    time    md5sum   filename    path
 #?          #----------------------+--------+-------------------------------
@@ -335,6 +342,7 @@
 #?      $0 /opt/bin/ --force
 #?      $0 /opt/bin/ --useenv
 #?      $0 /opt/bin/ --gnuenv
+#?      $0 /opt/bin/ --noargs
 #?      $0 --install /opt/bin/
 #?      $0 --install /tmp/dir/ --instdev
 #?      $0 --check   /opt/bin/
@@ -399,8 +407,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) ¸ÿÖn
-V 3.55 25/02/28 16:48:02"
+SID="@(#) INSTALL-template.sh 3.56 25/02/28 17:42:15"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -411,6 +418,7 @@ src_directory="$dir"
 clean_directory=".files_to_be_removed"  # must be set after reading arguments
 _break=0                # 1 if screen width < 50; then use two lines as output
 colour=""               # 32 green, 34 blue for colour-blind
+noargs=0                # 1 use plain shebang lines without options
 useenv=0                # 1 to change shebang lines to /usr/bin/env
 gnuenv=0                # 1 to change shebang lines to /usr/bin/env -S
 ignore=0                # 1 ignore errors, continue script instead of exit
@@ -701,9 +709,9 @@ copy_file   () {
 	src=$1
 	dst=$2
 	convert=0
+	ext=${src##*.}
+	file=${src##*/}
 	if [ 0 -lt $useenv ]; then
-		ext=${src##*.}
-		file=${src##*/}
 		# ugly hardcode match of extensions and names
 		case "$ext" in
 		    awk | cgi | pl | pm | sh | tcl | pod | txt)  convert=1 ; ;;
@@ -717,9 +725,19 @@ copy_file   () {
 		    *_completion_o-saft)  convert=1 ; ;;
 		esac
 	fi
+	if [ 0 -lt $noargs ]; then
+		case "$ext" in
+		    pl | pm)  convert=2 ; ;;
+		esac
+	fi
 	#dbx# \perl -lane 'if(1==$.){exit 1 if m|^#\!\s*/usr/bin/env |}' "$src" || echo skip $src ...
 	\perl -lane 'if(1==$.){exit 1 if m|^#\!\s*/usr/bin/env |}' "$src" || convert=0
-	if [ 1 -eq $convert ]; then
+	case "$convert" in
+	  0)    # just copy
+		echo_info "  cp    $src $dst"
+		$try \cp --preserve=all "$src"  "$dst"  || __exit 4
+		;;
+	  1)    # --gnuenv or --useemv
 		echo_info "install converted $src ..."
 		# only the very first line $. ist changed
 		if [ -n "$try" ]; then
@@ -737,11 +755,27 @@ copy_file   () {
 		fi
 		# set proper modes
 		\chmod 555 "$dst" # assuming that it is and should be executable
-
-	else
-		echo_info "  cp    $src $dst"
-		$try \cp --preserve=all "$src"  "$dst"  || __exit 4
-	fi
+		;;
+	  2)    # --noargs
+		# only the very first line $. ist changed
+		# lines may look like:
+			#!/usr/bin/perl -CADSio
+			#! /usr/bin/perl -w -I .
+			#! /bin/perl
+		# note that following match does not need to contain /perl,
+		# it's assumed, that the check for $ext above selects proper
+		# files only
+		# TODO: rarely used "#!/usr/bin/env -S .." will be changed also
+		if [ -n "$try" ]; then
+		    echo 'perl -lane "if(1==$.){s|^([#/!a-zA-Z0-9_.-]+).*|$1|;}print;" '"'$src' > '$dst'"
+		    return
+		fi
+		\perl -lane 'if(1==$.){s|^([#/!a-zA-Z0-9_.-]+).*|$1|;}print;' \
+			"$src" > "$dst"  || __exit 4
+		# convert only  "#! /some/path/tool"
+		\chmod 555 "$dst"
+		;;
+	esac # $convert
 	return
 } # copy_file
 
@@ -1170,7 +1204,7 @@ mode_checkdev () {
 mode_install () {
 	echo_info "mode_install() ..."
 	echo_info "$mode from $src_directory"
-	echo_info "force=$force , ignore=$ignore , gnuenv=$gnuenv , useenv=$useenv"
+	echo_info "force=$force , ignore=$ignore , gnuenv=$gnuenv , useenv=$useenv , noargs=$noargs"
 	err=0
 	if [ ! -d "$inst_directory" ]; then
 		echo_red "**ERROR: 040: $inst_directory does not exist; exit"
@@ -1451,6 +1485,8 @@ while [ $# -gt 0 ]; do
           '--bunt')             colour="34m";   ;; # alias
           '--blind')            colour="34m";   ;; # alias
           '--i' | '--ignore')   ignore=1;       ;;
+          '--no-args')          noargs=1;       ;; # alias
+          '--noargs')           noargs=1;       ;;
           '--useenv')           useenv=1;       ;;
           '--use-env')          useenv=1;       ;; # alias
           '--gnuenv')           gnuenv=1; useenv=1; ;;
@@ -1459,11 +1495,18 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.55 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.56 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
 done
+
+if [ 0 -lt $noargs ]; then
+	if [ 0 -lt $useenv -o 0 -lt $gnuenv ]; then
+		echo_red "**ERROR: 004: --noargs not allowed with --useenv or --gnuenv; exit"
+		exit 2
+	fi
+fi
 
 if [ -n "$osaft_vm_build" ]; then
 	case "$mode" in
@@ -1487,7 +1530,7 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.55; $mode $src_txt $inst_directory ..."
+echo "# $0 3.56; $mode $src_txt $inst_directory ..."
     # always print internal SID, makes debugging simpler
 
 # check for lock-file, should only exist on author's system
