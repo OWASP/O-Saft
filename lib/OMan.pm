@@ -35,7 +35,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_oman   = "@(#) OMan.pm 3.73 25/02/27 09:25:52";
+my  $SID_oman   = "@(#) OMan.pm 3.74 25/02/28 12:36:32";
 our $VERSION    = "24.09.24";
 
 use Exporter qw(import);
@@ -741,8 +741,8 @@ sub _man_use_tty    {   # break long lines of text; SEE Note:tty
     my $_len = 80;
     my $cols = $cfg{'tty'}->{'width'};
     if (10 > $cols) {   # size smaller 10 doesn't make sense
-        $cols = $ENV{COLUMNS} || 0;  # ||0 avoids perl's "Use of uninitialized value"
-        if ($cols =~ m/^[1-9][0-9]+$/) {    # ensure that we get numbers
+        $cols = $ENV{COLUMNS} || 0;     # SEE Note:Defensive Programming
+        if ($cols =~ m/^[1-9][0-9]+$/) {# ensure that we get numbers
             $cfg{'tty'}->{'width'} = $cols;
             return;
         }
@@ -1007,7 +1007,7 @@ sub _man_html_chck  {
     my $cmd_opt = shift || "";                  # +cmd or --opt or --opt=value
     my $tag_nam = $cmd_opt;
     my $tag_val = '';
-    return '' if ($cmd_opt !~ m/^(?:-|\+)+/);   # defensive programming
+    return '' if ($cmd_opt !~ m/^(?:-|\+)+/);   # SEE Note:Defensive Programming
     return $cmd_opt if ($mode ne 'cgi');        # for "html" nothing special
     # $cmd_opt may contain:  "--opt1 --opt2"; hence split at spaces and use first
     if ($cmd_opt =~ m/^(?:\+)/) { # is command, print simple checkbox
@@ -1524,8 +1524,8 @@ sub _man_ciphers_get     {
     my $ciphers = "";
     foreach my $key (sort(keys %ciphers)) {
         my $name  = Ciphers::get_name ($key);
-        next if not $name;              # defensive programming
-        next if $name =~ m/^\s*$/;      # defensive programming
+        next if not $name;              # SEE Note:Defensive Programming
+        next if $name =~ m/^\s*$/;      # SEE Note:Defensive Programming
         my $sec   = Ciphers::get_sec  ($key);
         my $hex   = Ciphers::key2text ($key);
         my $mac   = Ciphers::get_mac  ($key);
@@ -1597,7 +1597,7 @@ EoHTML
 sub _man_ciphers_html_li {
     #? helper function for man_ciphers_html(): return LI tag with content
     my ($hex, $sec, $name, $dl) = @_;
-    $name = "" if not defined $name;    # defensive programming
+    $name = "" if not defined $name;    # SEE Note:Defensive Programming
     $dl   =~ s/\n$//;
     return << "EoHTML";
 
@@ -2018,7 +2018,7 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     );
     my $txt = "";
     my $sep = "\t";
-    if (defined $types{$typ}) { # defensive programming
+    if (defined $types{$typ}) { # SEE Note:Defensive Programming
        $sep = $types{$typ}->[1];
     } else {
        if ($typ =~ m/(?:^cfg[_-]|[_-]cfg$)/) {
@@ -2030,7 +2030,7 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
        } else {
            # this is a programming error, hence always printed on STDERR
            print STDERR "**WARNING: 510: unknown table type '$typ'; using 'text' instead.\n";
-           return $pod; # avoid uninitialised value; return as no data for $typ is available
+           return $pod; # return as no data for $typ is available
        }
     }
     _man_dbx("man_table($typ) ...");
@@ -2075,7 +2075,7 @@ sub man_table       {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         # TODO: --cfg_range=* and --cfg-regex=*  are not yet implemented
         #       however, we can print it using --help=cfg-regex
         foreach my $key (sort keys %{$cfg{$list}}) {
-            $txt =  $cfg{$list}->{$key} || "";  # "" to avoid "Use of uninitialized value ..."
+            $txt =  $cfg{$list}->{$key} || "";  # SEE Note:Defensive Programming
             if ('ARRAY' eq ref($cfg{$list}->{$key})) {
                 $txt = join("\t", @{$cfg{$list}->{$key}});
             }
@@ -2245,7 +2245,7 @@ sub man_options     {
 
 sub man_toc         {
     #? print help table of contents
-    my $typ     = lc(shift) || "";      # || to avoid uninitialised value
+    my $typ     = lc(shift) || "";          # SEE Note:Defensive Programming
     my $toc;
     _man_dbx("man_toc() ..");
     foreach my $txt (grep{/^=head. /} @help) {  # note: @help is in POD format
@@ -2338,7 +2338,7 @@ sub man_wiki        {
 sub man_help        {
     #? print complete user documentation for o-saft.pl as plain text (man-style)
     # called when no special help, prints full help text or parts of it
-    my $label   = lc(shift) || "";      # || to avoid uninitialised value
+    my $label   = lc(shift) || "";      # SEE Note:Defensive Programming
     my $anf     = uc($label);
     my $end     = "[A-Z]";
     _man_dbx("man_help($anf, $end) ...");
@@ -2753,7 +2753,7 @@ this tool, for example:
 
 =head1 VERSION
 
-3.73 2025/02/27
+3.74 2025/02/28
 
 
 =head1 AUTHOR
