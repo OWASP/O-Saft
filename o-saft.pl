@@ -71,7 +71,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.189 25/02/28 12:35:15"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.190 25/02/28 13:36:41"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -388,7 +388,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.189"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.190"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6191,7 +6191,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.189");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.190");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7505,7 +7505,7 @@ if ($help !~ m/^\s*$/) {
     OMan::man_printhelp($help);
     exit 0;
 }
-if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.189"; exit 0; }
+if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.190"; exit 0; }
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))     { _vprint("  list       "); printciphers_list('list'); exit 0; }
 if (_is_cfg_do('ciphers'))  { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
@@ -8665,6 +8665,8 @@ Code for such measure may look like:
     next   if not defined $var;
     return if not defined $var;
     return if "" eq $var;
+
+Additional notes for Tcl can be found in section L<Note:Tcl> below.
 
 
 =head2 Perl:version
@@ -9853,6 +9855,60 @@ Obviosly there is a line break if the text is longer than the tty's width.
 
 Currently (12/2023) there's only one such print statement: testing ciphers
 which requires at least 65 characters (stty columns) to behave as expected.
+
+
+=head2 Note:Tcl
+
+Tcl is not needed for the main functionality, it's just used for the GUI.
+As there is no place yet --2025-- for Annotations in the Tcl code, it will
+be done here.
+
+The measures to avoid warnings or errors as described below are similar to
+those described in section L<Note:Defensive Programming> above.
+
+=head3 Tcl:dict
+
+dict  bails out with an error if non-existant keys are queruied.
+
+=head3 Tcl:expr
+
+expr  is picky about values when doing math calculations.
+
+=head3 Tcl:incr
+
+incr  sets the value of the variable to 1 if the variable didn't exit. But
+it bails out with an error when the variable's value is anything else than
+a number, even when it's the empty string.
+
+=head3 Tcl:global
+
+global variables need to be defined in main. If they're used in procs they
+must be referenced using "global myglobal", or somehow using "upvar ...".
+Tcl also provides the shortcut notation for global variables "::myglobal".
+The shortcut notation is used for Tcl/Tk global variables, while the tools
+global variables must be declared with "global myglobal".
+
+=head3 Tcl:regexp, regsub
+
+Following issues are known and most likely handled properly:
+
+=over
+
+=item match against empty string
+
+Functions behave unexpected when used with an empty string or strings just
+containing white spaces.
+
+=item match white space or end of word
+
+regexp, sometimes, needs C<( |$)> instead of a simple C<$> to match end of word.
+
+=item meta characters used as first or last character in RegEx
+
+These characers must be escaped with C<\\> to avoid errors when compiling the
+RegEx. Tcl is also picky about character classes, it need C<\\> inside C<[]>.
+
+=back
 
 
 =cut
