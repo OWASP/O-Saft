@@ -71,7 +71,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.185 25/02/26 17:29:00"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.186 25/02/28 10:20:23"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -388,7 +388,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.185"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.186"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -2718,8 +2718,8 @@ sub _useopenssl     {
 sub _can_connect    {
     # return 1 if host:port can be connected; 0 otherwise
     my ($host, $port, $sni, $timeout, $ssl) = @_;
-    trace("_can_connect($host, $port, $sni, $timeout, $ssl) {");
     if (not defined $sni) { $sni = $STR{UNDEF}; } # defensive programming
+    trace("_can_connect($host, $port, $sni, $timeout, $ssl) {");
     local $? = 0; local $! = undef;
     my $socket;
     my $ret = 0;
@@ -4287,6 +4287,7 @@ sub check2818       {
     $cfg{'done'}->{'check2818'}++;
     return if (1 < $cfg{'done'}->{'check2818'});
     my $val = $data{'verify_altname'}->{val}($host);
+    if (not defined $val) { $val = $STR{UNDEF}; } # defensive programming
     $checks{'rfc_2818_names'}->{val} = $val if ($val !~ m/matches/); # see SSLinfo.pm
     return;
 } # check2818
@@ -6188,7 +6189,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.185");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.186");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7502,7 +7503,7 @@ if ($help !~ m/^\s*$/) {
     OMan::man_printhelp($help);
     exit 0;
 }
-if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.185"; exit 0; }
+if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.186"; exit 0; }
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))     { _vprint("  list       "); printciphers_list('list'); exit 0; }
 if (_is_cfg_do('ciphers'))  { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
@@ -8052,7 +8053,10 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     my $connect_ssl = 1;
     trace(" sni_name= " . ($cfg{'sni_name'} || $STR{UNDEF}));
     if (not _can_connect($host, $port, $cfg{'sni_name'}, $cfg{'timeout'}, $connect_ssl)) {
-        next if ($cfg{'sslerror'}->{'ignore_no_conn'} <= 0);
+        if (0 >= $cfg{'sslerror'}->{'ignore_no_conn'}) {
+            OCfg::hint("use '--ignore_no_conn' to avoid abort"); # Hint evtl. in _can_connect ...
+            next;
+        }
     }
     $connect_ssl = 0;
     if (not _can_connect($host, 80   , $cfg{'sni_name'}, $cfg{'timeout'}, $connect_ssl)) {
