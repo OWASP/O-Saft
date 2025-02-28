@@ -71,7 +71,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.186 25/02/28 10:20:23"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.187 25/02/28 10:35:11"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -388,7 +388,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.186"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.187"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -957,30 +957,30 @@ sub _need_checkdest { return __need_this('need-checkdest'); }
 sub _need_check_dh  { return __need_this('need-check_dh');  }
 sub _need_checkhttp { return __need_this('need-checkhttp'); }
 sub _need_checkprot { return __need_this('need-checkprot'); }
-    # returns >0 if any  of the given commands is listed in $cfg{need-*}
+    # returns >0 if any of the given commands is listed in $cfg{need-*}
 sub _is_do_cmdvulns { return __need_this('cmd-vulns');      }
-    # returns >0 if any  of the given commands is listed in $cfg{cmd-vulns}
+    # returns >0 if any of the given commands is listed in $cfg{cmd-vulns}
 sub _is_hashkey     { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)} keys %{$ref}); }
 sub _is_member      { my ($is,$ref)=@_; return grep({lc($is) eq lc($_)}      @{$ref}); }
-    # returns list of matching entries in specified array @cfg{*}
+    # returns list of entries matching $is in specified array @cfg{*}
 sub _is_cfg_do      { my  $is=shift;    return _is_member($is, \@{$cfg{'do'}});        }
 sub _is_cfg_intern  { my  $is=shift;    return _is_member($is, \@{$cfg{'commands_int'}}); }
 sub _is_cfg_hexdata { my  $is=shift;    return _is_member($is, \@{$cfg{'data_hex'}});  }
 sub _is_cfg_call    { my  $is=shift;    return _is_member($is, \@{$openssl{'call'}});  }
-    # returns >0 if the given string is listed in $cfg{*}
+    # returns >0 if the given string $is is listed in $cfg{*}
 sub _is_cfg         { my  $is=shift;    return $cfg{$is};   }
 sub _is_cfg_ssl     { my  $is=shift;    return $cfg{$is};   }
-    # returns >0 if specified key (protocol like SSLv3) is set $cfg{*}
+    # returns >0 if specified key $is (protocol like SSLv3) is set $cfg{*}
 sub _is_cfg_out     { my  $is=shift;    return $cfg{'out'}->{$is};  }
 sub _is_cfg_tty     { my  $is=shift;    return $cfg{'tty'}->{$is};  }
 sub _is_cfg_use     { my  $is=shift;    return $cfg{'use'}->{$is};  }
-    # returns value for given key in $cfg{*}->{key}; which is 0 or 1 (usually)
+    # returns value for given key $is in $cfg{*}->{key}; which is 0 or 1 (usually)
 sub _is_cfg_trace   { return $cfg{'trace'};   }
 sub _is_cfg_verbose { return $cfg{'verbose'}; }
-sub _is_cfg_ciphermode  { my  $is=shift;    return ($cfg{'ciphermode'} =~ $is); }
-    # returns >0 if the given string is matches $cfg{ciphermode}; string can be RegEx
+sub _is_cfg_ciphermode  { my $is=shift; return ($cfg{'ciphermode'} =~ $is); }
+    # returns >0 if the given string $is matches $cfg{ciphermode}; string can be RegEx
 sub _is_cfg_legacy  { my  $is=shift;    return ($cfg{'legacy'}     =~ $is); }
-    # returns >0 if the given string is matches $cfg{legacy}; string can be RegEx
+    # returns >0 if the given string $is matches $cfg{legacy}; string can be RegEx
 
 sub _set_cfg_out    { my ($is,$val)=@_; $cfg{'out'}->{$is} = $val; return; }
 sub _set_cfg_tty    { my ($is,$val)=@_; $cfg{'tty'}->{$is} = $val; return; }
@@ -4984,8 +4984,10 @@ sub checkdest       {
     my $currenttime = time();
     $key    = 'session_starttime';
     $value  = $data{$key}->{val}($host);
-    $checks{$key}->{val}        = "$value < $currenttime" if ($value < ($currenttime - 5));
-    $checks{$key}->{val}        = "$value > $currenttime" if ($value > ($currenttime + 5));
+    if (defined $value and ($value =~ m/^[0-9]+/ )) { # defensive programming ..
+        $checks{$key}->{val}    = "$value < $currenttime" if ($value < ($currenttime - 5));
+        $checks{$key}->{val}    = "$value > $currenttime" if ($value > ($currenttime + 5));
+    }
 
     foreach my $key (qw(heartbeat)) {   # these are good if there is no value
         next if ($checks{$key}->{val} !~ m/$text{'undef'}/);
@@ -6189,7 +6191,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.186");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.187");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7503,7 +7505,7 @@ if ($help !~ m/^\s*$/) {
     OMan::man_printhelp($help);
     exit 0;
 }
-if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.186"; exit 0; }
+if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.187"; exit 0; }
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))     { _vprint("  list       "); printciphers_list('list'); exit 0; }
 if (_is_cfg_do('ciphers'))  { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
