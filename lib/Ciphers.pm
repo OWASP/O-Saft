@@ -31,7 +31,7 @@ our @CARP_NOT   = qw(Ciphers); # TODO: funktioniert nicht
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ciphers= "@(#) Ciphers.pm 3.65 25/02/26 18:08:06";
+my  $SID_ciphers= "@(#) Ciphers.pm 3.66 25/02/28 12:22:56";
 our $VERSION    = "24.09.24";   # official verion number of this file
 
 use Exporter qw(import);
@@ -998,9 +998,9 @@ sub sort_results    {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     my @sorted;             # array to be returned
     my @tmp_arr;
     foreach my $key (sort keys %$unsorted) {
-        next if ($key =~ m/^\s*$/);         # defensive programming ..
+        next if ($key =~ m/^\s*$/);     # SEE Note:Defensive Programming
         my $cipher    = get_name($key);
-        if (not defined $cipher) {  # defensive programming ..
+        if (not defined $cipher) {      # SEE Note:Defensive Programming
             OCfg::warn("862: unknown cipher key '$key'; key ignored");
             next;
         }
@@ -1696,7 +1696,7 @@ sub _ciphers_init   {
     # example:   #0     #1      #2      #3      #4          #5      #6      #7 ...
     #     0x02020080    WEAK    WEAK    SSLv2   RSA(512)    RSA     RC4     40    MD5    -?-    EXP-RC4-MD5    RC4_128_EXPORT40_WITH_MD5    EXPORT
     my $fh = *DATA;
-    my $dumm = *DATA;   # avoid Perl warning "... used only once: possible typo ..."
+    my $dumm = *DATA;   # SEE Note:Defensive Programming
     if (0 < $::osaft_standalone) {  # SEE Note:Stand-alone
         ## no critic qw(InputOutput::RequireBriefOpen)
         ## no critic qw(ErrorHandling::RequireCarping)
@@ -1936,7 +1936,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 VERSION
 
-3.65 2025/02/26
+3.66 2025/02/28
 
 
 =head1 AUTHOR
