@@ -71,7 +71,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.187 25/02/28 10:35:11"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.188 25/02/28 12:18:31"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -388,7 +388,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.187"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.188"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -910,7 +910,7 @@ sub _get_yes_no     { my $val=shift || ""; return ($val eq "") ? 'yes' : 'no (' 
 sub _get_base2      {
     # return base-2 of given number
     my $value = shift;
-       $value = 1 if ($value !~ /^[0-9]+$/);# defensive programming: quick&dirty check
+       $value = 1 if ($value !~ /^[0-9]+$/);# SEE Note:Defensive Programming
        return 0   if ($value == 0);         # -''-
        $value = log($value);
     # base-2 = log($value) / log(2)
@@ -1281,7 +1281,7 @@ sub _check_modules  {
             # veriosn module too old, use natural number compare
     } else {
         $have_version = 0;
-        $version::VERSION = ""; # defensive programming ..
+        $version::VERSION = ""; # SEE Note:Defensive Programming
     }
     if ($have_version == 0) {
         warn $STR{WARN}, "120: ancient perl has no 'version' module; version checks may not be accurate;";
@@ -1815,7 +1815,7 @@ sub _init_openssldir    {
     # resets openssl{'exe'}, openssl{'external'} and openssl{'sclient'} on error
     # SEE Note:OpenSSL CApath
     # $openssl{'exe'} not passed as parameter, as it will be changed here
-    return "" if ($openssl{'exe'} eq "");   # defensive programming
+    return "" if ($openssl{'exe'} eq "");   # SEE Note:Defensive Programming
     my $dir = qx("$openssl{'exe'}" version -d); # get something like: OPENSSLDIR: "/usr/local/openssl"
         # qx() should be safe here because `$openssl{'exe'}' checked before
     chomp $dir;
@@ -2718,7 +2718,7 @@ sub _useopenssl     {
 sub _can_connect    {
     # return 1 if host:port can be connected; 0 otherwise
     my ($host, $port, $sni, $timeout, $ssl) = @_;
-    if (not defined $sni) { $sni = $STR{UNDEF}; } # defensive programming
+    if (not defined $sni) { $sni = $STR{UNDEF}; } # SEE Note:Defensive Programming
     trace("_can_connect($host, $port, $sni, $timeout, $ssl) {");
     local $? = 0; local $! = undef;
     my $socket;
@@ -2781,7 +2781,7 @@ sub _get_target     {
     my $arg   =  shift;
 
     # TODO:  ugly and just simple cases, not very perlish code ...
-    return ("https", $arg, $last, "", "") if ($arg =~ m#^\s*$#);    # defensive programming
+    return ("https", $arg, $last, "", "") if ($arg =~ m#^\s*$#);    # SEE Note:Defensive Programming
     return ("https", $arg, $last, "", "") if ($arg !~ m#[:@\\/?]#); # seem to be bare name or IP
     # something complicated, analyse ...
     my $prot  =  $arg;
@@ -3214,7 +3214,7 @@ sub ciphers_scan_intern {
             # with following "keys %accepted", reason yet unknown
         $accepted_cnt = scalar(keys %accepted);
         $accepted_cnt--;    # -1 because $accepted{'0'} always exist
-        if (exists $accepted{'0'}[1]) { # defensive programming ..
+        if (exists $accepted{'0'}[1]) { # SEE Note:Defensive Programming
             if ($accepted{'0'}[0] eq $accepted{'0'}[1]) {
                 $results->{'_admin'}{$ssl}{'cipher_selected'} = $accepted{'0'}[0];
                 trace(" cipher_selected= $accepted{'0'}[0]");
@@ -3762,15 +3762,15 @@ sub checkciphers    {
     my %hasrsa  ;   # ECDHE-RSA   is mandatory for TR-02102-2, see 3.2.3
     foreach my $ssl (sort(keys %$results)) {# all checked SSL versions with ciphers
       next if '_admin' eq $ssl;
-      next if not $results->{$ssl};         # defensive programming .. (unknown how this can happen)
+      next if not $results->{$ssl};         # unknown how this can happen; SEE Note:Defensive Programming
       foreach my $key (sort(keys %{$results->{$ssl}})) {   # check all accepted
         # SEE Note:Testing, sort
-        next if ($key =~ m/^\s*$/);         # defensive programming (key missing in %ciphers)
-        next if not $results->{$ssl}{$key}; # defensive programming ..
+        next if ($key =~ m/^\s*$/);         # key missing in %ciphers; SEE Note:Defensive Programming
+        next if not $results->{$ssl}{$key}; # SEE Note:Defensive Programming
         my $yesno  = $results->{$ssl}{$key}[0];
         my $cipher = Ciphers::get_name($key);
         if (($cipher =~ m/^\s*$/) || ($yesno =~ m/^\s*$/)) {
-            # defensive programming .. probably programming error
+            # probably programming error; SEE Note:Defensive Programming
             OCfg::warn("420: empty value for $key => '$cipher: [$yesno]'; check ignored");
             next;
         }
@@ -4287,7 +4287,7 @@ sub check2818       {
     $cfg{'done'}->{'check2818'}++;
     return if (1 < $cfg{'done'}->{'check2818'});
     my $val = $data{'verify_altname'}->{val}($host);
-    if (not defined $val) { $val = $STR{UNDEF}; } # defensive programming
+    if (not defined $val) { $val = $STR{UNDEF}; } # SEE Note:Defensive Programming
     $checks{'rfc_2818_names'}->{val} = $val if ($val !~ m/matches/); # see SSLinfo.pm
     return;
 } # check2818
@@ -4692,7 +4692,7 @@ sub checkdv         {
         return; # .. as ..
     }
     ($txt = $subject) =~ s#/.*?$cfg{'regex'}->{$oid}=##;
-    $txt = "" if not defined $txt;  # defensive programming ..
+    $txt = "" if not defined $txt;  # SEE Note:Defensive Programming
 
 # TODO: %data_oid not yet used
     $data_oid{$oid}->{val} = $txt if ($txt !~ m/^\s*$/);
@@ -4984,7 +4984,7 @@ sub checkdest       {
     my $currenttime = time();
     $key    = 'session_starttime';
     $value  = $data{$key}->{val}($host);
-    if (defined $value and ($value =~ m/^[0-9]+/ )) { # defensive programming ..
+    if (defined $value and ($value =~ m/^[0-9]+/ )) { # SEE Note:Defensive Programming
         $checks{$key}->{val}    = "$value < $currenttime" if ($value < ($currenttime - 5));
         $checks{$key}->{val}    = "$value > $currenttime" if ($value > ($currenttime + 5));
     }
@@ -5430,7 +5430,7 @@ sub print_line      {
     #? print label and value separated by separator
     #? print hostname and key depending on --showhost and --trace-key option
     my ($legacy, $host, $port, $key, $text, $value) = @_;
-        $text   = $STR{NOTXT} if not defined $text; # defensive programming ..
+        $text   = $STR{NOTXT} if not defined $text; # SEE Note:Defensive Programming
         $value  = $STR{UNDEF} if not defined $value;# .. missing variable declaration
         $value  = Encode::decode("UTF-8", $value);
     # general format of a line is:
@@ -5468,7 +5468,7 @@ sub print_data      {
         OCfg::warn("801: unknown label '$key'; output ignored"); # seems to be a programming error
         return;
     }
-    my $label = ($data{$key}->{txt} || "");     # defensive programming ..
+    my $label = ($data{$key}->{txt} || "");     # SEE Note:Defensive Programming
     my $value =  $data{$key}->{val}($host, $port) || "";
        $value = _cleanup_data($key, $value);
     if ($key =~ m/X509$/) {                     # always pretty print
@@ -5535,7 +5535,7 @@ sub print_data      {
 sub print_check     {
     #? print label and result of check
     my ($legacy, $host, $port, $key, $value) = @_;
-    $value = $checks{$key}->{val} if not defined $value;# defensive programming ..
+    $value = $checks{$key}->{val} if not defined $value;# SEE Note:Defensive Programming
     my $label = "";
     $label = $checks{$key}->{txt} if ($cfg{'label'} ne 'key'); # TODO: $cfg{'label'} should be parameter
     print_line($legacy, $host, $port, $key, $label, $value);
@@ -5664,7 +5664,7 @@ sub print_cipherline    {
         # compliant;host:port;protocol;cipher;description
     if ($legacy eq 'ssltest')   {
         # cipher, description, (supported)
-        return if ("" eq $cipher);  # defensive programming ..
+        return if ("" eq $cipher);  # SEE Note:Defensive Programming
             # TODO: analyse when $cipher could be "", should not happen
         printf("   %s, %s %s bits, %s Auth, %s MAC, %s Kx (%s)\n", $cipher,
                 Ciphers::get_enc( $key), $bits,
@@ -5673,7 +5673,7 @@ sub print_cipherline    {
               );
     }
     if ($legacy eq 'ssltest-g') {
-        return if ("" eq $cipher);  # defensive programming ..
+        return if ("" eq $cipher);  # SEE Note:Defensive Programming
         printf("%s;%s;%s;%s;%s %s bits, %s Auth, %s MAC, %s Kx\n",
                 'C', $host . ":" . $port, $ssl, $cipher,
                 Ciphers::get_enc( $key), $bits,
@@ -6191,7 +6191,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.187");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.188");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6368,7 +6368,7 @@ sub printversion        {
         printf("=   %-22s %s\n", "module name", "found in");
         printf("=   %s+%s\n",    "-"x22,        "-"x51);
         foreach my $m (sort(keys %INC)) {
-            $d = $INC{$m} || $STR{UNDEF};   # defensive progamming; sometimes undefined, reason unknown
+            $d = $INC{$m} || $STR{UNDEF};   # sometimes undefined, reason unknown; SEE Note:Defensive Programming
             printf("    %-22s %6s\n", $m, $d);
             $d =~ s#$m$##; $p{$d} = 1;
         }
@@ -7505,7 +7505,7 @@ if ($help !~ m/^\s*$/) {
     OMan::man_printhelp($help);
     exit 0;
 }
-if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.187"; exit 0; }
+if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.188"; exit 0; }
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))     { _vprint("  list       "); printciphers_list('list'); exit 0; }
 if (_is_cfg_do('ciphers'))  { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
@@ -7884,11 +7884,11 @@ OUsr::pre_main();
 _vprint("check target arguments");
 my @_targets;   # used for trace_arg() only
 push(@_targets, OCfg::get_target_host($_)) for (0 .. $#{$cfg{'targets'}});
-   # target for index 0 is default entry and contains no host, that's ok
+    # target for index 0 is default entry and contains no host, that's ok
 trace_arg("targets=@_targets");
 # defensive, user-friendly programming
-  # could do these checks earlier (after setting defaults), but we want
-  # to keep all checks together for better maintenance
+    # could do these checks earlier (after setting defaults), but we want
+    # to keep all checks together for better maintenance
 if (2 > scalar(@{$cfg{'targets'}})) {
     _trace_info("  USAGEno - printusage_exit(no targets)");
     printusage_exit("no target hosts given");   # does not make any sense
@@ -8475,7 +8475,7 @@ Quick note about the syntax used herein, mainly text decorations.
 
 =item  Sections in help-texts
 
-For referencing sections in documentations, like from:
+For referencing sections in documentation, like that from:
 
     o-saft.pl  --help
 
@@ -8537,13 +8537,13 @@ that, please see "voodoo" in lib/OMan.pm .
 
 =head3 Annotation Syntax
 
-Each single annotation is headed using POD's =head2 syntax.  All following
+Each single annotation is headed using POD's C<=head2>  syntax. All following
 text is supposed to be read by humans!
 
 It then will be referenced in the code with the "SEE <Annotation>" syntax,
-where  "<Annotation>"  is the text right of the  =head2  keyword.
+where  "<Annotation>"  is the text right of the  C<=head2>  keyword.
 
-I.g. no other markup is used, except POD'S =head3 and  L <..> markup.
+I.g. no other markup is used, except POD'S C<=head3>  and  L <..> markup.
 
 All following texts from here on are Annotations.
 
@@ -8620,6 +8620,51 @@ See following table  how changing POD to plain ASCII (VERSION 14.11.14 vs.
     * reduced source code:     4.4   1.0 kBytes    23%  o-saft.pl
     * improved performance:    2.7  0.02 seconds 0.75%  o-saft.pl
     -------------------------+----+-------------+------+----------
+
+
+=head2 Note:Defensive Programming
+
+As Perl just distinguishes types of variables (scalar, array and hash), it
+doesn't care about the type of a varaiable's value (integer, string, etc.)
+which will be automatically converted by Perl itself as needed.
+
+If such a convertion fails (very rarely), or the program's context expects
+another type, Perl bails out with warnings like:
+
+=over
+
+=item Use of uninitialized value ...
+
+=item Undefined subroutine &main::somthing called at ...
+
+=item ... used only once: possible typo ...
+
+=back
+
+As most data handled by this code is passed in at runtime, unexpected data
+types may occour, or data may be missing at all.  This may result in empty
+values or even undefined values for a variable. Keep in mind that an unde-
+fined value of a variable is different to an undefined variable itself.
+
+These warnings most likely  won't harm the  intended functionality, but it
+bothers the user. Hence parts of the code are tweaked to avoid complains. 
+
+Measures (aka defensice programming) to avoid these warnings are:
+
+=over
+
+=item assigning default value
+
+=item early returns from functions
+
+=back
+
+Code for such measure may look like:
+
+    $var = function() || "";
+    next   if not defined $var;
+    return if not defined $var;
+    return if "" eq $var;
 
 
 =head2 Perl:version
