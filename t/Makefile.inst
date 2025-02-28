@@ -6,7 +6,7 @@
 #?      make help.test.inst
 #?
 #? VERSION
-#?      @(#) Makefile.inst 3.12 24/09/23 20:55:11
+#?      @(#) Makefile.inst 3.13 25/02/28 17:43:47
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.inst = targets for testing INSTALL.sh
 
-O-SID.inst         := 3.12
+O-SID.inst         := 3.13
 O-SELF.inst        := t/Makefile.inst
 ALL.includes       += $(O-SELF.inst)
 ALL.inc.type       += inst
@@ -83,6 +83,7 @@ testarg-inst-INSTALL.sh_--checkdev--colour: TEST.args += --checkdev --colour
 testarg-inst-INSTALL.sh_--checkdev--other:  TEST.args += --checkdev --other
 testarg-inst-INSTALL.sh_--install--gnuenv:  TEST.args += --install  --gnuenv
 testarg-inst-INSTALL.sh_--install--useenv:  TEST.args += --install  --useenv
+testarg-inst-INSTALL.sh_--install--noargs:  TEST.args += --install  --noargs
 testarg-inst-INSTALL.sh_--install--instdev: TEST.args += --install  --instdev
 testarg-inst-INSTALL.sh_--simulate-vm:      export osaft_vm_build = 1
     # set TEST.init  empty not necessary as long as there is no --check
@@ -119,6 +120,7 @@ ALL.test.inst      += \
 	testarg-inst-INSTALL.sh_--checkdev--other \
 	testarg-inst-INSTALL.sh_--install--gnuenv \
 	testarg-inst-INSTALL.sh_--install--useenv \
+	testarg-inst-INSTALL.sh_--install--noargs \
 	testarg-inst-INSTALL.sh_--install--instdev \
 	testarg-inst-INSTALL.sh_--simulate-vm \
 	testarg-inst-INSTALL.sh_from-tgz
