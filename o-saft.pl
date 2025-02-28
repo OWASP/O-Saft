@@ -71,7 +71,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.188 25/02/28 12:18:31"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.189 25/02/28 12:35:15"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -388,7 +388,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.188"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.189"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -3181,7 +3181,7 @@ sub ciphers_scan_intern {
     $results->{'_admin'}{'session_protocol'}   = "";
     foreach my $ssl (@{$cfg{'version'}}) {
         $results->{'_admin'}{$ssl}{'cnt_offered'}  = 0; # early initialisation ..
-        $results->{'_admin'}{$ssl}{'cnt_accepted'} = 0; # .. avoids uninitialised use
+        $results->{'_admin'}{$ssl}{'cnt_accepted'} = 0; # SEE Note:Defensive Programming
         next if ($cfg{$ssl} == 0);
         if ($usesni >= 1) { # Do not use SNI with SSLv2 and SSLv3
             # SSLv2 has no SNI; SSLv3 has originally no SNI
@@ -4942,7 +4942,7 @@ sub checkdest       {
     #  it's ok if both are empty 'cause then no tickets are used
     $key   = 'session_ticket';
     $value = $data{$key}->{val}($host, $port);
-    if (defined $OData::data0{$key}->{val}) {# avoid Perl warning "Use uninitialized value in string"
+    if (defined $OData::data0{$key}->{val}) {   # SEE Note:Defensive Programming
         $checks{'session_random'}->{val} = $value if ($value eq $OData::data0{$key}->{val});
     } else {
         $checks{'session_random'}->{val} = $text{'na'};
@@ -6191,7 +6191,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.188");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.189");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7505,7 +7505,7 @@ if ($help !~ m/^\s*$/) {
     OMan::man_printhelp($help);
     exit 0;
 }
-if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.188"; exit 0; }
+if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.189"; exit 0; }
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))     { _vprint("  list       "); printciphers_list('list'); exit 0; }
 if (_is_cfg_do('ciphers'))  { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
