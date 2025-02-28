@@ -20,6 +20,8 @@
 #?                        note that symbolic links cannot be copied and will
 #?                        replaced by the file in the installation directory
 #?                        default operation mode if no other mode given
+#           --install-f - same as install, but allows execution in developer
+#                         directory (not part of official help)
 #?          --check     - check current installation; see  --check=*  also
 #?          --clean     - move files not necessary to run O-Saft into subdir
 #?                        ./.files_to_be_removed
@@ -297,7 +299,7 @@
 #?      # check SIDs and checksums of all installed files:
 #?          $0 . --check=SID --changes
 #?      - should return an empty list like:
-#?          # ./INSTALL.sh 3.54; --check=SID  . ...
+#?          # ./INSTALL.sh 3.55; --check=SID  . ...
 #?
 #?          # SID   date    time    md5sum   filename    path
 #?          #----------------------+--------+-------------------------------
@@ -397,7 +399,8 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.54 25/01/10 16:47:38"
+SID="@(#) ¸ÿÖn
+V 3.55 25/02/28 16:48:02"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -760,7 +763,7 @@ check_md5   () {
 	newsum=`\md5sum $_dst` # compute m5sum of installed file
 	newsum=${newsum%% *}   # remove trailing filename
 	#dbx# echo "# $name : $md5sum : $newsum."
-	[ "$md5sum" = "$newsum" ] || echo_red "# wrong checksum $newsum for Â»$_dstÂ«"
+	[ "$md5sum" = "$newsum" ] || echo_yellow "**WARNING: wrong checksum $newsum for Â»$_dstÂ«"
 	[ "$md5sum" = "$newsum" ] || err=`expr $err + 1`
 	return
 } # check_md5
@@ -1425,6 +1428,7 @@ while [ $# -gt 0 ]; do
 	  '--check')            mode=check;     ;;
 	  '--clean')            mode=cleanup;   ;;
 	  '--install')          mode=install;   ;;
+	  '--install-f')        mode=install-f; ;;
 	  '--openssl')          mode=openssl;   ;;
 	  '--expect')           mode=expected;  ;; # alias
 	  '--expected')         mode=expected;  ;;
@@ -1455,7 +1459,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.54 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.55 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1473,7 +1477,7 @@ if [ -n "$osaft_vm_build" ]; then
 fi
 
 if [ -n "$new_dir" ]; then
-	# new dir given, implies --install
+	# new dir given, implies --install; not affeced by --install-f
 	[ -z "$mode" ] && mode="install"
 	inst_directory="$new_dir"
 fi
@@ -1483,16 +1487,26 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.54; $mode $src_txt $inst_directory ..."
+echo "# $0 3.55; $mode $src_txt $inst_directory ..."
     # always print internal SID, makes debugging simpler
 
 # check for lock-file, should only exist on author's system
 if [ -e "$src_directory/$lock" -o -e "$inst_directory/$lock" ]; then
+	_error="**ERROR: 003: development directory; --n enforced"
 	case $mode in
-	cgi | cleanup | install)
-		echo_red "**ERROR: 003: development directory; --n enforced"
+	cgi | cleanup)
+		echo_red $_error"
 		try=echo
 		;;
+	install)
+		echo_red $_error"
+		echo_yellow "!!Hint:  003: remove $src_directory/$lock to install or use --install-f"
+		try=echo
+		;;
+	install-f)
+		echo_yellow "**WARNING: 003: installing from development directory"
+		sleep 5
+		mode=install
 	esac
 fi
 
