@@ -49,7 +49,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.37 25/01/10 19:03:34";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.38 25/02/28 12:41:56";
 our $VERSION        =  "24.09.24";  # official verion number of this file
 
 BEGIN {
@@ -134,7 +134,7 @@ $SSLinfo::verbose       = 0; # 1: print some verbose messages
 $SSLinfo::linux_debug   = 0; # passed to Net::SSLeay::linux_debug
 $SSLinfo::slowly        = 0; # passed to Net::SSLeay::slowly
 
-# avoid Perl warning "... used only once: possible typo ..."
+# SEE Note:Defensive Programming
 my $dumm_1  = $SSLinfo::linux_debug;
 my $dumm_2  = $SSLinfo::proxyport;
 my $dumm_3  = $SSLinfo::proxypass;
@@ -2832,7 +2832,7 @@ sub do_ssl_open($$$@) {
                 $response =  "<<target did not return content for HTTP>>";
                 $_SSLinfo{'http_status'} = $response;
                 last;
-                #$response = ''; # avoid uninitialised value later
+                #$response = ..; # avoid uninitialised value later
             }
             # NOTE that get_http() returns all keys in %headers capitalised
             my $headers = "";   # for trace only
@@ -4271,7 +4271,7 @@ L<Net::SSLeay(1)>
 
 =head1 VERSION
 
-3.37 2025/01/10
+3.38 2025/02/28
 
 =head1 AUTHOR
 
