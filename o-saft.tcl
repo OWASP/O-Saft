@@ -514,9 +514,16 @@ exec wish "$0" ${1+"$@"}
 #.
 #.   Some Naming Conventions
 #.       - procedures:
+#.          config:*    - reading, updating configurations
 #.          create_*    - create widget or window
 #.          osaft_*     - run external  o-saft.pl  (and process output)
-#.          search_*    - searching texts in help (widget in help window)
+#.          search:*    - searching texts in help (widget in help window)
+#.          gui*        - anything realted to GUI widgets
+#.          obj*        - operations on widgets
+#.          msg*        - handling the message queue
+#.       - variables (system):
+#.          ::*         - system and Tcl global variables with prefix ::
+#.                        then no "global .." in procs necessary
 #.       - variables (GUI):
 #.          HELP-       - prefix used for all Tcl-text tags in help
 #.          f_*         - prefix used for all filter list variables
@@ -648,10 +655,10 @@ exec wish "$0" ${1+"$@"}
 #.      texts are placed in Tk's text widget instead of a label widget, 'cause
 #.      text widgets allow selecting their content by default, while labels do
 #.      not. These text widgets are set to state "read-only"  instaed of Tcl's
-#.      disabled state, see gui_set_readonly() for details.
+#.      disabled state, see obj_readonly:set() for details.
 #.
 #? VERSION
-#?      @(#) 3.52 Spring Edition 2025
+#?      @(#) 3.53 Spring Edition 2025
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -667,6 +674,7 @@ set cfg(testtcl) 0
 set cfg(needtk)  1              ;# load Tk if needed only; dirty hack for --h
 #package require Tcl     8.5    ;# for documentation only
 #package require Tk      8.5    ;# modern Tcl/Tk doesn't need it anymore
+if {![info exists argv0]} { set argv0 "o-saft.tcl" }   ;# if it is a tclet
 if { [regexp -- {--h(elp)?} $argv]} {
     set cfg(needtk)  0
 }
@@ -768,14 +776,14 @@ foreach values $_dict_vals {
 }
 
 # functions to get above texts and values
-proc dict_txt:get   {i key} {
+proc dict_txt:get {idx key} {
     #? return value from dict; empty string if nothing exists
-    if {![dict exists $::TXTmap $i]}      { return "" }
-    if {![dict exists $::TXTmap $i $key]} { return "" }
-    dict get $::TXTmap $i $key
+    if {![dict exists $::TXTmap $idx]}      { return "" }
+    if {![dict exists $::TXTmap $idx $key]} { return "" }
+    dict get $::TXTmap $idx $key
 }; # dict_txt:get
-proc txt_text:get   {idx}   { dict_txt:get $idx text  }
-proc txt_icon:get   {idx}   { dict_txt:get $idx icon  }
+proc txt_text:get {idx}     { dict_txt:get $idx    text }
+proc txt_icon:get {idx}     { dict_txt:get $idx    icon }
 
 # ::MSG  define dictionary for error, warning etc. texts used in GUI
     # Following dict simulates a message queue. Messages (mainly informational
@@ -793,13 +801,13 @@ dict set ::MSG   0       text   "mandatory: message text"
 
 # functions to set and get the message queue MSG
 # ::MSG avoids using "global MSG"
-proc msg_type:set   {i txt} { dict set  ::MSG $i   type   $txt }
-proc msg_text:set   {i txt} { dict set  ::MSG $i   text   $txt }
-proc msg_type:get   {idx}   { dict get $::MSG $idx type        }
-proc msg_text:get   {idx}   { dict get $::MSG $idx text        }
-proc msg_keys:get   {}      { return [lrange [lsort -integer [dict keys $::MSG]] 1 end] }
+proc msg_type:set {idx txt} { dict set  ::MSG $idx type $txt }
+proc msg_text:set {idx txt} { dict set  ::MSG $idx text $txt }
+proc msg_type:get {idx}     { dict get $::MSG $idx type      }
+proc msg_text:get {idx}     { dict get $::MSG $idx text      }
+proc msg_keys:get {}        { return [lrange [lsort -integer [dict keys $::MSG]] 1 end] }
     #? return sorted list of indices (idx) without idx=0
-proc msg_keys:last  {}      { return [lindex [msg_keys:get] end] }
+proc msg_keys:last {}       { return [lindex [msg_keys:get] end] }
     #? return last indices in MSG, returns "" if only idx=0 exists
 proc msg:append  {type txt} {
     #? add new message $txt of type $type to message queue MSG
@@ -824,9 +832,9 @@ proc perr         {txt} { puts stderr "[txt_text:get error  ] $txt"; return }
 
 proc pinfo        {txt} {
     #? output INFO message
-    global cfg argv
+    global cfg
     # $cfg(VERB) may not yet set, hence checking options
-    if {![regexp -- {--(d|v|dbx|debug)( |$)} $argv]} { return }
+    if {![regexp -- {--(d|v|dbx|debug)( |$)} $::argv]} { return }
         # Tcl's regexp needs ( |$) instead of a simple $ to match end of word
     puts stderr "[txt_text:get info] $txt"
     return
@@ -838,14 +846,14 @@ proc pinfo        {txt} {
 # will be overwritten; doesn't harm, because it's used for documentation only
 # in the code herein
 
-proc docker_config  {mode}  {
+proc docker:init {mode} {
     #? initilise configuration for use with Docker image
     #  may be called with $mode=opt for --docker option or with $mode=prg to
     #  check if program name matches *-docker
     #  must be early definition, because called right after program start
-    global cfg prg env argv0
+    global cfg prg
     switch $mode {
-       prg { if {[regexp {\-docker$} $argv0]} { set mode 1 } }
+       prg { if {[regexp {\-docker$} $::argv0]} { set mode 1 } }
        opt { set mode 1 }
     }
     if {1==$mode} {
@@ -853,12 +861,12 @@ proc docker_config  {mode}  {
         set prg(SAFT)    "o-saft-docker"
     }
     # independent of mode, can always be set
-    if {1==[info exists env(o_saft_docker_tag)] } { set prg(docker-tag) $env(o_saft_docker_tag)  }
-    if {1==[info exists env(o_saft_docker_name)]} { set prg(docker-id)  $env(o_saft_docker_name) }
+    if {1==[info exists ::env(o_saft_docker_tag)] } { set prg(docker-tag) $::env(o_saft_docker_tag)  }
+    if {1==[info exists ::env(o_saft_docker_name)]} { set prg(docker-id)  $::env(o_saft_docker_name) }
     return
-}; # docker_config
+}; # docker:init
 
-proc docker_args    {}      {
+proc docker_args:get {} {
     #? if in "docker mode" pass image ID to Docker;
     # note that docker specific options must be before o-saft.pl commands or options
     global prg
@@ -869,14 +877,13 @@ proc docker_args    {}      {
 # FIXME: need to distinguish if --id= or --tag= was specified
     }
     return $do
-}; # docker_args
+}; # docker_args:get
 
 proc _message     {icon title txt} {
     # print message, either with GUI or on STDERR
-    global argv
     set str [txt_text:get $icon]   ;# the identifier in $icon is the key in the dict also
     if {""!=[info commands tk_messageBox]} {
-        if {![regexp -- {\+quit} $argv]} {
+        if {![regexp -- {\+quit} $::argv]} {
             # check in $argv because $cfg may not yet set
             # +quit mainly used for testing
             tk_messageBox -icon $icon -title "$str $title" -message "$txt"
@@ -903,15 +910,13 @@ proc _isexecutable {ex} {
 proc _isempty     {str} { if { [regexp {^\s*$} $str]} { return 1 }; return 0; }
     #? return 1 if string is empty, 0 otherwise
 
-if {![info exists argv0]} { set argv0 "o-saft.tcl" }   ;# if it is a tclet
-
 # NOTE that cfg() also contains all +commands and -options passed to o-saft.pl
 # they are extracted in osaft_exec(); so the array indexes must not start with
 # + or -
-set cfg(SID)    "@(#) o-saft.tcl 3.52 25/02/27 19:26:05"
+set cfg(SID)    "@(#) o-saft.tcl 3.53 25/02/28 01:24:19"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2025"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {3.52}
+set cfg(VERSION) {3.53}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -1072,7 +1077,7 @@ set cfg(no-match)   {_NO_}     ;# text pattern used to avoid matching some text
 # RC-END }
 
 set cfg(docs-help)      {--help=alias --help=checks --help=data --help=glossar --help=regex --help=rfc --help}
-                                # file extensions for files from ./doc/ used in osaft_read_data() and osaft_help()
+                                # file extensions for files from ./doc/ used in osaft_file:read() and osaft_help()
                                 # missing: --help=text --help=ourstr --help=compliance
                                 # missing because too much data: --help=range
 set cfg(docs-help-all)  "--help=commands --help=opts $cfg(docs-help) --help=ciphers-text"
@@ -1083,7 +1088,7 @@ set cfg(guiwidgets) {}         ;# contains the widgets of the GUI
 set cfg(guimenus)   {}         ;# contains the widgets of the GUI's menus
                                 # debugging only for --gui-layout=tablet
 
-docker_config prg              ;# may initialise some docker-specific settings
+docker:init prg                ;# may initialise some docker-specific settings
 
 pinfo "read   $prg(INIT)"
 catch {
@@ -1121,7 +1126,7 @@ catch { set my_bg "[lindex [.i config -bg] 4]" }
     #
     # This allows to generate the buttons without these attributes (-text, -bg,
     # -image, etc.), which simplifies the code.  These attributes are set later
-    # using  guitheme_set(),  which then also takes care  if there  should be a
+    # using  guitheme:set(),  which then also takes care  if there  should be a
     # simple theme (just text and background) or a more sexy one using images.
     # Note:   the key (object name) in following table must be the last part of
     #         the object (widget) name of the button, example: .f.about  .
@@ -1129,7 +1134,7 @@ catch { set my_bg "[lindex [.i config -bg] 4]" }
 
     #----------+---------------+-------+-------+-------------------------------
     # object    button text colour   image      help text (aka tooltip)
-    # name      -text       -bg     -image      guitip_set()
+    # name      -text       -bg     -image      guitip:set()
     #----------+-----------+-------+-----------+-------------------------------
 array set cfg_buttons "
     about       {{!}        $my_bg  {!}         {About $cfg(ICH) $cfg(VERSION)}}
@@ -1184,7 +1189,7 @@ array set cfg_buttons "
     menu_rsave  {{Save}             {}     save {Save results to file}}
     menu_reset  {{Reset}            {}    reset {Reset configuration to defaults}}
 ";  #----------+-----------+-------+-----------+-------------------------------
-    # name      -text           -bg     -image  guitip_set()
+    # name      -text           -bg     -image  guitip:set()
     #----------+-----------+-------+-----------+-------------------------------
 
     # Note: all buttons as described above,  can be configured also by the user
@@ -1197,7 +1202,7 @@ array set cfg_buttons "
     # also values for other objects.  So the lists are initialised here for all
     # other values, and then the values from cfg_buttons are added.
     #
-    # array in cfg(RC)  array herein   (see also update_cfg() )
+    # array in cfg(RC)  array herein   (see also config:update() )
     #     cfg_color     cfg_colors
     #     cfg_label     cfg_texts
     #     cfg_tipp      cfg_tipps
@@ -1454,7 +1459,7 @@ _txt2arr [string map "
 #------+-------+-------+-------+-------+-------+-------+-------+-------------------------------
   no	-regexp	1	{}	{}	{}	0	no\s*(LO|WE|we|ME|HI)	word 'no' followed by LOW|WEAK|MEDIUM|HIGH
 # NOTE   no  has no colours, otherwhise it would mix with filters below
-# FIXME  no  must be first RegEx in liste here, but still causes problems in toggle_filter
+# FIXME  no  must be first RegEx in liste here, but still causes problems in obj_tag:toggle
   LOW	-regexp	3	red	{}	{}	0	(LOW|low)	word  LOW   anywhere
   WEAK	-exact	4	red	{}	{}	0	WEAK	word  WEAK  anywhere
   weak	-exact	4	red	{}	{}	0	weak	word  weak  anywhere
@@ -1519,18 +1524,20 @@ proc _str2obj     {str} {
     return $name
 }; # _str2obj
 
-proc _istty       {}    { 
+proc _istty          {} { 
     #? returns 1 if started with TTY, otherwise 0
-    global tcl_version
-    set istty [info exists env(TERM)]  ;# Fallback
-    if {8.4 < $tcl_version > 8.5} {
+    set istty [info exists ::env(TERM)]  ;# Fallback
+    if {8.4 < $::tcl_version > 8.5} {
         set istty [dict  exists  [fconfigure stdout] -mode]
     }
-    if {8.5 > $tcl_version < 8.5} {
+    if {8.5 > $::tcl_version < 8.5} {
         set istty [expr {![catch {fconfigure stdout  -mode}]}]
     }
     return $istty
 }; # _istty
+
+proc _isaqua         {} { return [string equal -nocase [tk windowingsystem] Aqua ] }
+    #? return 1 if Window system is Aqua (Mac OS X); 0 otherwise
 
 proc _notTOC      {str} {
     #? return 0 if string should be part of TOC; 1 otherwise
@@ -1544,18 +1551,23 @@ proc _notTOC      {str} {
 proc _count_tuples {str} { return  [expr [expr [llength $str] +1] / 2] }
     #? return number of touples in given list
 
+proc _filepath:get {mode} {
+    _dbx 2 "{$mode}{}"
+    global cfg
+    return "$cfg(docs-dir)/$cfg(O-Saft).$mode" ;# TODO: directory hardcoded
+}; # _filepath:get
+
 proc self_about  {mode} {
     #? extract description from myself; returns text
     _dbx 2 "{$mode}{"
-    global arrv argv0
-    set fid [open $argv0 r]
+    set fid [open $::argv0 r]
     set txt [read $fid]
     set hlp ""
     foreach l [split $txt "\r\n"] {
         if {![regexp {^#[?.]} $l]} { continue }
         if { [regexp {^#\.}   $l] && $mode eq {ABOUT}} { continue }
         if { [regexp {^\s*$}  $l]} { continue }
-        set l [regsub -all {\$0} $l $argv0]
+        set l [regsub -all {\$0} $l $::argv0]
         set hlp "$hlp\n[regsub {^#[?.]} $l {}]"
     }
     close $fid
@@ -1563,13 +1575,13 @@ proc self_about  {mode} {
     return $hlp
 }; # self_about
 
-proc self_write_rc      {}  {
+proc self_rc:print   {} {
     #? print data for resource file
     # print all lines between  RC-ANF and RC-END
     _dbx 2 "{}{"
-    global cfg argv0
+    global cfg
     set qq {"} ;# dumm "
-    if [catch { set fid [open $argv0 r]} err] { perr $err; exit 2 }
+    if [catch { set fid [open $::argv0 r]} err] { perr $err; exit 2 }
     # $rc_doc is used to define help text with the same syntax as used for this
     # file to avoid that it will be extracted with  --help  option, the text is
     # defined with a leading space in each line.
@@ -1594,7 +1606,7 @@ proc self_write_rc      {}  {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 3.52 25/02/27 19:26:05
+ #?      @(#) .o-saft.tcl generated by 3.53 25/02/28 01:24:19
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
@@ -1662,13 +1674,12 @@ set cfg(TITLE)  {$cfg(TITLE)}"
 
     _dbx 2 "}"
     return
-}; # self_write_rc
+}; # self_rc:print
 
-proc self_write_opts    {}  {
+proc self_opts:print {} {
     #? extract and print options from myself
     _dbx 2 "{}{"
-    global argv0
-    set fid [open $argv0 r]
+    set fid [open $::argv0 r]
     set txt [read $fid]
     # The goal here is to extract all known options of this tool.  They are
     # found in  __ main __  where there is a  switch  statement.  All cases
@@ -1694,24 +1705,7 @@ proc self_write_opts    {}  {
     close $fid
     _dbx 2 "}"
     return
-}; # self_write_opts
-
-proc _get_data_filename  {mode} {
-    _dbx 2 "{$mode}{}"
-    global cfg
-    return "$cfg(docs-dir)/$cfg(O-Saft).$mode" ;# TODO: directory hardcoded
-}; # _get_data_filename
-
-proc self_write_docs    {}  {
-    #? get documentation and help texts from o-saft.pl and store in file
-    # see also "make doc.data" and "make static.docs"
-    _dbx 2 "{}{"
-    global prg
-    pinfo  "exec {*}$prg(PERL) $prg(SAFT) [docker_args] --no-rc --help=gen-docs"
-    catch { exec {*}$prg(PERL) $prg(SAFT) [docker_args] --no-rc --help=gen-docs } txt
-    _dbx 2 "}"
-    return
-}; # self_write_docs
+}; # self_opts:print
 
 #_____________________________________________________________________________
 #____________________________________________________________ early actions __|
@@ -1728,9 +1722,9 @@ foreach arg $argv {
         --version       { puts $cfg(mySID);         exit;  }
         --h             -
         --help          { puts [self_about "HELP"]; exit;  }
-        --help=opts     { self_write_opts;          exit;  }
-        --rc            { self_write_rc;            exit;  }
-        --gen-docs      { self_write_docs;          exit;  }
+        --help=opts     { self_opts:print;          exit;  }
+        --rc            { self_rc:print;            exit;  }
+        --gen-docs      { osaft_doc:write;          exit;  }
         --tracecli      -
         --traceCLI      -
         --trace?cli     -
@@ -1777,8 +1771,8 @@ proc trace_commands  {} {
     append _trace_cmds "[info procs create*] "
     append _trace_cmds "[info procs osaft*]  "
     append _trace_cmds "[info procs search*] "
-    append _trace_cmds "images_read remove_host guibrowser_start guiwindow_show "
-    append _trace_cmds "gui_init gui_main guitheme_init update_cfg"
+    append _trace_cmds "config_img:read remove_host guibrowser:start guiwindow:show "
+    append _trace_cmds "gui_init gui_main guitheme:init config:update"
         # procs not found by info command before
     foreach _cmd $_trace_cmds {
         if {[regexp "\(create_\(tip\)\)" $_cmd]} { continue }
@@ -1798,135 +1792,82 @@ proc trace_buttons   {} {
     return
 }; # trace_buttons
 
-proc _isaqua      {}  { return [string equal -nocase [tk windowingsystem] Aqua ] }
-    #? return 1 if Window system is Aqua (Mac OS X); 0 otherwise
-
-proc images_read  {theme}   {
-    #? read $cfg(IMG) if exists and not already done
-    _dbx 2 "{$theme}"
-    global cfg IMG
-    #  if the file does not exist, the error is silently catched and ignored
-    if [info exists cfg(IMGSID)] { puts "IMG da $cfg(IMGSID)" }
-    if [info exists cfg(IMGSID)] { return };# already there
-    if {"image" eq $theme} {
-       set imgfile [regsub "$cfg(ICH)$" $cfg(ME) "$cfg(IMG)"];   # must be same path
-       _dbx 4 " IMG $imgfile"
-       if {[file isfile $imgfile]} {
-           pinfo "source $imgfile"
-           catch { source $imgfile } error_txt
-       } else {
-           pwarn "$cfg(IMG) not found; using traditional buttons"
-       }
-    }
-    _dbx 4 " IMG    = [array names IMG]"
+proc obj_disabled:set {w}   {
+    #? set widget to disabled state (mode)
+    $w config -state disabled
     return
-}; # images_read
+}; # obj_disabled:set
 
-proc update_cfg   {}        {
-    #? legacy conversion of old (pre 1.86) keys from cfg(RC) aka .o-saft.tcl
-    #
-    # Until version 1.84, respectively 1.6 of cfg(RC), the variables in cfg(RC)
-    # were identical to the ones used herein:
-    #   cfg_color,  cfg_label, cfg_tipp
-    # As cfg(RC) will only be sourced, it needs to have the complete definition
-    # of each of these variables, otherwise we may run into some syntax errors.
-    # Starting with version 1.86, the variables herein have been renamed to:
-    #   cfg_colors, cfg_texts, cfg_tipps
-    # and also some keys have been renamed.
-    # This function copies the settings from cfg(RC) to the internal variables.
-    # By doing this, the old keys are converted automatically (see switch cases
-    # below).
-    # Finally we remove the variables set by cfg(RC).
-    #
-    _dbx 2 "{}"
+proc obj_readonly:set {w}   {
+    #? set widget to readonly state (mode)
+    # The definition of "read-only" here is, that any action or event for the
+    # widget is allowed, except changing its content anyhow  (delete, insert,
+    # etc.). Selecting, highlighting is not considered as a change.
+    # This can accomplished simply with:
+    #   $w config -state disabled
+    # Unfortunately, this does not work as expected on Mac OS X's Aqua. There
+    # it also disables highlighting and selecting, for example copying to the
+    # clipboard (cutbuffer).
+    # Hence following workaround is used, which simply disables all functions
+    # for events and sets them to do nothing.
+    # This works on all platforms (*IX, Windows, Mac OS X Aqua).
+    foreach event {<KeyPress> <<PasteSelection>>} { bind $w $event break }
+    return
+}; # obj_readonly:set
+
+proc obj_cfg:set      {w opt val} {
+    #? use widget config command to change options value
+    if {$val ne {}} { $w config $opt $val }
+    return 1
+}; # obj_cfg:set
+
+proc obj_table:toggle {w tag val} {
+    #? toggle visability of text tagged with name $tag in text widget
+    _dbx 4 " $w rowcget  $tag $val"
     global cfg
-    if {1==[info exists cfg(RCSID)]} {
-        # cfg(RCSID) is defined in .o-saft.tcl, warn if old one
-        _dbx 4 " RCmin$cfg(RCmin) > RCSID$cfg(RCSID) ?"
-        if {$cfg(RCmin) > $cfg(RCSID)} {
-            set msg "converting data to new version ...\n\nplease update $cfg(RC) using 'usr/$cfg(RC)'"
-            msg:append warning $msg
-            _message warning "(update_cfg)" \
-"$cfg(RC) version $cfg(RCSID)
-----
-$msg
-----"
-        }
+    # toggling a list of rows could be as simple as
+    #   $w togglerowhide $cfg($tag)
+    # but some lines are in multiple lists, so each line's toggle state will
+    # be checked and changed only if different from given $val,  this avoids
+    # unexpected toggles
+    # FIXME: checkbutton in Filter window is wrong now (if multiple lists)
+    foreach n $cfg($tag) {
+        if {[$w rowcget  $n -hide] != $val} { continue }
+        $w togglerowhide $n
     }
-    global cfg_colors cfg_color
-    foreach key [array names cfg_color] {
-        set value $cfg_color($key)
-        # keys used in version < 1.86
-        switch -exact $key {
-          {start}       { set cfg_colors(cmdstart)  $value }
-          {closew}      { set cfg_colors(closewin)  $value }
-          {search}      { set cfg_colors(helpsearch) $value }
-          {choosecolor} { set cfg_colors(tkcolor)   $value }
-          {choosefont}  { set cfg_colors(tkfont)    $value }
-          {plus}        { set cfg_colors(host_add)  $value }
-          {minus}       { set cfg_colors(host_del)  $value }
-          default       { set cfg_colors($key)      $value }
-        }
-    }
-    array unset cfg_color
-    global cfg_texts cfg_label
-    foreach key [array names cfg_label] {
-        set value $cfg_label($key)
-        switch -exact $key {
-          {start}       { set cfg_texts(cmdstart)   $value }
-          {close}       { set cfg_texts(closewin)   $value }
-          {search}      { set cfg_texts(helpsearch) $value }
-          {color}       { set cfg_texts(tkcolor)    $value }
-          {font}        { set cfg_texts(tkfont)     $value }
-          {plus}        { set cfg_texts(host_add)   $value }
-          {minus}       { set cfg_texts(host_del)   $value }
-          default       { set cfg_texts($key)       $value }
-        }
-    }
-    array unset cfg_label
-    global cfg_tipps cfg_tipp
-    foreach key [array names cfg_tipp] {
-        set value $cfg_tipp($key)
-        switch -exact $key {
-          {start}       { set cfg_tipps(cmdstart)   $value }
-          {closew}      { set cfg_tipps(closewin)   $value }
-          {showfilterconfig}  { set cfg_tipps(filter) $value }
-          {resetfilterconfig} { set cfg_tipps(reset)  $value }
-          {goback}      { set cfg_tipps(help_prev)  $value }
-          {goforward}   { set cfg_tipps(help_next)  $value }
-          {search}      { set cfg_tipps(helpsearch) $value }
-          {choosecolor} { set cfg_tipps(tkcolor)    $value }
-          {choosefont}  { set cfg_tipps(tkfont)     $value }
-          {plus}        { set cfg_tipps(host_add)   $value }
-          {minus}       { set cfg_tipps(host_del)   $value }
-          default       { set cfg_tipps($key)       $value }
-        }
-    }
-    array unset cfg_tipp
-    global myX cfg_geo
-    foreach key [array names cfg_geo] {
-        set value $cfg_geo($key)
-        switch -exact $key {
-          {minus}       { set cfg_texts(host_del)   $value }
-          default       { set myX($key)             $value }
-        }
-    }
-    array unset cfg_geo
-    global cfg cfg_cmd
-    foreach key [array names cfg_cmd] {
-        set value $cfg_cmd($key)
-        switch -exact $key {
-          {minus}       { set cfg_texts(host_del)   $value }
-          default       { set cfg($key)             $value }
-        }
-    }
-    array unset cfg_geo
-   return
-}; # update_cfg
+    return
+}; # obj_table:toggle
 
-# if {1==$cfg(gui-tip)} { # use own tooltip from: http://wiki.tcl.tk/3060?redir=1954
+proc obj_text:toggle  {w tag val line} {
+    #? toggle visability of text tagged with name $tag in text widget
+    # note that complete line is tagged with name $tag.l (see filter:apply)
+    _dbx 4 " $w tag config $tag -elide [expr ! $val]"
+    global cfg
+    if {[regexp {\-(Label|#.KEY)} $tag]} {
+        $w tag config $tag   -elide [expr ! $val]  ;# hide just this pattern
+        # FIXME: still buggy (see below)
+        return
+    }
+    # FIXME: if there is more than one tag associated with the same range of
+    # characters (which is obviously for $tag and $tag.l), then unhiding the
+    # tag causes the $tag no longer accessable. Reason yet unknown.
+    # Hence we only support hiding the complete line yet.
+    $w tag config $tag.l -elide [expr ! $val]
+    return
+}; # obj_text:toggle
 
-proc guitip_show  {w txt}   {
+proc obj_tag:toggle   {w tag val line} {
+    #? toggle visability of text tagged with name $tag
+    _dbx 2 "{$w $tag $val $line}"
+    global cfg
+    switch $cfg(gui-result) {
+        text    { obj_text:toggle  $w $tag $val $line }
+        table   { obj_table:toggle $w $tag $val }
+    }
+    return
+}; # obj_tag:toggle
+
+proc guitip:show  {w txt}   {
     if {[eval winfo containing  [winfo pointerxy .]]!=$w} {return}
     set top $w.balloon
     catch {destroy $top}
@@ -1943,52 +1884,29 @@ proc guitip_show  {w txt}   {
     winfo reqheight $top.txt]+$wmx+$wmy
     raise $top
     return
-}; # guitip_show
+}; # guitip:show
 
-proc guitip_set   {w txt}   {
+proc guitip:set   {w txt}   {
     #? add tooltip message to given widget
     global cfg
     if {1==$cfg(gui-tip)} { # package tooltip not available, use own one
-        bind $w <Any-Enter> "after 1000 [list guitip_show %W [list $txt]]"
+        bind $w <Any-Enter> "after 1000 [list guitip:show %W [list $txt]]"
         bind $w <Any-Leave> "destroy %W.balloon"
     } else {
         set txt [regsub {^-} $txt " -"];# texts starting with - cause problems in tooltip::tooltip
         tooltip::tooltip $w "$txt"
     }
     return
-}; # guitip_set
+}; # guitip:set
 
-proc gui_set_disabled {w}   {
-    #? set widget to disabled state (mode)
-    $w config -state disabled
-    return
-}; # gui_set_disabled
-
-proc gui_set_readonly {w}   {
-    #? set widget to readonly state (mode)
-    # The definition of "read-only" here is, that any action or event for the
-    # widget is allowed, except changing its content anyhow  (delete, insert,
-    # etc.). Selecting, highlighting is not considered as a change.
-    # This can accomplished simply with:
-    #   $w config -state disabled
-    # Unfortunately, this does not work as expected on Mac OS X's Aqua. There
-    # it also disables highlighting and selecting, for example copying to the
-    # clipboard (cutbuffer).
-    # Hence following workaround is used, which simply disables all functions
-    # for events and sets them to do nothing.
-    # This works on all platforms (*IX, Windows, Mac OS X Aqua).
-    foreach event {<KeyPress> <<PasteSelection>>} { bind $w $event break }
-    return
-}; # gui_set_readonly
-
-proc guitheme_set {w theme} {
+proc guitheme:set {w theme} {
     #? set attributes for specified object
     # last part of the Tcl-widgets is key for array cfg_buttons
     _dbx 2 "{$w, $theme}"
     global cfg cfg_buttons IMG
     # text and tip are always configured
     set key [regsub {.*\.([^.]*)$} $w {\1}];# get trailer of widget name
-    set val [_get_tipp  $key];  if {"" ne $val} { guitip_set   $w  $val }
+    set val [_get_tipp  $key];  if {"" ne $val} { guitip:set   $w  $val }
     set val [_get_text  $key];  if {"" ne $val} { $w config -text  $val }
     set val [_get_image $key];  if {![info exists IMG($val)]} { set theme "text" }
     _dbx 4 " $w\t-> $key\t$theme\t-> $val"
@@ -2006,9 +1924,9 @@ proc guitheme_set {w theme} {
         }
     }
     return
-}; # guitheme_set
+}; # guitheme:set
 
-proc guitheme_init  {theme} {
+proc guitheme:init  {theme} {
     #? configure buttons with simple text or graphics
     _dbx 2 "{$theme}"
     global cfg_buttons
@@ -2023,12 +1941,12 @@ proc guitheme_init  {theme} {
         if {![regexp {^\.}  $obj]}  { continue }
         if {![regexp $rex   $obj]}  { continue }
         if { [regexp {^\.$} $obj]}  { continue }
-        guitheme_set $obj $theme
+        guitheme:set $obj $theme
     }
     return
-}; # guitheme_init
+}; # guitheme:init
 
-proc guicursor_set {cursor} {
+proc guicursor:set {cursor} {
     #? set cursor for toplevel and tab widgets and all other windows
     global cfg
     foreach w [list . objN objS winA winD winF winO] {
@@ -2042,30 +1960,30 @@ proc guicursor_set {cursor} {
         }
     }
     return
-}; # guicursor_set
+}; # guicursor:set
 
-proc guistatus_set    {val} {
+proc guistatus:set    {val} {
     #? add text to status line
     global cfg
     if {1==$cfg(quit)} { return }          ;# no GUI update
     $cfg(objS) config -state normal
     $cfg(objS) insert end "$val\n"
     $cfg(objS) see "end - 2 line"
-    gui_set_readonly $cfg(objS)
+    obj_readonly:set $cfg(objS)
     update idletasks                       ;# enforce display update
     return
-}; # guistatus_set
+}; # guistatus:set
 
-proc guiwindow_show   {w}   {
+proc guiwindow:show   {w}   {
     #? show window near current cursor position
     set y   [winfo pointery $w]; incr y 23
     set x   [winfo pointerx $w]; incr x 23
     wm geometry  $w "+$x+$y"
     wm deiconify $w
     return
-}; # guiwindow_show
+}; # guiwindow:show
 
-proc guibrowser_start {url} {
+proc guibrowser:start {url} {
     #? open URL in browser, uses system's native browser
     global cfg prg
     if {[string length $prg(BROWSER)] < 1} { pwarn [_get_text no_browser]; return }
@@ -2088,9 +2006,9 @@ proc guibrowser_start {url} {
     catch { exec {*}$prg(BROWSER) $url & }
 # FIXME: if {[_isaqua]} { open -a /Applications/$prg(BROWSER) $url }
     return
-}; # guibrowser_start
+}; # guibrowser:start
 
-proc guibrowser_bind  {w tagname}  {
+proc guibrowser:bind  {w tagname}  {
     #? search for URLs in $w, mark them and bind key to open browser
     global cfg
     set anf [$w search -regexp -all -count end {\shttps?://[^\s]*} 1.0]
@@ -2103,69 +2021,14 @@ proc guibrowser_bind  {w tagname}  {
         $w tag add    $tagname     $a "$a + $e c"
         $w tag add    $tagname-$i  $a "$a + $e c"
         $w tag config $tagname-$i -foreground [_get_color link]
-        $w tag bind   $tagname-$i <ButtonPress> "guibrowser_start $t"
+        $w tag bind   $tagname-$i <ButtonPress> "guibrowser:start $t"
         if {0==$cfg(gui-tip)} { tooltip::tooltip $w -tag $tagname-$i "[_get_tipp open_browser] $t" }
-            # cannot use guitip_set as we want to bind to $tagname and not $w
+            # cannot use guitip:set as we want to bind to $tagname and not $w
     }
     return
-}; # guibrowser_bind
+}; # guibrowser:bind
 
-proc toggle_cfg          {w opt val}      {
-    #? use widget config command to change options value
-    if {$val ne {}} { $w config $opt $val }
-    return 1
-}; # toggle_cfg
-
-proc toggle_filter_text  {w tag val line} {
-    #? toggle visability of text tagged with name $tag in text widget
-    # note that complete line is tagged with name $tag.l (see apply_filter)
-    _dbx 4 " $w tag config $tag -elide [expr ! $val]"
-    global cfg
-    #if {0==$line} {
-        #$w tag config $tag   -elide [expr ! $val] ;# "elide true" hides the text
-    #}
-    if {[regexp {\-(Label|#.KEY)} $tag]} {
-        $w tag config $tag   -elide [expr ! $val]  ;# hide just this pattern
-        # FIXME: still buggy (see below)
-        return
-    }
-    # FIXME: if there is more than one tag associated with the same range of
-    # characters (which is obviously for $tag and $tag.l), then unhiding the
-    # tag causes the $tag no longer accessable. Reason yet unknown.
-    # Hence we only support hiding the complete line yet.
-    $w tag config $tag.l -elide [expr ! $val]
-    return
-}; # toggle_filter_text
-
-proc toggle_filter_table {w tag val}      {
-    #? toggle visability of text tagged with name $tag in text widget
-    _dbx 4 " $w rowcget  $tag $val"
-    global cfg
-    # toggling a list of rows could be as simple as
-    #   $w togglerowhide $cfg($tag)
-    # but some lines are in multiple lists, so each line's toggle state will
-    # be checked and changed only if different from given $val,  this avoids
-    # unexpected toggles
-    # FIXME: checkbutton in Filter window is wrong now (if multiple lists)
-    foreach n $cfg($tag) {
-        if {[$w rowcget  $n -hide] != $val} { continue }
-        $w togglerowhide $n
-    }
-    return
-}; # toggle_filter_table
-
-proc toggle_filter       {w tag val line} {
-    #? toggle visability of text tagged with name $tag
-    _dbx 2 "{$w $tag $val $line}"
-    global cfg
-    switch $cfg(gui-result) {
-        text    { toggle_filter_text  $w $tag $val $line }
-        table   { toggle_filter_table $w $tag $val }
-    }
-    return
-}; # toggle_filter
-
-proc apply_filter_text  {w} {
+proc filter_text:apply  {w} {
     #? apply filters for markup in output, data is in text widget $w
     # set tag for all texts matching pattern from each filter
     # also sets a tag for the complete line named with suffix .l
@@ -2214,9 +2077,9 @@ proc apply_filter_text  {w} {
         if {""  ne $fn} { $w tag config HELP-$key -font       $fn }
     }
     return
-}; # apply_filter_text
+}; # filter_text:apply
 
-proc apply_filter_table {w} {
+proc filter_table:apply {w} {
     #? apply filters for markup in output, data is in table widget $w
     # FIXME: this is ugly code because the RegEx in f_rex are optimised for
     # use in Tcls's text widget, the RegEx must be changed to match the values
@@ -2257,7 +2120,7 @@ proc apply_filter_table {w} {
             if {"" eq $rex} { continue }   ;# -"-
             _dbx 4 " $key : /$rex/ bg=$bg, fg=$fg, fn=$fn"
             # finding the pattern in the  table's cells is not as simple as in
-            # texts (see apply_filter_text() above), that's why the RegEx must
+            # texts (see filter_text:apply() above), that's why the RegEx must
             # be applied to the proper column: $col and $matchtxt is needed
             switch -exact $key {
                 "no"        { continue }
@@ -2296,18 +2159,18 @@ proc apply_filter_table {w} {
         }
     }
     return
-}; # apply_filter_table
+}; # filter_table:apply
 
-proc apply_filter    {w layout cmd} {
+proc filter:apply    {w layout cmd} {
     #? apply filters for markup in output tab, data is in text or table widget $w
     _dbx 2 "{$w, $layout, $cmd}"
     global cfg
     switch $layout {
-        text    { apply_filter_text  $w }
-        table   { apply_filter_table $w }
+        text    { filter_text:apply  $w }
+        table   { filter_table:apply $w }
     }
     return
-}; # apply_filter
+}; # filter:apply
 
 proc create_selected   {title val}  {
     #? opens toplevel window with selectable text
@@ -2319,8 +2182,8 @@ proc create_selected   {title val}  {
     wm geometry  $w 200x50
     pack [entry  $w.choosen  -textvariable __var -relief flat]
     pack [button $w.closewin -command "destroy $w"] -side right -padx $myX(rpad)
-    guitheme_set $w.closewin $cfg(gui-button)
-    guitip_set   $w.choosen "[_get_tipp choosen] $title"
+    guitheme:set $w.closewin $cfg(gui-button)
+    guitip:set   $w.choosen "[_get_tipp choosen] $title"
     set __var "$val"
     return 1
 }; # create_selected
@@ -2347,7 +2210,7 @@ proc create_window     {title size} {
     pack [button $this.f1.closewin -command "destroy $this"] -padx $myX(rpad) -side right
     bind $this <Key-q>            "destroy_window %W $this";# see "Key Bindings"
     # TODO: bind should not apply to entry fields
-    guitheme_set $this.f1.closewin $cfg(gui-button)
+    guitheme:set $this.f1.closewin $cfg(gui-button)
     if {"Help" eq $title || "About" eq $title} { return $this };# FIXME: use configurable texts
     if {[regexp {^Filter} $title]}             { return $this }
     if {[regexp {^Config} $title]}             { return $this }
@@ -2359,8 +2222,8 @@ proc create_window     {title size} {
     pack [button $this.f0.help_me     -command "create_help {$title}"]  -side right
     pack [button $this.f1.saveconfig  -command "osaft_save   $this.f0.t {CFG} 0" ] -side left
         # widget paremeter $tbl for osaft_save is unused here
-    guitheme_set $this.f1.saveconfig $cfg(gui-button)
-    guitheme_set $this.f0.help_me    $cfg(gui-button)
+    guitheme:set $this.f1.saveconfig $cfg(gui-button)
+    guitheme:set $this.f0.help_me    $cfg(gui-button)
     _dbx 2 "=$this }"
     return $this
 }; # create_window
@@ -2409,21 +2272,21 @@ proc create_host  {parent host_nr}  {
          [button $this.host_del -command "remove_host $this; set hosts($host_nr) {}"] \
          [button $this.host_add -command "create_host {$parent} [array size hosts];"] \
 
-    guitheme_set $this.host_add $cfg(gui-button)
-    guitheme_set $this.host_del $cfg(gui-button)
+    guitheme:set $this.host_add $cfg(gui-button)
+    guitheme:set $this.host_del $cfg(gui-button)
     if {0==$nr} {
         grid forget  $this.host_del
         if {"classic" eq $cfg(gui-layout)} {
             # first line has no {-} but {About}
             grid [button $this.about -command "create_about"] -row 0
             grid config  $this.about -column 4 -sticky e -padx "1 $myX(padx)"
-            guitheme_set $this.about $cfg(gui-button)
+            guitheme:set $this.about $cfg(gui-button)
         } else {
             # first line has {Start} button instead of simple label
             grid forget  $this.lh
             destroy      $this.lh
             grid [button $this.cmdstart -command "osaft_exec $this {Start}"] -row 0
-            guitheme_set $this.cmdstart $cfg(gui-button)
+            guitheme:set $this.cmdstart $cfg(gui-button)
                 # .cmdstart is same as "Start" Button in layout=classic
         }
     }
@@ -2451,7 +2314,7 @@ proc create_text  {parent content}  {
     # insert content
     $this.t insert end $content
     $this.t config -font TkFixedFont
-    gui_set_readonly $this.t
+    obj_readonly:set $this.t
     pack $this.s -side right -fill y  -pady 2 -padx {0 2} -in $this
     pack $this.t -fill both -expand 1 -pady 2 -padx {2 0} -in $this
     _dbx 2 "=$this }"
@@ -2634,7 +2497,7 @@ proc create_filterhead  {parent key col} {
     _dbx 2 "{$parent, ...}{"
     set this $parent.$key
     grid [label $this -text [_get_text $key] -relief raised -borderwidth 1 ] -sticky ew -row 0 -column $col
-    guitip_set  $this       [_get_tipp $key]
+    guitip:set  $this       [_get_tipp $key]
     _dbx 2 "}"
     return
 }; # create_filterhead
@@ -2682,15 +2545,15 @@ proc create_filtertext  {parent cmd}    {
 
         grid config $this.k$k $this.r$k -sticky ew
         grid config $this.f$k $this.b$k $this.s$k -sticky w
-        guitip_set  $this.k$k $f_cmt($k)
-        guitip_set  $this.r$k $f_cmt($k)
+        guitip:set  $this.k$k $f_cmt($k)
+        guitip:set  $this.r$k $f_cmt($k)
         # some entries apply setting to KEY entry
-        $this.f$k config -vcmd "toggle_cfg $this.k$k -fg   \$f_fg($k)" -validate focusout
-        $this.b$k config -vcmd "toggle_cfg $this.k$k -bg   \$f_bg($k)" -validate focusout
-        $this.s$k config -vcmd "toggle_cfg $this.k$k -font \$f_fn($k)" -validate focusout
-        toggle_cfg $this.k$k -fg   $f_fg($k)
-        toggle_cfg $this.k$k -bg   $f_bg($k)
-        toggle_cfg $this.k$k -font $f_fn($k)
+        $this.f$k config -vcmd "obj_cfg:set $this.k$k -fg   \$f_fg($k)" -validate focusout
+        $this.b$k config -vcmd "obj_cfg:set $this.k$k -bg   \$f_bg($k)" -validate focusout
+        $this.s$k config -vcmd "obj_cfg:set $this.k$k -font \$f_fn($k)" -validate focusout
+        obj_cfg:set $this.k$k -fg   $f_fg($k)
+        obj_cfg:set $this.k$k -bg   $f_bg($k)
+        obj_cfg:set $this.k$k -font $f_fn($k)
     }
     foreach {k key} [array get f_key] { # set all filter lines
         if {0 eq $k} { continue }
@@ -2763,10 +2626,10 @@ proc create_filtertab   {parent cmd}    {
         tk fontchooser config -command {create_selected [_get_text win_font]}; # what to do with selection
             # there is no tk_fontchooser, but tk::fontchooser or tk fontchooser
         pack [button $parent.tkfont  -command {tk fontchooser show}] -side right
-        guitheme_set $parent.tkfont $cfg(gui-button)
+        guitheme:set $parent.tkfont $cfg(gui-button)
     }
     pack [button $parent.tkcolor -command {create_selected [_get_text win_colour] [tk_chooseColor]} ] -side right
-    guitheme_set $parent.tkcolor $cfg(gui-button)
+    guitheme:set $parent.tkcolor $cfg(gui-button)
     _dbx 2 "}"
     return
 }; # create_filtertab
@@ -2787,7 +2650,7 @@ proc create_filter      {parent cmd}    {
     #? create new window with filter commands for exec results; store widget in cfg(winF)
     _dbx 2 "{$parent, $cmd}{"
     global cfg f_key f_bg f_fg f_cmt filter_bool myX
-    if {[winfo exists $cfg(winF)]}  { guiwindow_show $cfg(winF); return }
+    if {[winfo exists $cfg(winF)]}  { guiwindow:show $cfg(winF); return }
     set obj $parent;    # we want to have a short variable name
     set geo [split [winfo geometry .] {x+-}]
     set myX(geoF) +[expr [lindex $geo 2] + [lindex $geo 0]]+[expr [lindex $geo 3]+100]
@@ -2802,8 +2665,8 @@ proc create_filter      {parent cmd}    {
     pack [frame $this.f -relief sunken -borderwidth 1] -fill x
     pack [label $this.f.t -relief flat -text [_get_text c_toggle]] -fill x
     pack [checkbutton $this.f.c -text [_get_text hideline] -variable filter_bool($obj,line)] -anchor w
-    guitip_set  $this.f.c [_get_tipp hideline]
-    gui_set_readonly $this.f.c
+    guitip:set  $this.f.c [_get_tipp hideline]
+    obj_readonly:set $this.f.c
     foreach k [lsort -integer [array names f_key]] {
         # the Tclisch way to go through the array would simply be:
         #   foreach {k txt} [array get f_key] { ... }
@@ -2820,14 +2683,14 @@ proc create_filter      {parent cmd}    {
         set filter_bool($obj,HELP-$key) 1;  # default: checked
         pack [checkbutton $this.x$key \
                 -text $txt -variable filter_bool($obj,HELP-$key) \
-                -command "toggle_filter $obj HELP-$key \$filter_bool($obj,HELP-$key) \$filter_bool($obj,line);" \
+                -command "obj_tag:toggle $obj HELP-$key \$filter_bool($obj,HELP-$key) \$filter_bool($obj,line);" \
              ] -anchor w
             # note: checkbutton value passed as reference
         # TODO: following "-fg white" makes check in checkbox invisible
         if {"" ne $fg}  { $this.x$key config -fg $fg } ;# Tk is picky ..
         if {"" ne $bg}  { $this.x$key config -bg $bg } ;# empty colour not allowd
-        guitip_set $this.x$key "[_get_tipp show_hide] $f_cmt($k)"
-	# FIXME: hardcoded uncheck, because not visible by default, see create_resulttable
+        guitip:set $this.x$key "[_get_tipp show_hide] $f_cmt($k)"
+        # FIXME: hardcoded uncheck, because not visible by default, see create_resulttable()
         if { [regexp {^(==|o-saft)} $txt]} {
             set filter_bool($obj,HELP-$key) 0
         }
@@ -2846,14 +2709,14 @@ proc create_configtab   {parent cmd}    {
          [radiobutton $this.s$cmd -variable cfg(gui-result) -value "text"  -text "text" ] \
          [radiobutton $this.t$cmd -variable cfg(gui-result) -value "table" -text "table"] \
          -padx 5 -anchor w -side left
-    guitip_set  $this [_get_tipp "layout"]
+    guitip:set  $this [_get_tipp "layout"]
     set this $parent.ob
     pack [frame $this] -fill x -padx 5 -anchor w
     pack [label $this.b -text [_get_text gui_button] -width 20] \
          [radiobutton $this.j$cmd -variable cfg(gui-button) -value "text"  -text "text" ] \
          [radiobutton $this.i$cmd -variable cfg(gui-button) -value "image" -text "image"] \
          -padx 5 -anchor w -side left
-    guitip_set  $this [_get_tipp "img_txt"]
+    guitip:set  $this [_get_tipp "img_txt"]
     set this $parent.oc
     pack [frame  $this] -fill x -padx 5 -anchor w
     switch $cfg(gui-layout) {
@@ -2862,7 +2725,7 @@ proc create_configtab   {parent cmd}    {
     }
     pack [button $this.v$cmd -command "create_main $cfg(gui-layout)" -text [_get_text menu_mode]] \
          -side left
-    guitip_set  $this [_get_btn_tip menu_mode]
+    guitip:set  $this [_get_btn_tip menu_mode]
     _dbx 2 "}"
     return
 }; # create_configtab
@@ -2928,7 +2791,7 @@ proc create_tooltab     {parent cmd}    {
              [entry $this.e -textvariable prg($var) -width 33] \
              -padx 5 -anchor w -side left
     }
-    guitip_set  $this.e [_get_tipp docker-id]
+    guitip:set  $this.e [_get_tipp docker-id]
     _dbx 2 "}"
     return
 }; # create_tooltab
@@ -2951,7 +2814,7 @@ proc create_ciphers     {}  {
     # SEE Cipher:text (in lib/OMan.pm) for expected data
     _dbx 2 "{}{"
     global cfg myX
-    if {[winfo exists $cfg(winD)]}  { guiwindow_show $cfg(winD); return }
+    if {[winfo exists $cfg(winD)]}  { guiwindow:show $cfg(winD); return }
     set cfg(winD) [create_window [_get_text win_cipher] $myX(geoD)]
     set data  [osaft_ciphers]]
 # FIXME: print error if no ciphers given
@@ -3004,7 +2867,7 @@ proc create_about       {}  {
     #  Show the text starting with  #?  from this file.
     _dbx 2 "{}{"
     global cfg myX
-    if {[winfo exists $cfg(winA)]}  { guiwindow_show $cfg(winA); return }
+    if {[winfo exists $cfg(winA)]}  { guiwindow:show $cfg(winA); return }
     set cfg(winA) [create_window [_get_text win_about] $myX(geoA)]
     set txt [create_text $cfg(winA) [self_about "ABOUT"]].t
     $txt config -bg [_get_color osaft]
@@ -3020,8 +2883,8 @@ proc create_about       {}  {
     $txt tag config sektion -font osaftBold
 
     # bind buttons and keys
-    guibrowser_bind $txt ABOUT-URL
-    bind  $txt <KeyPress>   "search_view $txt %K"
+    guibrowser:bind $txt ABOUT-URL
+    bind  $txt <KeyPress>   "search:view $txt %K"
     _dbx 2 "}"
     return
 }; # create_about
@@ -3091,7 +2954,7 @@ proc create_help  {sect} {
     if {[winfo exists $cfg(winO)]} {    # if there is a window, just jump to text
         wm deiconify $cfg(winO)
         set name [_str2obj [string trim $sect]]
-        search_show $cfg(winO).t "HELP-HEAD-$name"
+        search:show $cfg(winO).t "HELP-HEAD-$name"
         return
     }
     set this    [create_window {Help} $myX(geoO)]
@@ -3099,14 +2962,14 @@ proc create_help  {sect} {
     set toc     {}
 
     _dbx 4 " 2. add additional buttons for search"
-    pack [button $this.f1.help_home -command "search_show $txt {HELP-LNK-T}; set search(curr) 0;"] \
-         [button $this.f1.help_prev -command "search_next $txt {-}"] \
-         [button $this.f1.help_next -command "search_next $txt {+}"] \
+    pack [button $this.f1.help_home -command "search:show $txt {HELP-LNK-T}; set search(curr) 0;"] \
+         [button $this.f1.help_prev -command "search:next $txt {-}"] \
+         [button $this.f1.help_next -command "search:next $txt {+}"] \
         [spinbox $this.f1.s -textvariable search(text) -values $search(list) \
-             -command "search_list %d"   -wrap 1 -width 25 ] \
+             -command "search:list %d"   -wrap 1 -width 25  ] \
         [spinbox $this.f1.m -textvariable search(mode) -values [list exact regex smart fuzzy] \
-             -command {global search; set search(last) ""} ] \
-         [button $this.f1.helpreset -command "search_rset" ] \
+             -command {global search; set search(last) ""}  ] \
+         [button $this.f1.helpreset -command "search:reset" ] \
          [button $this.f1.help_help -command {global cfg; create_about; $cfg(winA).t see 84.0} ] \
         -side left
         # TODO: remove hardcoded text position 84.0 in About
@@ -3114,21 +2977,21 @@ proc create_help  {sect} {
     $this.f1.m config -state readonly -relief groove -wrap 1 -width 5
     pack config  $this.f1.m  -padx 10
     pack config  $this.f1.help_home   $this.f1.help_help -padx $myX(rpad)
-    guitheme_set $this.f1.help_home   $cfg(gui-button)
-    guitheme_set $this.f1.help_prev   $cfg(gui-button)
-    guitheme_set $this.f1.help_next   $cfg(gui-button)
-    guitheme_set $this.f1.help_help   $cfg(gui-button)
-    guitheme_set $this.f1.helpreset   $cfg(gui-button)
-    guitip_set   $this.f1.m [_get_tipp help_mode]
-    guitip_set   $this.f1.s [_get_tipp helpsearch]
-    #guitip_set   $this.f1.help.rset  [_get_tipp helpreset]
+    guitheme:set $this.f1.help_home   $cfg(gui-button)
+    guitheme:set $this.f1.help_prev   $cfg(gui-button)
+    guitheme:set $this.f1.help_next   $cfg(gui-button)
+    guitheme:set $this.f1.help_help   $cfg(gui-button)
+    guitheme:set $this.f1.helpreset   $cfg(gui-button)
+    guitip:set   $this.f1.m [_get_tipp help_mode]
+    guitip:set   $this.f1.s [_get_tipp helpsearch]
+    #guitip:set   $this.f1.help.rset  [_get_tipp helpreset]
     bind         $this.f1.s <Return> "
            global search
            if {\$search(last) != \$search(text)} {
                lappend search(list) \$search(text);
                incr    search(curr)
            };
-           search_text $txt \$search(text);
+           search:text $txt \$search(text);
            "
 
     # FIXME (2020): all following code for markup needs to be redisigned, as
@@ -3158,7 +3021,7 @@ proc create_help  {sect} {
     $txt insert 1.0 "\nCONTENT\n$toc\n"
     $txt tag     add    HELP-LNK    2.0 2.7    ;# add markup
     $txt tag     add    HELP-LNK-T  2.0 2.7    ;#
-    gui_set_readonly $txt
+    obj_readonly:set $txt
     #_dbx 4 "TOC:[$txt get 1.0 end]"
     set nam [$txt search -regexp -nolinestop {^NAME$} 1.0]; # only new insert TOC
     if {"" eq $nam} {
@@ -3182,7 +3045,7 @@ proc create_help  {sect} {
         set b [$txt search -regexp {[A-Z]+} $a]
         $txt tag add    HELP-TOC    $b "$b + $e c" ;# do not markup leading spaces
         $txt tag add    HELP-TOC-$i $a "$a + $e c" ;# but complete line is clickable
-        $txt tag bind   HELP-TOC-$i <ButtonPress> "search_show $txt {HELP-HEAD-$name}"
+        $txt tag bind   HELP-TOC-$i <ButtonPress> "search:show $txt {HELP-HEAD-$name}"
     }
 
     # 4a. search for all references to section head in text
@@ -3200,7 +3063,7 @@ proc create_help  {sect} {
         if {[_notTOC $t]}          { continue };# skip some special strings
         set name [_str2obj [string trim $t]]
         $txt tag add    HELP-REF-$i $a "$a + $e c"
-        $txt tag bind   HELP-REF-$i <ButtonPress> "search_show $txt {HELP-HEAD-$name}"
+        $txt tag bind   HELP-REF-$i <ButtonPress> "search:show $txt {HELP-HEAD-$name}"
     }
 
     _dbx 4 " 5. search all commands and options and try to set click event"
@@ -3245,7 +3108,7 @@ proc create_help  {sect} {
         } else {
             # these matches are assumed references
             $txt tag add    HELP-LNK-$i $a "$a + $e c - 1 c" ;# do not markup spaces
-            $txt tag bind   HELP-LNK-$i <ButtonPress> "search_show $txt {HELP-LNK-$name}"
+            $txt tag bind   HELP-LNK-$i <ButtonPress> "search:show $txt {HELP-LNK-$name}"
             $txt tag config HELP-LNK-$i -foreground [_get_color link]
             $txt tag config HELP-LNK-$i -font osaftSlant
         }
@@ -3286,7 +3149,7 @@ proc create_help  {sect} {
     }
 
     _dbx 4 " 8. highlight all URLs and bind key"
-    guibrowser_bind $txt HELP-URL
+    guibrowser:bind $txt HELP-URL
 
     # finally global markups
     $txt tag config     HELP-CODE -background [_get_color code]
@@ -3311,13 +3174,13 @@ proc create_help  {sect} {
         _dbx 8 " #---------------+---------------+------------------------"
     }
 
-    bind $txt <KeyPress>    "search_view $txt %K"
-    #bind $txt <MouseWheel>  "search_view $txt %D" ;# done automatically
+    bind $txt <KeyPress>    "search:view $txt %K"
+    #bind $txt <MouseWheel>  "search:view $txt %D" ;# done automatically
 
     set cfg(winO) $this
     if {$sect ne ""} {
         set name [_str2obj [string trim $sect]]
-        search_show $cfg(winO).t "HELP-HEAD-$name"
+        search:show $cfg(winO).t "HELP-HEAD-$name"
     }
     return
 }; # create_help
@@ -3352,10 +3215,10 @@ proc create_tab   {parent layout cmd content} {
          -side left
     pack [button $tab.closetab   -command "destroy $tab"] -side right
    set cfg(objT) $tab.ttyresult
-    guitheme_set $tab.closetab   $cfg(gui-button)
-    guitheme_set $tab.saveresult $cfg(gui-button)
-    guitheme_set $tab.ttyresult  $cfg(gui-button)
-    guitheme_set $tab.filter     $cfg(gui-button)
+    guitheme:set $tab.closetab   $cfg(gui-button)
+    guitheme:set $tab.saveresult $cfg(gui-button)
+    guitheme:set $tab.ttyresult  $cfg(gui-button)
+    guitheme:set $tab.filter     $cfg(gui-button)
     $cfg(objN) select $tab
     _dbx 2 "=$tab }"
     return $w
@@ -3368,7 +3231,7 @@ proc create_cmd   {parent title} {
     set name [regsub {^\+} $title {cmd}]   ;# keys start with cmd instead of +
     set this $parent.$name
     pack [button $this -text $title -command "osaft_exec $parent $title"] -side left
-    guitheme_set $this $cfg(gui-button)
+    guitheme:set $this $cfg(gui-button)
     _dbx 2 "=$this }"
     return $this
 }; # create_cmd
@@ -3380,7 +3243,7 @@ proc create_opt   {parent title} {
     set name [regsub {^--} $title {cmd}]   ;# keys start with cmd instead of +
     set this $parent.$name
     pack [checkbutton $this -text $title -variable cfg($title)] -side left -padx 5
-    guitip_set   $this [_get_tipp $title]
+    guitip:set   $this [_get_tipp $title]
     _dbx 2 "=$this }"
     return $this
 }; # create_opt
@@ -3445,7 +3308,7 @@ proc create_win   {parent title cmd} {
             _dbx 4 " create window: $win »$dat«"
             set dat [string toupper [string trim $dat ] 0 0]
             set win [create_window $dat ""]
-            if {"" eq $win} { return }     ;# do nothing, even no: guiwindow_show $this
+            if {"" eq $win} { return }     ;# do nothing, even no: guiwindow:show $this
             set this $win.g
             frame $this                    ;# frame for grid
             continue
@@ -3491,7 +3354,7 @@ proc create_win   {parent title cmd} {
             if {[winfo exists $last_obj]} {
                 set txt "<text>"
                 if {[llength $values] > 0} { set txt [join $values { | }] }
-                guitip_set $last_obj "[_get_tipp possible_values] $txt";# $tip may containing collected values
+                guitip:set $last_obj "[_get_tipp possible_values] $txt";# $tip may containing collected values
             }
             _dbx 4 " create: »$idx« »$val«"
             #dbx# puts "create_win: entry: $this.$name.e -variable cfg($idx)"
@@ -3504,7 +3367,7 @@ proc create_win   {parent title cmd} {
             $this.$name.l config -font TkDefaultFont   ;# reset to default as Label is bold
         }
         grid $this.$name -sticky w
-        guitip_set $this.$name "$tip"  ;# $tip may be empty, i.e. for options
+        guitip:set $this.$name "$tip"  ;# $tip may be empty, i.e. for options
         # TODO: create tooltip with $values for very last $this.$name.e
     }
     pack $this -fill both -expand 1    ;# delayed pac for better performance
@@ -3573,8 +3436,8 @@ proc create_buttons     {parent cmd} {
             pack [button $this.b -text $dat -width 58 -command "create_win .$name {$txt} $cmd" -bg [_get_color button] ] \
                  [button $this.help_me -command "create_help {$txt}" ] \
                    -side left
-            guitheme_set $this.help_me $cfg(gui-button)
-            guitip_set   $this.b [_get_tipp settings]
+            guitheme:set $this.help_me $cfg(gui-button)
+            guitip:set   $this.b [_get_tipp settings]
     
             # argh, some command sections are missing in HELP, then disable help button
             if {1==[regexp $prg(rexOUT-show) $txt]} { $this.help_me config -state disable }
@@ -3615,10 +3478,10 @@ proc create_main_menu          {parent w} {
          [menubutton $w.cmds -text [_get_text menu_cmd ] -menu $w_cmds -bg black -fg [_get_color menu_cmd ] -borderwidth 0 -width 6] \
          [menubutton $w.opts -text [_get_text menu_opt ] -menu $w_opts -bg black -fg [_get_color menu_opt ] -borderwidth 0 -width 6] \
          [menubutton $w.conf -text [_get_text menu_cfg ] -menu $w_conf -bg black -fg [_get_color menu_cfg ] -borderwidth 0 -width 6]
-    guitip_set   $w.main [_get_tipp menu_menu]
-    guitip_set   $w.cmds [_get_tipp menu_cmd ]
-    guitip_set   $w.opts [_get_tipp menu_opt ]
-    guitip_set   $w.conf [_get_tipp menu_cfg ]
+    guitip:set   $w.main [_get_tipp menu_menu]
+    guitip:set   $w.cmds [_get_tipp menu_cmd ]
+    guitip:set   $w.opts [_get_tipp menu_opt ]
+    guitip:set   $w.conf [_get_tipp menu_cfg ]
     if {[_isaqua]} {
         # Mac OS X is different ...
         $w.main config -width 5
@@ -3678,7 +3541,7 @@ proc create_main_menu          {parent w} {
 # TODO: add to options tab, see create_main_quick_options()
          set cmd "docker_status"
 # TODO:  pack [entry $w.dockerid -textvariable prg(docker-id) -width 12] -anchor w
-# TODO:  guitip_set  $w.dockerid [_get_tipp docker-id]
+# TODO:  guitip:set  $w.dockerid [_get_tipp docker-id]
     }
 
     # FIXME: menus are shown "tearoff" at position 0+0
@@ -3737,7 +3600,7 @@ proc create_main_quick_options {parent w} {
     }
     if {[regexp {\-docker$} $prg(SAFT)]} {
         pack [entry $w.dockerid -textvariable prg(docker-id) -width 12] -anchor w
-        guitip_set  $w.dockerid [_get_tipp docker-id]
+        guitip:set  $w.dockerid [_get_tipp docker-id]
     }
     _dbx 2 "=$w }"
     return $w
@@ -3795,7 +3658,7 @@ proc create_main_status_line   {parent w} {
     set cfg(objS)   $w.t
     pack [frame     $w   -relief sunken -borderwidth 1] -fill x
     pack [text      $w.t -relief flat   -height $myX(maxS) -background [_get_color status] ] -fill x
-    gui_set_readonly $cfg(objS)
+    obj_readonly:set $cfg(objS)
     _dbx 2 "=$w }"
     return $w
 }; # create_main_status_line
@@ -3848,7 +3711,7 @@ proc create_main  {layout}  {
             lappend cfg(guiwidgets) [create_main_note          $w note   ]
             lappend cfg(guiwidgets) [create_main_tabs          $w note   ]
             lappend cfg(guiwidgets) [create_main_exit_button   $w fq     ]
-            guitheme_init $cfg(gui-button) ;# apply themes
+            guitheme:init $cfg(gui-button) ;# apply themes
         }
     }
     lappend cfg(guiwidgets) [create_main_status_line $w fl ]
@@ -3856,10 +3719,10 @@ proc create_main  {layout}  {
     return $w
 }; # create_main
 
-proc search_view  {w key}   {
+proc search:view  {w key}   {
     #? scroll given text widget according key
     _dbx 2 "{$w, $key}{"
-    #dbx puts "search_view: {$w, $key} [$w yview]"
+    #dbx puts "search:view: {$w, $key} [$w yview]"
     # Up and Down are handled automatically, usually, but not always, grrr
     switch $key {
         Home    { $w see [$w index HELP-LNK-T.first] }
@@ -3875,9 +3738,9 @@ proc search_view  {w key}   {
     #   End     { $w yview scroll  99 pages }
     _dbx 2 "}"
     return
-}; # search_view
+}; # search:view
 
-proc search_show  {w mark}  {
+proc search:show  {w mark}  {
     #? jump to mark in given text widget
     _dbx 2 "{$w, $mark}{"
     catch { $w see [$w index $mark.first] } err
@@ -3889,9 +3752,9 @@ proc search_show  {w mark}  {
     }
     _dbx 2 "}"
     return
-}; # search_show
+}; # search:show
 
-proc search_mark  {w see}   {
+proc search:mark  {w see}   {
     #? remove previous highlight, highlight at position see
     _dbx 2 "{$w, $see}{"
     set anf  [lindex $see 0]
@@ -3909,9 +3772,9 @@ proc search_mark  {w see}   {
     $w tag config HELP-search-mark -font osaftBold -background yellow
     _dbx 2 "}"
     return
-}; # search_mark
+}; # search:mark
 
-proc search_more  {w search_text regex} {
+proc search:more  {w search_text regex} {
     #? show overview of search results in new window
     # $w is the widget with O-Saft's help text, all matched texts are already
     # listed in $w's tag HELP-search-pos, each match is a tuple consisting of
@@ -3948,16 +3811,16 @@ proc search_more  {w search_text regex} {
         # bind events to highlight text
         $txt tag bind   TAG-$i  <Any-Enter>  "$txt tag config TAG-$i -background [_get_color osaft]"
         $txt tag bind   TAG-$i  <Any-Leave>  "$txt tag config TAG-$i -background white"
-        $txt tag bind   TAG-$i <ButtonPress> "$w   see $anf; search_mark $w \"$anf $end\""
-        guitip_set $txt "[_get_tipp helpclick]"
+        $txt tag bind   TAG-$i <ButtonPress> "$w   see $anf; search:mark $w \"$anf $end\""
+        guitip:set $txt "[_get_tipp helpclick]"
         # TAG-$i  are never used again; new searches overwrite existing tags
     }
-    gui_set_readonly $txt
+    obj_readonly:set $txt
     _dbx 2 "=$this }"
     return $this
-}; # search_more
+}; # search:more
 
-proc search_next  {w direction} {
+proc search:next  {w direction} {
     #? show next search text in help window
     # direction: + to search forward, - to search backward
     global search
@@ -3976,25 +3839,25 @@ proc search_next  {w direction} {
         # FIXME: round robin for + but not for -
     }
     $w see [lindex $see 0]             ;# show at start of match
-    search_mark $w "$see"
+    search:mark $w "$see"
     #$w yview scroll 1 units           ;# somtimes necessary, but difficult to decide when
     set search(see)  $see
     _dbx 2 "}"
     return
-}; # search_next
+}; # search:next
 
-proc search_text  {w search_text} {
+proc search:text  {w search_text} {
     #? search given text in help window's $w widget
     _dbx 2 "{$w, »$search_text«}{"
     global search
     if {[regexp ^\\s*$ $search_text]}  { return }  ;# do not search for spaces
     if {"exact" ne $search(mode)} {
         if {[string length $search_text] < 4} {
-            _message warning "(search_text): Search pattern" [_get_text h_min4chars]
+            _message warning "(search:text): Search pattern" [_get_text h_min4chars]
             return
         }
     }
-    if {$search_text eq $search(last)} { search_next $w {+}; return }
+    if {$search_text eq $search(last)} { search:next $w {+}; return }
     # new text to be searched, initialise ...
     set search(last) $search_text
     $w tag delete HELP-search-pos      ;# tag which contains all matches
@@ -4050,7 +3913,7 @@ proc search_text  {w search_text} {
         }
     }
     if {"exact" ne $search(mode)} {
-        # we have the original search_text as first alternate, and various
+        # we have the original search:text() as first alternate, and various
         # variants following in a non-capture group
         # Note: $words has already leading | hence missing in concatenation
         set regex "(?:$regex$words)"
@@ -4068,7 +3931,7 @@ proc search_text  {w search_text} {
             set err ""
             catch { $w search -regexp -all -nocase -- $regex 1.0 } err
             if {[regexp {compile} $err]} {
-                _message warning "(search_text)" "[_get_text h_badregex]\n----\n$err"
+                _message warning "(search:text)" "[_get_text h_badregex]\n----\n$err"
                 return
             }
             # else { RegEx OK }
@@ -4110,18 +3973,18 @@ proc search_text  {w search_text} {
     _dbx 4 " HELP-search-pos: $tags"
     set search(see)  [lrange $tags 0 1];# remember current position
     $w tag config HELP-search-pos -background [_get_color osaft]
-    search_mark $w $search(see)
+    search:mark $w $search(see)
     $w see [lindex $search(see) 0]
     _dbx 4 " see= $search(see)\tlast= $search(last)"
     # show window with all search results (note: $anf contains tuples)
     if {$search(more) < [_count_tuples $anf]} {
-       search_more $w $search_text $regex
+       search:more $w $search_text $regex
     }
     _dbx 2 "}"
     return
-}; # search_text
+}; # search:text
 
-proc search_rset        {}  {
+proc search:reset  {}       {
     #? reset/clear search list (history)
     _dbx 2 "{}{"
     global search
@@ -4132,9 +3995,9 @@ proc search_rset        {}  {
     set search(text) "";# resets entry field
     _dbx 2 "}"
     return
-}; # search_rset
+}; # search:reset
 
-proc search_list  {direction} {
+proc search:list  {direction} {
     #? get next or previous search text from search list (history)
     _dbx 2 "{$direction}{"
     global search
@@ -4149,19 +4012,19 @@ proc search_list  {direction} {
     _dbx 4 " curr= $search(curr) of $len, »$search(text)«"
     _dbx 2 "}"
     return
-}; # search_list
+}; # search:list
 
-proc osaft_read_data {norc mode} {
+proc osaft_file:read {norc mode} {
     #? return configuration from corresponding file or prg(SAFT)
     #  $mode denotes the type of configuration; it is also the file suffix,
     #  example: mode = "--help=data"
     #       reads:  o-saft.pl.--help=data
     #    or calls:  o-saft.pl --help=data
     _dbx 2 "{$norc,$mode}{"
-    global cfg prg env
+    global cfg prg
     set txt  ""
     if {"file" eq $cfg(docs-src)} {
-        set file [_get_data_filename $mode]
+        set file [_filepath:get $mode]
         if {![catch {open $file  r} fid]} {
             set txt [read $fid]
             pinfo "read  $file"
@@ -4173,42 +4036,54 @@ proc osaft_read_data {norc mode} {
         _dbx 4 " error=$fid; ignored"
         if {"" ne $fid} {
             # open failed, file may not exist
-            if {1==[info exists env(ANDROID_DATA)]} {
+            if {1==[info exists ::env(ANDROID_DATA)]} {
                 set msg "no data available for '$mode' [_get_text gen_docs]"
                 msg:append warning $msg
-                _message warning "(osaft_read_data)" $msg
+                _message warning "(osaft_file:read)" $msg
                 # AndroidWish cannot yet execute other programs :-(03/2022):-
             }
         }
     # else "dynamic"
     }
-    pinfo  "exec {*}$prg(PERL) $prg(SAFT) [docker_args] $norc $mode"
-    catch { exec {*}$prg(PERL) $prg(SAFT) [docker_args] $norc $mode } txt error_opts
+    pinfo  "exec {*}$prg(PERL) $prg(SAFT) [docker_args:get] $norc $mode"
+    catch { exec {*}$prg(PERL) $prg(SAFT) [docker_args:get] $norc $mode } txt error_opts
     #_dbx 4 " error_opts=$error_opts"
     if {0!=[dict get $error_opts -code]} {
         set msg "$prg(SAFT) failed\n----\n$txt"
         msg:append error $msg
-        _message error "(osaft_read_data)" $msg
+        _message error "(osaft_file:read)" $msg
     }
     _dbx 2 "=... RC text ... }"
     return $txt
-}; # osaft_read_data
+}; # osaft_file:read
 
-proc osaft_ciphers   {} {
+proc osaft_doc:write {} {
+    #? get documentation and help texts from o-saft.pl and store in file
+    # see also "make doc.data" and "make static.docs"
+    # NOTE: not a GUI function, defined here because of its name osaft_*
+    _dbx 2 "{}{"
+    global prg
+    pinfo  "exec {*}$prg(PERL) $prg(SAFT) [docker_args:get] --no-rc --help=gen-docs"
+    catch { exec {*}$prg(PERL) $prg(SAFT) [docker_args:get] --no-rc --help=gen-docs } txt
+    _dbx 2 "}"
+    return
+}; # osaft_doc:write
+
+proc osaft_ciphers {}   {
     #? get description of cipher suites from o-saft.pl; returns text
     _dbx 2 "{}{"
-    set help [osaft_read_data "" "--help=ciphers-text"]
+    set help [osaft_file:read "" "--help=ciphers-text"]
     # convert to tabular data
     _dbx 2 "}"
     return $help
 }; # osaft_ciphers
 
-proc osaft_help   {}    {
+proc osaft_help    {}   {
     #? get help from o-saft.pl --help (for use in own help window)
     _dbx 2 "{}{"
     global cfg prg
     # get information from O-Saft; it's a performance penulty, but simple ;-)
-    set help [osaft_read_data "" "--help"]
+    set help [osaft_file:read "" "--help"]
     if {5 > [llength [split $help "\n"]]} {
         _dbx 2 " help = »$help«"
         # exec call failed, probably because  PATH  does not contain . then
@@ -4220,7 +4095,7 @@ proc osaft_help   {}    {
         # if it was a problem with docker, following most likely fails too
         # FIXME: workaround does not work with --docker
         set prg(SAFT) [file join "." $prg(SAFT)];# try current directory also
-        set help [osaft_read_data --no-rc "--help"]
+        set help [osaft_file:read --no-rc "--help"]
     }
 
     _dbx 4 " 1. collect more documentations with --help=*"
@@ -4228,7 +4103,7 @@ proc osaft_help   {}    {
     foreach mode $cfg(docs-help) {
         if {{--help} eq $mode} { continue } ;# already read
         set txt ""
-        set txt [osaft_read_data --no-rc $mode]
+        set txt [osaft_file:read --no-rc $mode]
         if {2 < [llength [split $txt "\n"]]} {
             set txt [regsub -all {[&]} $txt {\\&}] ;# avoid interpretation by regexp
             set txt [regsub -all {^=   [^\n]*}  $txt {}]  ;# remove header line, the very first one
@@ -4293,11 +4168,11 @@ proc osaft_help   {}    {
     return $help
 }; # osaft_help
 
-proc osaft_reset  {}    {
+proc osaft_reset   {}   {
     #? reset all options in exe()
     _dbx 2 "{}{"
     global exe
-    guistatus_set "reset"
+    guistatus:set "reset"
     foreach {idx val} [array get exe] {
         if {[regexp {^[^-]} $idx]}     { continue };# want options only
         if {[string trim $val] eq "0"} { continue };# already ok
@@ -4311,7 +4186,7 @@ proc osaft_reset  {}    {
     return
 }; # osaft_reset
 
-proc osaft_init   {}    {
+proc osaft_init    {}   {
     #? set values from .o-saft.pl in cfg()
     _dbx 2 "{}{"
     global cfg exe prg
@@ -4340,7 +4215,7 @@ proc osaft_init   {}    {
     return
 }; # osaft_init
 
-proc _table_get   {tbl} {
+proc _table:get   {tbl} {
     #? return all lines from the text widget (table) $tbl, except the hidden ones
     # lines are formatted like result from O-Saft (roughly, not exactly)
     set txt ""
@@ -4354,7 +4229,7 @@ proc _table_get   {tbl} {
         append txt "$label:\t$value $cmt\n"
     }
     return $txt
-}; # _table_get
+}; # _table:get
 
 proc osaft_save   {tbl type nr} {
     #? save selected output from text widget $tbl to file; $nr used if $type == TAB
@@ -4364,7 +4239,7 @@ proc osaft_save   {tbl type nr} {
         # FIXME: following type of TAB needs to be identified individually, not globally
         switch $cfg(gui-result) {
             text    { puts $results($nr)     }
-            table   { puts [_table_get $tbl] }
+            table   { puts [_table:get $tbl] }
         }
         return     ;# ready
     }
@@ -4394,12 +4269,12 @@ proc osaft_save   {tbl type nr} {
         set fid  [open $name w]
         switch $cfg(gui-result) {
             text    { puts $fid $results($nr)     }
-            table   { puts $fid [_table_get $tbl] }
+            table   { puts $fid [_table:get $tbl] }
         }
     }
     _dbx 4 " file = $name"
     close $fid
-    guistatus_set "TAB »$title« saved to $name"
+    guistatus:set "TAB »$title« saved to $name"
     pinfo         "saved $name "
     _dbx 2 "}"
     return
@@ -4418,18 +4293,18 @@ proc osaft_load   {cmd} {
         STDIN { set fid stdin }
     }
     if {"" eq $name} { return }
-    guicursor_set watch
+    guicursor:set watch
     incr cfg(EXEC)
     if {"STDIN" ne $name} { set fid [open $name r] }
     set results($cfg(EXEC)) [read $fid]
     if {"STDIN" ne $name} { close $fid }
     set w [create_tab  $cfg(objN) $cfg(gui-result) [file tail $name] $results($cfg(EXEC))]
-    apply_filter $w $cfg(gui-result) $name ;# text placed in pane, now do some markup
+    filter:apply $w $cfg(gui-result) $name ;# text placed in pane, now do some markup
     # TODO: filter may fail (return Tcl error) as data is not known to be table or text
     #puts $fid $results($nr)
-    guistatus_set "loaded file: $name"
+    guistatus:set "loaded file: $name"
     pinfo         "loaded $name "
-    guicursor_set {}
+    guicursor:set {}
     _dbx 2 "}"
     return
 }; # osaft_load
@@ -4439,15 +4314,15 @@ proc osaft_exec   {parent cmd}  {
     # $parent is a dummy here
     _dbx 2 "{$cmd}{"
     global cfg hosts prg results
-    guicursor_set watch
-    guistatus_set "#{ $cmd"
+    guicursor:set watch
+    guistatus:set "#{ $cmd"
     set do  {}     ;# must be set to avoid tcl error
     set opt {}     ;# ..
     set targets {} ;# ..
     if {1==$cfg(docker)} {
         # pass image ID to Docker;
         # note that this option must be before o-saft.pl commands or options
-        # TODO:  docker_args() benutzen
+        # TODO:  docker_args:get() benutzen
         lappend do "-id=$prg(docker-id)"
         lappend do "-tag=$prg(docker-tag)"
     }
@@ -4458,7 +4333,7 @@ proc osaft_exec   {parent cmd}  {
             lappend do $idx
         }
         if {0>=[llength do]} {
-            guistatus_set "# no command given, using +cipher ."
+            guistatus:set "# no command given, using +cipher ."
             lappend do "+cipher"
         }
     } else {
@@ -4506,7 +4381,7 @@ proc osaft_exec   {parent cmd}  {
     incr cfg(EXEC)
     set result  ""
     set status  0
-    guistatus_set "$exectxt"
+    guistatus:set "$exectxt"
     pinfo          "$execcmd "
     if {[catch { {*}$execcmd } result errors]} {
         # exited abnormaly, get status and sanitise result
@@ -4529,15 +4404,154 @@ proc osaft_exec   {parent cmd}  {
     if {[regexp $prg(rexOUT-text) $do]} { set _layout "text" }; # force to text
     if {"docker_status" eq $cmd}        { set _layout "text" };
     set txt [create_tab  $cfg(objN) $_layout $cmd $results($cfg(EXEC))]
-    apply_filter $txt $_layout $cmd    ;# text placed in pane, now do some markup
+    filter:apply $txt $_layout $cmd    ;# text placed in pane, now do some markup
     destroy $cfg(winF)                 ;# workaround, see FIXME in create_filtertab
-    guistatus_set "#} $do done (status=$status)."  ;# status not yet used ...
-    guicursor_set {}
+    guistatus:set "#} $do done (status=$status)."  ;# status not yet used ...
+    guicursor:set {}
     _dbx 2 "}"
     return
 }; # osaft_exec
 
-proc config_perl  {}    {
+proc config_img:read {theme} {
+    #? read $cfg(IMG) if exists and not already done
+    _dbx 2 "{$theme}"
+    global cfg IMG
+    #  if the file does not exist, the error is silently catched and ignored
+    if [info exists cfg(IMGSID)] { puts "IMG da $cfg(IMGSID)" }
+    if [info exists cfg(IMGSID)] { return };# already there
+    if {"image" eq $theme} {
+       set imgfile [regsub "$cfg(ICH)$" $cfg(ME) "$cfg(IMG)"];   # must be same path
+       _dbx 4 " IMG $imgfile"
+       if {[file isfile $imgfile]} {
+           pinfo "source $imgfile"
+           catch { source $imgfile } error_txt
+       } else {
+           pwarn "$cfg(IMG) not found; using traditional buttons"
+       }
+    }
+    _dbx 4 " IMG    = [array names IMG]"
+    return
+}; # config_img:read
+
+proc config:update {}   {
+    #? legacy conversion of old (pre 1.86) keys from cfg(RC) aka .o-saft.tcl
+    #
+    # Until version 1.84, respectively 1.6 of cfg(RC), the variables in cfg(RC)
+    # were identical to the ones used herein:
+    #   cfg_color,  cfg_label, cfg_tipp
+    # As cfg(RC) will only be sourced, it needs to have the complete definition
+    # of each of these variables, otherwise we may run into some syntax errors.
+    # Starting with version 1.86, the variables herein have been renamed to:
+    #   cfg_colors, cfg_texts, cfg_tipps
+    # and also some keys have been renamed.
+    # This function copies the settings from cfg(RC) to the internal variables.
+    # By doing this, the old keys are converted automatically (see switch cases
+    # below).
+    # Finally we remove the variables set by cfg(RC).
+    #
+    _dbx 2 "{}"
+    global cfg
+    if {1==[info exists cfg(RCSID)]} {
+        # cfg(RCSID) is defined in .o-saft.tcl, warn if old one
+        _dbx 4 " RCmin$cfg(RCmin) > RCSID$cfg(RCSID) ?"
+        if {$cfg(RCmin) > $cfg(RCSID)} {
+            set msg "converting data to new version ...\n\nplease update $cfg(RC) using 'usr/$cfg(RC)'"
+            msg:append warning $msg
+            _message warning "(config:update)" \
+"$cfg(RC) version $cfg(RCSID)
+----
+$msg
+----"
+        }
+    }
+    global cfg_colors cfg_color
+    foreach key [array names cfg_color] {
+        set value $cfg_color($key)
+        # keys used in version < 1.86
+        switch -exact $key {
+          {start}       { set cfg_colors(cmdstart)  $value }
+          {closew}      { set cfg_colors(closewin)  $value }
+          {search}      { set cfg_colors(helpsearch) $value }
+          {choosecolor} { set cfg_colors(tkcolor)   $value }
+          {choosefont}  { set cfg_colors(tkfont)    $value }
+          {plus}        { set cfg_colors(host_add)  $value }
+          {minus}       { set cfg_colors(host_del)  $value }
+          default       { set cfg_colors($key)      $value }
+        }
+    }
+    array unset cfg_color
+    global cfg_texts cfg_label
+    foreach key [array names cfg_label] {
+        set value $cfg_label($key)
+        switch -exact $key {
+          {start}       { set cfg_texts(cmdstart)   $value }
+          {close}       { set cfg_texts(closewin)   $value }
+          {search}      { set cfg_texts(helpsearch) $value }
+          {color}       { set cfg_texts(tkcolor)    $value }
+          {font}        { set cfg_texts(tkfont)     $value }
+          {plus}        { set cfg_texts(host_add)   $value }
+          {minus}       { set cfg_texts(host_del)   $value }
+          default       { set cfg_texts($key)       $value }
+        }
+    }
+    array unset cfg_label
+    global cfg_tipps cfg_tipp
+    foreach key [array names cfg_tipp] {
+        set value $cfg_tipp($key)
+        switch -exact $key {
+          {start}       { set cfg_tipps(cmdstart)   $value }
+          {closew}      { set cfg_tipps(closewin)   $value }
+          {showfilterconfig}  { set cfg_tipps(filter) $value }
+          {resetfilterconfig} { set cfg_tipps(reset)  $value }
+          {goback}      { set cfg_tipps(help_prev)  $value }
+          {goforward}   { set cfg_tipps(help_next)  $value }
+          {search}      { set cfg_tipps(helpsearch) $value }
+          {choosecolor} { set cfg_tipps(tkcolor)    $value }
+          {choosefont}  { set cfg_tipps(tkfont)     $value }
+          {plus}        { set cfg_tipps(host_add)   $value }
+          {minus}       { set cfg_tipps(host_del)   $value }
+          default       { set cfg_tipps($key)       $value }
+        }
+    }
+    array unset cfg_tipp
+    global myX cfg_geo
+    foreach key [array names cfg_geo] {
+        set value $cfg_geo($key)
+        switch -exact $key {
+          {minus}       { set cfg_texts(host_del)   $value }
+          default       { set myX($key)             $value }
+        }
+    }
+    array unset cfg_geo
+    global cfg cfg_cmd
+    foreach key [array names cfg_cmd] {
+        set value $cfg_cmd($key)
+        switch -exact $key {
+          {minus}       { set cfg_texts(host_del)   $value }
+          default       { set cfg($key)             $value }
+        }
+    }
+    array unset cfg_geo
+   return
+}; # config:update
+
+proc config:read   {}   {
+    #? read configuration RC-file and IMG-file
+    _dbx 2 "{}{"
+    global cfg prg
+    # read $cfg(RC) if any
+    # if the file does not exist, the error is silently catched and ignored
+    set rcfile [file join $::env(HOME) $cfg(RC)]
+    if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
+    set rcfile [file join {./}       $cfg(RC)]
+    pinfo "source $rcfile"
+    if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
+    config:update                  ;# update configuration as needed
+    _dbx 2 "}"
+    return
+}; # config:read
+
+proc config:perl   {}   {
     #? check if perl executable is necessary and set it; exits if not found
     # honours $prg(PERL)
     _dbx 2 "{}{"
@@ -4571,7 +4585,7 @@ proc config_perl  {}    {
             set prg(PERL) [tk_getOpenFile -title "Please choose perl.exe" ]
         }
     }
-    if {1==[info exists env(ANDROID_DATA)]} {
+    if {1==[info exists ::env(ANDROID_DATA)]} {
         # dirty hack to detect Android and adapt configuration
         set cfg(gui-button) "text" ;# text by default, because icons are too small
         set prg(PERL)       /data/data/com.termux/files/usr/bin/perl
@@ -4586,11 +4600,42 @@ proc config_perl  {}    {
 
     _dbx 2 " prg(PERL)=$prg(PERL) }"
     return
-}; # config_perl
+}; # config:perl
 
-proc config_osaft {}    {
+proc config:data   {}   {
+    #? get data for commands, options and help from $prg(SAFT)
+    _dbx 2 "{}{"
+    global cfg prg
+    # read (get) data from prg(SAFT)
+    # FIXME: prg(docker-id) is missing here;  hence cfg(HELP), cfg(OPTS), cfg(CMDS)
+    #        will be empty if O-Saft's default Docker image is not (found) running
+    #        workaround: use environment variables, see o-saft-docker
+    set norc      ""               ;# may be --no-rc if necessary
+    set cfg(HELP) [osaft_help]     ;# calls also:  $prg(SAFT) +help
+    set cfg(OPTS) [osaft_file:read $norc "--help=opts"]
+    set cfg(CMDS) [osaft_file:read $norc "--help=commands"]
+    if {5 > [llength [split $cfg(CMDS) "\n"]]} {
+        # failed, so we have no commands, no options and no help text
+        # checking cfg(CMDS) is sufficient, as without commands nothing can be done
+        set msg "$prg(SAFT) did not return list of commands"
+        msg:append error $msg
+        _message error "(config:data)" \
+"$msg
+----
+$cfg(CMDS)
+----
+"
+        if {0==$cfg(testtcl)} {
+            exit 2
+        }
+    }
+    _dbx 2 "}"
+    return
+}; # config:data
+
+proc config:osaft  {}   {
     #? check if our script is executable, prints wanring in GUI
-    # should be called after config_perl(); may set prg(PERL) also
+    # should be called after config:perl(); may set prg(PERL) also
     _dbx 2 "{}{"
     global cfg prg
     # check if prg(SAFT) exists in PATH using  +VERSION  command; +VERSION just
@@ -4623,7 +4668,7 @@ proc config_osaft {}    {
         if {"$prg(PERL)"!="$_perl"} {
             set msg "using: $_perl $osaft ..."
             msg:append warning $msg
-            _message warning "(config_osaft)" $msg
+            _message warning "(config:osaft)" $msg
         }
         set prg(PERL) $_perl   ;# need prg(PERL)
     }
@@ -4634,7 +4679,7 @@ proc config_osaft {}    {
                 set hint "check PATH environment variable, or use --perl=FILE option."
                 msg:append warning $msg
                 msg:append hint   $hint
-                _message warning "(config_osaft)" \
+                _message warning "(config:osaft)" \
 "$msg
 ----
 $usage
@@ -4644,68 +4689,15 @@ $hint"
     }
     _dbx 2 "}"
     return
-}; # config_osaft
+}; # config:osaft
 
-proc config_read  {}    {
-    #? read configuration RC-file and IMG-file
-    _dbx 2 "{}{"
-    global cfg prg env
-    # read $cfg(RC) if any
-    # if the file does not exist, the error is silently catched and ignored
-    set rcfile [file join $env(HOME) $cfg(RC)]
-    if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
-    set rcfile [file join {./}       $cfg(RC)]
-    pinfo "source $rcfile"
-    if {[file isfile $rcfile]} { catch { source $rcfile } error_txt }
-    update_cfg                     ;# update configuration as needed
-    _dbx 2 "}"
-    return
-}; # config_read
-
-proc config_data  {}    {
-    #? get data for commands, options and help from $prg(SAFT)
-    _dbx 2 "{}{"
-    global cfg prg
-    # read (get) data from prg(SAFT)
-    # FIXME: prg(docker-id) is missing here;  hence cfg(HELP), cfg(OPTS), cfg(CMDS)
-    #        will be empty if O-Saft's default Docker image is not (found) running
-    #        workaround: use environment variables, see o-saft-docker
-    set norc      ""               ;# may be --no-rc if necessary
-    set cfg(HELP) [osaft_help]     ;# calls also:  $prg(SAFT) +help
-    set cfg(OPTS) [osaft_read_data $norc "--help=opts"]
-    set cfg(CMDS) [osaft_read_data $norc "--help=commands"]
-    if {5 > [llength [split $cfg(CMDS) "\n"]]} {
-        # failed, so we have no commands, no options and no help text
-        # checking cfg(CMDS) is sufficient, as without commands nothing can be done
-        set msg "$prg(SAFT) did not return list of commands"
-        msg:append error $msg
-        _message error "(config_data)" \
-"$msg
-----
-$cfg(CMDS)
-----
-"
-        if {0==$cfg(testtcl)} {
-            exit 2
-        }
-    }
-    _dbx 2 "}"
-    return
-}; # config_data
-
-proc config_print {}    {
+proc config:print  {}   {
     #? print debug information
     _dbx 2 "{}{"
-    global argv0 argv env cfg prg myX hosts
+    global cfg prg myX hosts
 
     # some platforms are picky (i.e. Android's AndroWish)-:
-    global tcl_patchLevel
-    global tcl_platform
-    global tcl_library
-    global tcl_rcFileName
-    global tk_library
-    global tk_patchLevel
-    global tk_strictMotif
+    #global tcl_patchLevel tcl_platform tcl_library tcl_rcFileName
 
     if {"console" eq [info commands console]} { console show } ;# windows hack
     # cfg(RCSID) set in RC-file
@@ -4717,13 +4709,13 @@ proc config_print {}    {
     set max "<<shown with --d only>>"
     set rex " |  rex*      = <<shown with --d only>>"
     set tab "<<no values>>"
-    set osv $tcl_platform(osVersion)
+    set osv $::tcl_platform(osVersion)
 # TODO: on Mac OS X add: set version [exec sw_vers -productVersion]
     set sid $cfg(SID)
     set str_make "<<value not printed (OSAFT_MAKE exists)>>"
         # TODO: string should be STR{MAKEVAL} from lib/OText.pm
     # SEE Make:OSAFT_MAKE (in Makefile.pod)
-    if {1==[info exists env(OSAFT_MAKE)]} {     # avoid diff
+    if {1==[info exists ::env(OSAFT_MAKE)]} {   # avoid diff
         set osv $str_make
         set sid $str_make
     }
@@ -4731,7 +4723,7 @@ proc config_print {}    {
         # use with --d only to avoid noisy output with "make test"
         set max [wm maxsize .]
         set wmf [wm frame   .] ;# returns a pointer
-        if {1==[info exists env(OSAFT_MAKE)]} { # avoid diff
+        if {1==[info exists ::env(OSAFT_MAKE)]} { # avoid diff
             set wmf $str_make
         }
     }
@@ -4749,7 +4741,7 @@ proc config_print {}    {
         set i [string length $var]
         while {$i < 10} { append spaces " "; incr i; }
         set val ""
-        if {1==[info exists env($var)]} { set val $env($var) }
+        if {1==[info exists ::env($var)]} { set val $::env($var) }
         append sys "\n |  $var$spaces= $val"
     }
     append sys "\n |  istty     = [_istty]"
@@ -4777,16 +4769,16 @@ proc config_print {}    {
     }
         set packs [regsub ^\n $packs {}] ;# remove leading \n
     set tk_wm ""
-    if {1==[info exists env(ANDROID_DATA)]} {
+    if {1==[info exists ::env(ANDROID_DATA)]} {
         while {$i < 10} { append spaces " "; incr i; }
         # some platforms are picky (i.e. Android's AndroWish)-:
         set tk_wm "'Tk  version' and some others not shown on Android'"
     } else {
         set tk_wm "\
-|  rcFileName= $tcl_rcFileName
-Tk  version   = $tk_patchLevel
- |  library   = $tk_library
- |  strictMotif= $tk_strictMotif
+|  rcFileName= $::tcl_rcFileName
+Tk  version   = $::tk_patchLevel
+ |  library   = $::tk_library
+ |  strictMotif= $::tk_strictMotif
 WM  frame     = $wmf
  |  maxsize   = $max
  |  geometry  = [wm geometry   .]
@@ -4822,7 +4814,7 @@ ICH self      = $cfg(ICH)
  |  RC        = $cfg(RC)\t$rc
  |  CDIR, pwd = $cfg(CDIR)
  |  O-Saft    = $cfg(O-Saft)
-PRG $argv0
+PRG $::argv0
  |  INIT      = $prg(INIT)\t$ini
  |  POST      = $prg(POST)
  |  PERL      = $prg(PERL)
@@ -4834,7 +4826,7 @@ PRG $argv0
  |  docker-id = $prg(docker-id)
  |  docker-tag= $prg(docker-tag)
 $rex
-ARG argv      = $argv
+ARG argv      = $::argv
  |  targets   = $targets
  |  files     = $cfg(files)
 CFG TITLE     = $cfg(TITLE)
@@ -4863,20 +4855,20 @@ GUI tooltip   = tooltip package\t$tip
  |  nbsp      = \\u[format "%02X" [scan "$cfg(nbsp)" "%c"]]
  |  buffer    = $myX(buffer)
 SYS $sys
-TCL version   = $tcl_patchLevel
- |  library   = $tcl_library
- |  platform  = $tcl_platform(platform)
- |  os        = $tcl_platform(os)
+TCL version   = $::tcl_patchLevel
+ |  library   = $::tcl_library
+ |  platform  = $::tcl_platform(platform)
+ |  os        = $::tcl_platform(os)
  |  osVersion = $osv
- |  byteOrder = $tcl_platform(byteOrder)
- |  wordSize  = $tcl_platform(wordSize)
+ |  byteOrder = $::tcl_platform(byteOrder)
+ |  wordSize  = $::tcl_platform(wordSize)
 $packs
 $tk_wm
 _/" "$prefix"]
     #          [tk windowingsystem] # we believe this is a window manager property
     _dbx 2 "}"
     return
-}; # config_print
+}; # config:print
 
 proc gui_init:prg {start} {
     # search browser, first matching will be used,
@@ -5004,7 +4996,7 @@ proc gui_init:keys_NOT_WORKING {}  {
         bind $w <Key-g>          {create_configwin }
         bind $w <Key-h>          {create_help {}   }
         bind $w <Key-q>          {exit}
-	# TODO: some bindings are not recogniced in complex widgets, like tablelist
+        # TODO: some bindings are not recogniced in complex widgets, like tablelist
     }
     # other tests, not working too
     #   bind .entry <Key-q> break
@@ -5034,7 +5026,7 @@ proc gui_init       {}  {
     #? initialise GUI
     _dbx 2 "{}{"
     gui_init:cfg
-    global cfg argv
+    global cfg
     set __native    ""
     # next switch is ugly workaround to detect special start methods ...
     # it also does some special setup for Mac OS X
@@ -5046,7 +5038,7 @@ proc gui_init       {}  {
         {aqua}  -
         {Aqua}  { set __native "open"
                   set cfg(confirm) {}      ;# Aqua's tk_save* has no  -confirmoverwrite
-                  if {[regexp -- {-(img|image)} $argv]} {
+                  if {[regexp -- {-(img|image)} $::argv]} {
                       set msg "using images for buttons is not recomended on Aqua systems"
                       msg:append warning $msg
                       _message warning "(gui_init)" $msg
@@ -5066,7 +5058,7 @@ proc gui_init       {}  {
 
 proc gui_main       {}  {
     _dbx 2 "{}{"
-    global argv0 argv env cfg prg myX hosts
+    global cfg prg myX hosts
     gui_init
 
     #| create toplevel window
@@ -5093,9 +5085,9 @@ proc gui_main       {}  {
     #| some verbose output
     if {1<[array size hosts]} { pinfo "hosts=[array size hosts]"; }
     set vm ""      ;# check if inside docker
-    if {1==[info exist env(osaft_vm_build)]} { set vm "($env(osaft_vm_build))" }
-    if {1==$cfg(docker)}                     { set vm "(using $prg(SAFT))" }
-    guistatus_set "$argv0 $vm $argv"
+    if {1==[info exist ::env(osaft_vm_build)]} { set vm "($::env(osaft_vm_build))" }
+    if {1==$cfg(docker)}                       { set vm "(using $prg(SAFT))" }
+    guistatus:set "$::argv0 $vm $::argv"
         # full path and all passed arguments; useful if started from .desktop file
 
     #| show message from message queue
@@ -5103,7 +5095,7 @@ proc gui_main       {}  {
     foreach idx [msg_keys:get] {
         set txt [msg_text:get $idx]
         set typ [txt_text:get [msg_type:get $idx]]
-        guistatus_set "$typ $txt"
+        guistatus:set "$typ $txt"
     }
 
     #| GUI ready, initialise tracing if required
@@ -5111,7 +5103,7 @@ proc gui_main       {}  {
 
     gui_init:keys
 
-    if {0 < $cfg(DEBUG)} { config_print }
+    if {0 < $cfg(DEBUG)} { config:print }
         # must be at end when window was created, otherwise wm data is missing or mis-leading
 
     _dbx 2 "}"
@@ -5164,7 +5156,7 @@ foreach arg $argv {
         options__for_runtime_behavior { set dumm "-----------"; }
         options__for_use_with_docker  { set dumm "-----------"; }
          -docker        -
-        --docker        { docker_config opt;                    }
+        --docker        { docker:init opt;                      }
          -id=*          -
          -dockerid=*    -
          -docker-id=*   -
@@ -5225,8 +5217,8 @@ if {0<$cfg(DEBUG)}  { set cfg(VERB) 1; set myX(maxS) 10; }
 if {0<$cfg(TRACE)}  { trace_commands;  }
 if {0<$cfg(VERB)}   { lappend prg(Ocmd) {+quit} {+version}; }
 if {0<$cfg(docker)} { lappend prg(Ocmd) {docker_status};    }
-if {98==$cfg(DEBUG)} { foreach mode $cfg(docs-help-all) { puts [_get_data_filename $mode]; }; exit; }
-if {0<$cfg(DEBUG) && 1==[info exists env(OSAFT_MAKE)]}  { lappend cfg(docs-help) "--help=OSAFT_MAKE"; }
+if {98==$cfg(DEBUG)} { foreach mode $cfg(docs-help-all) { puts [_filepath:get $mode]; }; exit; }
+if {0<$cfg(DEBUG) && 1==[info exists ::env(OSAFT_MAKE)]}  { lappend cfg(docs-help) "--help=OSAFT_MAKE"; }
     # purpose is to see one "exec o-saft.pl .." because doc-file does not exist
 
 # copy exe() to cfg(); +commands and -options
@@ -5234,18 +5226,19 @@ foreach {idx val} [array get exe] { set cfg($idx) $val; }
 
 #| read $cfg(RC) and $cfg(IMG), data from $prg(SAFT)
 if {0<$userc} {
-    config_read
-    # read $cfg(IMG)             ;# must be read before any widget is created
-    images_read $cfg(gui-button) ;# more precisely: before first use of guitheme_set
+    config:read
+    # $cfg(IMG) must be read before any widget is created;
+    # more precisely: before first use of guitheme:set
+    config_img:read $cfg(gui-button)
 }
-config_perl
-config_osaft
-config_data
+config:perl
+config:osaft
+config:data
 
 #| special debug output
 if {99==$cfg(DEBUG)} { puts "$cfg(HELP)"; exit; }
 if {97==$cfg(DEBUG)} {
-    config_print
+    config:print
     if {0<$cfg(testtcl)} {
         _message info "$cfg(ICH) --test-tcl" "click \[OK\] to exit"
     }
