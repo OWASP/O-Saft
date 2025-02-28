@@ -17,7 +17,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.39 25/01/10 17:13:03";
+my  $SID_odoc   = "@(#) ODoc.pm 3.40 25/02/28 12:26:16";
 our $VERSION    = "24.09.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -360,7 +360,7 @@ sub _get_filehandle {
 sub get_egg     {
     #? get easter egg from text
     my $fh      = _get_filehandle(shift);
-    my $egg     = "";   # set empty to avoid "Use of uninitialized value" later
+    my $egg     = "";
     while (<$fh>) { $egg .= $_ if (m/^#begin/..m/^#end/); }
     $egg =~ s/#(begin|end) .*\n//g;
     close($fh);
@@ -378,7 +378,7 @@ sub get_custom  {
     my $version = shift || $VERSION;
     my @txt;
     my $fh      = _get_filehandle($file);
-    return "" if ("" eq $fh);           # defensive programming
+    return "" if ("" eq $fh);           # SEE Note:Defensive Programming
     for (<$fh>) {   ## no critic qw(InputOutput::ProhibitReadlineInForLoop)
         next if (m/^#begin/..m/^#end/); # remove egg
         next if (/^#/);                 # remove comments
@@ -387,8 +387,8 @@ sub get_custom  {
         s/ {1,2}((?:Net::SSLeay|ldd|openssl|timeout|IO::Socket(?:::SSL|::INET)?)\(\d(?:pm)?\))/ "$1"/g; ## no critic qw(RegularExpressions::ProhibitComplexRegexes)
         # special markup for own tools
         ##s#([a-zA-Z0-9.,;:/] )(o-saft(?:\.(?:pl|tcl)?)|lib/[^./]*\.pm)#$1 "$2"#g;
-        s/[IX]&([^&]*)&/$1/g;       # internal links without markup
-        #s/L&([^&]*)&/"$1"/g;        # external links, must be last one
+        s/[IX]&([^&]*)&/$1/g;           # internal links without markup
+        #s/L&([^&]*)&/"$1"/g;            # external links, must be last one
         push(@txt, $_);
     }
     return _replace_var($name, $version, @txt);
@@ -402,7 +402,7 @@ sub get_markup  {
     my $version = shift || $VERSION;
     my @txt;
     my $fh      = _get_filehandle($file);
-    return "" if ("" eq $fh);           # defensive programming
+    return "" if ("" eq $fh);           # SEE Note:Defensive Programming
     # Preformat plain text with markup for further simple substitutions. We
     # use a modified  &  instead of < >  POD markup as it is easy to parse.
     # &  was choosen because it rarely appears in texts and  is not  a meta
@@ -489,7 +489,7 @@ sub get_markup  {
 sub get_section {
     #? return data of section $start from file as string, removes POD format
     my $file    = shift;
-    my $label   = lc(shift) || "";  # || to avoid "Use of uninitialised value"
+    my $label   = lc(shift) || "";      # SEE Note:Defensive Programming
     my $anf     = uc($label);
     my $end     = "[A-Z]";
     my $hlp;
@@ -518,7 +518,7 @@ sub get_section {
 sub get_section_from_pod {
     #? return data of section $start from file as string, removes POD format
     my $file    = shift;
-    my $label   = lc(shift) || "";  # || to avoid "Use of uninitialised value"
+    my $label   = lc(shift) || "";      # SEE Note:Defensive Programming
     my $anf     = uc($label);
     my $end     = "[A-Z]";
     my $hlp;
@@ -629,7 +629,7 @@ lib/OText.pm
 
 =head1 VERSION
 
-3.39 2025/01/10
+3.40 2025/02/28
 
 
 =head1 AUTHOR
