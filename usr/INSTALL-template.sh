@@ -306,7 +306,7 @@
 #?      # check SIDs and checksums of all installed files:
 #?          $0 . --check=SID --changes
 #?      - should return an empty list like:
-#?          # ./INSTALL.sh 3.56; --check=SID  . ...
+#?          # ./INSTALL.sh 3.57; --check=SID  . ...
 #?
 #?          # SID   date    time    md5sum   filename    path
 #?          #----------------------+--------+-------------------------------
@@ -407,7 +407,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.56 25/02/28 17:42:15"
+SID="@(#) INSTALL-template.sh 3.57 25/03/01 10:53:12"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -1495,7 +1495,7 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.56 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.57 ; exit;        ;; # for compatibility to $osaft_exe
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1530,26 +1530,27 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.56; $mode $src_txt $inst_directory ..."
+echo "# $0 3.57; $mode $src_txt $inst_directory ..."
     # always print internal SID, makes debugging simpler
 
 # check for lock-file, should only exist on author's system
 if [ -e "$src_directory/$lock" -o -e "$inst_directory/$lock" ]; then
 	_error="**ERROR: 003: development directory; --n enforced"
 	case $mode in
-	cgi | cleanup)
-		echo_red $_error"
-		try=echo
-		;;
-	install)
-		echo_red $_error"
-		echo_yellow "!!Hint:  003: remove $src_directory/$lock to install or use --install-f"
-		try=echo
-		;;
 	install-f)
 		echo_yellow "**WARNING: 003: installing from development directory"
 		sleep 5
 		mode=install
+		;;
+	install)
+		echo_red "$_error"
+		echo_yellow "!!Hint:  003: remove $src_directory/$lock to install or use --install-f"
+		try=echo
+		;;
+	cgi | cleanup)
+		echo_red "$_error"
+		try=echo
+		;;
 	esac
 fi
 
