@@ -308,7 +308,7 @@
 #?      # check SIDs and checksums of all installed files:
 #?          $0 . --check=SID --changes
 #?      - should return an empty list like:
-#?          # ./INSTALL.sh 3.61; --check=SID  . ...
+#?          # ./INSTALL.sh 3.62; --check=SID  . ...
 #?
 #?          # SID   date    time    md5sum   filename    path
 #?          #----------------------+--------+-------------------------------
@@ -409,7 +409,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.61 25/03/01 14:06:02"
+SID="@(#) INSTALL-template.sh 3.62 25/03/01 14:18:09"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -1124,9 +1124,6 @@ mode_check  () {
 	echo_info "mode_check() ..."
 	echo_info "PATH$tab$PATH"
 	check_tools
-
-	PATH=${inst_directory}:$PATH # ensure that given directory is in PATH
-
 	check_inst
 	check_self
 	check_rc
@@ -1501,8 +1498,8 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.61 ; exit;        ;; # for compatibility to $osaft_exe
-	  3.61 | 3* | 4*) ;; # ignore version number
+	  '+VERSION')   echo 3.62 ; exit;        ;; # for compatibility to $osaft_exe
+	  3.62 | 3* | 4*) ;; # ignore version number
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1537,7 +1534,7 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.61 $mode $src_txt $inst_directory "
+echo "# $0 3.62 $mode $src_txt $inst_directory "
     # always print internal SID, makes debugging simpler
 
 _b='`'  # using backticks in echo is tricky ...
@@ -1574,20 +1571,13 @@ case $mode in
 	openssl)    mode_openssl ; ;;
 	expected)   mode_expected; ;;
 	cgi)        mode_cgi     ; ;;
-	check)
-		echo "cd $inst_directory"
-		if ! cd $inst_directory 2>/dev/null ; then
-			echo_red "$_error"
-			try=echo
-		fi
-		mode_check
-		;;
+	#check)     # see below
  	# parts of check; allow any separator for --check= beside =
-	--check*)
+	check | --check*)
+		PATH=${inst_directory}:$PATH # ensure that given directory is in PATH
 		# all checks done in the installation directory
 		echo "cd $inst_directory"
-		[ -n "$try" ] || exit 2
-		if ! cd $inst_directory 2>/dev/null ; then
+		if !  cd $inst_directory 2>/dev/null ; then
 			echo_red "$_error"
 			try=echo
 		fi
@@ -1612,6 +1602,8 @@ case $mode in
 		--check?pod)        check_podtools  ; ;;
 		--check?podtools)   check_podtools  ; ;;
 		--check?usr)        check_usr       ; ;;
+		# simple mode=check itself
+		check)              mode_check      ; ;;
 		esac
 		;;
 	*)          err=5; echo_red "**ERROR: 060: unknow mode  $mode; exit"; ;;
