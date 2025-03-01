@@ -308,7 +308,7 @@
 #?      # check SIDs and checksums of all installed files:
 #?          $0 . --check=SID --changes
 #?      - should return an empty list like:
-#?          # ./INSTALL.sh 3.59; --check=SID  . ...
+#?          # ./INSTALL.sh 3.60; --check=SID  . ...
 #?
 #?          # SID   date    time    md5sum   filename    path
 #?          #----------------------+--------+-------------------------------
@@ -409,7 +409,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.59 25/03/01 12:48:32"
+SID="@(#) INSTALL-template.sh 3.60 25/03/01 13:32:54"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -809,6 +809,7 @@ check_md5   () {
 check_tools () {
 	[ "check" = "$mode" ] || echo_info "check_tools() ..."
 	echo_head "# check for O-Saft programs found via environment variable PATH"
+	echo_info "PATH$tab$PATH"
 	_cnt=0
 	_gui=0
 	for p in `echo $PATH|\tr ':' ' '` ; do
@@ -886,6 +887,9 @@ check_self  () {
 		echo_label "$o"
 		e=$(\command -v $o)
 		if [ -n "$e" ] ; then
+#_b='`'
+#echo "## $_b$o $_opt$_b"
+#echo EXIT ; exit
 			v=`$o $_opt`
 			_txt=`echo "$v $e"|\awk '{printf("%8s %s",$1,$2)}'`
 			echo_green "$_txt"
@@ -1116,12 +1120,10 @@ check_sids  () {
 
 mode_check  () {
 	echo_info "mode_check() ..."
-	echo "# PATH$tab$PATH"
+	echo_info "PATH$tab$PATH"
 	check_tools
 
 	PATH=${inst_directory}:$PATH # ensure that given directory is in PATH
-	echo "cd $inst_directory"
-	cd "$inst_directory"         # must be done with --n too
 
 	check_inst
 	check_self
@@ -1497,8 +1499,8 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.59 ; exit;        ;; # for compatibility to $osaft_exe
-	  3.59 | 3* | 4*) ;; # ignore version number
+	  '+VERSION')   echo 3.60 ; exit;        ;; # for compatibility to $osaft_exe
+	  3.60 | 3* | 4*) ;; # ignore version number
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1533,7 +1535,7 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.59 $mode $src_txt $inst_directory "
+echo "# $0 3.60 $mode $src_txt $inst_directory "
     # always print internal SID, makes debugging simpler
 
 # check for lock-file, should only exist on author's system
@@ -1557,18 +1559,32 @@ if [ -e "$src_directory/$lock" -o -e "$inst_directory/$lock" ]; then
 	esac
 fi
 
+_error="**ERROR: 006: can't cd to '$inst_directory'; --n enforced"
 case $mode in
 	usage)      mode_usage   ; ;;
-	check)      mode_check   ; ;;
 	checkdev)   mode_checkdev; ;;
 	cleanup)    mode_cleanup ; ;;
 	install)    mode_install ; ;;
 	openssl)    mode_openssl ; ;;
 	expected)   mode_expected; ;;
 	cgi)        mode_cgi     ; ;;
+	check)
+		echo "cd $inst_directory"
+		if ! cd $inst_directory 2>/dev/null ; then
+			echo_red "$_error"
+			try=echo
+		fi
+		mode_check
+		;;
  	# parts of check; allow any separator for --check= beside =
 	--check*)
-		cd $inst_directory # all checks done in the installation directory
+		# all checks done in the installation directory
+		echo "cd $inst_directory"
+		[ -n "$try" ] || exit 2
+		if ! cd $inst_directory 2>/dev/null ; then
+			echo_red "$_error"
+			try=echo
+		fi
 		case $mode in
 		--check?sid)        check_sids      ; ;;
 		--check?SID)        check_sids      ; ;;
