@@ -308,7 +308,7 @@
 #?      # check SIDs and checksums of all installed files:
 #?          $0 . --check=SID --changes
 #?      - should return an empty list like:
-#?          # ./INSTALL.sh 3.64; --check=SID  . ...
+#?          # ./INSTALL.sh 3.65; --check=SID  . ...
 #?
 #?          # SID   date    time    md5sum   filename    path
 #?          #----------------------+--------+-------------------------------
@@ -409,7 +409,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) âè‡R÷U 3.64 25/03/01 14:48:03"
+SID="@(#) –KÒÛ`U 3.65 25/03/01 15:59:37"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -418,16 +418,16 @@ dir=${0%/*}
 lock="INSTALL.sh.lock"
 src_directory="$dir"
 clean_directory=".files_to_be_removed"  # must be set after reading arguments
-_break=0                # 1 if screen width < 50; then use two lines as output
+_break=                 # --break  if screen width < 50; then use two lines as output
 colour=""               # 32 green, 34 blue for colour-blind
-noargs=0                # 1 use plain shebang lines without options
-useenv=0                # 1 to change shebang lines to /usr/bin/env
-gnuenv=0                # 1 to change shebang lines to /usr/bin/env -S
-ignore=0                # 1 ignore errors, continue script instead of exit
-other=0
-force=0
-instdev=0               # 1 install development files also
-changes=0               # 1 show only changed file with --check=SID
+noargs=                 # --noargs use plain shebang lines without options
+useenv=                 # --useenv to change shebang lines to /usr/bin/env
+gnuenv=                 # --gnuenv to change shebang lines to /usr/bin/env -S
+ignore=                 # --ignore ignore errors, continue script instead of exit
+other= 
+force= 
+instdev=                # 1 install development files also
+changes=                # 1 show only changed file with --check=SID
 optn=""
 optv=                   # 1 print verbose information
 mode=""                 # "", cgi, check, clean-up, install, openssl
@@ -569,8 +569,8 @@ _cols=0
 \command -v \tput >/dev/null && _cols=`\tput cols`
 if [ 0 -lt $_cols ]; then
 	# adapt _line to screen width
-	[ -n "$OSAFT_MAKE" ] && _cols=78    # SEE Make:OSAFT_MAKE
-	[ 51 -gt $_cols ]    && _break=1    # see echo_label()
+	[ -n "$OSAFT_MAKE" ] && _cols=78           # SEE Make:OSAFT_MAKE
+	[ 51 -gt $_cols ]    && _break="--break"   # see echo_label()
 	while [ 42 -lt $_cols ]; do
 		# FIXME: some terminal break line when colour is used
 		_line="$_line-"
@@ -581,7 +581,7 @@ fi
 #_____________________________________________________________________________
 #________________________________________________________ general functions __|
 __exit      () {
-	[ 0 -lt $ignore ] && return
+	[ -n "$ignore" ] && return
 	exit $@
 }
 echo_grey   () {
@@ -617,7 +617,7 @@ echo_foot   () {
 }
 echo_label  () {
 	\perl -le "printf'# %21s%c','$@',0x09"  # use perl instead of echo for formatting
-	[ 0 -eq $_break ] && return
+	[ -z "$_break" ] && return
 	\perl -le 'printf"\n\t"'                # use additional line
 }
 # for escape sequences, shell's built-in echo must be used
@@ -713,7 +713,7 @@ copy_file   () {
 	convert=0
 	ext=${src##*.}
 	file=${src##*/}
-	if [ 0 -lt $useenv ]; then
+	if [ -n "$useenv" ]; then
 		# ugly hardcode match of extensions and names
 		case "$ext" in
 		    awk | cgi | pl | pm | sh | tcl | pod | txt)  convert=1 ; ;;
@@ -727,7 +727,7 @@ copy_file   () {
 		    *_completion_o-saft)  convert=1 ; ;;
 		esac
 	fi
-	if [ 0 -lt $noargs ]; then
+	if [ -n "$noargs" ]; then
 		case "$ext" in
 		    pl | pm)  convert=2 ; ;;
 		esac
@@ -749,7 +749,7 @@ copy_file   () {
 		# convert only  "#! /some/path/tool"
 		\perl -lane 'if(1==$.){s|^.*?/([a-zA-Z0-9_.-]+)\s*$|#\!/usr/bin/env $1|;}print;' \
 			"$src" > "$dst"  || __exit 4
-		if [ 0 -lt $gnuenv ]; then
+		if [ -n "$gnuenv" ]; then
 		# convert only  "#! /some/path/tool arg..."
 		\perl -lane 'if(1==$.){exit 1 if m|^#.*?/([a-zA-Z0-9_.-]+)\s(.*)$|;}' "$src" || \
 		\perl -lane 'if(1==$.){s|^#.*?/([a-zA-Z0-9_.-]+)\s(.*)$|#\!/usr/bin/env -S $1 $2|;}print;' \
@@ -1109,11 +1109,11 @@ check_sids  () {
 	#echo_head "# check SIDs of installed files"
 	echo_head "# SID	date	time	md5sum	filename	path"
 		# must use literal TAB instead of \t (problem in BusyBox)
-	if [ 0 -eq $changes ]; then
-		\echo "$files_all_src" | $osaft_sid
-	else
+	if [ -n "$changes" ]; then
 		# show diff only (tested with GNU diff only)
 		\echo "$files_all_src" | $osaft_sid | \diff $osaft_rel -
+	else
+		\echo "$files_all_src" | $osaft_sid
 	fi
 	echo_foot
 	echo_grey "# some files in doc/ t/ and usr/ don't have a SID"
@@ -1194,7 +1194,7 @@ mode_checkdev () {
 	echo      "# $text_prof"
 	echo_foot
 	echo ""
-	if [ $other -ne 0 ]; then
+	if [ -n "$other" ]; then
 		# printed with --other only
 		echo_head "# check for other SSL-related tools"
 		check_commands $tools_other
@@ -1250,7 +1250,7 @@ mode_install () {
 		echo "$inst_directory/$osaft_gui --rc > $inst_directory/$osaft_guirc"
 	fi
 
-	if [ $instdev -eq 1 ]; then
+	if [ -n "$instdev" ]; then
 		echo_info "installing $inst_directory ..."
 		$try \mkdir -p "$inst_directory/$tst_dir"
 		$try \ln  -s . "$inst_directory/$tst_dir"
@@ -1270,7 +1270,7 @@ mode_install () {
 		done
 	fi
 
-	if [ $force -eq 1 ]; then
+	if [ -n "$force" ]; then
 		echo_info 'installing RC-FILEs in $HOME ...'
 		for f in $inst_directory/$osaft_exerc $inst_directory/$osaft_exerc ; do
 			echo_info "  cp    $src_directory/$f $HOME/"
@@ -1473,10 +1473,10 @@ while [ $# -gt 0 ]; do
 	  '--check-dev')        mode=checkdev;  ;;
 	  '--usage')            mode=usage;     ;; # alias
 	   --check*)            mode="$1";      ;;
-	  '--force')            force=1;        ;;
-	  '--other')            other=1;        ;;
-	  '--instdev')          instdev=1;      ;;
-	  '--changes')          changes=1;      ;;
+	  '--force')            force="--force";   ;;
+	  '--other')            other="--other";   ;;
+	  '--instdev')          instdev="--instdev"; ;;
+	  '--changes')          changes="--changes"; ;;
           '--no-colour')        colour="";      ;;
           '--colour')           colour="34m";   ;;
           '--colour-blind')     colour="34m";   ;;
@@ -1487,26 +1487,26 @@ while [ $# -gt 0 ]; do
           '--color-not-blind')  colour="32m";   ;; # alias
           '--bunt')             colour="34m";   ;; # alias
           '--blind')            colour="34m";   ;; # alias
-          '--ignore' | '--i')   ignore=1;       ;;
-          '--no-args')          noargs=1;       ;; # alias
-          '--noargs')           noargs=1;       ;;
-          '--useenv')           useenv=1;       ;;
-          '--use-env')          useenv=1;       ;; # alias
-          '--gnuenv')           gnuenv=1; useenv=1; ;;
-          '--gnu-env')          gnuenv=1; useenv=1; ;; # alias
+          '--ignore' | '--i')   ignore="--ignore"; ;;
+          '--no-args')          noargs="--noargs"; ;; # alias
+          '--noargs')           noargs="--noargs"; ;;
+          '--useenv')           useenv="--useenv"; ;;
+          '--use-env')          useenv="--useenv"; ;; # alias
+          '--gnuenv')           gnuenv="--gnuenv"; useenv="--useenv"; ;;
+          '--gnu-env')          gnuenv="--gnuenv"; useenv="--useenv"; ;; # alias
 	  '--version')
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.64 ; exit;        ;; # for compatibility to $osaft_exe
-	  3.64 | 3* | 4*) ;; # ignore version number
+	  '+VERSION')   echo 3.65 ; exit;        ;; # for compatibility to $osaft_exe
+	  3.65 | 3* | 4*) ;; # ignore version number
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
 done
 
-if [ 0 -lt $noargs ]; then
-	if [ 0 -lt $useenv -o 0 -lt $gnuenv ]; then
+if [ -n "$noargs" ]; then
+	if [ -n "$useenv" -o -n "$gnuenv" ]; then
 		echo_red "**ERROR: 004: --noargs not allowed with --useenv or --gnuenv; exit"
 		exit 2
 	fi
@@ -1534,7 +1534,8 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.64 $mode $src_txt $inst_directory "
+echo   "$0 $optn $force $_break $ignore $other $changes $noargs $useenv $gnuenv $instdev $inst_directory"
+echo_info "# $0 3.65 $mode $src_txt $inst_directory "
     # always print internal SID, makes debugging simpler
 
 _b='`'  # using backticks in echo is tricky ...
