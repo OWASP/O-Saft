@@ -308,7 +308,7 @@
 #?      # check SIDs and checksums of all installed files:
 #?          $0 . --check=SID --changes
 #?      - should return an empty list like:
-#?          # ./INSTALL.sh 3.58; --check=SID  . ...
+#?          # ./INSTALL.sh 3.59; --check=SID  . ...
 #?
 #?          # SID   date    time    md5sum   filename    path
 #?          #----------------------+--------+-------------------------------
@@ -409,7 +409,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.58 25/03/01 10:58:54"
+SID="@(#) INSTALL-template.sh 3.59 25/03/01 12:48:32"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -1444,7 +1444,7 @@ EoUsage
 new_dir=
 while [ $# -gt 0 ]; do
 	case "$1" in
-	  -h | --h | --help* | '-?' | '/?')
+	  -h | --h | --help* | --usage | '-?' | '/?')
 		[ "$1" = "--help" ] && shift  # allow: --help update
 		case "$1" in
 		  --help=CHECK)  _help CHECK; ;;
@@ -1486,7 +1486,7 @@ while [ $# -gt 0 ]; do
           '--color-not-blind')  colour="32m";   ;; # alias
           '--bunt')             colour="34m";   ;; # alias
           '--blind')            colour="34m";   ;; # alias
-          '--i' | '--ignore')   ignore=1;       ;;
+          '--ignore' | '--i')   ignore=1;       ;;
           '--no-args')          noargs=1;       ;; # alias
           '--noargs')           noargs=1;       ;;
           '--useenv')           useenv=1;       ;;
@@ -1497,7 +1497,8 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.58 ; exit;        ;; # for compatibility to $osaft_exe
+	  '+VERSION')   echo 3.59 ; exit;        ;; # for compatibility to $osaft_exe
+	  3.59 | 3* | 4*) ;; # ignore version number
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1532,7 +1533,7 @@ clean_directory="$inst_directory/$clean_directory"
 [ -z "$mode" ] && mode="usage"  # default mode
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
-echo "# $0 3.58; $mode $src_txt $inst_directory ..."
+echo "# $0 3.59 $mode $src_txt $inst_directory "
     # always print internal SID, makes debugging simpler
 
 # check for lock-file, should only exist on author's system
