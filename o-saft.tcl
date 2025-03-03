@@ -37,12 +37,12 @@ exec wish "$0" ${1+"$@"}
 #?
 #? DESCRIPTION
 #?      This is a simple GUI for  O-Saft - OWASP SSL advanced forensic tool.
-#?      The GUI supports all commands (Cmd menu  or  Commands TAB) and options
-#?      (Opt menu  or  Options TAB) available in  o-saft.pl.  For each command
+#?      The GUI supports all commands (Cmd menu  or  Commands tab) and options
+#?      (Opt menu  or  Options tab) available in  o-saft.pl.  For each command
 #?      o-saft.pl  will be executed as specified. Results are printed in a new
-#?      TAB of the GUI.  A filter to markup some important texts is applied to
+#?      tab of the GUI.  A filter to markup some important texts is applied to
 #?      the results in the GUI.  This filter can be modified and extended (see
-#?      Config menu  or  Filter TAB).
+#?      Config menu  or  Filter tab).
 #?      All results and settings (commands and options) can be saved to files.
 #?
 #?      It can be used to read saved results from other calls of  o-saft.pl.
@@ -74,8 +74,8 @@ exec wish "$0" ${1+"$@"}
 #?      --pod       use podviewer to show help text;    default: (inline)
 #?      --tkpod     use tkpod to show help text;        default: (inline)
 #?      --perl=FILE use FILE as executable for perl;    default: (empty)
-#?      --load=FILE read data from FILE and show in result TAB
-#?      --stdin     read data from STDIN and show in result TAB
+#?      --load=FILE read data from FILE and show in result tab
+#?      --stdin     read data from STDIN and show in result tab
 #?
 #?   Options for use with docker:
 #?      --docker    use o-saft-docker instead of o-saft.pl
@@ -134,7 +134,7 @@ exec wish "$0" ${1+"$@"}
 #?      Unfortunately balloon help is not available on pulldown menues.
 #?
 #?      Functinality related to  o-saft.pl  is available in the main window.
-#?      Result TAB  (see below) will be used to show results from  o-saft.pl .
+#?      Result tab  (see below) will be used to show results from  o-saft.pl .
 #?      Often used commands and options for  o-saft.pl  are available in pull-
 #?      down menues.  Additionally own windows are provided for  all available
 #?      commands and options of  o-saft.pl .
@@ -153,7 +153,7 @@ exec wish "$0" ${1+"$@"}
 #?   Cmd (pullwon menu)
 #?       Contains some often used commands and a submenu with all commands.
 #?       Note that selecting any of the +commands here starts  o-saft.pl  with
-#?       that command immediately and shows result in a ne TAB.
+#?       that command immediately and shows result in a new tab.
 #?
 #?   Opt (pullwon menu)
 #?       Contains some often used options and a submenu with all options. They
@@ -169,10 +169,10 @@ exec wish "$0" ${1+"$@"}
 #?   "target" (entry field)
 #?       List of target to be checked.
 #?
-#?   Result TAB
-#?      The results of  o-saft.pl  are shown in a new TAB. The format (layout)
+#?   Result tab
+#?      The results of  o-saft.pl  are shown in a new tab. The format (layout)
 #?      of the result can be simple "text" or "table".  This can be configured
-#?      in the  Config menu  or  Options TAB.
+#?      in the  Config menu  or  Options tab.
 #?
 #?      The difference between the formats are:
 #?      "table"
@@ -192,8 +192,8 @@ exec wish "$0" ${1+"$@"}
 #?
 #?      Note that the +info command always uses "text" format".
 #?
-#?      Each Result TAB provides following Buttons: "Save", "STDOUT", "Filter"
-#?      and "Close TAB".
+#?      Each Result tab provides following Buttons: "Save", "STDOUT", "Filter"
+#?      and "Close tab".
 #?
 #?      Tipp: if the results should look similar to those returned by o-saft.pl
 #?      use the "Filter" window and enable the "== CMT" checkbox.
@@ -203,7 +203,7 @@ exec wish "$0" ${1+"$@"}
 #?      to o-saft.pl with all +commands and -options will be shown there.  The
 #?      command are ready for C&P into a shell (if necessary).
 #?
-#?   Examples for Filter in Result TAB
+#?   Examples for Filter in Result tab
 #?      Please see  "Config Filter" window and its ballon help.
 #?
 #?      Match complete line containing Certificate:
@@ -279,7 +279,7 @@ exec wish "$0" ${1+"$@"}
 #?      When started with any  -d  option, the Config pulldown menu provides a
 #?      "Config Tool" action which opens the  window "Tool Settings" with some
 #?      internal settings. Changes there are applied to the tool immediately.
-#?      It's the "Tool Settings" TAB in "classic" layout.
+#?      It's the "Tool Settings" tab in "classic" layout.
 #?
 #?   Buttons
 #?      By default, an image will be used for  most buttons.  Images look more
@@ -296,7 +296,7 @@ exec wish "$0" ${1+"$@"}
 #?      to change it.
 #?
 #? GUI LIMITATIONS
-#?      All Result TABs are lost when switcheng the layout.
+#?      All Result tabs are lost when switcheng the layout.
 #?
 #? DOCKER
 #?      This script can be used from within any Docker image. The host is then
@@ -358,7 +358,7 @@ exec wish "$0" ${1+"$@"}
 #?         additional argument
 #?      This is a Tcl problem and cannot be fixed herein.
 #?
-#?      The markup defined in the filters (see Filter TAB) may not yet produce
+#?      The markup defined in the filters (see Filter tab) may not yet produce
 #?      perfect layouts for the results and the help texts,  to be improved in
 #?      many ways.
 #?      Note that the markup is independent of the results and does not change
@@ -378,11 +378,16 @@ exec wish "$0" ${1+"$@"}
 #?      To pipe data in on STDIN, the option  --stdin  must be used, otherwise
 #?      it will not be read.
 #?
+#?      Commands printed with  --v  on STDOUT (with prefix **INFO) may contain
+#?      curly brackets which are not part of the command or its arguments, but
+#?      a remnant of Tcl. However, the same command printed in the status line
+#?      of the GUI does not contain them.
+#?
 #?      STDIN  and  _LOAD  as filenames can not be used to load data.
 #?
 #?      Not really a problem, but worth to mention:
 #?      It's not possible to map cipher suites to the proper  SSL/TLS protocol
-#?      in the results TAB in table view. Therefore the cipher suite names are
+#?      in the Results tab in table view. Therefore the cipher suite names are
 #?      prepended by the protocol.
 #?      Due technical reasons, the protocol and the cipher suite name  will be
 #?      separated by the non-breaking space character U+2007.
@@ -458,8 +463,8 @@ exec wish "$0" ${1+"$@"}
 #.       Cfg - menubutton for  configuration settings
 #.       (C) - Buttons for most commonly used commands
 #.       (O) - CheckButtons for most commonly used options
-#.       (R) - Frame containing panes (TAB) for results
-#.       (T) - Frame containing panes (TAB) for commands, options, filter,
+#.       (R) - Frame containing panes (tab) for results
+#.       (T) - Frame containing panes (tab) for commands, options, filter,
 #.             config and results
 #.       (S) - Frame containing Status messages
 #.       [+] - Add line with Host:Port
@@ -467,7 +472,7 @@ exec wish "$0" ${1+"$@"}
 #.       [!] - Help about  $0
 #.       [?] - Help about  o-saft.pl
 #.
-#.      Filter TAB Description
+#.      Filter tab Description
 #.           +---------------------------------------------------------------+
 #.       (f) |    Key     r  e  #  RegEx  Foreground Background  Font     u  |
 #.           | +---------+--+--+--+------+----------+----------+--------+--- |
@@ -694,7 +699,7 @@ exec wish "$0" ${1+"$@"}
 #.      disabled state, see obj_readonly:set() for details.
 #.
 #? VERSION
-#?      @(#) 3.60 Spring Edition 2025
+#?      @(#) 3.61 Spring Edition 2025
 #?
 #? AUTHOR
 #?      04. April 2015 Achim Hoffmann
@@ -958,10 +963,10 @@ proc _isempty     {str} { if { [regexp {^\s*$} $str]} { return 1 }; return 0; }
 # NOTE that cfg() also contains all +commands and -options passed to o-saft.pl
 # they are extracted in osaft_exec(); so the array indexes must not start with
 # + or -
-set cfg(SID)    "@(#) o-saft.tcl 3.60 25/03/03 16:48:52"
+set cfg(SID)    "@(#) o-saft.tcl 3.61 25/03/03 19:59:41"
 set cfg(mySID)  "$cfg(SID) Spring Edition 2025"
                  # contribution to SCCS's "what" to avoid additional characters
-set cfg(VERSION) {3.60}
+set cfg(VERSION) {3.61}
 set cfg(TITLE)  {O-Saft}
 set cfg(RC)     {.o-saft.tcl}
 set cfg(RCmin)  1.13                   ;# expected minimal version of cfg(RC)
@@ -1200,7 +1205,7 @@ array set cfg_buttons "
     help_me     {{?}        $my_bg  {?}         {Open window with help for these settings}}
     closeme     {{Quit}     orange  quit        {Close program}}
     closewin    {{Close}    orange  close       {Close window}}
-    closetab   {{Close Tab} orange  closetab    {Close this TAB}}
+    closetab   {{Close tab} orange  closetab    {Close this tab}}
     loadresult    {{Load}   lightgreen load     {Load results from file}}
     saveresult    {{Save}   lightgreen save     {Save results to file}}
     saveconfig    {{Save}   lightgreen save     {Save configuration to file  }}
@@ -1217,7 +1222,7 @@ array set cfg_buttons "
     help_help   {{?}        $my_bg  {?}         {Show help about search functionality}}
     helpreset   {{Reset}    $my_bg  reset       {Reset/clear list of search texts}}
     helpsearch  {{??}       $my_bg  helpsearch  {Text to be searched}}
-    cmdstart    {{Start}    yellow  cmdstart    {Execute $prg(SAFT) with commands selected in 'Commands' tab}}
+    cmdstart    {{Start}    yellow  cmdstart    {Execute $prg(SAFT) with selected command (in 'Commands' tab or 'Cmd' menu)}}
     cmdcheck    {{+check}   #ffd800 +check      {Execute $prg(SAFT) +check   }}
     cmdcipher   {{+cipher}  #ffd000 +cipher     {Execute $prg(SAFT) +cipher  }}
     cmdinfo     {{+info}    #ffc800 +info       {Execute $prg(SAFT) +info    }}
@@ -1327,7 +1332,7 @@ array set cfg_texts "
 GUI may be incomplete
 
 !!Hint:
-use »$prg(SAFT) --help=gen-docs« to generate static files
+use '$prg(SAFT) --help=gen-docs' to generate static files
     }
 "
 # above texts are used with _get_text()
@@ -1336,12 +1341,14 @@ array set cfg_tipps "
     DESC        {-- CONFIGURATION texts used for tool tips on buttons --------}
     settings    {Open window with more settings}
     open_browser {Open in browser:}
-    layout      {Format used in result TAB}
+    layout      {Format used in Result tab}
     DESC_other  {-- CONFIGURATION texts used for tool tips on other objects --}
     choosen     {Choosen value for}
     hideline    {Hide complete line instead of pattern only}
+    host_port   {target (host:port) to be checked}
     possible_values {possible values:}
     show_hide   {show/hide:}
+    status_line {Show messages and executed commands}
     tabMENU     {Select commands and options in ☰ menu.}
     tabCMD      {
 Select commands. All selected commands will be executed with the 'Start' button.
@@ -1354,7 +1361,7 @@ Select and configure options. All options are used for any command button.
     tabFILTER   {
 Configure filter for text markup: r, e and # specify how the RegEx should work;
 Forground, Background, Font and u  specify the markup to apply to matched text.
-Changes apply to Result TAB of next +command.
+Changes apply to Result tab of next +command.
 }
     DESC_filter {-- CONFIGURATION texts used in Filter tab -------------------}
     t_key       {Unique key for regex}
@@ -1403,8 +1410,8 @@ proc _get_padx    {key} { global myX;         return $myX($key)        }
 set cfg(DESC)   {-- CONFIGURATION internal data storage ----------------------}
 set cfg(CDIR)   [file join [pwd] [file dirname [info script]]]
 set cfg(EXEC)   -1 ;# count executions, used for object names
-    #               # counter also used for number of TABs in $cfg(objN),
-    #               # hence with gui-layout=classic # TABs with results of exec
+    #               # counter also used for number of tabs in $cfg(objN),
+    #               # hence with gui-layout=classic # tabs with results of exec
     #               # start at 4 (or 5 with --d*), see create_main_tabs()
 set cfg(x--x)   0  ;# each option  will have its own entry (this is a dummy)
 set cfg(x++x)   0  ;# each command will have its own entry (this is a dummy)
@@ -1415,7 +1422,7 @@ set cfg(winA)   "" ;# object name of About  window
 set cfg(winD)   "" ;# object name of Cipher window
 set cfg(winF)   "" ;# object name of Filter window
 set cfg(winT)   "" ;# (reserved for future use)
-set cfg(objN)   "" ;# object name of notebook; needed to add more note TABS
+set cfg(objN)   "" ;# object name of notebook; needed to add more note tabs
 set cfg(objS)   "" ;# object name of status line
 set cfg(objT)   "" ;# widget name of button ttyresult
 set cfg(VERB)   0  ;# set to 1 to print more informational messages from Tcl/Tk
@@ -1596,7 +1603,7 @@ proc _notTOC      {str} {
     if {[regexp {^ *(NOT YET|WYSIW)} $str]} { return 1 }   ;# skip some special strings
     if {[regexp {^ *$} $str]}               { return 1 }   ;# skip empty
     if {[regexp {^(HIGH|MDIUM|LOW|WEAK|SSL|DHE|OWASP)} [string trim $str]]} { return 1 }
-    _dbx 4 " no     = »$str«"
+    _dbx 4 " no     = '$str'"
     return 0
 }; # _notTOC
 
@@ -1659,7 +1666,7 @@ proc self_rc:print   {} {
  #?      variables.
  #?
  #? VERSION
- #?      @(#) .o-saft.tcl generated by 3.60 25/03/03 16:48:52
+ #?      @(#) .o-saft.tcl generated by 3.61 25/03/03 19:59:41
  #?
  #? AUTHOR
  #?      dooh, who is author of this file? cultural, ethical, discussion ...
@@ -2332,7 +2339,7 @@ proc create_host  {parent host_nr}  {
          [button $this.host_del -command "remove_host $this; set hosts($host_nr) {}"] \
          [button $this.host_add -command "create_host {$parent} [array size hosts];"] \
 
-#   guitip:set   this.eh [_get_tipp host_cfg ]
+    guitip:set   $this.eh [_get_tipp host_port ]
     guitheme:set $this.host_add $cfg(gui-button)
     guitheme:set $this.host_del $cfg(gui-button)
     if {0==$nr} {
@@ -2441,7 +2448,7 @@ proc create_resulttable {parent content} {
     # lines starting with = or # are currently ignored, because Tcl's tablelist
     # has no "colspan" functionality and therfore do not fit into the 4 colums
     _dbx 2 "{$parent, ...}{"
-    _dbx 16 " content=»$content«"
+    _dbx 16 " content='$content'"
     global  cfg prg
     set this    $parent.ft
     frame $this
@@ -2973,7 +2980,7 @@ proc create_help  {sect} {
     _dbx 2 "{$sect}{}" ;# no "_dbx 2"  at very end, because there are early returns
     global cfg myX prg search
 
-    _dbx 2 " TKPOD = »$prg(TKPOD)«"
+    _dbx 2 " TKPOD = '$prg(TKPOD)'"
     if {1==[info exists prg(TKPOD)]} {
         if {$prg(TKPOD) ne "O-Saft"} {  # external viewer specified, use it ...
             create_pod $prg(TKPOD) $sect
@@ -3231,8 +3238,8 @@ proc create_help  {sect} {
         _dbx 8 " #---------------+---------------+------------------------"
         foreach {k l} [$txt tag ranges $tag] {
             set t [$txt get $k $l]
-            # TODO: set rex "cipher"; if {[regexp $rex $t]} { _dbx 4 "   $tag:\t($k, $l)\t»$t«" }
-            _dbx 8 "   $tag:\t($k, $l)\t»$t«"
+            # TODO: set rex "cipher"; if {[regexp $rex $t]} { _dbx 4 "   $tag:\t($k, $l)\t'$t'" }
+            _dbx 8 "   $tag:\t($k, $l)\t'$t'"
         }
         _dbx 8 " #---------------+---------------+------------------------"
     }
@@ -3249,8 +3256,8 @@ proc create_help  {sect} {
 }; # create_help
 
 proc create_note  {parent title} {
-    #? create notebook TAB; returns widget
-    _dbx 2 "{$parent, »$title«}{"
+    #? create notebook tab; returns widget
+    _dbx 2 "{$parent, '$title'}{"
     set name [_str2obj $title]
     set this $parent.$name
     set alt  0
@@ -3262,9 +3269,9 @@ proc create_note  {parent title} {
 }; # create_note
 
 proc create_tab   {parent layout cmd content} {
-    #? create new TAB in .note and set focus for it; returns text widget in TAB
+    #? create new tab in .note and set focus for it; returns text widget in tab
     _dbx 2 "{$parent, $layout, $cmd, ...}{"
-    _dbx 4 " content=»$content«"
+    _dbx 4 " content='$content'"
     global cfg
     set tab [create_note $parent "($cfg(EXEC)) $cmd"]
     switch $layout {
@@ -3289,7 +3296,7 @@ proc create_tab   {parent layout cmd content} {
 
 proc create_cmd   {parent title} {
     #? create button to run O-Saft command; returns widget
-    _dbx 2 "{$parent, »$title«}{"
+    _dbx 2 "{$parent, '$title'}{"
     global cfg
     set name [regsub {^\+} $title {cmd}]   ;# keys start with cmd instead of +
     set this $parent.$name
@@ -3301,7 +3308,7 @@ proc create_cmd   {parent title} {
 
 proc create_opt   {parent title} {
     #? create checkbutton for O-Saft options; returns widget
-    _dbx 2 "{$parent, »$title«}{"
+    _dbx 2 "{$parent, '$title'}{"
     global cfg
     set name [regsub {^--} $title {cmd}]   ;# keys start with cmd instead of +
     set this $parent.$name
@@ -3315,7 +3322,7 @@ proc create_win   {parent title cmd} {
     #? create window for commands and options
     #  creates one button for each line returned by: o-saft.pl --help=opt|commands
     # title must be string of group of command or options
-    _dbx 2 "{$parent, »$title« $cmd}{"
+    _dbx 2 "{$parent, '$title' $cmd}{"
     global cfg myX prg
     set this $parent
     set win  $this
@@ -3323,7 +3330,7 @@ proc create_win   {parent title cmd} {
     switch $cmd {
       "CMD" { set data $cfg(CMDS); incr max }
       "OPT" { set data $cfg(OPTS) }
-      default { pwarn "create_win called with wrong command »$cmd«"; return }
+      default { pwarn "create_win called with wrong command '$cmd'"; return }
     }
         # data is a huge list which contains commands or options grouped by a
         # header line. The window to be created just contains the lines which
@@ -3368,7 +3375,7 @@ proc create_win   {parent title cmd} {
         if {"$title" eq "$dat"} {   # FIXME: scary comparsion, better use RegEx
             # title matches: create a window for checkboxes and entries
             set skip 0
-            _dbx 4 " create window: $win »$dat«"
+            _dbx 4 " create window: $win '$dat'"
             set dat [string toupper [string trim $dat ] 0 0]
             set win [create_window $dat ""]
             if {"" eq $win} { return }     ;# do nothing, even no: guiwindow:show $this
@@ -3398,7 +3405,7 @@ proc create_win   {parent title cmd} {
         set tip [regsub {[^\s]+\s*}   $dat {} ]
         set dat [lindex [split $dat " "] 0]
 
-        _dbx 4 " verify: »$dat«\t$cmd"
+        _dbx 4 " verify: '$dat'\t$cmd"
         set name [_str2obj $dat]
         if {[winfo exists $this.$name]} {
             # this occour if command/or option appears more than once in list
@@ -3419,7 +3426,7 @@ proc create_win   {parent title cmd} {
                 if {[llength $values] > 0} { set txt [join $values { | }] }
                 guitip:set $last_obj "[_get_tipp possible_values] $txt";# $tip may containing collected values
             }
-            _dbx 4 " create: »$idx« »$val«"
+            _dbx 4 " create: '$idx' '$val'"
             #dbx# puts "create_win: entry: $this.$name.e -variable cfg($idx)"
             pack [label  $this.$name.l -text $idx -width $myX(lenl)] -fill x -side left -anchor w
             pack [entry  $this.$name.e -textvariable cfg($idx)]      -fill x -side left -expand 1
@@ -3472,7 +3479,7 @@ proc create_buttons     {parent cmd} {
             }
       "OPT" { # add options for o-saft.tcl itself
             }
-      default { pwarn "create_buttons called with wrong command »$cmd«"; return }
+      default { pwarn "create_buttons called with wrong command '$cmd'"; return }
     }
     if {"tablet" ne $cfg(gui-layout)} {
         set txt  [_get_tipp "tab$cmd"]     ;# tabCMD and tabOPT
@@ -3628,7 +3635,7 @@ proc create_main_host_entries  {parent w} {
     pack [frame ${w}_1]            ;# create dummy frame to keep create_host() happy
     lappend cfg(guiwidgets) ${w}_1 ;# required in remove_main()
     foreach {i host} [array get hosts] {    # display hosts
-        if {5 < $i} { pwarn "only 6 hosts possible; »$host« ignored"; continue }
+        if {5 < $i} { pwarn "only 6 hosts possible; '$host' ignored"; continue }
         lappend cfg(guiwidgets) [create_host $w $i]
     }
     _dbx 2 "=$w }"
@@ -3689,7 +3696,7 @@ proc create_main_tabs          {parent w} {
     _dbx 2 "{$parent, $w}{"
     global cfg
     set w   $parent.$w
-    # create TABs: Command and Options
+    # create tabs: Command and Options
     set tab_cmds    [create_note $w [_get_text win_cmds  ]]
     set tab_opts    [create_note $w [_get_text win_opts  ]]
     set tab_filt    [create_note $w [_get_text win_filter]]
@@ -3721,6 +3728,7 @@ proc create_main_status_line   {parent w} {
     set cfg(objS)   $w.t
     pack [frame     $w   -relief sunken -borderwidth 1] -fill x
     pack [text      $w.t -relief flat   -height $myX(maxS) -background [_get_color status] ] -fill x
+    guitip:set      $w.t [_get_tipp status_line]
     obj_readonly:set $cfg(objS)
     _dbx 2 "=$w }"
     return $w
@@ -3842,14 +3850,14 @@ proc search:more  {w search_text regex} {
     # $w is the widget with O-Saft's help text, all matched texts are already
     # listed in $w's tag HELP-search-pos, each match is a tuple consisting of
     # start and end position (index)
-    _dbx 2 "{$w, »$search_text«, $regex}{"
+    _dbx 2 "{$w, '$search_text', $regex}{"
     global search myX
     set matches [$w tag ranges HELP-search-pos];# get all match positions
     set cnt  [_count_tuples $matches]
-    set this [create_window "$cnt matches for: »$regex«" $myX(geoo)]
+    set this [create_window "$cnt matches for: '$regex'" $myX(geoo)]
     set txt  [create_resulttext $this ""].t
     #{ adjust window, quick&dirty
-    create_window:title   $this "[_get_text win_search_results] »$search_text«"
+    create_window:title   $this "[_get_text win_search_results] '$search_text'"
     create_window:nosave  $this    ;# no "Save" button needed here
     create_window:helpcmd $this {create_about; global cfg; $cfg(winA).t see 84.0}
         # redefine help button to show About and scroll to Help description
@@ -3911,7 +3919,7 @@ proc search:next  {w direction} {
 
 proc search:text  {w search_text} {
     #? search given text in help window's $w widget
-    _dbx 2 "{$w, »$search_text«}{"
+    _dbx 2 "{$w, '$search_text'}{"
     global search
     if {[regexp ^\\s*$ $search_text]}  { return }  ;# do not search for spaces
     if {"exact" ne $search(mode)} {
@@ -4012,7 +4020,7 @@ proc search:text  {w search_text} {
         #   no "Save" button; "Help" button to show description for "Search"
         # finally, the window will be destroyed after a few seconds.
         global myX
-        set warn [create_window "[_get_text h_nomatch] »$search_text«" $myX(geo-)]
+        set warn [create_window "[_get_text h_nomatch] '$search_text'" $myX(geo-)]
         create_window:title   $warn [_get_text win_search]
         create_window:nosave  $warn    ;# no "Save" button needed here
         create_window:helpcmd $warn {create_about; global cfg; $cfg(winA).t see 84.0}
@@ -4070,7 +4078,7 @@ proc search:list  {direction} {
     if {$search(curr) < 0} { set search(curr) [expr $len - 1] }
     if {$search(curr) > [expr $len - 1]} { set search(curr) 0 }
     set search(text) [lindex $search(list) $search(curr)]
-    _dbx 4 " curr= $search(curr) of $len, »$search(text)«"
+    _dbx 4 " curr= $search(curr) of $len, '$search(text)'"
     _dbx 2 "}"
     return
 }; # search:list
@@ -4146,7 +4154,7 @@ proc osaft_help    {}   {
     # get information from O-Saft; it's a performance penulty, but simple ;-)
     set help [osaft_file:read "" "--help"]
     if {5 > [llength [split $help "\n"]]} {
-        _dbx 2 " help = »$help«"
+        _dbx 2 " help = '$help'"
         # exec call failed, probably because  PATH  does not contain . then
         # prg(SAFT) returns an error, most likely just one line, like:
         #   couldn't execute "o-saft.pl": no such file or directory
@@ -4214,7 +4222,7 @@ proc osaft_help    {}   {
                           pinfo "previous line for testing only, should be same as next line:"
                           pinfo "'exec {*} o-saft.pl  --no-rc --help=OSAFT_MAKE'"
                         }
-              default   { pwarn "unknown parameter »$mode«; ignored"; continue; }
+              default   { pwarn "unknown parameter '$mode'; ignored"; continue; }
             }
             append info "\n\nINFO $head\n$txt" ;# initial TAB for $txt important
         }
@@ -4267,7 +4275,7 @@ proc osaft_init    {}   {
             set idx [string trim $l]
             set val 1
         }
-        _dbx 4 " exe($idx) = »$val«"
+        _dbx 4 " exe($idx) = '$val'"
         set exe($idx) $val
     }
     # now copy commands and options from command-line to $cfg
@@ -4322,7 +4330,7 @@ proc osaft_save   {tbl type nr} {
         }
     }
     if {$type eq "TAB"} {
-        set title  [$cfg(objN) tab $nr -text];# get TAB's title
+        set title  [$cfg(objN) tab $nr -text];# get tab's title
         set suffix [regsub -all {\s*\([0-9]*\)\s*} $title  {}] ;# remove (index)
         set suffix [regsub -all {[^a-zA-Z0-9_+-]}  $suffix {_}];# sanitise for filename
         set name [tk_getSaveFile {*}$cfg(confirm) -title "$cfg(TITLE): [_get_tipp saveresult]" -initialfile "$prg(SAFT)--$suffix.log"]
@@ -4335,14 +4343,14 @@ proc osaft_save   {tbl type nr} {
     }
     _dbx 4 " file = $name"
     close $fid
-    guistatus:set "TAB »$title« saved to $name"
+    guistatus:set "tab '$title' saved to $name"
     pinfo         "saved $name "
     _dbx 2 "}"
     return
 }; # osaft_save
 
 proc osaft_load   {cmd} {
-    #? load results from file and create a new TAB for it
+    #? load results from file and create a new tab for it
     #  cmd can be: _LOAD which asks for the file toload
     #              STDIN which reads data from STDIN
     #              file  which reads data from file if it exists
@@ -4433,7 +4441,7 @@ proc osaft_exec   {parent cmd}  {
 # TODO exec: missing catch around exec above; hence no variables to check or show
 #    _dbx 4 " error_opts=$error_opts"
 #    if {0!=[dict get $error_opts -code]} { _message error "(osaft_exec)" "$prg(SAFT) failed\n----\n$txt" }
-    # sanitise $execcmd for printing in status line and results TAB
+    # sanitise $execcmd for printing in status line and results tab
     # Tcl uses {} to quote strings, which need to be '' for a shell
     # finally we use $execcmd for execution and $exectxt for print
     set exectxt $execcmd
@@ -4958,10 +4966,9 @@ proc gui_init:prg {start} {
             break
         }
     }
-    _dbx 4 " BROWSER= $prg(BROWSER)"
     # search PODviewer
-    _dbx 2 " TKPOD = »$prg(TKPOD)«"
-    _dbx 2 " start = »$start«"
+    _dbx 2 " TKPOD = '$prg(TKPOD)'"
+    _dbx 2 " start = '$start'"
 # FIXME: if {[_isaqua]} ...
     if {"O-Saft" ne $prg(TKPOD)} {
         set binary [lindex [auto_execok $prg(TKPOD)] 0];# search in $PATH
@@ -4975,6 +4982,8 @@ proc gui_init:prg {start} {
             set prg(TKPOD)    "O-Saft"
         }
     }
+    pinfo "browser $prg(BROWSER)"
+    pinfo "viewer  $prg(TKPOD)"
     _dbx 2 "}"
     return
 }; # gui_init:prg
@@ -5290,7 +5299,7 @@ foreach arg $argv {
         --*                  { set  exe($arg)   1;              }
         +*                   { set  exe($arg)   1; set doit 1;  }
         *                    { set  hosts([array size hosts]) $arg; }
-        default              { pwarn "unknown parameter »$arg«; ignored" }
+        default              { pwarn "unknown parameter '$arg'; ignored" }
     }
 }
 if {0<$cfg(DEBUG)}  { set cfg(VERB) 1; set myX(maxS) 10; }
