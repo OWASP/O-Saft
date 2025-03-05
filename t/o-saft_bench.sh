@@ -39,12 +39,12 @@
 #?          * max. memory: 45000 kB is good for cipher and check commands
 #?
 #? VERSION
-#?      @(#) o-saft_bench.sh 1.21 22/04/16 19:26:26
+#?      @(#) o-saft_bench.sh 1.22 25/03/05 22:38:51
 #? AUTHOR
-#?      07-jul-14 Achim Hoffmann
+#?      07-Jul-14 Achim Hoffmann
 # -----------------------------------------------------------------------------
 
-  SID="@(#) o-saft_bench.sh 1.21 22/04/16 19:26:26"
+  SID="@(#) o-saft_bench.sh 1.22 25/03/05 22:38:51"
 
 
   ich=${0##*/}
@@ -60,7 +60,7 @@ while [ $# -gt 0 ]; do
 	case "$1" in
 	 '-h' | '--h' | '--help')
 		\sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0; exit 0; ;;
-	'+VERSION')	echo "1.21"; exit 0; ;;
+	'+VERSION')	echo "1.22"; exit 0; ;;
 	*)	host="$1"; ;;
 	esac
 	shift
@@ -82,59 +82,61 @@ echo    "#"
 echo    "# testing with target: \$host = $host"
 
 # dummy to load modules and alocate memory, otherwise first test results are misleading
-$osaft +check localhost --trace --user >/dev/null 2>&1
+#dbx# $osaft +check localhost --trace --user >/dev/null 2>&1
 
    t="%U  %S  %E  %P  %Kk  %Mk" # format for time, improved by following awk
 line="#--------------------------------------+-----+-----+--------+----+---+-------+"
 echo $line
-echo "#                                      |    time            |    |  memory   |"
-echo "#         command                      | user system   real | CPU| av.   max |"
+echo "#                                      #    time            |    |  memory   |"
+echo "#         command                      # user system   real | CPU| av.   max |"
 echo $line
 
 while read -r cmd ; do
 	[ -z "$cmd" ] && continue  # skip final emtpy line
-	#dbx# echo    "o-saft.pl $cmd "
 	txt=`echo "$cmd" | \sed -e "s/ $host/ "'$host/' -e 's/\\\/|/'`
 		# we want a well formatted table, hence the real hostname is
 		# replaced by the fixed string $host
+	cmd=`echo "$cmd" | \sed -e 's/ *#$//'`
+	#dbx# echo    "o-saft.pl $cmd "
 	#dbx# echo "$txt #"
-	echo -n "o-saft.pl $txt" && $time --quiet -f "$t" $osaft $cmd 2>&1 >/dev/null \
+	echo -n "o-saft.pl $txt" && \
+	$time --quiet -f "$t" $osaft $cmd 2>&1 >/dev/null \
 	| awk '{printf"%5s %5s %8s %4s %3s %7s\n",$1,$2,$3,$4,$5,$6}'
 		# awk is just for pretty printing
 		# NOTE: --exit=BEGIN0 is some kind of minimal (perl) resources
 		# NOTE: time writes on tty, hence redirect to STDOUT, the final
 		#       >/dev/null at end handles output from $osaft, crazy ...
+		# following line produces strange results when used with time:
+	# --exit=BEGIN0                #
 done << EoT
-	--exit=BEGIN0                \ 
-	+VERSION           --norc    \ 
-	+version                     \ 
-	+version --v --usr           \ 
-	+version           --norc    \ 
-	+version --v       --norc    \ 
-	+libversion                  \ 
-	+libversion        --norc    \ 
-	+ciphers                     \ 
-	+ciphers -V                  \ 
-	+list                        \ 
-	--v +help                    \ 
-        --help=gen-wiki              \ 
-        --help=gen-wiki --no-header  \ 
-	+cipher                $host \ 
-	+cipherall             $host \ 
-	+info                  $host \ 
-	+info  --noopenssl     $host \ 
-	+quick                 $host \ 
-	+quick --noopenssl     $host \ 
-	+check                 $host \ 
-	+check --noopenssl     $host \ 
-	+sizes                 $host \ 
-	+sizes --trace-cmd --trace-time $host \ 
-	+quit  --trace-cmd --trace-time       \ 
-
+	+VERSION           --norc    #
+	+version                     #
+	+version --v --usr           #
+	+version           --norc    #
+	+version --v       --norc    #
+	+libversion                  #
+	+libversion        --norc    #
+	+ciphers                     #
+	+ciphers -V                  #
+	+list                        #
+	--v +help                    #
+        --help=gen-wiki              #
+        --help=gen-wiki --no-header  #
+	+cipher                $host #
+	+cipherall             $host #
+	+info                  $host #
+	+info  --noopenssl     $host #
+	+quick                 $host #
+	+quick --noopenssl     $host #
+	+check                 $host #
+	+check --noopenssl     $host #
+	+sizes                 $host #
+	+sizes --trace-cmd --trace-time $host #
+	+quit  --trace-cmd --trace-time       #
 EoT
 # tricky here document:
-# We want to have well formated texts (command and options) for o-saft.pl call.
-# Hence we use a trailing backslash followed by a single space.
+# final  #  is used to format the text and is also the separator between
+# command and time values.
 
 echo $line
 exit
