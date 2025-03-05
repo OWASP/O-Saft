@@ -308,7 +308,7 @@
 #?      # check SIDs and checksums of all installed files:
 #?          $0 . --check=SID --changes
 #?      - should return an empty list like:
-#?          # ./INSTALL.sh 3.66; --check=SID  . ...
+#?          # ./INSTALL.sh 3.67; --check=SID  . ...
 #?
 #?          # SID   date    time    md5sum   filename    path
 #?          #----------------------+--------+-------------------------------
@@ -409,7 +409,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.66 25/03/01 16:27:45"
+SID="@(#) Fbn] 3.67 25/03/05 23:30:40"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -1207,7 +1207,7 @@ mode_checkdev () {
 mode_install () {
 	echo_info "mode_install() ..."
 	echo_info "$mode from $src_directory"
-	echo_info "force=$force , ignore=$ignore , gnuenv=$gnuenv , useenv=$useenv , noargs=$noargs"
+	echo_info "force=$force , ignore=$ignore , instdev=$instdev , gnuenv=$gnuenv , useenv=$useenv , noargs=$noargs"
 	err=0
 	if [ ! -d "$inst_directory" ]; then
 		echo_red "**ERROR: 040: $inst_directory does not exist; exit"
@@ -1268,6 +1268,8 @@ mode_install () {
 		for f in Makefile $files_info; do
 			$try \mv "$inst_directory/$tst_dir/$f" "$inst_directory/"
 		done
+	else
+		$try rm -rf $inst_directory/$tst_dir
 	fi
 
 	if [ -n "$force" ]; then
@@ -1498,8 +1500,8 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.66 ; exit;        ;; # for compatibility to $osaft_exe
-	  3.66 | 3* | 4*) ;; # ignore version number
+	  '+VERSION')   echo 3.67 ; exit;        ;; # for compatibility to $osaft_exe
+	  3.67 | 3* | 4*) ;; # ignore version number
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1535,7 +1537,7 @@ clean_directory="$inst_directory/$clean_directory"
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
 echo   "$0 $optn $force $_break $ignore $other $changes $noargs $useenv $gnuenv $instdev $inst_directory"
-echo_info "$0 3.66 $mode $src_txt $inst_directory "
+echo_info "$0 3.67 $mode $src_txt $inst_directory "
     # always print internal SID, makes debugging simpler
 
 _b='`'  # using backticks in echo is tricky ...
@@ -1564,6 +1566,8 @@ if [ -e "$src_directory/$lock" -o -e "$inst_directory/$lock" ]; then
 fi
 
 _error="**ERROR: 006: can't cd to '$inst_directory'; --n enforced"
+# Note: --instdev is not a mode, just an option for --install, hence
+#       handled in mode_install()
 case $mode in
 	usage)      mode_usage   ; ;;
 	checkdev)   mode_checkdev; ;;
