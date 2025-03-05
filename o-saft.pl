@@ -71,7 +71,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.190 25/02/28 13:36:41"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.191 25/03/05 19:43:15"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -388,7 +388,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.190"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.191"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1980,6 +1980,10 @@ sub _init_checks_val    {
         $checks{'hastls11'} ->{val} = _get_text('disabled', "--no-TLSv11") if (1 > $cfg{'TLSv11'});
         $checks{'hastls12'} ->{val} = _get_text('disabled', "--no-TLSv12") if (1 > $cfg{'TLSv12'});
         $checks{'hastls13'} ->{val} = _get_text('disabled', "--no-TLSv13") if (1 > $cfg{'TLSv13'});
+        $checks{'hasdtls1'} ->{val} = _get_text('disabled', "--no-DTLSv1") if (1 > $cfg{'DTLSv1'});
+        $checks{'hasdtls11'}->{val} = _get_text('disabled', "--no-DTLSv11") if (1 > $cfg{'DTLSv12'});
+        $checks{'hasdtls12'}->{val} = _get_text('disabled', "--no-DTLSv12") if (1 > $cfg{'DTLSv12'});
+        $checks{'hasdtls13'}->{val} = _get_text('disabled', "--no-DTLSv13") if (1 > $cfg{'DTLSv13'});
         $checks{'hasalpn'}  ->{val} = _get_text('disabled', "--no-alpn")   if (not _is_cfg_use('alpn'));
         $checks{'hasnpn'}   ->{val} = _get_text('disabled', "--no-npn")    if (not _is_cfg_use('npn'));
         $checks{'sni'}      ->{val} = $text{'na_sni'}           if (not _is_cfg_use('sni'));
@@ -6191,7 +6195,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.190");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.191");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7505,7 +7509,7 @@ if ($help !~ m/^\s*$/) {
     OMan::man_printhelp($help);
     exit 0;
 }
-if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.190"; exit 0; }
+if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.191"; exit 0; }
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))     { _vprint("  list       "); printciphers_list('list'); exit 0; }
 if (_is_cfg_do('ciphers'))  { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
