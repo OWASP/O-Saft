@@ -39,12 +39,12 @@
 #?          * max. memory: 45000 kB is good for cipher and check commands
 #?
 #? VERSION
-#?      @(#) o-saft_bench.sh 1.22 25/03/05 22:38:51
+#?      @(#) o-saft_bench.sh 1.23 25/03/05 22:40:43
 #? AUTHOR
 #?      07-Jul-14 Achim Hoffmann
 # -----------------------------------------------------------------------------
 
-  SID="@(#) o-saft_bench.sh 1.22 25/03/05 22:38:51"
+  SID="@(#) o-saft_bench.sh 1.23 25/03/05 22:40:43"
 
 
   ich=${0##*/}
@@ -60,7 +60,7 @@ while [ $# -gt 0 ]; do
 	case "$1" in
 	 '-h' | '--h' | '--help')
 		\sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0; exit 0; ;;
-	'+VERSION')	echo "1.22"; exit 0; ;;
+	'+VERSION')	echo "1.23"; exit 0; ;;
 	*)	host="$1"; ;;
 	esac
 	shift
@@ -82,7 +82,7 @@ echo    "#"
 echo    "# testing with target: \$host = $host"
 
 # dummy to load modules and alocate memory, otherwise first test results are misleading
-#dbx# $osaft +check localhost --trace --user >/dev/null 2>&1
+$osaft +check localhost --trace --user >/dev/null 2>&1
 
    t="%U  %S  %E  %P  %Kk  %Mk" # format for time, improved by following awk
 line="#--------------------------------------+-----+-----+--------+----+---+-------+"
