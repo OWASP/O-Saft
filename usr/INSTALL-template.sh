@@ -308,7 +308,7 @@
 #?      # check SIDs and checksums of all installed files:
 #?          $0 . --check=SID --changes
 #?      - should return an empty list like:
-#?          # ./INSTALL.sh 3.68; --check=SID  . ...
+#?          # ./INSTALL.sh 3.69; --check=SID  . ...
 #?
 #?          # SID   date    time    md5sum   filename    path
 #?          #----------------------+--------+-------------------------------
@@ -409,7 +409,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.68 25/03/05 23:38:54"
+SID="@(#) INSTALL-template.sh 3.69 25/03/05 23:49:58"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -1258,16 +1258,19 @@ mode_install () {
 			$try \ln -s "../$d" "$inst_directory/$tst_dir/$d"
 		done
 		for f in $files_install_dev; do
+			# already installed file, would result in error
+			# TODO: filenames hardcoded
+			case "$f" in
+			  Dockerfile)         continue; ;;
+			  Dockerfile.openssl) continue; ;;
+			  o-saft-docker-dev)  continue; ;;
+			esac
 			_dst="$inst_directory/$f"
 				# $tst_dir already part of $f
 			echo_info "  cp    $src_directory/$f      $_dst"
 			$try \cp    "$src_directory/$f"          "$_dst" \
 			|| echo_red "**ERROR: 044: copying $f failed" \
 			&& check_md5 "$src_directory/$osaft_rel" "$_dst"
-		done
-		# wrong installed
-		for f in Makefile $files_info; do
-			$try \mv "$inst_directory/$tst_dir/$f" "$inst_directory/"
 		done
 	else
 		$try rm -rf $inst_directory/$tst_dir
@@ -1501,8 +1504,8 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.68 ; exit;        ;; # for compatibility to $osaft_exe
-	  3.68 | 3* | 4*) ;; # ignore version number
+	  '+VERSION')   echo 3.69 ; exit;        ;; # for compatibility to $osaft_exe
+	  3.69 | 3* | 4*) ;; # ignore version number
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1538,7 +1541,7 @@ clean_directory="$inst_directory/$clean_directory"
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
 echo   "$0 $optn $force $_break $ignore $other $changes $noargs $useenv $gnuenv $instdev $inst_directory"
-echo_info "$0 3.68 $mode $src_txt $inst_directory "
+echo_info "$0 3.69 $mode $src_txt $inst_directory "
     # always print internal SID, makes debugging simpler
 
 _b='`'  # using backticks in echo is tricky ...
