@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.78 25/03/05 12:33:08";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.80 25/03/05 19:33:40";
 our $VERSION    =  "24.09.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -3464,7 +3464,7 @@ sub test_cipher_regex   {
     print <<'EoT';
 = PFS values:
 =   yes   cipher supports PFS
-=   no    cipher does not supports PFS
+=   no    cipher does not support PFS
 =   -     pseudo cipher
 = OWASP values:
 =   x     value A or B or C or D as returned by get_cipher_owasp()
@@ -3567,7 +3567,7 @@ sub _doc_init   {
     if ($_path eq $0) {
         # executed in . and found via $PATH, need to find pathname
         # don't want to use module, for example $FindBin::Bin
-        foreach my $p (split(":",@ENV{PATH})) {
+        foreach my $p (split(":", $ENV{'PATH'})) {
             if (-x "$p/$0") { $_path = $p; last; }
         }
         # TODO: if ($_path eq $0) ... could this happen?
@@ -3607,7 +3607,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.78"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.80"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3653,7 +3653,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.78 2025/03/05
+3.80 2025/03/05
 
 =head1 AUTHOR
 
