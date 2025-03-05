@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.76 25/01/10 17:17:17";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.77 25/03/05 12:29:20";
 our $VERSION    =  "24.09.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -3563,9 +3563,17 @@ sub _doc_init   {
     #? initialise dynamic settings for path names, mainly documentation files
     # key=value looks like:  '--help=opts'  => "doc/o-saft.pl.--help=opts"
     # o-saft.pl must be hardcoded
-    # ensure that files are located in directory where executed $0 resides
+    # ensure that directory lib/ is found where executed $0 resides
+    my  $_path  = $0;   $_path =~ s#[/\\][^/\\]*$##;
+    if ($_path eq $0) {
+        # executed in . and found via $PATH, need to find pathname
+        # don't want to use module, for example $FindBin::Bin
+        foreach my $p (split(":",@ENV{PATH})) {
+            if (-x "$p/$0") { $_path = $p; last; }
+        }
+        # TODO: if ($_path eq $0) ... could this happen?
+    }
     foreach my $k (@{$cfg{'files'}->{'pattern-help'}}) {
-        my $_path = $0;     $_path =~ s#[/\\][^/\\]*$##;
         $cfg{'files'}->{$k} = join("/", $_path, $cfg{'dirs'}->{'doc'}, "o-saft.pl.$k");
     }
     return;
@@ -3600,7 +3608,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.76"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.77"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3646,7 +3654,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.76 2025/01/10
+3.77 2025/03/05
 
 =head1 AUTHOR
 
