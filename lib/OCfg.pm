@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.77 25/03/05 12:29:20";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.78 25/03/05 12:33:08";
 our $VERSION    =  "24.09.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -3562,7 +3562,6 @@ sub _cmd_init   {
 sub _doc_init   {
     #? initialise dynamic settings for path names, mainly documentation files
     # key=value looks like:  '--help=opts'  => "doc/o-saft.pl.--help=opts"
-    # o-saft.pl must be hardcoded
     # ensure that directory lib/ is found where executed $0 resides
     my  $_path  = $0;   $_path =~ s#[/\\][^/\\]*$##;
     if ($_path eq $0) {
@@ -3574,7 +3573,7 @@ sub _doc_init   {
         # TODO: if ($_path eq $0) ... could this happen?
     }
     foreach my $k (@{$cfg{'files'}->{'pattern-help'}}) {
-        $cfg{'files'}->{$k} = join("/", $_path, $cfg{'dirs'}->{'doc'}, "o-saft.pl.$k");
+        $cfg{'files'}->{$k} = join("/", $_path, $cfg{'dirs'}->{'doc'}, "$cfg{'files'}->{SELF}.$k");
     }
     return;
 } # _cmd_init
@@ -3608,7 +3607,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.77"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.78"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3654,7 +3653,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.77 2025/03/05
+3.78 2025/03/05
 
 =head1 AUTHOR
 
