@@ -18,7 +18,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odata  =  "@(#) OData.pm 3.38 25/03/05 09:46:27";
+my  $SID_odata  =  "@(#) OData.pm 3.39 25/03/05 19:35:08";
 our $VERSION    =  "24.09.24";
 
 use Exporter qw(import);
@@ -436,8 +436,8 @@ our %check_dest = (  # target (connection) data
     'sgc'           => {'txt' => "Target supports Server Gated Cryptography (SGC)"},
     'hassslv2'      => {'txt' => "Target does not support SSLv2"},
     'hassslv3'      => {'txt' => "Target does not support SSLv3"},      # POODLE
-    'hastls10'      => {'txt' => "Target does not supports TLSv1"},
-    'hastls11'      => {'txt' => "Target does not supports TLSv1.1"},
+    'hastls10'      => {'txt' => "Target does not support TLSv1"},
+    'hastls11'      => {'txt' => "Target does not support TLSv1.1"},
     'hastls10_old'  => {'txt' => "Target supports TLSv1"},  # until 23.04.23 version
     'hastls11_old'  => {'txt' => "Target supports TLSv1.1"},# until 23.04.23 version
     'hastls12'      => {'txt' => "Target supports TLSv1.2"},
@@ -1295,7 +1295,7 @@ _init();
 
 =head1 VERSION
 
-3.38 2025/03/05
+3.39 2025/03/05
 
 
 =head1 AUTHOR
