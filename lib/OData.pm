@@ -18,7 +18,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odata  =  "@(#) OData.pm 3.37 25/01/10 17:10:33";
+my  $SID_odata  =  "@(#) OData.pm 3.38 25/03/05 09:46:27";
 our $VERSION    =  "24.09.24";
 
 use Exporter qw(import);
@@ -316,6 +316,8 @@ our %data   = (         # connection and certificate details
 
 our %checks = (
     # key           =>  {val => "", txt => "label to be printed", score => 0, typ => "connection"},
+    # will be initialised in _init() from:
+    #    %check_cert, %check_conn, %check_dest, %check_size, %check_http
     #
     # default for 'val' is "" (empty string), default for 'score' is 0
     # 'typ' is any of certificate, connection, destination, https, sizes
@@ -1227,12 +1229,16 @@ sub _init   {
     # more initialisation for %data add keys from %prot to %data
     # add keys from %prot to %shorttext also
     $data{'fallback_protocol'}->{'val'} = sub { return $OCfg::prot{'fallback'}->{val}  };
-    foreach my $ssl (keys %OCfg::prot) {
-        my $key = lc($ssl); # keys in data are all lowercase (see: convert all +CMD)
-        $data{$key}->{val} = sub {    return $OCfg::prot{$ssl}->{'default'}; };
-        $data{$key}->{txt} = "Target default $OCfg::prot{$ssl}->{txt} cipher";
-        $shorttexts{$key}  =        "Default $OCfg::prot{$ssl}->{txt} cipher";
-    }
+# TODO: following currently (3/2025) disabled because not used
+#    foreach my $ssl (keys %OCfg::prot) {
+#        my $key = lc($ssl); # keys in data are all lowercase (see: convert all +CMD)
+#        $checks{$key}->{val} = sub {    return $OCfg::prot{$ssl}->{'default'}; };
+#        $checks{$key}->{txt} = "Target default $OCfg::prot{$ssl}->{txt} cipher";
+##     # or ??
+#        $data{$key}->{val} = sub {    return $OCfg::prot{$ssl}->{'default'}; };
+#        $data{$key}->{txt} = "Target default $OCfg::prot{$ssl}->{txt} cipher";
+#        $shorttexts{$key}  =        "Default $OCfg::prot{$ssl}->{txt} cipher";
+#    }
 
     #_trace("_init() }");
     return;
@@ -1289,7 +1295,7 @@ _init();
 
 =head1 VERSION
 
-3.37 2025/01/10
+3.38 2025/03/05
 
 
 =head1 AUTHOR
