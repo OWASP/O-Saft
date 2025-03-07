@@ -71,7 +71,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.191 25/03/05 19:43:15"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.192 25/03/07 18:44:47"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -388,7 +388,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.191"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.192"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1338,15 +1338,25 @@ sub _enable_functions   {
     my $txs = "ancient Net::SSLeay $version_ssleay";
     my $txt = "improper Net::SSLeay $version_ssleay";
     my $txt_buggysni = "does not support SNI or is known to be buggy; SNI disabled;";
+    my $txt_buggyssl = "SSL.pm may print warning 'Use of uninitialized value in numeric ...'";
+    my $txt_nodata   = "if connection to target fails, all commands except +cipher and +protocols may not return data";
 
-    if ($cfg{'ssleay'}->{'openssl'} == 0) {
+    if (0 == $cfg{'ssleay'}->{'openssl'}) {
         warn $STR{WARN}, "122: $txs; cannot detect OpenSSL version";
     }
-    if ($cfg{'ssleay'}->{'iosocket'} == 0) {
+    if (0 == $cfg{'ssleay'}->{'iosocket'}) {
         warn $STR{WARN}, "123: ancient or unknown version of IO::Socket detected";
     }
+    # quick&dirty: 124 used for multiple messages for IO::Socket::SSL < 1.37
+    if ($version_iosocket < 1.37) {
+        if (0 == $cfg{'sslerror'}->{'ignore_no_conn'}) {
+            warn $STR{WARN}, "124: $txi < 1.37; $txt_buggyssl";
+        } else {
+            warn $STR{WARN}, "124: $txt_nodata";
+        }
+    }
 
-    if ($cfg{'ssleay'}->{'can_sni'} == 0) {
+    if (0 == $cfg{'ssleay'}->{'can_sni'}) {
         if((_is_cfg_use('sni')) and (not _is_cfg_ciphermode('openssl'))) {
             $cfg{'use'}->{'sni'} = 0;
             if ($version_iosocket < 1.90) {
@@ -6195,7 +6205,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.191");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.192");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7509,7 +7519,7 @@ if ($help !~ m/^\s*$/) {
     OMan::man_printhelp($help);
     exit 0;
 }
-if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.191"; exit 0; }
+if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.192"; exit 0; }
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))     { _vprint("  list       "); printciphers_list('list'); exit 0; }
 if (_is_cfg_do('ciphers'))  { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
