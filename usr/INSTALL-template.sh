@@ -308,7 +308,7 @@
 #?      # check SIDs and checksums of all installed files:
 #?          $0 . --check=SID --changes
 #?      - should return an empty list like:
-#?          # ./INSTALL.sh 3.70; --check=SID  . ...
+#?          # ./INSTALL.sh 3.71; --check=SID  . ...
 #?
 #?          # SID   date    time    md5sum   filename    path
 #?          #----------------------+--------+-------------------------------
@@ -409,7 +409,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.70 25/03/05 23:55:40"
+SID="@(#) INSTALL-template.sh 3.71 25/03/12 18:12:52"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -1085,7 +1085,7 @@ check_openssl   () {
 			cd "$p" # ensure that $r is used
 			$o --no-warn +version >/dev/null && \
 			openssl=`$o --no-warn +version 2>/dev/null | \awk '/external executable/{if(3==NF){print $NF}}'` && \
-			version=`$o --no-warn +version 2>/dev/null | \awk '/external executable/{if(4<NF){sub(/^.*  O/,"");print}}'` && \
+			version=`$o --no-warn +version 2>/dev/null | \awk '/external executable/{if(4<NF){sub(/^.*  O/,"O");print}}'` && \
 			echo_label "$o" && echo_green "$openssl ($version)" || echo_red "missing"
 			)
 		fi
@@ -1506,8 +1506,8 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.70 ; exit;        ;; # for compatibility to $osaft_exe
-	  3.70 | 3* | 4*) ;; # ignore version number
+	  '+VERSION')   echo 3.71 ; exit;        ;; # for compatibility to $osaft_exe
+	  3.71 | 3* | 4*) ;; # ignore version number
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1543,7 +1543,7 @@ clean_directory="$inst_directory/$clean_directory"
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
 echo   "$0 $optn $force $_break $ignore $other $changes $noargs $useenv $gnuenv $instdev $inst_directory"
-echo_info "$0 3.70 $mode $src_txt $inst_directory "
+echo_info "$0 3.71 $mode $src_txt $inst_directory "
     # always print internal SID, makes debugging simpler
 
 _b='`'  # using backticks in echo is tricky ...
