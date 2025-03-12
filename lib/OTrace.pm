@@ -41,7 +41,7 @@ use Data::Dumper qw(Dumper);
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_trace      = "@(#) OTrace.pm 3.50 25/02/26 17:26:59";
+my  $SID_trace      = "@(#) OTrace.pm 3.51 25/03/12 16:17:56";
 our $VERSION        = "24.09.24";
 
 our $prefix_trace   = "#". __PACKAGE__ . ":";
@@ -870,6 +870,7 @@ sub init_show   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
         _pline("complete %cfg {");
         foreach my $key (sort(keys %cfg)) {
             if ($key =~ m/(hints|openssl|ssleay|sslerror|sslhello|regex|^out|^use)$/) { # |data
+                next if ($key =~ m/need-openssl/);  # necessary since o-saft.pl 3.197
                 # TODO: ugly data structures ... should be done by _p_k_v()
                 _ptext("# - - - - HASH: $key= {");
                 if ($key =~ m/openssl/) {
@@ -1236,7 +1237,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.50 2025/02/26
+3.51 2025/03/12
 
 =head1 AUTHOR
 
