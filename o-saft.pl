@@ -71,7 +71,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.197 25/03/12 15:16:35"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.199 25/03/12 19:06:59"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -389,7 +389,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.197"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.199"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -947,10 +947,8 @@ sub _need_netinfo   {
     my $need_cipher = join("|", @{$cfg{'need-cipher'}});
     return grep{not /^(?:$need_cipher)$/} @{$cfg{'do'}};
 } # _need_netinfo
-sub _need_openssl   { 
+sub _need_openssl   { return _need_netinfo() + _is_cfg_ciphermode('openssl'); }
     # returns >0 if $cfg{'do'} contains commands other than cipher* or --ciphermode=openssl
-    return _is_cfg_ciphermode('openssl') + __need_this('need-openssl');
-} # _need_netinfo
 sub _need_cipher    { return __need_this('need-cipher');    }
 sub _need_default   { return __need_this('need-default');   }
 sub _need_checkssl  { return __need_this('need-checkssl');  }
@@ -6204,7 +6202,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.197");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.199");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7518,7 +7516,7 @@ if ($help !~ m/^\s*$/) {
     OMan::man_printhelp($help);
     exit 0;
 }
-if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.197"; exit 0; }
+if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.199"; exit 0; }
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))     { _vprint("  list       "); printciphers_list('list'); exit 0; }
 if (_is_cfg_do('ciphers'))  { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
@@ -7723,7 +7721,7 @@ _check_functions()  if $_checks;
 #| check for proper openssl support
 #| -------------------------------------
 _vprint("  check openssl capabilities for '$openssl{'exe'}'");
-_check_openssl() if (0 < _need_openssl());
+_check_openssl() if (0 < _need_netinfo());
      # openssl is used with option  --ciphermode=openssl  (most commands)
      # or for any +info or +check command, even the individual ones like +cn
      # hence we check capabilities always and print warnings if appropriate
