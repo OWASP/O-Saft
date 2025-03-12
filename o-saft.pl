@@ -71,7 +71,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.192 25/03/07 18:44:47"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.193 25/03/12 09:31:41"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -388,7 +388,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.192"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.193"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6205,7 +6205,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.192");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.193");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7519,7 +7519,7 @@ if ($help !~ m/^\s*$/) {
     OMan::man_printhelp($help);
     exit 0;
 }
-if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.192"; exit 0; }
+if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.193"; exit 0; }
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))     { _vprint("  list       "); printciphers_list('list'); exit 0; }
 if (_is_cfg_do('ciphers'))  { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
@@ -8064,23 +8064,6 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
 
     next if _trace_next("  DNS9    - end");
 
-    # Quick check if the target is available
-    next if _trace_next("  CONN0   - start"); # SEE Note:Connection Test
-    my $connect_ssl = 1;
-    trace(" sni_name= " . ($cfg{'sni_name'} || $STR{UNDEF}));
-    if (not _can_connect($host, $port, $cfg{'sni_name'}, $cfg{'timeout'}, $connect_ssl)) {
-        if (0 >= $cfg{'sslerror'}->{'ignore_no_conn'}) {
-            OCfg::hint("use '--ignore_no_conn' to avoid abort"); # Hint evtl. in _can_connect ...
-            next;
-        }
-    }
-    $connect_ssl = 0;
-    if (not _can_connect($host, 80   , $cfg{'sni_name'}, $cfg{'timeout'}, $connect_ssl)) {
-        $SSLinfo::use_http = 0;
-        OCfg::warn("325: HTTP disabled, using '--no-http'");
-    }
-    next if _trace_next("  CONN9   - end");
-
     if (_is_cfg_do('cipher_dh')) {
         # abort here is ok because +cipher-dh cannot be combined with other commands
         if (not _is_cfg_ciphermode('intern')) {
@@ -8158,6 +8141,23 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         goto CLOSE_SSL if (_is_cfg_do('cipher') and (0 == $quick)); # next HOSTS
     } # need_cipher
     next if _trace_next("  CIPHER9 - end");
+
+    # Quick check if the target is available; any command except +cipher*
+    next if _trace_next("  CONN0   - start"); # SEE Note:Connection Test
+    my $connect_ssl = 1;
+    trace(" sni_name= " . ($cfg{'sni_name'} || $STR{UNDEF}));
+    if (not _can_connect($host, $port, $cfg{'sni_name'}, $cfg{'timeout'}, $connect_ssl)) {
+        if (0 >= $cfg{'sslerror'}->{'ignore_no_conn'}) {
+            OCfg::hint("use '--ignore_no_conn' to avoid abort"); # Hint evtl. in _can_connect ...
+            next;
+        }
+    }
+    $connect_ssl = 0;
+    if (not _can_connect($host, 80   , $cfg{'sni_name'}, $cfg{'timeout'}, $connect_ssl)) {
+        $SSLinfo::use_http = 0;
+        OCfg::warn("325: HTTP disabled, using '--no-http'");
+    }
+    next if _trace_next("  CONN9   - end");
 
     if (_is_cfg_do('fallback_protocol')) {
         _vprint("  protocol fallback support ...");
