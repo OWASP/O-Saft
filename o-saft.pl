@@ -71,7 +71,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.193 25/03/12 09:31:41"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.194 25/03/12 09:56:03"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -253,6 +253,7 @@ $::osaft_standalone = 0;        # SEE Note:Stand-alone
 #| definitions: include configuration
 #| -------------------------------------
 # modules always needed, it's ok to die if missing, hence not loaded with _load_modules()
+use IO::Socket; # avoid: Bareword "AF_INET" not allowed while "strict subs" in use ...
 use OText       qw(%STR);
 use OCfg        qw(%cfg %dbx %data_oid %prot _dbx);
 use OData       qw(%checks   %data %check_cert %check_conn %check_dest %check_http %check_size);
@@ -388,7 +389,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.193"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.194"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -1196,16 +1197,6 @@ sub _load_modules   {
     # SEE Perl:import include
     trace("_load_modules() {");
     my $_err = "";
-    use IO::Socket::INET;
-    if (1 > 0) { # code disabled until IO/Socket/INET.pm can be loaded this way
-        # cannot load IO::Socket::INET delayed because we use AF_INET,
-        # otherwise we get at startup:
-        #    Bareword "AF_INET" not allowed while "strict subs" in use ...
-        $_err = _load_file("IO/Socket/SSL.pm", "IO-SSL module");
-        warn $STR{ERROR}, "005: $_err" if ("" ne $_err);
-        $_err = _load_file("IO/Socket/INET.pm", "IO INET module");
-        warn $STR{ERROR}, "006: $_err" if ("" ne $_err);
-    }
     if (0 < $cfg{'need_netdns'}) {
         $_err = _load_file("Net/DNS.pm", "Net::DNS module'");
         if ("" ne $_err) {
@@ -1238,6 +1229,11 @@ sub _load_modules   {
         # TODO: not (yet) supported for proxy
     }
     goto FIN if (1 > $cfg{'need_netinfo'});
+
+    $_err = _load_file("IO/Socket/INET.pm", "IO INET module");
+    warn $STR{ERROR}, "006: $_err" if ("" ne $_err);
+    $_err = _load_file("IO/Socket/SSL.pm", "IO-SSL module");
+    warn $STR{ERROR}, "005: $_err" if ("" ne $_err);
     $_err = _load_file("lib/SSLinfo.pm", "SSLinfo module");  # must be found with @INC
     if ("" ne $_err) {
         die  $STR{ERROR}, "011: $_err\n"  if (not _is_cfg_do('version'));
@@ -6205,7 +6201,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.193");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.194");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7519,7 +7515,7 @@ if ($help !~ m/^\s*$/) {
     OMan::man_printhelp($help);
     exit 0;
 }
-if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.193"; exit 0; }
+if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.194"; exit 0; }
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))     { _vprint("  list       "); printciphers_list('list'); exit 0; }
 if (_is_cfg_do('ciphers'))  { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
@@ -7701,7 +7697,7 @@ if (1 > (_need_netinfo() + _need_checkssl()) and not $test) {
     $cfg{'need_netinfo'} = 1 if (_is_cfg_do('cipher_strong'));
     $cfg{'need_netinfo'} = 1 if (_is_cfg_do('cipher_weak')  );
 }
-_load_modules();
+_load_modules(); # loads modules depending on _need_cipher()
 
 _trace_info("  LOAD9   - load modules end");
 _trace_info("  CHECK0  - check configuration start");
