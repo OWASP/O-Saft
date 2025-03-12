@@ -1,5 +1,5 @@
 
-# SID   @(#) devel.txt 3.6 24/08/18 13:37:17
+# SID   @(#) devel.txt 3.7 25/03/12 18:27:14
 
 
 NAME
@@ -53,8 +53,8 @@ DESCRIPTION
 OVERVIEW
 
         Using make for development uses additional external tools and/or Perl
-        To get an overview about the source, functions, methods, descriptions
-        following commands can be used.
+        to get an overview about source, functions, methods and descriptions.
+        Following commands can be used.
 
         Descriptions, Methods
 
@@ -154,7 +154,8 @@ DEBUGGING
 
         Please see  '$0 --help=OPTIONS'  for detailed description.
 
-        Empty or undefined strings are written as  '<<undefined>>'  in texts.
+        Empty or undefined strings  are written as  '<<undef>>'  in texts, or
+        as  '<<undefined>>'  (mainly in SSLhelo.pm).
         Some parameters, in particular those of  HTTP responses,  are written
         as  '<<response>>'.  Long parameter lists are abbreviated with '...'.
         In general, single-line values are always printed,  multi-line values
@@ -463,6 +464,26 @@ TESTING
         development. These tests are implemented in the  ./t/  directory, see
         all 'Makefile.*' there, start with 'Makefile.pod'.
 
+        After initialising the development environment (for example when the
+        tarball have been extracted),  use following to create a logfile for
+        each test in  t/log/ :
+
+          make test.log
+
+        If necessary, disable some tests, for example if docker is missing:
+
+          make test.log ALL.test.docker=
+
+        After changing the source code, simply start again:
+
+          make test.log
+
+        and follow the instructions printed at end (compare logfile,  accexpt
+        new logfiles). Most likely, the next step is any of:
+
+          make test.log-compare
+          make test.log-compare-v
+
     Developer (internal) testing
 
         Testing SSL/TLS  is a challenging task. Beside the oddities described
@@ -505,7 +526,7 @@ TESTING
           or the text used as prefix triggerd by the  --trace  option:
               $0 --cfg-init=prefix_trace="#TRACE: "
 
-        The options which provide information about  internal data structures
+        The commands which provide information about internal data structures
         and alike described below, behave like the command  +quit  and do not
         perform any checks on the target(s).  
         See 't/Makefile.*' how to use these tests.
@@ -545,7 +566,8 @@ TESTING
 
       +test-avail
 
-          Print overview of all available commands and checks.
+          Print overview of all available commands and checks.  It will print
+          print a short description about its output.
 
       +test-maps
 
@@ -563,7 +585,7 @@ TESTING
 
       +test-regex
 
-          Print results for applying various texts to defined regex.
+          Print internal data structures of RegEx for results.
 
       +test-init
 
