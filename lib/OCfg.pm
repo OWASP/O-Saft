@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.80 25/03/05 19:33:40";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.81 25/03/12 22:39:14";
 our $VERSION    =  "24.09.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -52,10 +52,6 @@ use OText       qw(%STR);
 #_____________________________________________________ public documentation __|
 
 # more public documentation, see start of methods section, and at end of file.
-
-# HACKER's INFO
-#       Following (internal) functions from o-saft.pl are used:
-#       _is_vulnerable()
 
 =pod
 
@@ -157,25 +153,7 @@ purpose of this module is defining variables. Hence we export them.
 
 =head1 CONSTANTS
 
-=over 4
-
-=item $STR{ERROR}
-
-=item $STR{WARN}
-
-=item $STR{HINT}
-
-=item $STR{USAGE}
-
-=item $STR{DBX}
-
-=item $STR{UNDEF}
-
-=item $STR{NOTXT}
-
-=item $STR{MAKEVAL}
-
-=back
+None.
 
 
 =head1 VARIABLES
@@ -2416,9 +2394,9 @@ our %cfg = (    # main data structure for configuration
     'use' =>    {      # configurations to use or do some specials
         'mx'            => 0,   # 1: make MX-Record DNS lookup
         'dns'           => 1,   # 1: make DNS reverse lookup
-        'http'          => 1,   # 1: make HTTP  request with default (Net::LLeay) settings
+        'http'          => 1,   # 1: make HTTP  request with default (Net::SSLeay) settings
                                 # 2: make HTTP  request without headers User-Agent and Accept
-        'https'         => 1,   # 1: make HTTPS request with default (Net::LLeay) settings
+        'https'         => 1,   # 1: make HTTPS request with default (Net::SSLeay) settings
                                 # 2: make HTTPS request without headers User-Agent and Accept
         'forcesni'      => 0,   # 1: do not check if SNI seems to be supported by Net::SSLeay
         'sni'           => 1,   # 0: do not make connection in SNI mode
@@ -3392,7 +3370,7 @@ sub printhint       {
 
 =head3 OCfg::test_cipher_regex( )
 
-Internal test function: apply regex to intended text/list.
+Internal test function: apply RegEx to intended text/list.
 
 =cut
 
@@ -3404,7 +3382,7 @@ sub _regex_head     { return sprintf("= %s\t%s\t%s\t%s", "PFS", "OWASP", "owasp"
 sub _regex_line     { return "=------+-------+-------+---------------------------------------"; }
 
 sub test_cipher_regex   {
-    #? check regex if cipher supports PFS, uses internal sub and not regex directly
+    #? check RegEx if cipher supports PFS, uses internal sub and not cfg{regex} directly
     local $\ = "\n";
     printf("#%s:\n", (caller(0))[3]);
     print "
@@ -3607,7 +3585,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.80"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.81"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3653,7 +3631,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.80 2025/03/05
+3.81 2025/03/12
 
 =head1 AUTHOR
 
