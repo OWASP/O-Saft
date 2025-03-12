@@ -8,7 +8,7 @@
 #?      make help.test.opt
 #?
 #? VERSION
-#?      @(#) Makefile.opt 3.7 24/09/05 09:31:50
+#?      @(#) Makefile.opt 3.8 25/03/12 22:33:22
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -17,7 +17,7 @@
 
 HELP-help.test.opt  = targets for testing '$(SRC.pl)' options
 
-O-SID.opt          := 3.7
+O-SID.opt          := 3.8
 O-SELF.opt         := t/Makefile.opt
 ALL.includes       += $(O-SELF.opt)
 ALL.inc.type       += opt
@@ -59,7 +59,7 @@ testarg-opt-alias-%:            EXE.pl      = ../$(SRC.pl)
 testarg-opt-alias-%:            TEST.init   = --traceARG --v +quit
 testarg-opt-alias-enabled..1:   TEST.args  += --exit=MAIN  -b
 #testarg-opt-alias-enabled..2:   TEST.args  += --exit=MAIN  -b
-testarg-opt-alias-ca_path..x:   TEST.args  += --exit=MAIN  -c x
+testarg-opt-alias-ca_path..x:   TEST.args  += --exit=MAIN  -c gibtsnicht
 
 testarg-opt-alias-+test-ciphers-list: TEST.args += +test-ciphers-list
 
