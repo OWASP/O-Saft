@@ -41,7 +41,7 @@
 #?              Name of archive file for O-Saft (during build).
 #?
 #?          OSAFT_VM_SRC_OPENSSL
-#?              URL to fetch openssl.tgz archive.
+#?              URL to fetch openssl.tgz archive. Can be local file.
 #?
 #?          OSAFT_VM_SHA_OPENSSL
 #?              SHA256 checksum for the openssl-1.0.2-chacha.tar.gz archive.
@@ -180,7 +180,7 @@ ARG     OSAFT_VM_DYN_OPENSSL="--shared"
 #                             --static  not yet (2020) working 'cause of libkrb5
 ARG     OSAFT_VM_APT_INSTALL
 ARG     OSAFT_VERSION="undefined"
-ARG     _SELF_="H$Þ^"
+ARG     _SELF_="Dockerfile.openssl"
 #       _SELF_ for internal use only to make multiple references unique
 
 LABEL \
@@ -192,7 +192,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/$_SELF_" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
 	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) H$Þ^ 3.6 24/09/26 01:19:36" \
+	SID="@(#) Dockerfile.openssl 3.7 25/03/13 16:32:54" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "$_SELF_ $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
@@ -272,7 +272,10 @@ RUN \
 	$apt_exe $apt_add $opt_add $packages_dev && \
 	cd    $WORK_DIR				&& \
 	mkdir -p $BUILD_DIR ${OPENSSL_DIR}	&& \
-	curl --insecure --location --silent $OSAFT_VM_SRC_OPENSSL -o $OSAFT_VM_TAR_OPENSSL && \
+	[   -f "$OSAFT_VM_SRC_OPENSSL" ]        && \
+		cp "$OSAFT_VM_SRC_OPENSSL" "$OSAFT_VM_TAR_OPENSSL" ; \
+	[ ! -f "$OSAFT_VM_TAR_OPENSSL" ]        && \
+		curl --insecure --location --silent $OSAFT_VM_SRC_OPENSSL -o $OSAFT_VM_TAR_OPENSSL && \
 	# check sha256 if there is one
 	[ -n "$OSAFT_VM_SHA_OPENSSL" ]		&& \
 		echo "$OSAFT_VM_SHA_OPENSSL  $OSAFT_VM_TAR_OPENSSL" | sha256sum -c ; \
