@@ -6,7 +6,7 @@
 #?      make help.test.init
 #?
 #? VERSION
-#?      @(#) Makefile.init 3.6 25/01/07 18:28:29
+#?      @(#) Makefile.init 3.7 25/03/13 12:06:50
 #?
 #? AUTHOR
 #?      19-dez-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.init = targets for testing initialisations of o-saft.pl
 
-O-SID.init         := 3.6
+O-SID.init         := 3.7
 O-SELF.init        := t/Makefile.init
 ALL.includes       += $(O-SELF.init)
 ALL.inc.type       += init
@@ -78,10 +78,10 @@ ifndef init-macros-generated
     undefine _opt
 endif
 
-$(TEST.tmpdir)::
+$(O-DIR.tmp)::
 	@mkdir $@
 
-$(TEST.tmp.rc): $(TEST.tmpdir)
+$(TEST.tmp.rc): $(O-DIR.tmp)
 	@echo "$(TEST.rc.opts)" | tr ' ' '\012' > $@
 
 testarg-init-%:         EXE.pl      := ../$(SRC.pl)
@@ -107,7 +107,7 @@ testarg-init-OSAFT_CONFIG:: $(TEST.tmp.rc)
 	@echo testarg-init-OSAFT_CONFIG:: $(OSAFT_CONFIG) ::
 	@cd    $(TEST.dir) && pwd && env OSAFT_CONFIG=$(OSAFT_CONFIG) $(EXE.pl) --v
 	@rm    $(TEST.tmp.rc)
-	@rmdir $(TEST.tmpdir)
+	@rmdir $(O-DIR.tmp)
 
 ALL.test.init  += testarg-init-OSAFT_OPTIONS testarg-init-OSAFT_CONFIG
 ALL.test.init  += testarg-init-+ext-opt901   testarg-init-+ext-opt902
