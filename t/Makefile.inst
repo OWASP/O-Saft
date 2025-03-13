@@ -6,7 +6,7 @@
 #?      make help.test.inst
 #?
 #? VERSION
-#?      @(#) Makefile.inst 3.13 25/02/28 17:43:47
+#?      @(#) Makefile.inst 3.14 25/03/13 11:00:23
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.inst = targets for testing INSTALL.sh
 
-O-SID.inst         := 3.13
+O-SID.inst         := 3.14
 O-SELF.inst        := t/Makefile.inst
 ALL.includes       += $(O-SELF.inst)
 ALL.inc.type       += inst
@@ -37,14 +37,16 @@ help.test.inst-vv:    HELP_TYPE = inst
 EXE.INSTALL        ?= INSTALL.sh
 EXE.install_openssl = $(O-DIR.usr)/install_openssl.sh
 
-LIST.INSTALL.sh    :=   --install   --clean --check    --checkdev \
-			--expected  --cgi   --usage \
+LIST.INSTALL.sh    :=   --usage --expected  \
+	--install       --cgi  --clean --check         --checkdev \
 	--check-tools   --check-self   --check-perl    --check-modules \
 	--check-rc      --check-inst   --check-summary --check-openssl \
 	--check-usr     --check-SID    --check-podtools
 # --check-* used instead of --check=* to avoid GNU make problems with
 # target names containing =
 # --openssl not jet tested because it calls install_openssl.sh
+
+# O-DIR.tmp       = /tmp/o-saft   # should alreday be set
 
 #_____________________________________________________________________________
 #______________________________________________________ targets for testing __|
@@ -61,9 +63,9 @@ HELP-testarg-inst-usr-install_openssl%  = test arguments and options of '($EXE.i
 # TODO: need test for EXE.INSTALL if perl, wish, docker are missing
 
 testcmd-inst-INSTALL.sh%:           EXE.pl    = ../$(EXE.INSTALL)
-testcmd-inst-INSTALL.sh%:           TEST.init = --n --v /tmp/o-saft
+testcmd-inst-INSTALL.sh%:           TEST.init = --n --v $(O-DIR.tmp)
 testarg-inst-INSTALL.sh%:           EXE.pl    = ../$(EXE.INSTALL)
-testarg-inst-INSTALL.sh%:           TEST.init = --n --v /tmp/o-saft
+testarg-inst-INSTALL.sh%:           TEST.init = --n --v $(O-DIR.tmp)
 # targets for INSTALL.sh are for testing INSTALL.sh's behaviour, they are not
 # intended to install anything, hence they are called with --n  which results
 # in some error messsages. Returns following errors, which is OK for --n :
@@ -74,9 +76,12 @@ testarg-inst-INSTALL.sh%:           TEST.init = --n --v /tmp/o-saft
 
 ALL.test.inst       = $(LIST.INSTALL.sh:%=testcmd-inst-INSTALL.sh_%)
 
-# additional special option for INSTALL.sh
+# set TEST.init  empty not necessary as long as there is no --check
 testcmd-inst-INSTALL.sh_--usage:            TEST.init  =
-    # simulate empty arguments
+testcmd-inst-INSTALL.sh_--expected:         TEST.init  =
+    # simulates empty arguments (except that from LIST.INSTALL.sh)
+
+# additional special option for INSTALL.sh
 testarg-inst-INSTALL.sh_--check-SID--changes: TEST.args += --check-SID --changes
 testarg-inst-INSTALL.sh_--check--colour:    TEST.args += --check    --colour
 testarg-inst-INSTALL.sh_--checkdev--colour: TEST.args += --checkdev --colour
@@ -86,7 +91,6 @@ testarg-inst-INSTALL.sh_--install--useenv:  TEST.args += --install  --useenv
 testarg-inst-INSTALL.sh_--install--noargs:  TEST.args += --install  --noargs
 testarg-inst-INSTALL.sh_--install--instdev: TEST.args += --install  --instdev
 testarg-inst-INSTALL.sh_--simulate-vm:      export osaft_vm_build = 1
-    # set TEST.init  empty not necessary as long as there is no --check
 
 testarg-inst-INSTALL.sh_%.log:      EXE.log-filterarg  = awk '\
 	($$2~/...INSTALL.sh */) {$$3="<<SID replaced by make>>"} {print}'
