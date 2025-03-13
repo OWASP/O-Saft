@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 3.25 25/01/11 15:59:07
+#?      @(#) Makefile 3.26 25/03/13 11:24:49
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-O-SID.test         := 3.25
+O-SID.test         := 3.26
 O-SELF.test        := t/Makefile
 ALL.includes       += $(O-SELF.test)
 ALL.inc.type       += test
@@ -133,8 +133,8 @@ TEST.dir       := t
 TEST.logdir    ?= $(TEST.dir)/log
 TEST.logtxt    := <<random value replaced by make>>
 TEST.symlinks  := ../usr ../lib ../.o-saft.pl ../docs
-TEST.tmpdir    ?= /tmp/$(O-Project)
-TEST.tmp.rc    ?= $(TEST.tmpdir)/.rc
+O-DIR.tmp      ?= /tmp/$(O-Project)
+TEST.tmp.rc    ?= $(O-DIR.tmp)/.rc
 
 # following may be redefined in any included t/Makefile*
 #TEST.init      := --header
