@@ -69,9 +69,15 @@
 #?        PEM format file with CAs         /etc/ssl/certs/ca-certificates.crt
 #?        common paths to PEM files for CAs /etc/ssl/certs /usr/lib/certs /System/Library/OpenSSL
 #?        common PEM filenames for CAs     ca-certificates.crt certificates.crt certs.pem
-#?        Net::SSLeay::
-#?        PEM format file with CAs         /etc/ssl/certs/ca-certificates.crt
-#?        common paths to PEM files for CAs /etc/ssl/certs /usr/lib/certs /System/Library/OpenSSL
+#?        list of supported elliptic curves prime192v1 prime256v1 sect163k1 \
+#?           sect163r1 sect193r1 sect233k1 sect233r1 sect283k1 sect283r1 \
+#?           sect409k1 sect409r1 sect571k1 sect571r1 secp160k1 secp160r1 \
+#?           secp160r2 secp192k1 secp224k1 secp224r1 secp256k1 secp384r1 \
+#?           secp521r1 brainpoolP256r1 brainpoolP384r1 brainpoolP512r1
+#?        list of supported ALPN, NPN      http/1.1,h2c,h2c-14,spdy/1,\
+#?           npn-spdy/2,spdy/2,spdy/3,spdy/3.1,spdy/4a2,spdy/4a4,grpc-exp,\
+#?           h2-14,h2-15,h2-16,http/2.0,h2
+#?    = o-saft.pl +cipher --ciphermode=openssl or --ciphermode=socket =
 #?        number of supported ciphers      201
 #?        openssl supported SSL versions   SSLv2 SSLv3 TLSv1 TLSv11 TLSv12
 #?        o-saft.pl known SSL versions     SSLv2 SSLv3 TLSv1 TLSv11 TLSv12 TLSv13 DTLSv09 DTLSv1 DTLSv11 DTLSv12 DTLSv13
@@ -102,7 +108,7 @@
 #?        * the directory where to find O-Saft
 #?
 #?          OSAFT_VM_SRC_OPENSSL
-#?              URL to fetch openssl.tgz archive.
+#?              URL to fetch openssl.tgz archive. Can also be a local file.
 #?
 #?          OSAFT_VM_SHA_OPENSSL
 #?              SHA256 checksum for the openssl-1.0.2-chacha.tar.gz archive.
@@ -168,7 +174,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#) install_openssl.sh 1.45 25/01/10 17:04:38
+#?      @(#) install_openssl.sh 3.2 25/03/13 16:21:15
 #?
 #? AUTHOR
 #?      18. January 2018 Achim Hoffmann
@@ -404,7 +410,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  +VERSION)     echo 1.45 ; exit; ;; # for compatibility
+	  +VERSION)     echo 3.2 ; exit; ;; # for compatibility
 	  --version)    \sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0; exit 0; ;;
 	  -h | --h | --help | '-?' | '/?')
 		sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
@@ -525,11 +531,15 @@ alias   apk="\echo '#'apk"  #
 # Dockerfile 1.30 {
 
 # Pull, build and install enhanced openssl
+#dbx# set -x
 RUN \
 	apk add --no-cache gmp-dev lksctp-tools-dev	&& \
 	cd    $WORK_DIR				&& \
 	mkdir -p $BUILD_DIR $OPENSSL_DIR	&& \
-	wget --no-check-certificate $OSAFT_VM_SRC_OPENSSL -O $OSAFT_VM_TAR_OPENSSL && \
+	[   -f "$OSAFT_VM_SRC_OPENSSL" ]        && \
+		cp "$OSAFT_VM_SRC_OPENSSL" "$OSAFT_VM_TAR_OPENSSL" ; \
+	[ ! -f "$OSAFT_VM_TAR_OPENSSL" ]        && \
+		wget --no-check-certificate $OSAFT_VM_SRC_OPENSSL -O $OSAFT_VM_TAR_OPENSSL && \
 	# check sha256 if there is one
 	[ -n "$OSAFT_VM_SHA_OPENSSL" ]		&& \
 		echo "$OSAFT_VM_SHA_OPENSSL  $OSAFT_VM_TAR_OPENSSL" | sha256sum -c ; \
@@ -635,3 +645,7 @@ mcpan_install $perl_io_socket
 ### test o-saft.pl
 test_osaft
 
+### cleanup
+[ -e "$BUILD_DIR" ] && \
+	echo "**WARNING: BUILD_DIR=$BUILD_DIR exists after build; removing" && \
+	rm -rf $BUILD_DIR
