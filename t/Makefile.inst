@@ -6,7 +6,7 @@
 #?      make help.test.inst
 #?
 #? VERSION
-#?      @(#) Makefile.inst 3.14 25/03/13 11:00:23
+#?      @(#) Makefile.inst 3.15 25/03/13 16:34:34
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.inst = targets for testing INSTALL.sh
 
-O-SID.inst         := 3.14
+O-SID.inst         := 3.15
 O-SELF.inst        := t/Makefile.inst
 ALL.includes       += $(O-SELF.inst)
 ALL.inc.type       += inst
@@ -135,6 +135,16 @@ testarg-inst-usr-install_openssl_%:     TEST.init =
 testarg-inst-usr-install_openssl_--n:   TEST.args = --n
 testarg-inst-usr-install_openssl_--m:   TEST.args = --m
 testarg-inst-usr-install_openssl_--list:TEST.args = --list
+
+# target creating openssl must be defined because of cleanup (see testarg-%:)
+# and using a local tarball instead downloading (see $(EXE.install_openssl))
+# TODO: target executed in . should be changed to /tmp
+testarg-inst-usr-install_openssl_--m:   TEST.args = --m
+testarg-inst-usr-install_openssl_--m::  export OSAFT_VM_SRC_OPENSSL = ./testssl/openssl-1.0.2-chacha.tar.gz
+testarg-inst-usr-install_openssl_--m::
+	@$(O-TRACE.target)
+	-cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args)
+	@-test -f $(TEST.dir)/openssl.tgz && rm -f $(TEST.dir)/openssl.tgz
 
 ALL.test.inst      += \
 	testarg-inst-usr-install_openssl_--m  \
