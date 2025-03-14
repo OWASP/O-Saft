@@ -28,7 +28,7 @@
 #?              Tested packages are:  tcl  tk  tklib  xvfb  openssl
 #?
 #?          OSAFT_VM_SRC_OSAFT
-#?              URL to fetch o-saft.tgz archive.
+#?              URL to fetch o-saft.tgz archive. Can be local file.
 #?
 #?          OSAFT_VM_SHA_OSAFT
 #?              SHA256 checksum for the o-saft.tgz archive.
@@ -53,7 +53,7 @@
 #?              Build (link) mode of openssl executable: --static or --shared
 #?
 #?          OSAFT_VM_SRC_SSLEAY
-#?              URL to fetch Net-SSLeay.tar.gz archive.
+#?              URL to fetch Net-SSLeay.tar.gz archive. Can be local file.
 #?
 #?          OSAFT_VM_SHA_SSLEAY
 #?              SHA256 checksum for the Net-SSLeay.tar.gz archive.
@@ -62,7 +62,7 @@
 #?              Name of archive file for Net-SSLeay.tgz (during build).
 #?
 #?          OSAFT_VM_SRC_SOCKET
-#?              URL to fetch IO-Socket-SSL.tar.gz archive.
+#?              URL to fetch IO-Socket-SSL.tar.gz archive. Can be local file.
 #?
 #?          OSAFT_VM_SHA_SOCKET
 #?              SHA256 checksum for the IO-Socket-SSL.tar.gz archive.
@@ -192,7 +192,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/$_SELF_" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
 	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) Dockerfile.openssl 3.7 25/03/13 16:32:54" \
+	SID="@(#) Dockerfile.openssl 3.8 25/03/14 14:16:31" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "$_SELF_ $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
@@ -339,7 +339,10 @@ RUN \
 	workaround_alpine_bug			&& \
 	cd    $WORK_DIR				&& \
 	mkdir -p $BUILD_DIR			&& \
-	curl --insecure --location --silent $OSAFT_VM_SRC_SSLEAY -o $OSAFT_VM_TAR_SSLEAY && \
+	[   -f "$OSAFT_VM_SRC_SSLEAY" ]         && \
+		cp "$OSAFT_VM_SRC_SSLEAY" "$OSAFT_VM_TAR_SSLEAY" ; \
+	[ ! -f "$OSAFT_VM_TAR_SSLEAY" ]         && \
+		curl --insecure --location --silent $OSAFT_VM_SRC_SSLEAY -o $OSAFT_VM_TAR_SSLEAY && \
 	# check sha256 if there is one
 	[ -n "$OSAFT_VM_SHA_SSLEAY" ]		&& \
 		echo "$OSAFT_VM_SHA_SSLEAY  $OSAFT_VM_TAR_SSLEAY" | sha256sum -c ; \
@@ -363,7 +366,10 @@ RUN \
 	echo "#== Pull, build and install IO::Socket::SSL" && \
 	workaround_alpine_bug			&& \
 	mkdir -p $BUILD_DIR			&& \
-	curl --insecure --location --silent $OSAFT_VM_SRC_SOCKET -o $OSAFT_VM_TAR_SOCKET && \
+	[   -f "$OSAFT_VM_SRC_SOCKET" ]         && \
+		cp "$OSAFT_VM_SRC_SOCKET" "$OSAFT_VM_TAR_SOCKET" ; \
+	[ ! -f "$OSAFT_VM_TAR_SOCKET" ]         && \
+		curl --insecure --location --silent $OSAFT_VM_SRC_SOCKET -o $OSAFT_VM_TAR_SOCKET && \
 	# check sha256 if there is one
 	[ -n "$OSAFT_VM_SHA_SOCKET" ]		&& \
 		echo "$OSAFT_VM_SHA_SOCKET  $OSAFT_VM_TAR_SOCKET" | sha256sum -c ; \
@@ -379,7 +385,10 @@ RUN \
 	echo "#== Pull and install O-Saft"	&& \
 	workaround_alpine_bug			&& \
 	cd    $WORK_DIR				&& \
-	curl --insecure --location --silent $OSAFT_VM_SRC_OSAFT -o $OSAFT_VM_TAR_OSAFT	&& \
+	[   -f "$OSAFT_VM_SRC_OSAFT" ]          && \
+		cp "$OSAFT_VM_SRC_OSAFT" "$OSAFT_VM_TAR_OSAFT" ; \
+	[ ! -f "$OSAFT_VM_TAR_OSAFT" ]          && \
+		curl --insecure --location --silent $OSAFT_VM_SRC_OSAFT -o $OSAFT_VM_TAR_OSAFT	&& \
 	# check sha256 if there is one
 	[ -n "$OSAFT_VM_SHA_OSAFT" ]		&& \
 		echo "$OSAFT_VM_SHA_OSAFT  $OSAFT_VM_TAR_OSAFT" | sha256sum -c ; \
