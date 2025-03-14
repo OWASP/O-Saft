@@ -174,7 +174,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#) install_openssl.sh 3.4 25/03/14 13:31:31
+#?      @(#) install_openssl.sh 3.5 25/03/14 14:04:40
 #?
 #? AUTHOR
 #?      18. January 2018 Achim Hoffmann
@@ -453,7 +453,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  +VERSION)     echo 3.4 ; exit; ;; # for compatibility
+	  +VERSION)     echo 3.5 ; exit; ;; # for compatibility
 	  --version)    \sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0; exit 0; ;;
 	  -h | --h | --help | '-?' | '/?')
 		sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
@@ -613,7 +613,10 @@ echo_head "### Pull, build and install Net::SSLeay"
 RUN \
 	cd    $WORK_DIR				&& \
 	mkdir -p $BUILD_DIR			&& \
-	wget --no-check-certificate $OSAFT_VM_SRC_SSLEAY -O $OSAFT_VM_TAR_SSLEAY && \
+	[   -f "$OSAFT_VM_SRC_SSLEAY" ]         && \
+		cp "$OSAFT_VM_SRC_SSLEAY"  "$OSAFT_VM_TAR_SSLEAY" ; \
+	[ ! -f "$OSAFT_VM_TAR_SSLEAY" ]        && \
+		wget --no-check-certificate $OSAFT_VM_SRC_SSLEAY -O $OSAFT_VM_TAR_SSLEAY && \
 	# check sha256 if there is one
 	[ -n "$OSAFT_VM_SHA_SSLEAY" ]		&& \
 		echo "$OSAFT_VM_SHA_SSLEAY  $OSAFT_VM_TAR_SSLEAY" | sha256sum -c ; \
