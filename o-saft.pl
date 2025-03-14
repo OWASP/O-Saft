@@ -71,7 +71,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.199 25/03/12 19:06:59"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.201 25/03/14 15:52:07"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -389,7 +389,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.199"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.201"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -3897,6 +3897,9 @@ sub checkdates      {
     $data{'valid_months'}->{val}    = ($until[3] * 12) - ($since[3] * 12) + $u_mon - $s_mon;
     $data{'valid_days'}->{val}      = ($data{'valid_years'}->{val}  *  5) + ($data{'valid_months'}->{val} * 30); # approximately
     $data{'valid_days'}->{val}      = ($until[1] - $since[1]) if ($data{'valid_days'}->{val} < 60); # more accurate
+# TODO: need new $data{before-heartbleed} which must be newer than
+#       1397199600  = Fr 11. Apr 09:00:00 MEST 2014  which are potentially 
+#       subject to Heartbleed; needs to be set in SSLinfo.pm
 
     # The current timestamp is added to the  STS max-age  to check if the STS
     # max-age exceeds the certificate's expire date. All timestamps are given
@@ -6202,7 +6205,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.199");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.201");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7516,7 +7519,7 @@ if ($help !~ m/^\s*$/) {
     OMan::man_printhelp($help);
     exit 0;
 }
-if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.199"; exit 0; }
+if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.201"; exit 0; }
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))     { _vprint("  list       "); printciphers_list('list'); exit 0; }
 if (_is_cfg_do('ciphers'))  { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
@@ -7721,7 +7724,7 @@ _check_functions()  if $_checks;
 #| check for proper openssl support
 #| -------------------------------------
 _vprint("  check openssl capabilities for '$openssl{'exe'}'");
-_check_openssl() if (0 < _need_netinfo());
+_check_openssl() if (0 < _need_openssl());
      # openssl is used with option  --ciphermode=openssl  (most commands)
      # or for any +info or +check command, even the individual ones like +cn
      # hence we check capabilities always and print warnings if appropriate
