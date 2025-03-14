@@ -174,7 +174,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#) †¿[ 3.3 25/03/13 20:45:13
+#?      @(#) install_openssl.sh 3.4 25/03/14 13:31:31
 #?
 #? AUTHOR
 #?      18. January 2018 Achim Hoffmann
@@ -311,6 +311,47 @@ mcpan_modules   () {
 	return
 } # mcpan_modules
 
+show_environment () {
+	#? show passed environment variables
+	cat <<EoT
+
+# start build in WORK_DIR=
+	$dir
+# get openssl from OSAFT_VM_SRC_OPENSSL=
+	$OSAFT_VM_SRC_OPENSSL
+# store tar in OSAFT_VM_TAR_OPENSSL=
+	$OSAFT_VM_TAR_OPENSSL
+# check with OSAFT_VM_SHA_OPENSSL=
+	$OSAFT_VM_SHA_OPENSSL
+# build OSAFT_VM_DYN_OPENSSL=$OSAFT_VM_DYN_OPENSSL
+# install openssl binary in OPENSSL_DIR=  # (full path)
+	$OPENSSL_DIR
+# use libraries for openssl from LD_RUN_PATH=
+	$LD_RUN_PATH
+
+# get Net-SSLeay from OSAFT_VM_SRC_SSLEAY=
+	$OSAFT_VM_SRC_SSLEAY
+# store tar in OSAFT_VM_TAR_SSLEAY=
+	$OSAFT_VM_TAR_SSLEAY
+# check with OSAFT_VM_SHA_SSLEAY=
+	$OSAFT_VM_SHA_SSLEAY
+# install Net-SSLeay in (path from Net-SSLeay's Makefile)
+	/usr/local/lib
+
+# build openssl in (temporary dir) BUILD_DIR=$BUILD_DIR  $move_rc
+# modify  OSAFT_DIR/.o-saft.pl  OSAFT_DIR=$OSAFT_DIR
+# and store in:  $dir/.o-saft.pl
+
+# consider setting PATH to:
+	${OPENSSL_DIR}/bin:$dir:$PATH
+
+# found perl: `which perl`
+# perl uses @INC=
+EoT
+	perl -le 'print "\t" . join "\n\t",@INC'
+	return
+} # show_environment
+
 check_mandatory () {
 	err=0
 	echo_head "# required mandatory tools:"
@@ -386,6 +427,7 @@ check_directories () {
 
 test_osaft      () {
 	echo_head "### test o-saft.pl ..."
+pwd
 	o_saftrc=$OSAFT_DIR/.o-saft.pl
 	[ -e  $o_saftrc ] || \
 		echo "**WARNING: $o_saftrc not found; testing without"
@@ -411,7 +453,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  +VERSION)     echo 3.3 ; exit; ;; # for compatibility
+	  +VERSION)     echo 3.4 ; exit; ;; # for compatibility
 	  --version)    \sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0; exit 0; ;;
 	  -h | --h | --help | '-?' | '/?')
 		sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
@@ -425,44 +467,6 @@ while [ $# -gt 0 ]; do
 	        move_rc=""
 		[ -e $dir/.o-saft.pl ] && move_rc="
 # move existing  $dir/.o-saft.pl to $dir/.o-saft.pl-orig"
-		cat <<EoT
-
-### Configuration
-
-# start build in WORK_DIR=
-	$dir
-# get openssl from OSAFT_VM_SRC_OPENSSL=
-	$OSAFT_VM_SRC_OPENSSL
-# store tar in OSAFT_VM_TAR_OPENSSL=
-	$OSAFT_VM_TAR_OPENSSL
-# check with OSAFT_VM_SHA_OPENSSL=
-	$OSAFT_VM_SHA_OPENSSL
-# build OSAFT_VM_DYN_OPENSSL=$OSAFT_VM_DYN_OPENSSL
-# install openssl binary in OPENSSL_DIR=  # (full path)
-	$OPENSSL_DIR
-# use libraries for openssl from LD_RUN_PATH=
-	$LD_RUN_PATH
-
-# get Net-SSLeay from OSAFT_VM_SRC_SSLEAY=
-	$OSAFT_VM_SRC_SSLEAY
-# store tar in OSAFT_VM_TAR_SSLEAY=
-	$OSAFT_VM_TAR_SSLEAY
-# check with OSAFT_VM_SHA_SSLEAY=
-	$OSAFT_VM_SHA_SSLEAY
-# install Net-SSLeay in (path from Net-SSLeay's Makefile)
-	/usr/local/lib
-
-# build openssl in (temporary dir) BUILD_DIR=$BUILD_DIR  $move_rc
-# modify  OSAFT_DIR/.o-saft.pl  OSAFT_DIR=$OSAFT_DIR
-# and store in:  $dir/.o-saft.pl
-
-# consider setting PATH to:
-	${OPENSSL_DIR}/bin:$dir:$PATH
-
-# found perl: `which perl`
-# perl uses @INC=
-EoT
-		perl -le 'print "\t" . join "\n\t",@INC'
 		;;
 	  *)
 		echo "**ERROR: unknown option '$arg'; exit"
@@ -478,12 +482,16 @@ done
 ### preconditions (needs to be checked with or without --n)
 miss=""
 err=0
+
+echo_head "### Configuration"
+show_environment
 echo_head "### Preconditions"
 check_mandatory
 check_modules
 check_libraries
 check_directories
 if [ 0 -eq $err ]; then
+	echo ''
 	echo '# OK all preconditions satisfied'
 	echo ''
 	if [ 1 -eq $optn  ]; then
@@ -518,7 +526,7 @@ EoT
 	echo "#    continue due to  --i  was given."
 	echo ""
 fi
-[ 1 -eq $optn  ] && exit 0  # defensive programming, never reached
+[ 1 -eq $optn  ] && exit 0
 
 ### install modules
 [ 1 -eq $optm  ] && mcpan_modules
