@@ -180,20 +180,20 @@ ARG     OSAFT_VM_DYN_OPENSSL="--shared"
 #                             --static  not yet (2020) working 'cause of libkrb5
 ARG     OSAFT_VM_APT_INSTALL
 ARG     OSAFT_VERSION="undefined"
-ARG     _SELF_="Dockerfile.openssl"
+ARG     _SELF_="©hùd"
 #       _SELF_ for internal use only to make multiple references unique
 
 LABEL \
-	VERSION="$OSAFT_VERSION"	\
+	VERSION="$OSAFT_VERSION" \
 	\
-	DESCRIPTION="Build O-Saft docker image (with Peter Mosman's openssl)"	\
+	DESCRIPTION="Build O-Saft docker image (with Peter Mosman's openssl)" \
 	SYNOPSIS="docker build --force-rm --rm -f ./$_SELF_ -t owasp/o-saft:$OSAFT_VERSION -t owasp/o-saft ." \
 	DETAILS="Please see https://github.com/OWASP/O-Saft/raw/master/o-saft-docker" \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/$_SELF_" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
 	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) Dockerfile.openssl 3.10 25/03/16 11:15:16" \
-	AUTHOR="Achim Hoffmann"	
+	SID="@(#) ©hùd 3.11 25/03/16 14:35:57" \
+	AUTHOR="Achim Hoffmann"
 
 ENV     osaft_vm_build  "$_SELF_ $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
 ENV     OSAFT_DIR       /O-Saft
@@ -203,7 +203,7 @@ ENV     TERM            xterm
 ENV     LD_RUN_PATH     ${OPENSSL_DIR}/lib
 ENV     PATH ${OSAFT_DIR}:${OSAFT_DIR}/usr:${OPENSSL_DIR}/bin:$PATH
 ENV     BUILD_DIR       /tmp_src
-ENV     WORK_DIR	/
+ENV     WORK_DIR        /
 
 WORKDIR	$WORK_DIR
 
@@ -216,7 +216,7 @@ RUN \
 	else \
 	    adduser -D -h ${OSAFT_DIR} ${OSAFT_VM_USER} ; \
 	fi && \
-	mkdir -p ${OSAFT_DIR}			&& \
+	mkdir -p ${OSAFT_DIR} && \
 	\
 	echo "#== Configure apk (alpine) or apt (debian); default: apk" && \
 	tklib=tk-lib && \
@@ -233,12 +233,12 @@ RUN \
 	packages_dev="gmp-dev lksctp-tools-dev" && \
 	packages_perl="perl-net-dns perl-net-libidn perl-mozilla-ca" && \
 	if expr "X$OSAFT_VM_FROM" : Xdebian >/dev/null ; then \
-	   tklib=tklib		; \
-	   apt_exe=apt-get	; \
-	   apt_add=install	; \
-	   apt_del=purge	; \
-	   opt_add=--yes	; \
-	   opt_del=--yes	; \
+	   tklib=tklib          ; \
+	   apt_exe=apt-get      ; \
+	   apt_add=install      ; \
+	   apt_del=purge        ; \
+	   opt_add=--yes        ; \
+	   opt_del=--yes        ; \
 # fehltnoch: perl-dev
 	   packages_make="gcc make linux-headers-amd64" ; \
 		# ncurses-base ncurses-bin  already part of debian
@@ -254,7 +254,7 @@ RUN \
 	if expr "X$OSAFT_VM_FROM" : Xdebian >/dev/null ; then \
 	    $apt_exe update ; \
 	fi && \
-	$apt_exe $apt_add $opt_add $packages	&& \
+	$apt_exe $apt_add $opt_add $packages    && \
 	\
 	echo "#== Workaround for docker/alpine (bug or race condition)" && \
 	#   in some alpine versions, resolving a hostname fails, see
@@ -268,155 +268,160 @@ RUN \
 	    done; } && \
 	\
 	echo "#== Pull, build and install enhanced openssl" && \
-	workaround_alpine_bug			&& \
+	workaround_alpine_bug                   && \
 	$apt_exe $apt_add $opt_add $packages_dev && \
-	cd    $WORK_DIR				&& \
-	mkdir -p $BUILD_DIR ${OPENSSL_DIR}	&& \
+	cd    $WORK_DIR                         && \
+	mkdir -p $BUILD_DIR ${OPENSSL_DIR}      && \
 	echo "#=  get and extract $OSAFT_VM_TAR_OPENSSL" && \
-	[   -f "$OSAFT_VM_SRC_OPENSSL" ]        && \
+	if [ -f "$OSAFT_VM_SRC_OPENSSL" ]; then \
 		cp "$OSAFT_VM_SRC_OPENSSL" "$OSAFT_VM_TAR_OPENSSL" ; \
-	[ ! -f "$OSAFT_VM_TAR_OPENSSL" ]        && \
-		curl --insecure --location --silent $OSAFT_VM_SRC_OPENSSL -o $OSAFT_VM_TAR_OPENSSL && \
+	else \
+		curl --insecure --location --silent $OSAFT_VM_SRC_OPENSSL -o $OSAFT_VM_TAR_OPENSSL ; \
+	fi && \
 	echo "#=  check sha256 if there is one" && \
-	[ -n "$OSAFT_VM_SHA_OPENSSL" ]		&& \
+	if [ -n "$OSAFT_VM_SHA_OPENSSL" ]; then \
 		echo "$OSAFT_VM_SHA_OPENSSL  $OSAFT_VM_TAR_OPENSSL" | sha256sum -c ; \
-	\
-	tar   -xzf $OSAFT_VM_TAR_OPENSSL -C $BUILD_DIR --strip-components=1	&& \
-	cd    $BUILD_DIR			&& \
+	fi && \
+	tar   -xzf $OSAFT_VM_TAR_OPENSSL -C $BUILD_DIR --strip-components=1 && \
+	cd    $BUILD_DIR                        && \
 	echo "#=  patch openssl.cnf for GOST"   && \
-	sed -i '/RANDFILE/a openssl_conf=openssl_def' apps/openssl.cnf	&& \
+	sed -i '/RANDFILE/a openssl_conf=openssl_def' apps/openssl.cnf && \
 	#   using echo instead of cat to avoid problems with stacked commands:
 	#   cat -> shell -> docker
 	(\
 	  echo 'openssl_conf=openssl_def'; \
-	  echo '[openssl_def]';		\
+	  echo '[openssl_def]';         \
 	  echo 'engines=engine_section';\
-	  echo '[engine_section]';	\
-	  echo 'gost=gost_section';	\
-	  echo '[gost_section]';	\
-	  echo 'engine_id = gost';	\
+	  echo '[engine_section]';      \
+	  echo 'gost=gost_section';     \
+	  echo '[gost_section]';        \
+	  echo 'engine_id = gost';      \
 	  echo 'default_algorithms=ALL';\
 	  echo 'CRYPT_PARAMS=id-Gost28147-89-CryptoPro-A-ParamSet'; \
-	) >> apps/openssl.cnf			&& \
+	) >> apps/openssl.cnf                   && \
 	echo "#=  config with all options, even if they are default" && \
-	LDFLAGS="-rpath=$LD_RUN_PATH"   && export LDFLAGS	&& \
+	LDFLAGS="-rpath=$LD_RUN_PATH"   && export LDFLAGS && \
 		# see description for LD_RUN_PATH above
-	./config --prefix=${OPENSSL_DIR} --openssldir=${OPENSSL_DIR}/ssl	\
-		$OSAFT_VM_DYN_OPENSSL	\
+	./config --prefix=${OPENSSL_DIR} --openssldir=${OPENSSL_DIR}/ssl  \
+		$OSAFT_VM_DYN_OPENSSL   \
 		--with-krb5-flavor=MIT --with-krb5-dir=/usr/include/krb5/ \
-		-fPIC zlib zlib-dynamic enable-zlib enable-npn sctp	\
-		enable-deprecated enable-weak-ssl-ciphers	\
-		enable-heartbeats enable-unit-test  enable-ssl-trace	\
-		enable-ssl3    enable-ssl3-method   enable-ssl2	\
-		enable-tls1    enable-tls1-method   enable-tls\
-		enable-tls1-1  enable-tls1-1-method enable-tlsext	\
-		enable-tls1-2  enable-tls1-2-method enable-tls1-2-client \
-		enable-dtls1   enable-dtls1-method	\
-		enable-dtls1-2 enable-dtls1-2-method	\
-		enable-md2     enable-md4   enable-mdc2	\
-		enable-rc2     enable-rc4   enable-rc5	\
-		enable-sha0    enable-sha1  enable-sha256 enable-sha512	\
-		enable-aes     enable-cms   enable-dh     enable-egd	\
-		enable-des     enable-dsa   enable-rsa    enable-rsax	\
-		enable-ec      enable-ec2m  enable-ecdh   enable-ecdsa	\
-		enable-blake2  enable-bf    enable-cast enable-camellia	\
-		enable-gmp     enable-gost  enable-GOST   enable-idea	\
-		enable-poly1305 enable-krb5 enable-rdrand enable-rmd160	\
-		enable-seed    enable-srp   enable-whirlpool	\
+		-fPIC zlib zlib-dynamic enable-zlib enable-npn sctp       \
+		enable-deprecated enable-weak-ssl-ciphers         \
+		enable-heartbeats enable-unit-test  enable-ssl-trace      \
+		enable-ssl3    enable-ssl3-method   enable-ssl2   \
+		enable-tls1    enable-tls1-method   enable-tls    \
+		enable-tls1-1  enable-tls1-1-method enable-tlsext \
+		enable-tls1-2  enable-tls1-2-method enable-tls1-2-client  \
+		enable-dtls1   enable-dtls1-method      \
+		enable-dtls1-2 enable-dtls1-2-method    \
+		enable-md2     enable-md4   enable-mdc2 \
+		enable-rc2     enable-rc4   enable-rc5  \
+		enable-sha0    enable-sha1  enable-sha256 enable-sha512 \
+		enable-aes     enable-cms   enable-dh     enable-egd    \
+		enable-des     enable-dsa   enable-rsa    enable-rsax   \
+		enable-ec      enable-ec2m  enable-ecdh   enable-ecdsa  \
+		enable-blake2  enable-bf    enable-cast enable-camellia \
+		enable-gmp     enable-gost  enable-GOST   enable-idea   \
+		enable-poly1305 enable-krb5 enable-rdrand enable-rmd160 \
+		enable-seed    enable-srp   enable-whirlpool    \
 		enable-rfc3779 enable-ec_nistp_64_gcc_128 experimental-jpake \
 		-DOPENSSL_USE_BUILD_DATE -DTLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES -DTEMP_GOST_TLS	\
 		&& \
-	make depend && make && make report -i && make install	&& \
-	echo "#=  make depend ..."      && make depend && \
-        echo "#=  make ..."             && make && \
-        echo "#=  make report -i ..."   && make report -i && \
-        echo "#=  make install ..."     && make install && \ 
+	echo "#=  make depend ..."      && make depend  && \
+	echo "#=  make ..."             && make         && \
+	echo "#=  make report -i ..."   && make report -i && \
+	echo "#=  make install ..."     && make install && \ 
 		# make report most likely fails, hence -i
 	# simple test
 	echo -n "#   number of ciphers ${OPENSSL_DIR}/bin/openssl: " && \
 	${OPENSSL_DIR}/bin/openssl ciphers -V ALL:COMPLEMENTOFALL:aNULL|wc -l && \
 	echo "#=  cleanup"                      && \
 	$apt_exe $apt_del $opt_del $packages_dev && \
-	cd    $WORK_DIR				&& \
+	cd    $WORK_DIR                         && \
 	rm   -rf $BUILD_DIR $OSAFT_VM_TAR_OPENSSL && \
 	\
 	echo "#== Pull, build and install Net::SSLeay" && \
-	workaround_alpine_bug			&& \
-	cd    $WORK_DIR				&& \
-	mkdir -p $BUILD_DIR			&& \
-	[   -f "$OSAFT_VM_SRC_SSLEAY" ]         && \
+	workaround_alpine_bug                   && \
+	cd    $WORK_DIR                         && \
+	mkdir -p $BUILD_DIR                     && \
+	if [ -f "$OSAFT_VM_SRC_SSLEAY" ]; then \
 		cp "$OSAFT_VM_SRC_SSLEAY" "$OSAFT_VM_TAR_SSLEAY" ; \
-	[ ! -f "$OSAFT_VM_TAR_SSLEAY" ]         && \
-		curl --insecure --location --silent $OSAFT_VM_SRC_SSLEAY -o $OSAFT_VM_TAR_SSLEAY && \
+	else \
+		curl --insecure --location --silent $OSAFT_VM_SRC_SSLEAY -o $OSAFT_VM_TAR_SSLEAY ; \
+	fi && \
 	# check sha256 if there is one
-	[ -n "$OSAFT_VM_SHA_SSLEAY" ]		&& \
+	if [ -n "$OSAFT_VM_SHA_SSLEAY" ]; then \
 		echo "$OSAFT_VM_SHA_SSLEAY  $OSAFT_VM_TAR_SSLEAY" | sha256sum -c ; \
-	\
-	tar   -xzf $OSAFT_VM_TAR_SSLEAY -C $BUILD_DIR --strip-components=1	&& \
+	fi && \
+	tar   -xzf $OSAFT_VM_TAR_SSLEAY -C $BUILD_DIR --strip-components=1 && \
 	echo "#=  install additional packages for Net-SSLeay ..." && \
 	$apt_exe $apt_add $opt_add $packages_perl && \
 	echo "#=  configure and make Net-SSLeay" && \
-	cd    $BUILD_DIR			&& \
-	perl -i.orig -pe 'if (m/^#define\s*REM_AUTOMATICALLY_GENERATED_1_09/){print "const SSL_METHOD * SSLv2_method()\n\nconst SSL_METHOD * SSLv3_method()\n\n";}' SSLeay.xs	&& \
+	cd    $BUILD_DIR                        && \
+	perl -i.orig -pe 'if (m/^#define\s*REM_AUTOMATICALLY_GENERATED_1_09/){print "const SSL_METHOD * SSLv2_method()\n\n";}' SSLeay.xs      && \
 		# quick&dirty patch, results in warning, which can be ignored
 		# Warning: duplicate function definition 'SSLv2_method' detected in SSLeay.xs, line 4256
-	LDFLAGS="-rpath=$LD_RUN_PATH"   && export LDFLAGS	&& \
+		# Mar/2025: "const SSL_METHOD * SSLv3_method()"  removed as
+		#   modern gcc complain with error about duplicate definitions
+	LDFLAGS="-rpath=$LD_RUN_PATH"   && export LDFLAGS && \
 	echo "n" | env OPENSSL_PREFIX=$OPENSSL_DIR \
-                   perl Makefile.PL DEFINE=-DOPENSSL_BUILD_UNSAFE=1 \
-                   INC=-I$OPENSSL_DIR/include PREFIX=$SSLEAY_DIR && \
+		   perl Makefile.PL DEFINE=-DOPENSSL_BUILD_UNSAFE=1 \
+		   INC=-I$OPENSSL_DIR/include PREFIX=$SSLEAY_DIR && \
 		# Makefile.PL asks for "network tests", hence pipe "n" as answer
-	make && make test -i && make install	&& \
-	cd    $WORK_DIR				&& \
+	make && make test -i && make install    && \
+	cd    $WORK_DIR                         && \
 	rm   -rf $BUILD_DIR $OSAFT_VM_TAR_SSLEAY && \
 	\
 	echo "#== Pull, build and install IO::Socket::SSL" && \
-	workaround_alpine_bug			&& \
-	mkdir -p $BUILD_DIR			&& \
-	[   -f "$OSAFT_VM_SRC_SOCKET" ]         && \
+	workaround_alpine_bug                   && \
+	mkdir -p $BUILD_DIR                     && \
+	if [ -f "$OSAFT_VM_SRC_SOCKET" ]; then \
 		cp "$OSAFT_VM_SRC_SOCKET" "$OSAFT_VM_TAR_SOCKET" ; \
-	[ ! -f "$OSAFT_VM_TAR_SOCKET" ]         && \
-		curl --insecure --location --silent $OSAFT_VM_SRC_SOCKET -o $OSAFT_VM_TAR_SOCKET && \
+	else \
+		curl --insecure --location --silent $OSAFT_VM_SRC_SOCKET -o $OSAFT_VM_TAR_SOCKET ; \
+	fi && \
 	# check sha256 if there is one
-	[ -n "$OSAFT_VM_SHA_SOCKET" ]		&& \
+	if [ -n "$OSAFT_VM_SHA_SOCKET" ]; then \
 		echo "$OSAFT_VM_SHA_SOCKET  $OSAFT_VM_TAR_SOCKET" | sha256sum -c ; \
-	\
-	tar   -xzf $OSAFT_VM_TAR_SOCKET -C $BUILD_DIR --strip-components=1	&& \
-	cd    $BUILD_DIR			&& \
-	echo "n" | perl Makefile.PL INC=-I${OPENSSL_DIR}/include	&& \
-	make && make -i test && make install	&& \
+	fi && \
+	tar   -xzf $OSAFT_VM_TAR_SOCKET -C $BUILD_DIR --strip-components=1 && \
+	cd    $BUILD_DIR                        && \
+	echo "n" | perl Makefile.PL INC=-I${OPENSSL_DIR}/include && \
+	make && make -i test && make install    && \
 		# make test sometimes fails (see Workaround above), hence -i
-	cd    $WORK_DIR				&& \
+	cd    $WORK_DIR                         && \
 	rm   -r $BUILD_DIR $OSAFT_VM_TAR_SOCKET && \
 	\
-	echo "#== Pull and install O-Saft"	&& \
-	workaround_alpine_bug			&& \
-	cd    $WORK_DIR				&& \
-	[   -f "$OSAFT_VM_SRC_OSAFT" ]          && \
+	echo "#== Pull and install O-Saft"      && \
+	workaround_alpine_bug                   && \
+	cd    $WORK_DIR                         && \
+	if [ -f "$OSAFT_VM_SRC_OSAFT" ]; then \
 		cp "$OSAFT_VM_SRC_OSAFT" "$OSAFT_VM_TAR_OSAFT" ; \
-	[ ! -f "$OSAFT_VM_TAR_OSAFT" ]          && \
-		curl --insecure --location --silent $OSAFT_VM_SRC_OSAFT -o $OSAFT_VM_TAR_OSAFT	&& \
+	else \
+		curl --insecure --location --silent $OSAFT_VM_SRC_OSAFT -o $OSAFT_VM_TAR_OSAFT ; \
+	fi && \
 	# check sha256 if there is one
-	[ -n "$OSAFT_VM_SHA_OSAFT" ]		&& \
+	if [ -n "$OSAFT_VM_SHA_OSAFT" ]; then \
 		echo "$OSAFT_VM_SHA_OSAFT  $OSAFT_VM_TAR_OSAFT" | sha256sum -c ; \
-	\
-	tar   -xzf ${OSAFT_VM_TAR_OSAFT}	&& \
+	fi && \
+	tar   -xzf ${OSAFT_VM_TAR_OSAFT}        && \
 	# handle master directory from github, mv to ${OSAFT_DIR}
 	# checks fail sometimes, hence in a sub-shell
 	(\
 	  [ -d "./O-Saft-master" ] && mv ./O-Saft-master/*           ${OSAFT_DIR}/ ; \
 	  [ -d "./O-Saft-master" ] && mv ./O-Saft-master/.[a-zA-Z]*  ${OSAFT_DIR}/ ; \
-	  [ -d "./O-Saft-master" ] && rm -rf ./O-Saft-master/ 	; \
+	  [ -d "./O-Saft-master" ] && rm -rf ./O-Saft-master/  ; \
 	  exit 0 ; \
 	) && \
-	chown -R root:root   ${OSAFT_DIR}		&& \
-	chown -R ${OSAFT_VM_USER}:${OSAFT_VM_USER} ${OSAFT_DIR}/doc	&& \
-	chown -R ${OSAFT_VM_USER}:${OSAFT_VM_USER} ${OSAFT_DIR}/lib	&& \
-	chown -R ${OSAFT_VM_USER}:${OSAFT_VM_USER} ${OSAFT_DIR}/usr	&& \
+	chown -R root:root   ${OSAFT_DIR}       && \
+	chown -R ${OSAFT_VM_USER}:${OSAFT_VM_USER} ${OSAFT_DIR}/doc     && \
+	chown -R ${OSAFT_VM_USER}:${OSAFT_VM_USER} ${OSAFT_DIR}/lib     && \
+	chown -R ${OSAFT_VM_USER}:${OSAFT_VM_USER} ${OSAFT_DIR}/usr     && \
 	chown    ${OSAFT_VM_USER}:${OSAFT_VM_USER} ${OSAFT_DIR}/.o-saft.pl && \
-	cp       ${OSAFT_DIR}/.o-saft.pl ${OSAFT_DIR}/.o-saft.pl-orig	&& \
+	cp       ${OSAFT_DIR}/.o-saft.pl ${OSAFT_DIR}/.o-saft.pl-orig   && \
 	perl -i.bak -pe "s:^#?\s*--openssl=.*:--openssl=${OPENSSL_DIR}/bin/openssl:;s:^#?\s*--openssl-cnf=.*:--openssl-cnf=${OPENSSL_DIR}/ssl/openssl.cnf:;s:^#?\s*--ca-path=.*:--ca-path=/etc/ssl/certs/:;s:^#?\s*--ca-file=.*:--ca-file=/etc/ssl/certs/ca-certificates.crt:" ${OSAFT_DIR}/.o-saft.pl && \
-	chmod 666 ${OSAFT_DIR}/.o-saft.pl		&& \
-	rm    -f  ${OSAFT_VM_TAR_OSAFT}			&& \
+	chmod 666 ${OSAFT_DIR}/.o-saft.pl       && \
+	rm    -f  ${OSAFT_VM_TAR_OSAFT}         && \
 	\
 	echo "#== Cleanup" && \
 	$apt_exe $apt_del $opt_del $packages_make
