@@ -174,7 +174,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#) install_openssl.sh 3.6 25/03/16 10:13:17
+#?      @(#) install_openssl.sh 3.7 25/03/16 11:16:14
 #?
 #? AUTHOR
 #?      18. January 2018 Achim Hoffmann
@@ -453,7 +453,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  +VERSION)     echo 3.6 ; exit; ;; # for compatibility
+	  +VERSION)     echo 3.7 ; exit; ;; # for compatibility
 	  --version)    \sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0; exit 0; ;;
 	  -h | --h | --help | '-?' | '/?')
 		sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
@@ -536,7 +536,7 @@ echo_head '### install openssl ...'
 alias   RUN="\cd $dir && "  # create aliases, so Dockerfile's syntax can be used
 alias   apk="\echo '#'apk"  #
 
-# Dockerfile.openssl 3.8 {
+# Dockerfile.openssl 3.10 {
 
 #dbx# set -x
 RUN \
@@ -631,11 +631,11 @@ RUN \
 		# quick&dirty patch, results in warning, which can be ignored
 		# Warning: duplicate function definition 'SSLv2_method' detected in SSLeay.xs, line 4256
 	LDFLAGS="-rpath=$LD_RUN_PATH"   && export LDFLAGS	&& \
-	echo "n" | env OPENSSL_PREFIX=$OPENSSL_DIR perl Makefile.PL \
-		INC=-I$OPENSSL_DIR/include DEFINE=-DOPENSSL_BUILD_UNSAFE=1	&& \
+	echo "n" | env OPENSSL_PREFIX=$OPENSSL_DIR \
+		   perl Makefile.PL DEFINE=-DOPENSSL_BUILD_UNSAFE=1 \
+		   INC=-I$OPENSSL_DIR/include PREFIX=$SSLEAY_DIR && \
 		# Makefile.PL asks for "network tests", hence pipe "n" as answer
-		# installation in (default) /usr/local, hence no PREFIX=
-	make && make test && make install	&& \
+	make && make test -i && make install	&& \
 	cd    $WORK_DIR				&& \
 	rm   -rf $BUILD_DIR $OSAFT_VM_TAR_SSLEAY && \
 	\
@@ -648,7 +648,7 @@ RUN \
 	  perl -pe "s:^#\s*--openssl=.*:--openssl=$OPENSSL_DIR/bin/openssl:;s:^#?\s*--openssl-cnf=.*:--openssl-cnf=$OPENSSL_DIR/ssl/openssl.cnf:;s:^#?\s*--ca-path=.*:--ca-path=/etc/ssl/certs/:;s:^#?\s*--ca-file=.*:--ca-file=/etc/ssl/certs/ca-certificates.crt:" $OSAFT_DIR/.o-saft.pl-orig > ./.o-saft.pl && \
 	  chmod 666 ./.o-saft.pl
 
-# Dockerfile.openssl 3.8 }
+# Dockerfile.openssl 3.10 }
 
 # NOTE --ca-path and --ca-file are set to /etc/ because special openssl does
 #      not provide its on CA files; expects that /etc/ssl/certs/ exists.
