@@ -174,7 +174,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#) šðv_ 3.6 25/03/16 10:13:17
+#?      @(#) install_openssl.sh 3.6 25/03/16 10:13:17
 #?
 #? AUTHOR
 #?      18. January 2018 Achim Hoffmann
