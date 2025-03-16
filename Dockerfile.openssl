@@ -180,7 +180,7 @@ ARG     OSAFT_VM_DYN_OPENSSL="--shared"
 #                             --static  not yet (2020) working 'cause of libkrb5
 ARG     OSAFT_VM_APT_INSTALL
 ARG     OSAFT_VERSION="undefined"
-ARG     _SELF_="¯ŽU"
+ARG     _SELF_="Dockerfile.openssl"
 #       _SELF_ for internal use only to make multiple references unique
 
 LABEL \
@@ -192,7 +192,7 @@ LABEL \
 	SOURCE0="https://github.com/OWASP/O-Saft/raw/master/$_SELF_" \
 	SOURCE1="$OSAFT_VM_SRC_OSAFT" \
 	SOURCE2="$OSAFT_VM_SRC_OPENSSL" \
-	SID="@(#) ¯ŽU 3.9 25/03/15 09:43:14" \
+	SID="@(#) Dockerfile.openssl 3.10 25/03/16 11:15:16" \
 	AUTHOR="Achim Hoffmann"	
 
 ENV     osaft_vm_build  "$_SELF_ $OSAFT_VERSION; FROM $OSAFT_VM_FROM"
@@ -361,11 +361,11 @@ RUN \
 		# quick&dirty patch, results in warning, which can be ignored
 		# Warning: duplicate function definition 'SSLv2_method' detected in SSLeay.xs, line 4256
 	LDFLAGS="-rpath=$LD_RUN_PATH"   && export LDFLAGS	&& \
-	echo "n" | env OPENSSL_PREFIX=${OPENSSL_DIR} perl Makefile.PL \
-		INC=-I${OPENSSL_DIR}/include DEFINE=-DOPENSSL_BUILD_UNSAFE=1	&& \
+	echo "n" | env OPENSSL_PREFIX=$OPENSSL_DIR \
+                   perl Makefile.PL DEFINE=-DOPENSSL_BUILD_UNSAFE=1 \
+                   INC=-I$OPENSSL_DIR/include PREFIX=$SSLEAY_DIR && \
 		# Makefile.PL asks for "network tests", hence pipe "n" as answer
-		# installation in (default) /usr/local, hence no PREFIX=
-	make && make test && make install	&& \
+	make && make test -i && make install	&& \
 	cd    $WORK_DIR				&& \
 	rm   -rf $BUILD_DIR $OSAFT_VM_TAR_SSLEAY && \
 	\
