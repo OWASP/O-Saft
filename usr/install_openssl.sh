@@ -121,7 +121,7 @@
 #?              Build (link) mode of openssl executable: --static or --shared
 #?
 #?          OSAFT_VM_SRC_SSLEAY
-#?              URL to fetch Net-SSLeay.tar.gz archive.
+#?              URL to fetch Net-SSLeay.tar.gz archive. Can be local file.
 #?
 #?          OSAFT_VM_SHA_SSLEAY
 #?              SHA256 checksum for the Net-SSLeay.tar.gz archive.
@@ -174,7 +174,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#) install_openssl.sh 3.5 25/03/14 14:04:40
+#?      @(#) šðv_ 3.6 25/03/16 10:13:17
 #?
 #? AUTHOR
 #?      18. January 2018 Achim Hoffmann
@@ -453,7 +453,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  +VERSION)     echo 3.5 ; exit; ;; # for compatibility
+	  +VERSION)     echo 3.6 ; exit; ;; # for compatibility
 	  --version)    \sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0; exit 0; ;;
 	  -h | --h | --help | '-?' | '/?')
 		sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
@@ -536,26 +536,26 @@ echo_head '### install openssl ...'
 alias   RUN="\cd $dir && "  # create aliases, so Dockerfile's syntax can be used
 alias   apk="\echo '#'apk"  #
 
-# Dockerfile 1.30 {
+# Dockerfile.openssl 3.8 {
 
-# Pull, build and install enhanced openssl
 #dbx# set -x
 RUN \
+	echo "#== Pull, build and install enhanced openssl" && \
 	apk add --no-cache gmp-dev lksctp-tools-dev	&& \
 	cd    $WORK_DIR				&& \
 	mkdir -p $BUILD_DIR $OPENSSL_DIR	&& \
-	echo "## get and extract $OSAFT_VM_TAR_OPENSSL" && \
+	echo "#= get and extract $OSAFT_VM_TAR_OPENSSL" && \
 	[   -f "$OSAFT_VM_SRC_OPENSSL" ]        && \
 		cp "$OSAFT_VM_SRC_OPENSSL" "$OSAFT_VM_TAR_OPENSSL" ; \
 	[ ! -f "$OSAFT_VM_TAR_OPENSSL" ]        && \
 		wget --no-check-certificate $OSAFT_VM_SRC_OPENSSL -O $OSAFT_VM_TAR_OPENSSL && \
-	echo "##  check sha256 if there is one" && \
+	echo "#=  check sha256 if there is one" && \
 	[ -n "$OSAFT_VM_SHA_OPENSSL" ]		&& \
 		echo "$OSAFT_VM_SHA_OPENSSL  $OSAFT_VM_TAR_OPENSSL" | sha256sum -c ; \
 	\
 	tar   -xzf $OSAFT_VM_TAR_OPENSSL -C $BUILD_DIR --strip-components=1	&& \
 	cd    $BUILD_DIR			&& \
-	echo "##  patch openssl.cnf for GOST"   && \
+	echo "#=  patch openssl.cnf for GOST"   && \
 	sed -i '/RANDFILE/a openssl_conf=openssl_def' apps/openssl.cnf	&& \
 	#   using echo instead of cat to avoid problems with stacked commands:
 	#   cat -> shell -> docker
@@ -570,7 +570,7 @@ RUN \
 	  echo 'default_algorithms=ALL';\
 	  echo 'CRYPT_PARAMS=id-Gost28147-89-CryptoPro-A-ParamSet'; \
 	) >> apps/openssl.cnf			&& \
-	echo "## config with all options, even if they are default" && \
+	echo "#=  config with all options, even if they are default" && \
 	LDFLAGS="-rpath=$LD_RUN_PATH"   && export LDFLAGS	&& \
 		# see description for LD_RUN_PATH above
 	./config --prefix=$OPENSSL_DIR --openssldir=$OPENSSL_DIR/ssl	\
@@ -598,33 +598,34 @@ RUN \
 		enable-rfc3779 enable-ec_nistp_64_gcc_128 experimental-jpake \
 		-DOPENSSL_USE_BUILD_DATE -DTLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES -DTEMP_GOST_TLS	\
 		&& \
-	echo "## make depend && make ..."       && \
-	make depend && make && make report -i && make install	&& \
+	echo "#=  make depend ..."      && make depend && \
+	echo "#=  make ..."             && make && \
+	echo "#=  make report -i ..."   && make report -i && \
+	echo "#=  make install ..."     && make install	&& \
 		# make report most likely fails, hence -i
 	# simple test
 	echo -n "# number of ciphers $OPENSSL_DIR/bin/openssl: " && \
 	$OPENSSL_DIR/bin/openssl ciphers -V ALL:COMPLEMENTOFALL:aNULL|wc -l && \
-	echo "## cleanup"                       && \
+	echo "#=  cleanup"                       && \
 	apk  del --purge gmp-dev lksctp-tools-dev && \
 	cd    $WORK_DIR				&& \
 	rm   -rf $BUILD_DIR $OSAFT_VM_TAR_OPENSSL && \
-
-echo_head "### Pull, build and install Net::SSLeay"
-RUN \
+	\
+	echo "#== Pull, build and install Net::SSLeay" && \
 	cd    $WORK_DIR				&& \
 	mkdir -p $BUILD_DIR			&& \
 	[   -f "$OSAFT_VM_SRC_SSLEAY" ]         && \
 		cp "$OSAFT_VM_SRC_SSLEAY"  "$OSAFT_VM_TAR_SSLEAY" ; \
-	[ ! -f "$OSAFT_VM_TAR_SSLEAY" ]        && \
+	[ ! -f "$OSAFT_VM_TAR_SSLEAY" ]         && \
 		wget --no-check-certificate $OSAFT_VM_SRC_SSLEAY -O $OSAFT_VM_TAR_SSLEAY && \
 	# check sha256 if there is one
 	[ -n "$OSAFT_VM_SHA_SSLEAY" ]		&& \
 		echo "$OSAFT_VM_SHA_SSLEAY  $OSAFT_VM_TAR_SSLEAY" | sha256sum -c ; \
 	\
-	# install additional packages for Net-SSLeay ...
 	tar   -xzf $OSAFT_VM_TAR_SSLEAY -C $BUILD_DIR --strip-components=1	&& \
+	echo "#=  install additional packages for Net-SSLeay ..." && \
 	apk add --no-cache perl-net-dns perl-net-libidn perl-mozilla-ca		&& \
-	echo "## configure and make Net-SSLeay" && \
+	echo "#=  configure and make Net-SSLeay" && \
 	cd    $BUILD_DIR			&& \
 	perl -i.orig -pe 'if (m/^#define\s*REM_AUTOMATICALLY_GENERATED_1_09/){print "const SSL_METHOD * SSLv2_method()\n\nconst SSL_METHOD * SSLv3_method()\n\n";}' SSLeay.xs	&& \
 		# quick&dirty patch, results in warning, which can be ignored
@@ -638,7 +639,7 @@ RUN \
 	cd    $WORK_DIR				&& \
 	rm   -rf $BUILD_DIR $OSAFT_VM_TAR_SSLEAY && \
 	\
-	echo "## Adapt O-Saft's .o-saft.pl ..." && \
+	echo "#== Adapt O-Saft's .o-saft.pl ..." && \
 	cd    $WORK_DIR				&& \
 	[ -e  $OSAFT_DIR/.o-saft.pl ]		&& \
 	  mv  $OSAFT_DIR/.o-saft.pl $OSAFT_DIR/.o-saft.pl-orig	&& \
@@ -647,7 +648,7 @@ RUN \
 	  perl -pe "s:^#\s*--openssl=.*:--openssl=$OPENSSL_DIR/bin/openssl:;s:^#?\s*--openssl-cnf=.*:--openssl-cnf=$OPENSSL_DIR/ssl/openssl.cnf:;s:^#?\s*--ca-path=.*:--ca-path=/etc/ssl/certs/:;s:^#?\s*--ca-file=.*:--ca-file=/etc/ssl/certs/ca-certificates.crt:" $OSAFT_DIR/.o-saft.pl-orig > ./.o-saft.pl && \
 	  chmod 666 ./.o-saft.pl
 
-# Dockerfile 1.30 }
+# Dockerfile.openssl 3.8 }
 
 # NOTE --ca-path and --ca-file are set to /etc/ because special openssl does
 #      not provide its on CA files; expects that /etc/ssl/certs/ exists.
