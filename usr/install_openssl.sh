@@ -174,7 +174,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#) install_openssl.sh 3.7 25/03/16 11:16:14
+#?      @(#) install_openssl.sh 3.8 25/03/16 14:37:52
 #?
 #? AUTHOR
 #?      18. January 2018 Achim Hoffmann
@@ -453,7 +453,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  +VERSION)     echo 3.7 ; exit; ;; # for compatibility
+	  +VERSION)     echo 3.8 ; exit; ;; # for compatibility
 	  --version)    \sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0; exit 0; ;;
 	  -h | --h | --help | '-?' | '/?')
 		sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
@@ -627,9 +627,11 @@ RUN \
 	apk add --no-cache perl-net-dns perl-net-libidn perl-mozilla-ca		&& \
 	echo "#=  configure and make Net-SSLeay" && \
 	cd    $BUILD_DIR			&& \
-	perl -i.orig -pe 'if (m/^#define\s*REM_AUTOMATICALLY_GENERATED_1_09/){print "const SSL_METHOD * SSLv2_method()\n\nconst SSL_METHOD * SSLv3_method()\n\n";}' SSLeay.xs	&& \
+	perl -i.orig -pe 'if (m/^#define\s*REM_AUTOMATICALLY_GENERATED_1_09/){print "const SSL_METHOD * SSLv2_method()\n\";}' SSLeay.xs	&& \
 		# quick&dirty patch, results in warning, which can be ignored
 		# Warning: duplicate function definition 'SSLv2_method' detected in SSLeay.xs, line 4256
+		# Mar/2025: "const SSL_METHOD * SSLv3_method()"  removed as
+		#   modern gcc complain with error about duplicate definitions
 	LDFLAGS="-rpath=$LD_RUN_PATH"   && export LDFLAGS	&& \
 	echo "n" | env OPENSSL_PREFIX=$OPENSSL_DIR \
 		   perl Makefile.PL DEFINE=-DOPENSSL_BUILD_UNSAFE=1 \
