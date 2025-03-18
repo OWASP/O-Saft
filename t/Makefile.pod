@@ -40,9 +40,13 @@ Most  test.*  targets are summary targets executing a list of the above.
 All  help.*  targets are for documentation of the makefile's targets.
 For more details on target names, please  see L</O-Saft:Makefile Targets> .
 
-To get a list of all target for testing, use:
+To get a list of all individual target for testing, use:
 
     make s-ALL.tests
+
+To get a list of all summary target for testing, use:
+
+    make targets | grep ^test
 
 For more such target, please  see L</O-Saft:Makefile Targets> .
 
@@ -88,7 +92,7 @@ The sub-headers in this section are referenced from other Makefile* .
 
 =head1 VERSION
 
-@(#) Makefile.pod 3.13 24/08/18 15:13:39
+@(#) Makefile.pod 3.14 25/03/18 13:16:30
 
 =head1 AUTHOR
 
@@ -457,7 +461,7 @@ Naming conventions for targets:
     test.name_arg   - some pattern rule targets use  _  to pass arguments
     test.name.log   - same as  test.name  but store results in logfile
     test%ext        - pattern rule used instead of explicit target rule to
-                      allow spelling variants, like tst.ext or tst-ext
+                      allow spelling variants, like test.ext or test-ext
     testarg-TYP-*   - targets for testing tool arguments in Makefile.TYP
     testcmd-TYP-*   - targets for testing tool  commands in Makefile.TYP
                       "tool" may be any of those defined in macro  ALL.exe
@@ -479,6 +483,17 @@ Targets in the Makefile* are grouped, usually. Each group should be headed
 by the help texts for the targets using  HELP-  variables (see below).
 
 =head3 Get information about available targets
+
+Keep in mind that many targets are generated at (make) runtime and are not
+visible (to human eyes) in the  Makefile* verbatim.  To get all individual
+targets, use:
+
+    make s-ALL.tests
+
+To get list of all test* targets, use:
+
+    make targets | grep ^test
+    make targets target=test\\.
 
 Following make commands can be used as starters to get a list of available
 targets, their documentation, information about Makefiles and other help:
