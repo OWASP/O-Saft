@@ -1,5 +1,5 @@
 
-# SID   @(#) devel.txt 3.7 25/03/12 18:27:14
+# SID   @(#) devel.txt 3.8 25/03/18 13:17:45
 
 
 NAME
@@ -17,7 +17,11 @@ DESCRIPTION
         This is about hints and tricks for debugging, tracing and testing. It
         is the documentation for development!
 
-        For user documentation please refer to  help.txt  or use:.
+        For a brief introduction to user testing please see:
+
+              $0 --help=test
+
+        For complete user documentation please refer to  help.txt  or use:
 
               $0 --help
               $0 --help=HELP
@@ -52,8 +56,7 @@ DESCRIPTION
 
 OVERVIEW
 
-        Using make for development uses additional external tools and/or Perl
-        to get an overview about source, functions, methods and descriptions.
+        To get an overview about source, functions, methods and descriptions.
         Following commands can be used.
 
         Descriptions, Methods
@@ -439,18 +442,9 @@ TESTING
 
     User testing
 
-        During normal use of the tool, "testing" is only required for hunting
-        problems with the connected target. Following options for tracing and
-        verbosity can be used for that:
+        Please see:
 
-      --v
-
-          Print more information about checks.
-
-      --trace
-
-          Print debugging messages.
-          For more details, please see  X&Options for tracing and debugging& .
+              $0 --help=test
 
     Functional testing
 
@@ -464,8 +458,8 @@ TESTING
         development. These tests are implemented in the  ./t/  directory, see
         all 'Makefile.*' there, start with 'Makefile.pod'.
 
-        After initialising the development environment (for example when the
-        tarball have been extracted),  use following to create a logfile for
+        After initialising the development environment  (for example when the
+        tarball have been extracted),  use following to create  a logfile for
         each test in  t/log/ :
 
           make test.log
@@ -478,8 +472,8 @@ TESTING
 
           make test.log
 
-        and follow the instructions printed at end (compare logfile,  accexpt
-        new logfiles). Most likely, the next step is any of:
+        and follow the instructions printed at end (compare|accept logfiles).
+        Most likely, the next step is any of:
 
           make test.log-compare
           make test.log-compare-v
