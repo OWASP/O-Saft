@@ -21,7 +21,7 @@
 #?          make targets.me
 #?
 #? VERSION
-#?      @(#) Makefile.help 3.5 24/07/01 16:29:01
+#?      @(#) Makefile.help 3.6 25/03/18 13:10:45
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -30,7 +30,7 @@
 
 HELP-help.test.help = targets to get information/documentation from Makefiles
 
-O-SID.help         := 3.5
+O-SID.help         := 3.6
 O-SELF.help        := t/Makefile.help
 ALL.includes       += $(O-SELF.help)
 ALL.inc.type       += help
@@ -245,8 +245,9 @@ HELP.help       = $(O-NL)\
 \# which are used like:                 $(O-NL)\
 \#    $(MAKE_COMMAND) echo  echo=MYVAR  $(O-NL)\
 \#    $(MAKE_COMMAND) macro macro=MYVAR $(O-NL)\
+\#    $(MAKE_COMMAND) target target=MYTARGET $(O-NL)\
 \# For easy use, following alias exist: $(O-NL)\
-\#    e-  m-  p-  s-  t-                $(O-NL)\
+\#    e-  m-  t-  p-  s-                $(O-NL)\
 \# which are used like:                 $(O-NL)\
 \#    $(MAKE_COMMAND) e-TEST.MYmacro    $(O-NL)\
 \#    $(MAKE_COMMAND) m-TEST.MYmacro    $(O-NL)\
