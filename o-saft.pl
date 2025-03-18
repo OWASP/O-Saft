@@ -71,7 +71,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.201 25/03/14 15:52:07"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.203 25/03/19 00:01:38"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -389,7 +389,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.201"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.203"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -2816,6 +2816,72 @@ sub _get_target     {
     return ($prot, $host, $port, $auth, $path);
 } # _get_target
 
+sub _get_dns        {
+    #? return IP and DNS related data; empty list if target is invalid
+    #  gethostbyname() and gethostbyaddr() set $? on error, needs to be reset!
+    my $host  = shift;
+    my $fail  = "";
+    my $rhost = "";
+    my $dns   = "";
+    my $myIP  = "";
+    my $myip  = "";
+    trace("_get_dns($host){");
+    if ("" ne $cfg{'proxyhost'}) {
+        # if a proxy is used, DNS might not work at all, or be done by the
+        # proxy (which even may return other results than the local client)
+        # so we set corresponding values to a warning
+        $fail   = _get_text('disabled', "--proxyhost=$cfg{'proxyhost'}");
+        $rhost  = $fail;
+        $dns    = $fail;
+        $myIP   = $fail;
+        $myip   = $fail;
+    } else {
+        $fail   = '<<gethostbyaddr() failed>>';
+        $myip   = gethostbyname($host); # primary IP as identified by given hostname
+        if (not defined $myip) {
+            OCfg::warn("201: Can't get IP for host '$host'; host ignored");
+            trace(" host}");
+            return undef;   # failed, must be handled by caller
+        }
+        # gethostbyaddr() is strange: returns $?==0 but an error message in $!
+        # hence just checking $? is not reliable, we do it additionally.
+        # If gethostbyaddr()  fails we use Perl's  `or'  to assign our default
+        # text.  This may happen when there are problems with the local name
+        # resolution.
+        # When gethostbyaddr() fails, the connection to the target most likely
+        # fails also, which produces more Perl warnings later.
+        # Using "C4" (8-bit unsigned char) which should be ok for IPs an works
+        # in ancient Perl too, which does not support "W4".
+        _vprint("  test IP");
+        $myIP       = join(".", unpack("C4", $myip));
+        if (_is_cfg_use('dns')) {   # following settings only with --dns
+            trace(" test DNS (disable with --no-dns)");
+           _trace_time("test DNS{");
+           local $? = 0; local $! = undef;
+           ($rhost  = gethostbyaddr($myip, AF_INET)) or $rhost = $fail;
+            $rhost  = $fail if ($? != 0);
+            my ($fqdn, $aliases, $addrtype, $length, @ips) = gethostbyname($host);
+            my $i = 0;
+            #dbx printf "@ips = %s\n", join(" - ", @ips);
+            foreach my $ip (@ips) {
+                local $? = 0; local $! = undef;
+                # TODO: $rhost  = gethostbyaddr($ipv6, AF_INET6));
+               ($rhost  = gethostbyaddr($ip, AF_INET)) or $rhost = $fail;
+                $rhost  = $fail if ($? != 0);
+                $dns   .= join(".", unpack("C4", $myip)) . " " . $rhost . "; ";
+                #dbx printf "[%s] = %s\t%s\n", $i, join(".",unpack("C4",$ip)), $rhost;
+            }
+            if ($rhost =~ m/gethostbyaddr/) {
+                OCfg::warn("202: Can't do DNS reverse lookup: for '$host': $fail; ignored");
+                OCfg::hint("202: use '--no-dns' to disable this check");
+            }
+           _trace_time("test DNS}");
+        }
+    }
+    trace("_get_dns()\t= [rhost=$rhost, dns=$dns, IP=$myIP, ..] }");
+    return ($rhost, $dns, $myIP, $myip);
+} # _get_dns
+
 sub _get_data0      {
     #? get %data for connection without SNI
     #  this function currently only returns data for:  cn_nosni, session_ticket
@@ -3127,7 +3193,7 @@ sub ciphers_scan_openssl {
     my $results = {};       # hash of cipher list to be returned
     foreach my $ssl (@{$cfg{'version'}}) {
         my $usesni  = $cfg{'use'}->{'sni'};
-        _vprint("  test $cnt ciphers for $ssl ... ($cfg{'ciphermode'}) ");
+        _vprint("    test $cnt ciphers for $ssl ... ($cfg{'ciphermode'}) ");
         trace( "  test $cnt ciphers for $ssl ... ($cfg{'ciphermode'}) ");
         trace( "  using cipherpattern=[ @{$cfg{'cipher'}} ], cipherrange=$cfg{'cipherrange'}");
         if ($ssl =~ m/^SSLv[23]/) {
@@ -3210,7 +3276,7 @@ sub ciphers_scan_intern {
         my $accepted_cnt = 0;
         my @all = _get_cipherslist('keys', $ssl);
         $total += scalar(@all);
-        _vprint("  test " . scalar(@all) . " ciphers for $ssl ... (SSLhello)");
+        _vprint("    test " . scalar(@all) . " ciphers for $ssl ... (SSLhello)");
         trace( "  test " . scalar(@all) . " ciphers for $ssl ... (SSLhello)");
         trace( "  using cipherpattern=[ @{$cfg{'cipher'}} ], cipherrange=$cfg{'cipherrange'}");
         if ("@all" =~ /^\s*$/) {
@@ -3267,6 +3333,50 @@ sub ciphers_scan_intern {
     }
     return $results;
 } # ciphers_scan_intern
+
+sub ciphers_scan    {
+    #? scan target for ciphers for all protocols;  modifies %checks, %prot
+    #  wrapper for ciphers_scan_intern() and ciphers_scan_openssl()
+    # returns array with accepted ciphers
+    my ($host, $port) = @_;
+    trace("ciphers_scan($host, $port) {");
+    my $results = {};   # array of arrays
+    OCfg::warn("209: No SSL versions for '+cipher' available") if ($#{$cfg{'version'}} < 0);
+        # above warning is most likely a programming error herein
+    if ('openssl' eq $cfg{'cipherrange'}) {
+        # get ciphers from openssl for any --ciphermode=
+        # TODO: see CIPHER_RANGE also
+        require SSLinfo;    # FIXME: dirty hack until we have lib/SSLtool.pm
+        $SSLinfo::openssl = $openssl{'exe'};
+        @{$cfg{'cipher'}} = map({Ciphers::get_key($_)||"";} SSLinfo::cipher_openssl("@{$cfg{'cipher'}}"));
+        trace(" openssl ciphers: " . scalar @{$cfg{'cipher'}});
+    }
+    _vprint("    test protocols @{$cfg{'version'}} ...");
+    if (_is_cfg_ciphermode('intern|dump')) {
+        trace(" use SSLhello ...");
+        SSLhello::printParameters() if ($cfg{'trace'} > 1);
+        $results = ciphers_scan_intern($host, $port);
+    }
+    if (_is_cfg_ciphermode('openssl|socket')) {
+        trace(" use $cfg{'ciphermode'} ...");
+        # FIXME: on tiny systems following may cause "Out of memory!"
+        $results = ciphers_scan_openssl($host, $port);  # uses @{$cfg{'ciphers'}}
+        # TODO:  $prot{$ssl}->{'default'} = $cipher;
+        # SEE Note:+cipher-selected
+        trace(" get default ...");
+        _trace_time("need_default{");
+        ciphers_default_openssl($host, $port);
+        _trace_time("need_default}");
+    }
+    foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
+        $checks{'cnt_ciphers'}->{val} += $results->{'_admin'}{$ssl}{'cnt_offered'};
+        $checks{'cnt_totals'} ->{val} += $results->{'_admin'}{$ssl}{'cnt_accepted'};
+    }
+    #dbx# print Dumper(\$results);
+    checkciphers($host, $port, $results);
+    trace("ciphers_scan() }"); # no trace($results) as already done by ciphers_scan_*()
+    return $results;
+} # ciphers_scan
 
 #_____________________________________________________________________________
 #__________________________________________________________ check functions __|
@@ -5410,7 +5520,7 @@ sub print_footer    {
 } # print_footer
 
 sub print_title     {
-    #? print title according given legacy format
+    #? print title according given legacy format; uses $cfg{'IP'}
     my ($legacy, $ssl, $host, $port, $header) = @_;
     if ($legacy eq 'sslyze')    {
         my $txt = " SCAN RESULTS FOR " . $host . " - " . $cfg{'IP'};
@@ -6129,6 +6239,24 @@ sub printchecks         {
     return;
 } # printchecks
 
+sub printdns            {
+    #? print DNS-related information for target
+    my ($legacy, $host, $port) = @_;
+    _vprint("  print DNS stuff");
+    trace(" +info || +check || +sni*");
+    if ($legacy =~ /(compact|full|owasp|simple)/) {
+        print_ruler();
+        print_line($legacy, $host, $port, 'host_name', $text{'host_name'}, $host);
+        print_line($legacy, $host, $port, 'host_IP',   $text{'host_IP'}, $cfg{'IP'});
+        if (_is_cfg_use('dns')) {
+            print_line($legacy, $host, $port, 'host_rhost', $text{'host_rhost'}, $cfg{'rhost'});
+            print_line($legacy, $host, $port, 'host_DNS',   $text{'host_DNS'},   $cfg{'DNS'});
+        }
+        print_ruler();
+    }
+    return;
+} # printdns
+
 #| definitions: print functions for help and information
 #| -------------------------------------
 
@@ -6205,7 +6333,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.201");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.203");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7519,7 +7647,7 @@ if ($help !~ m/^\s*$/) {
     OMan::man_printhelp($help);
     exit 0;
 }
-if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.201"; exit 0; }
+if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.203"; exit 0; }
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))     { _vprint("  list       "); printciphers_list('list'); exit 0; }
 if (_is_cfg_do('ciphers'))  { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
@@ -7992,82 +8120,16 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     $SSLinfo::target_url    =~ s:^\s*$:/:;      # set to / if empty
     _resetchecks();
     print_header(_get_text('out_target', "$host:$port"), "", "", $cfg{'out'}->{'header'});
+
     next if _trace_next("  DNS0    - start");
-
-    #  gethostbyname() and gethostbyaddr() set $? on error, needs to be reset!
-    my $rhost = "";
-    $fail = "";     # reusing variable
-    if ("" ne $cfg{'proxyhost'}) {
-        # if a proxy is used, DNS might not work at all, or be done by the
-        # proxy (which even may return other results than the local client)
-        # so we set corresponding values to a warning
-        $fail = _get_text('disabled', "--proxyhost=$cfg{'proxyhost'}");
-        $cfg{'rhost'}   = $fail;
-        $cfg{'DNS'}     = $fail;
-        $cfg{'IP'}      = $fail;
-        $cfg{'ip'}      = $fail;
-    } else {
-        $fail  = '<<gethostbyaddr() failed>>';
-        $cfg{'ip'}      = gethostbyname($host); # primary IP as identified by given hostname
-        if (not defined $cfg{'ip'}) {
-            OCfg::warn("201: Can't get IP for host '$host'; host ignored");
-            trace(" host}");
-            next;   # otherwise all following fails
-        }
-        # gethostbyaddr() is strange: returns $?==0 but an error message in $!
-        # hence just checking $? is not reliable, we do it additionally.
-        # If gethostbyaddr()  fails we use Perl's  `or'  to assign our default
-        # text.  This may happen when there are problems with the local name
-        # resolution.
-        # When gethostbyaddr() fails, the connection to the target most likely
-        # fails also, which produces more Perl warnings later.
-        # Using "C4" (8-bit unsigned char) which should be ok for IPs an works
-        # in ancient Perl too, which does not support "W4".
-        _vprint("  test IP");
-        $cfg{'IP'}          = join(".", unpack("C4", $cfg{'ip'}));
-        if (_is_cfg_use('dns')) {   # following settings only with --dns
-            trace(" test DNS (disable with --no-dns)");
-           _trace_time("test DNS{");
-           local $? = 0; local $! = undef;
-           ($cfg{'rhost'}   = gethostbyaddr($cfg{'ip'}, AF_INET)) or $cfg{'rhost'} = $fail;
-            $cfg{'rhost'}   = $fail if ($? != 0);
-            my ($fqdn, $aliases, $addrtype, $length, @ips) = gethostbyname($host);
-            my $i = 0;
-            #dbx printf "@ips = %s\n", join(" - ", @ips);
-            foreach my $ip (@ips) {
-                local $? = 0; local $! = undef;
-                # TODO: $rhost  = gethostbyaddr($ipv6, AF_INET6));
-               ($rhost  = gethostbyaddr($ip, AF_INET)) or $rhost = $fail;
-                $rhost  = $fail if ($? != 0);
-                $cfg{'DNS'} .= join(".", unpack("C4", $cfg{'ip'})) . " " . $rhost . "; ";
-                #dbx printf "[%s] = %s\t%s\n", $i, join(".",unpack("C4",$ip)), $rhost;
-            }
-            if ($cfg{'rhost'} =~ m/gethostbyaddr/) {
-                OCfg::warn("202: Can't do DNS reverse lookup: for '$host': $fail; ignored");
-                OCfg::hint("202: use '--no-dns' to disable this check");
-            }
-           _trace_time("test DNS}");
-        }
-    }
+    ($cfg{'rhost'}, $cfg{'DNS'}, $cfg{'IP'}, $cfg{'ip'}) = _get_dns($host);
+    next if not defined $cfg{'rhost'};  # otherwise all following fails
     if (_is_cfg_do('host') or (($info + $check + $cmdsni) > 0)) {
-        _vprint("  print DNS stuff");
-        trace(" +info || +check || +sni*");
-        if ($legacy =~ /(compact|full|owasp|simple)/) {
-            print_ruler();
-            print_line($legacy, $host, $port, 'host_name', $text{'host_name'}, $host);
-            print_line($legacy, $host, $port, 'host_IP',   $text{'host_IP'}, $cfg{'IP'});
-            if (_is_cfg_use('dns')) {
-                print_line($legacy, $host, $port, 'host_rhost', $text{'host_rhost'}, $cfg{'rhost'});
-                print_line($legacy, $host, $port, 'host_DNS',   $text{'host_DNS'},   $cfg{'DNS'});
-            }
-            print_ruler();
-        }
+        printdns($legacy, $host, $port);
     }
-
     next if _trace_next("  DNS9    - end");
 
     if (_is_cfg_do('cipher_dh')) {
-        # abort here is ok because +cipher-dh cannot be combined with other commands
         if (not _is_cfg_ciphermode('intern')) {
             OCfg::warn("405: option '--ciphermode=', not supported for '+cipher-dh'; reset to --ciphermode=intern");
             $cfg{'ciphermode'} = "intern";
@@ -8080,42 +8142,9 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
 
     next if _trace_next("  CIPHER0 - start (ciphermode=$cfg{'ciphermode'})");
     if (_need_cipher()) {
-        OCfg::warn("209: No SSL versions for '+cipher' available") if ($#{$cfg{'version'}} < 0);
-            # above warning is most likely a programming error herein
-        if ('openssl' eq $cfg{'cipherrange'}) {
-            # get ciphers from openssl for any --ciphermode=
-            # TODO: see CIPHER_RANGE also
-            require SSLinfo;    # FIXME: dirty hack until we have lib/SSLtool.pm
-            $SSLinfo::openssl = $openssl{'exe'};
-            @{$cfg{'cipher'}} = map({Ciphers::get_key($_)||"";} SSLinfo::cipher_openssl("@{$cfg{'cipher'}}"));
-            trace(" openssl ciphers: " . scalar @{$cfg{'cipher'}});
-        }
-        $cipher_results = {};           # new list for every host (array of arrays)
-        _vprint("  test protocols @{$cfg{'version'}} ...");
-        if (_is_cfg_ciphermode('intern|dump')) {
-            trace(" use SSLhello ...");
-            SSLhello::printParameters() if ($cfg{'trace'} > 1);
-            $cipher_results = ciphers_scan_intern($host, $port);
-        }
-        if (_is_cfg_ciphermode('openssl|socket')) {
-            trace(" use $cfg{'ciphermode'} ...");
-            # FIXME: on tiny systems following may cause "Out of memory!"
-            $cipher_results = ciphers_scan_openssl($host, $port);   # uses @{$cfg{'ciphers'}}
-            # TODO:  $prot{$ssl}->{'default'} = $cipher;
-            # SEE Note:+cipher-selected
-            trace(" get default ...");
-            _trace_time("need_default{");
-            ciphers_default_openssl($host, $port);
-            _trace_time("need_default}");
-        }
-        foreach my $ssl (@{$cfg{'version'}}) {  # all requested protocol versions
-            $checks{'cnt_ciphers'}->{val} += $cipher_results->{'_admin'}{$ssl}{'cnt_offered'};
-            $checks{'cnt_totals'} ->{val} += $cipher_results->{'_admin'}{$ssl}{'cnt_accepted'};
-        }
-        #dbx# print Dumper(\$cipher_results);
-        checkciphers($host, $port, $cipher_results);
-    } # need_cipher
-    next if _trace_next("  SCAN    - done");
+        $cipher_results = ciphers_scan($host, $port);
+    }
+    next if _trace_next("  SCAN    - done"); # dirty logic outside if-condition to ensure it's always checked
 
     if (_is_cfg_do('cipher_dh')) {
         _vprint("  +cipher-dh");
@@ -8140,11 +8169,13 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             # in printprotocols() anyway
             printcipherpreferred($legacy, $host, $port);
         }
+        next if _trace_next("  CIPHER9 - end");
         goto CLOSE_SSL if (_is_cfg_do('cipher') and (0 == $quick)); # next HOSTS
     } # need_cipher
-    next if _trace_next("  CIPHER9 - end");
+    next if _trace_next("  CIPHER9 - end"); # dirty logic outside if-condition to ensure it's always checked
 
-    # Quick check if the target is available; any command except +cipher*
+    # from here on all other commands than +cipher*
+    # Quick check if the target is available
     next if _trace_next("  CONN0   - start"); # SEE Note:Connection Test
     my $connect_ssl = 1;
     trace(" sni_name= " . ($cfg{'sni_name'} || $STR{UNDEF}));
