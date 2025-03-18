@@ -6,7 +6,7 @@
 #?      make help.test.inst
 #?
 #? VERSION
-#?      @(#) Makefile.inst 3.15 25/03/13 16:34:34
+#?      @(#) Makefile.inst 3.16 25/03/18 12:12:45
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.inst = targets for testing INSTALL.sh
 
-O-SID.inst         := 3.15
+O-SID.inst         := 3.16
 O-SELF.inst        := t/Makefile.inst
 ALL.includes       += $(O-SELF.inst)
 ALL.inc.type       += inst
@@ -35,7 +35,7 @@ help.test.inst-vv:    HELP_TYPE = inst
 #________________________________________________________________ variables __|
 
 EXE.INSTALL        ?= INSTALL.sh
-EXE.install_openssl = $(O-DIR.usr)/install_openssl.sh
+EXE.install_openssl = install_openssl.sh
 
 LIST.INSTALL.sh    :=   --usage --expected  \
 	--install       --cgi  --clean --check         --checkdev \
@@ -55,7 +55,7 @@ HELP-_inst  = ________________________________________ testing INSTALL.sh _
 HELP-testcmd-inst-INSTALL.sh%   = test arguments of '($EXE.INSTALL)'
 HELP-testarg-inst-INSTALL.sh%   = test arguments and options of '($EXE.INSTALL)'
 HELP-testarg-inst-INSTALL.sh%.log = same as testarg-inst-INSTALL.sh% but store output in '$(TEST.logdir)/'
-HELP-testarg-inst-usr-install_openssl%  = test arguments and options of '($EXE.install_openssl)'
+HELP-testarg-inst-usr-install_openssl%  = test arguments and options of '$(O-DIR.usr)/($EXE.install_openssl)'
 
 # NOTE: ensure that EXE.install is called with --n !
 # NOTE: EXE.INSTALL --openssl does not work from t directory
@@ -107,7 +107,7 @@ testcmd-inst-INSTALL.sh_%.log:      EXE.log-filtercmd  = awk '\
 testarg-inst-INSTALL.sh_from-tgz: $(GEN.tgz)
 	@mkdir -p $(O-DIR.tmp)/i
 	@cp $(GEN.tgz) $(O-DIR.tmp)/i/
-	@cd     $(O-DIR.tmp)/i && \
+	cd     $(O-DIR.tmp)/i && \
 		tar xf $(GEN.tgz) && cd O-Saft && \
 		./$(EXE.INSTALL) --install $(O-DIR.tmp); \
 		./$(EXE.INSTALL) --check   $(O-DIR.tmp); \
@@ -130,21 +130,41 @@ ALL.test.inst      += \
 	testarg-inst-INSTALL.sh_from-tgz
 
 # targets for install_openssl.sh
-testarg-inst-usr-install_openssl_%:     EXE.pl    = ../$(EXE.install_openssl)
+testarg-inst-usr-install_openssl_%:     EXE.pl    = ../$(O-DIR.usr)/$(EXE.install_openssl)
 testarg-inst-usr-install_openssl_%:     TEST.init =
 testarg-inst-usr-install_openssl_--n:   TEST.args = --n
 testarg-inst-usr-install_openssl_--m:   TEST.args = --m
 testarg-inst-usr-install_openssl_--list:TEST.args = --list
 
 # target creating openssl must be defined because of cleanup (see testarg-%:)
-# and using a local tarball instead downloading (see $(EXE.install_openssl))
-# TODO: target executed in . should be changed to /tmp
-testarg-inst-usr-install_openssl_--m:   TEST.args = --m
-testarg-inst-usr-install_openssl_--m::  export OSAFT_VM_SRC_OPENSSL = ./testssl/openssl-1.0.2-chacha.tar.gz
+# and using a local tarball instead downloading (see $(EXE.install_openssl));
+# $(SRC.pl) and $(SRC.rc) required in $(EXE.install_openssl)
+# build and install is done in $(O-DIR.tmp), using environment variables well
+# known by $(EXE.install_openssl); $(O-DIR.tmp) can safely be removed at end
+testarg-inst-usr-install_openssl_--m:   export BUILD_DIR   = $(O-DIR.tmp)/src
+testarg-inst-usr-install_openssl_--m:   export OSAFT_DIR   = $(O-DIR.tmp)
+testarg-inst-usr-install_openssl_--m:   export SSLEAY_DIR  = $(O-DIR.tmp)/lea
+testarg-inst-usr-install_openssl_--m:   export OPENSSL_DIR = $(O-DIR.tmp)/inst
+testarg-inst-usr-install_openssl_--m:   export OSAFT_VM_SRC_OPENSSL = $(PWD)/$(TEST.dir)/testssl/openssl-1.0.2-chacha.tar.gz
+testarg-inst-usr-install_openssl_--m:   export OSAFT_VM_SRC_SSLEAY  = $(PWD)/$(TEST.dir)/Net-SSLeay-1.94.tgz
 testarg-inst-usr-install_openssl_--m::
 	@$(O-TRACE.target)
-	-cd $(TEST.dir) && $(EXE.pl) $(TEST.init) $(TEST.args)
-	@-test -f $(TEST.dir)/openssl.tgz && rm -f $(TEST.dir)/openssl.tgz
+	@echo "**ERROR: $(EXE.install_openssl) not yet working in target $@"
+	@/bin/false
+	echo "exit"
+	exit
+	@mkdir -p $(OSAFT_DIR) $(OPENSSL_DIR) $(SSLEAY_DIR)
+	@cp           $(SRC.rc)     $(OSAFT_DIR)/
+	@ln -s $(PWD)/$(SRC.pl)     $(OSAFT_DIR)/$(SRC.pl)
+	@ln -s $(PWD)/$(O-DIR.lib)  $(OSAFT_DIR)/lib
+	@cp $(O-DIR.usr)/$(EXE.install_openssl) $(OSAFT_DIR)/
+	@echo "# cd OSAFT_DIR=$(OSAFT_DIR) # OPENSSL_DIR=$(OPENSSL_DIR) SSLEAY_DIR=$(SSLEAY_DIR)"
+	@cd     $(OSAFT_DIR)/ && \
+		./$(EXE.install_openssl) $(TEST.init) $(TEST.args) ; \
+		/bin/true
+	@ls  -l $(OSAFT_DIR)
+	@rm -rf $(O-DIR.tmp)
+
 
 ALL.test.inst      += \
 	testarg-inst-usr-install_openssl_--m  \
