@@ -6,7 +6,7 @@
 #?      make help.test.dev
 #?
 #? VERSION
-#?      @(#) Makefile.dev 3.17 24/09/04 10:22:15
+#?      @(#) Makefile.dev 3.18 25/03/18 11:53:13
 #?
 #? AUTHOR
 #?      19-apr-19 Achim Hoffmann
@@ -15,7 +15,7 @@
 
 HELP-help.test.dev  = targets for testing internal documentation and functionality
 
-O-SID.dev          := 3.17
+O-SID.dev          := 3.18
 O-SELF.dev         := t/Makefile.dev
 ALL.includes       += $(O-SELF.dev)
 ALL.inc.type       += dev
@@ -41,13 +41,13 @@ TEST.dev.hosts      =
 
 # list of source files (executables) to be used for some "grep"-targets
 # NOTE: contains only source files with potentionally marked control flow. This
-# is for sure in  SRC.pl  and  SRC.tcl.  To avoid  the target re-
-# turning "failed", it must be ensured that the last file returns something, so
-# SRC.pl  is the last in the list (see t*_flow target below)
-LIST.sources       := $(SRC.tcl:%=../%)  $(SRC.pm:%=../%)  $(SRC.pl:%=../%)
+# is for sure in  SRC.pl  and  SRC.tcl. To avoid the target returning "failed",
+# it must be ensured that the last file returns something, hence  SRC.pl is the
+# last in the list (see t*_flow target below)
+O-LIST.sources     := $(SRC.tcl)  $(SRC.pm)  $(SRC.pl)
 
 # list of programs 
-LIST.programs      := \
+O-LIST.programs    := \
 	$(SRC.sh) $(EXE.o_docker) $(GEN.src) \
 	$(SRC.pl) $(SRC.tcl)      $(SRC.pm)  \
 	$(TEST.dir)/Makefile.pod \
@@ -124,11 +124,11 @@ ifndef dev-macros-generated
     # need to call program in this directory and not the one found via $PATH
 
     # SEE Make:generating help
-    $(foreach _prg, $(LIST.programs), \
+    $(foreach _prg, $(O-LIST.programs), \
        $(eval HELP.dev += test.dev.$(subst /,-,$(_prg)).all\t\# targets for testing '$(_prg)'\n)\
     )
     $(eval HELP.dev +=\t\t\#____________ same as above, but store output in '$(TEST.logdir)' _\n)
-    $(foreach _prg, $(LIST.programs),\
+    $(foreach _prg, $(O-LIST.programs),\
         $(eval _test=test.$(subst /,-,$(_prg))) \
         $(eval HELP.dev += test.$(_test)_ARG.log\t\# see test.$(_test)_ARG but ...\n)\
     )
@@ -136,7 +136,7 @@ ifndef dev-macros-generated
     undefine _test
 
     # generate testarg-*_pod and testarg-*_--help targets
-    $(foreach _prg, $(LIST.programs),\
+    $(foreach _prg, $(O-LIST.programs),\
         $(eval _name=$(subst /,-,$(_prg)))    \
         $(eval _testarg=testarg-dev-$(_name)) \
         $(eval $(_testarg)_pod.log: EXE.log-filterarg = $(_EXE.log-filterarg)) \
@@ -152,7 +152,7 @@ ifndef dev-macros-generated
     undefine _testarg
 
     # generate testarg-* targets
-    $(foreach _prg, $(LIST.programs),\
+    $(foreach _prg, $(O-LIST.programs),\
         $(call GEN.targets-init,testarg,dev,$(_prg),LIST.$(subst /,-,$(_prg))) \
     )
 
@@ -236,11 +236,11 @@ testarg-dev-INSTALL.sh_pod:
 #______________________________________________ special targets for testing __|
 
 HELP-_dev3          = _____________________________________ some special targets _
-HELP-testarg-dev-grep_subs  = list perl function definitions from '$(LIST.sources)'
+HELP-testarg-dev-grep_subs  = list perl function definitions from '$(O-LIST.sources)'
 HELP-testarg-dev-grep_desc  = same as testarg-dev-grep_subs but with description
-HELP-testarg-dev-grep_flow  = show flow of functionality in '$(LIST.sources)'
-HELP-testarg-dev-grep_hint  = list all OCfg::hint() from '$(LIST.sources)'
-HELP-testarg-dev-grep_warn  = list all OCfg::warn() from '$(LIST.sources)'
+HELP-testarg-dev-grep_flow  = show flow of functionality in '$(O-LIST.sources)'
+HELP-testarg-dev-grep_hint  = list all OCfg::hint() from '$(O-LIST.sources)'
+HELP-testarg-dev-grep_warn  = list all OCfg::warn() from '$(O-LIST.sources)'
 HELP-testarg-dev-grep_sub   = list all subs from '$(SRC.pl)'
 HELP-testarg-dev-o-saft_notyet  = test for 'NOT YET IMPLEMENTED' commands
 HELP-test.dev.grep.sub      = alias for testarg-dev-grep_sub
@@ -251,25 +251,51 @@ HELP-test.dev.grep.warn     = alias for testarg-dev-grep_warn
 HELP-test.dev.grep.all      = all targets testarg-dev-grep_*
 
 # extract from our source (information for developers)
-# TODO: need to generate individual targets
-testarg-dev-grep_subs:
-	@$(O-TRACE.target)
-	@$(foreach prg, $(LIST.sources), echo "" && echo "# egrep '^[[:space:]]*sub[[:space:]]' $(prg) ..." && cd $(TEST.dir)&&egrep '^[[:space:]]*sub[[:space:]]' $(prg); )
+define EXE.grep_desc
+	O_TEST_pattern="^((#___*|sub|our|proc)[[:space:]]|[[:space:]]+#[?])" ; \
+	for f in $(O-LIST.sources); do \
+	    echo ""; echo "####################################### $${f}"; \
+            echo "# egrep '$${O_TEST_pattern}' $${f} ..."; \
+	    egrep $${O_TEST_pattern} $${f} | egrep -v '(SID_)'; \
+	done;
+endef
+
+define EXE.grep_subs
+	for f in $(O-LIST.sources); do \
+	    echo ""; echo "####################################### $${f}"; \
+            echo "# egrep '$${O_TEST_pattern}' $${f} ..."; \
+	    egrep $${O_TEST_pattern} $${f}; \
+	done;
+endef
+
+define EXE.grep_hint
+	for f in $(O-LIST.sources); do \
+	    echo ""; echo "####################################### $${f}"; \
+            echo "# egrep '$${O_TEST_pattern}' $${f} ..."; \
+	    grep $${O_TEST_pattern} $${f} | sed -e 's/^ *//'; \
+	done;
+endef
+
 testarg-dev-grep_desc:
 	@$(O-TRACE.target)
-	@$(foreach prg, $(LIST.sources), echo "" && echo "# egrep '^((#___*|sub|our|proc)[[:space:]]|[[:space:]]+#[?])' $(prg) | egrep -v '(SID_)' ..." && cd $(TEST.dir)&&egrep -s '^((#___*|sub|our|proc)[[:space:]]|[[:space:]]+#[?])' $(prg) | egrep -v '(SID_)'; )
+	@$(EXE.grep_desc)
+testarg-dev-grep_subs: export O_TEST_pattern = ^[[:space:]]*sub[[:space:]]
+testarg-dev-grep_subs:
+	@$(O-TRACE.target)
+	@$(EXE.grep_subs)
+testarg-dev-grep_flow: export O_TEST_pattern = ^[[:space:]]*\#[|]
+    # \ not part of pattern, beats Make's # dragon
 testarg-dev-grep_flow:
 	@$(O-TRACE.target)
-	@$(foreach prg, $(LIST.sources), echo "" && echo "# egrep '^[[:space:]]*#[|]' $(prg) ..." && cd $(TEST.dir)&&egrep -s '^[[:space:]]*#[|]' $(prg); )
-_TEST.brace=(
-# ) beat Make's foreach dragon
+	@$(EXE.grep_subs)
+testarg-dev-grep_hint: export O_TEST_pattern = OCfg::hint(
 testarg-dev-grep_hint:
 	@$(O-TRACE.target)
-	@$(foreach prg, $(LIST.sources), echo "" && echo "# grep 'OCfg::hint$(_TEST.brace)' $(prg) ..." && cd $(TEST.dir)&&grep -H 'OCfg::hint$(_TEST.brace)' $(prg) |sed -e 's/: */\t/'; )
+	@$(EXE.grep_hint)
+testarg-dev-grep_warn: export O_TEST_pattern = OCfg::warn(
 testarg-dev-grep_warn:
 	@$(O-TRACE.target)
-	@$(foreach prg, $(LIST.sources), echo "" && echo "# grep 'OCfg::warn$(_TEST.brace)' $(prg) ..." && cd $(TEST.dir)&&grep -H 'OCfg::warn$(_TEST.brace)' $(prg) |sed -e 's/: */\t/'; )
-# TODO: all above $(foreach ...) requires a ; at end, which may fail on Windows
+	@$(EXE.grep_hint)
 
 # function definitions more beautified for $(SRC.pl)
 EXE.grep-sub   := perl -lane '\
