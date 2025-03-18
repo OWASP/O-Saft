@@ -174,7 +174,7 @@
 #?      Build including required Perl modules:
 #?          $0 --m
 #? VERSION
-#?      @(#) install_openssl.sh 3.8 25/03/16 14:37:52
+#?      @(#) install_openssl.sh 3.9 25/03/18 12:14:44
 #?
 #? AUTHOR
 #?      18. January 2018 Achim Hoffmann
@@ -427,7 +427,6 @@ check_directories () {
 
 test_osaft      () {
 	echo_head "### test o-saft.pl ..."
-pwd
 	o_saftrc=$OSAFT_DIR/.o-saft.pl
 	[ -e  $o_saftrc ] || \
 		echo "**WARNING: $o_saftrc not found; testing without"
@@ -443,7 +442,6 @@ pwd
 	return
 } # test_osaft
 
-echo "# $0 $@ ..."
 optd=0
 opti=0
 optm=0
@@ -453,7 +451,7 @@ while [ $# -gt 0 ]; do
 	arg="$1"
 	shift
 	case "$arg" in
-	  +VERSION)     echo 3.8 ; exit; ;; # for compatibility
+	  +VERSION)     echo 3.9 ; exit; ;; # for compatibility
 	  --version)    \sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0; exit 0; ;;
 	  -h | --h | --help | '-?' | '/?')
 		sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
@@ -475,6 +473,8 @@ while [ $# -gt 0 ]; do
 		;;
 	esac
 done
+
+echo "# $0 $@ ..."
 
 ### install packages first
 [ 1 -eq $optd  ] && apt_install_debian
@@ -536,121 +536,124 @@ echo_head '### install openssl ...'
 alias   RUN="\cd $dir && "  # create aliases, so Dockerfile's syntax can be used
 alias   apk="\echo '#'apk"  #
 
-# Dockerfile.openssl 3.10 {
+# Dockerfile.openssl 3.11 {
 
 #dbx# set -x
 RUN \
 	echo "#== Pull, build and install enhanced openssl" && \
-	apk add --no-cache gmp-dev lksctp-tools-dev	&& \
-	cd    $WORK_DIR				&& \
-	mkdir -p $BUILD_DIR $OPENSSL_DIR	&& \
+	apk add --no-cache gmp-dev lksctp-tools-dev     && \
+	cd    $WORK_DIR                         && \
+	mkdir -p $BUILD_DIR $OPENSSL_DIR        && \
 	echo "#= get and extract $OSAFT_VM_TAR_OPENSSL" && \
-	[   -f "$OSAFT_VM_SRC_OPENSSL" ]        && \
+	if [ -f "$OSAFT_VM_SRC_OPENSSL" ]; then \
 		cp "$OSAFT_VM_SRC_OPENSSL" "$OSAFT_VM_TAR_OPENSSL" ; \
-	[ ! -f "$OSAFT_VM_TAR_OPENSSL" ]        && \
-		wget --no-check-certificate $OSAFT_VM_SRC_OPENSSL -O $OSAFT_VM_TAR_OPENSSL && \
+	else \
+		wget --no-check-certificate $OSAFT_VM_SRC_OPENSSL -O $OSAFT_VM_TAR_OPENSSL ; \
+	fi && \
 	echo "#=  check sha256 if there is one" && \
-	[ -n "$OSAFT_VM_SHA_OPENSSL" ]		&& \
+	if [ -n "$OSAFT_VM_SHA_OPENSSL" ]; then \
 		echo "$OSAFT_VM_SHA_OPENSSL  $OSAFT_VM_TAR_OPENSSL" | sha256sum -c ; \
-	\
-	tar   -xzf $OSAFT_VM_TAR_OPENSSL -C $BUILD_DIR --strip-components=1	&& \
-	cd    $BUILD_DIR			&& \
+	fi && \
+	tar   -xzf $OSAFT_VM_TAR_OPENSSL -C $BUILD_DIR --strip-components=1 && \
+	cd    $BUILD_DIR                        && \
 	echo "#=  patch openssl.cnf for GOST"   && \
-	sed -i '/RANDFILE/a openssl_conf=openssl_def' apps/openssl.cnf	&& \
+	sed -i '/RANDFILE/a openssl_conf=openssl_def' apps/openssl.cnf  && \
 	#   using echo instead of cat to avoid problems with stacked commands:
 	#   cat -> shell -> docker
 	(\
 	  echo 'openssl_conf=openssl_def'; \
-	  echo '[openssl_def]';		\
+	  echo '[openssl_def]';         \
 	  echo 'engines=engine_section';\
-	  echo '[engine_section]';	\
-	  echo 'gost=gost_section';	\
-	  echo '[gost_section]';	\
-	  echo 'engine_id = gost';	\
+	  echo '[engine_section]';      \
+	  echo 'gost=gost_section';     \
+	  echo '[gost_section]';        \
+	  echo 'engine_id = gost';      \
 	  echo 'default_algorithms=ALL';\
 	  echo 'CRYPT_PARAMS=id-Gost28147-89-CryptoPro-A-ParamSet'; \
-	) >> apps/openssl.cnf			&& \
+	) >> apps/openssl.cnf           && \
 	echo "#=  config with all options, even if they are default" && \
-	LDFLAGS="-rpath=$LD_RUN_PATH"   && export LDFLAGS	&& \
+	LDFLAGS="-rpath=$LD_RUN_PATH"   && export LDFLAGS && \
 		# see description for LD_RUN_PATH above
-	./config --prefix=$OPENSSL_DIR --openssldir=$OPENSSL_DIR/ssl	\
+	./config --prefix=$OPENSSL_DIR --openssldir=$OPENSSL_DIR/ssl    \
 		$OSAFT_VM_DYN_OPENSSL	\
 		--with-krb5-flavor=MIT --with-krb5-dir=/usr/include/krb5/ \
-		-fPIC zlib zlib-dynamic enable-zlib enable-npn sctp	\
-		enable-deprecated enable-weak-ssl-ciphers	\
-		enable-heartbeats enable-unit-test  enable-ssl-trace	\
-		enable-ssl3    enable-ssl3-method   enable-ssl2	\
-		enable-tls1    enable-tls1-method   enable-tls\
-		enable-tls1-1  enable-tls1-1-method enable-tlsext	\
-		enable-tls1-2  enable-tls1-2-method enable-tls1-2-client \
-		enable-dtls1   enable-dtls1-method	\
-		enable-dtls1-2 enable-dtls1-2-method	\
-		enable-md2     enable-md4   enable-mdc2	\
-		enable-rc2     enable-rc4   enable-rc5	\
-		enable-sha0    enable-sha1  enable-sha256 enable-sha512	\
-		enable-aes     enable-cms   enable-dh     enable-egd	\
-		enable-des     enable-dsa   enable-rsa    enable-rsax	\
-		enable-ec      enable-ec2m  enable-ecdh   enable-ecdsa	\
-		enable-blake2  enable-bf    enable-cast enable-camellia	\
-		enable-gmp     enable-gost  enable-GOST   enable-idea	\
-		enable-poly1305 enable-krb5 enable-rdrand enable-rmd160	\
-		enable-seed    enable-srp   enable-whirlpool	\
+		-fPIC zlib zlib-dynamic enable-zlib enable-npn sctp     \
+		enable-deprecated enable-weak-ssl-ciphers               \
+		enable-heartbeats enable-unit-test  enable-ssl-trace    \
+		enable-ssl3    enable-ssl3-method   enable-ssl2         \
+		enable-tls1    enable-tls1-method   enable-tls          \
+		enable-tls1-1  enable-tls1-1-method enable-tlsext       \
+		enable-tls1-2  enable-tls1-2-method enable-tls1-2-client\
+		enable-dtls1   enable-dtls1-method      \
+		enable-dtls1-2 enable-dtls1-2-method    \
+		enable-md2     enable-md4   enable-mdc2 \
+		enable-rc2     enable-rc4   enable-rc5  \
+		enable-sha0    enable-sha1  enable-sha256 enable-sha512 \
+		enable-aes     enable-cms   enable-dh     enable-egd    \
+		enable-des     enable-dsa   enable-rsa    enable-rsax   \
+		enable-ec      enable-ec2m  enable-ecdh   enable-ecdsa  \
+		enable-blake2  enable-bf    enable-cast enable-camellia \
+		enable-gmp     enable-gost  enable-GOST   enable-idea   \
+		enable-poly1305 enable-krb5 enable-rdrand enable-rmd160 \
+		enable-seed    enable-srp   enable-whirlpool \
 		enable-rfc3779 enable-ec_nistp_64_gcc_128 experimental-jpake \
-		-DOPENSSL_USE_BUILD_DATE -DTLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES -DTEMP_GOST_TLS	\
+		-DOPENSSL_USE_BUILD_DATE -DTLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES -DTEMP_GOST_TLS \
 		&& \
-	echo "#=  make depend ..."      && make depend && \
-	echo "#=  make ..."             && make && \
+	echo "#=  make depend ..."      && make depend  && \
+	echo "#=  make ..."             && make         && \
 	echo "#=  make report -i ..."   && make report -i && \
 	echo "#=  make install ..."     && make install	&& \
 		# make report most likely fails, hence -i
 	# simple test
 	echo -n "# number of ciphers $OPENSSL_DIR/bin/openssl: " && \
 	$OPENSSL_DIR/bin/openssl ciphers -V ALL:COMPLEMENTOFALL:aNULL|wc -l && \
-	echo "#=  cleanup"                       && \
+	echo "#=  cleanup"                      && \
 	apk  del --purge gmp-dev lksctp-tools-dev && \
-	cd    $WORK_DIR				&& \
+	cd    $WORK_DIR                         && \
 	rm   -rf $BUILD_DIR $OSAFT_VM_TAR_OPENSSL && \
 	\
 	echo "#== Pull, build and install Net::SSLeay" && \
-	cd    $WORK_DIR				&& \
-	mkdir -p $BUILD_DIR			&& \
-	[   -f "$OSAFT_VM_SRC_SSLEAY" ]         && \
+	cd    $WORK_DIR                         && \
+	mkdir -p $BUILD_DIR                     && \
+	if [ -f "$OSAFT_VM_SRC_SSLEAY" ]; then \
 		cp "$OSAFT_VM_SRC_SSLEAY"  "$OSAFT_VM_TAR_SSLEAY" ; \
-	[ ! -f "$OSAFT_VM_TAR_SSLEAY" ]         && \
-		wget --no-check-certificate $OSAFT_VM_SRC_SSLEAY -O $OSAFT_VM_TAR_SSLEAY && \
+	else \
+		wget --no-check-certificate $OSAFT_VM_SRC_SSLEAY -O $OSAFT_VM_TAR_SSLEAY ; \
+	fi && \
 	# check sha256 if there is one
-	[ -n "$OSAFT_VM_SHA_SSLEAY" ]		&& \
+	if [ -n "$OSAFT_VM_SHA_SSLEAY" ]; then \
 		echo "$OSAFT_VM_SHA_SSLEAY  $OSAFT_VM_TAR_SSLEAY" | sha256sum -c ; \
-	\
-	tar   -xzf $OSAFT_VM_TAR_SSLEAY -C $BUILD_DIR --strip-components=1	&& \
-	echo "#=  install additional packages for Net-SSLeay ..." && \
-	apk add --no-cache perl-net-dns perl-net-libidn perl-mozilla-ca		&& \
+	fi && \
+	tar   -xzf $OSAFT_VM_TAR_SSLEAY -C $BUILD_DIR --strip-components=1 && \
+	echo "#=  install additional packages for Net-SSLeay ..."       && \
+	apk add --no-cache perl-net-dns perl-net-libidn perl-mozilla-ca && \
 	echo "#=  configure and make Net-SSLeay" && \
-	cd    $BUILD_DIR			&& \
-	perl -i.orig -pe 'if (m/^#define\s*REM_AUTOMATICALLY_GENERATED_1_09/){print "const SSL_METHOD * SSLv2_method()\n\";}' SSLeay.xs	&& \
+	cd    $BUILD_DIR                && \
+	perl -i.orig -pe 'if (m/^#define\s*REM_AUTOMATICALLY_GENERATED_1_09/){print "const SSL_METHOD * SSLv2_method()\n\";}' SSLeay.xs && \
 		# quick&dirty patch, results in warning, which can be ignored
 		# Warning: duplicate function definition 'SSLv2_method' detected in SSLeay.xs, line 4256
 		# Mar/2025: "const SSL_METHOD * SSLv3_method()"  removed as
 		#   modern gcc complain with error about duplicate definitions
-	LDFLAGS="-rpath=$LD_RUN_PATH"   && export LDFLAGS	&& \
+	LDFLAGS="-rpath=$LD_RUN_PATH"   && export LDFLAGS && \
 	echo "n" | env OPENSSL_PREFIX=$OPENSSL_DIR \
 		   perl Makefile.PL DEFINE=-DOPENSSL_BUILD_UNSAFE=1 \
 		   INC=-I$OPENSSL_DIR/include PREFIX=$SSLEAY_DIR && \
 		# Makefile.PL asks for "network tests", hence pipe "n" as answer
-	make && make test -i && make install	&& \
-	cd    $WORK_DIR				&& \
+	make && make test -i && make install    && \
+	cd    $WORK_DIR                         && \
 	rm   -rf $BUILD_DIR $OSAFT_VM_TAR_SSLEAY && \
 	\
 	echo "#== Adapt O-Saft's .o-saft.pl ..." && \
-	cd    $WORK_DIR				&& \
-	[ -e  $OSAFT_DIR/.o-saft.pl ]		&& \
-	  mv  $OSAFT_DIR/.o-saft.pl $OSAFT_DIR/.o-saft.pl-orig	&& \
-	  cp  $OSAFT_DIR/.o-saft.pl-orig $OSAFT_DIR/.o-saft.pl	&& \
-	  rm  -f ./.o-saft.pl			&& \
-	  perl -pe "s:^#\s*--openssl=.*:--openssl=$OPENSSL_DIR/bin/openssl:;s:^#?\s*--openssl-cnf=.*:--openssl-cnf=$OPENSSL_DIR/ssl/openssl.cnf:;s:^#?\s*--ca-path=.*:--ca-path=/etc/ssl/certs/:;s:^#?\s*--ca-file=.*:--ca-file=/etc/ssl/certs/ca-certificates.crt:" $OSAFT_DIR/.o-saft.pl-orig > ./.o-saft.pl && \
-	  chmod 666 ./.o-saft.pl
+	cd    $WORK_DIR                         && \
+	if [ -e  $OSAFT_DIR/.o-saft.pl ]; then \
+		mv  $OSAFT_DIR/.o-saft.pl $OSAFT_DIR/.o-saft.pl-orig ; \
+		cp  $OSAFT_DIR/.o-saft.pl-orig $OSAFT_DIR/.o-saft.pl ; \
+		rm  -f ./.o-saft.pl ; \
+		perl -pe "s:^#\s*--openssl=.*:--openssl=$OPENSSL_DIR/bin/openssl:;s:^#?\s*--openssl-cnf=.*:--openssl-cnf=$OPENSSL_DIR/ssl/openssl.cnf:;s:^#?\s*--ca-path=.*:--ca-path=/etc/ssl/certs/:;s:^#?\s*--ca-file=.*:--ca-file=/etc/ssl/certs/ca-certificates.crt:" $OSAFT_DIR/.o-saft.pl-orig > ./.o-saft.pl ; \
+		chmod 666 ./.o-saft.pl ; \
+	fi
 
-# Dockerfile.openssl 3.10 }
+# Dockerfile.openssl 3.11 }
 
 # NOTE --ca-path and --ca-file are set to /etc/ because special openssl does
 #      not provide its on CA files; expects that /etc/ssl/certs/ exists.
