@@ -478,7 +478,7 @@ all_exe="$osaft_exe $osaft_gui $osaft_sh $osaft_dock $osaft_one"
 
 _line='----------------------+-----------------'
 _cols=0
-\command -v \tput >/dev/null && _cols=`\tput cols`
+\command -v \tput >/dev/null && _cols=$(tput cols || echo "0")
 if [ 0 -lt $_cols ]; then
 	# adapt _line to screen width
 	[ -n "$OSAFT_MAKE" ] && _cols=78    # SEE Make:OSAFT_MAKE
