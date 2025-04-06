@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.62 25/03/05 10:27:32
+#?      @(#) Makefile 3.63 25/04/07 00:40:33
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-O-SID           = 3.62
+O-SID           = 3.63
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -348,8 +348,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.62 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.62
+_INST.genbytext = generated data by Makefile 3.63 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.63
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-DIR.install)@'       \
 		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DIR.doc)@'              \
 		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-DIR.lib)@'              \
@@ -380,6 +380,7 @@ EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-DIR.install)@'       \
 		  -e 's@INSERTED_BY_MAKE_OSAFT_GETSID@$(EXE.get_sids)@'      \
 		  -e 's@INSERTED_BY_MAKE_OSAFT_DOCKER@$(EXE.o_docker)@'      \
 		  -e 's@INSERTED_BY_MAKE_OSAFT_DOC@$(_INST.osaft_doc)@'      \
+		  -e 's@INSERTED_BY_MAKE_OSAFT_CGI_HTML@$(GEN.cgi.html)@'    \
 		  -e 's@INSERTED_BY_MAKE_OSAFT_MODULES@$(ALL.osaftmodules)@' \
 		  -e 's@INSERTED_BY_MAKE_OSAFT@$(_INST.osaft)@'              \
 		  -e 's@INSERTED_BY_MAKE_FROM@$(_INST.genbytext)@'           \
@@ -634,8 +635,8 @@ docs:       $(GEN.docs)
 standalone: $(GEN.src)
 stand-alone:$(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.62
-tar:     _INST.is_edit  = 3.62
+_INST.is_edit           = 3.63
+tar:     _INST.is_edit  = 3.63
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
