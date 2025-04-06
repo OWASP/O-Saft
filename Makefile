@@ -21,14 +21,14 @@
 #       For the public available targets see below of  "well known targets" .
 #?
 #? VERSION
-#?      @(#) Makefile 3.63 25/04/07 00:40:33
+#?      @(#) Makefile 3.64 25/04/07 00:45:39
 #?
 #? AUTHOR
 #?      21-dec-12 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-O-SID           = 3.63
+O-SID           = 3.64
                 # define our own SID as variable, if needed ...
                 # SEE O-Saft:Makefile Version String
                 # Known variables herein (8/2019) to be changed are:
@@ -348,8 +348,8 @@ _INST.tools_ext = $(sort $(_ALL.devtools.extern))
 _INST.tools_opt = $(sort $(ALL.tools.optional))
 _INST.tools_other = $(sort $(ALL.tools.ssl))
 _INST.devmodules= $(sort $(ALL.devmodules))
-_INST.genbytext = generated data by Makefile 3.63 from $(SRC.inst)
-_INST.gen_text  = generated data from Makefile 3.63
+_INST.genbytext = generated data by Makefile 3.64 from $(SRC.inst)
+_INST.gen_text  = generated data from Makefile 3.64
 EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-DIR.install)@'       \
 		  -e 's@INSERTED_BY_MAKE_DOC_DIR@$(O-DIR.doc)@'              \
 		  -e 's@INSERTED_BY_MAKE_LIB_DIR@$(O-DIR.lib)@'              \
@@ -367,6 +367,7 @@ EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-DIR.install)@'       \
 		  -e 's@INSERTED_BY_MAKE_DEVTOOLSEXT@$(_INST.tools_ext)@'    \
 		  -e 's@INSERTED_BY_MAKE_DEVMODULES@$(_INST.devmodules)@'    \
 		  -e 's@INSERTED_BY_MAKE_PERL_MODULES@$(ALL.perlmodules)@'   \
+		  -e 's@INSERTED_BY_MAKE_OSAFT_CGI_HTML@$(GEN.cgi.html)@'    \
 		  -e 's@INSERTED_BY_MAKE_OSAFT_LIBDIR@$(O-DIR.lib)@'         \
 		  -e 's@INSERTED_BY_MAKE_OSAFT_DIRS@$(O-DIRS)@'              \
 		  -e 's@INSERTED_BY_MAKE_OSAFT_SH@$(SRC.sh)@'                \
@@ -380,7 +381,6 @@ EXE.install = sed -e 's@INSERTED_BY_MAKE_INSTALLDIR@$(O-DIR.install)@'       \
 		  -e 's@INSERTED_BY_MAKE_OSAFT_GETSID@$(EXE.get_sids)@'      \
 		  -e 's@INSERTED_BY_MAKE_OSAFT_DOCKER@$(EXE.o_docker)@'      \
 		  -e 's@INSERTED_BY_MAKE_OSAFT_DOC@$(_INST.osaft_doc)@'      \
-		  -e 's@INSERTED_BY_MAKE_OSAFT_CGI_HTML@$(GEN.cgi.html)@'    \
 		  -e 's@INSERTED_BY_MAKE_OSAFT_MODULES@$(ALL.osaftmodules)@' \
 		  -e 's@INSERTED_BY_MAKE_OSAFT@$(_INST.osaft)@'              \
 		  -e 's@INSERTED_BY_MAKE_FROM@$(_INST.genbytext)@'           \
@@ -635,8 +635,8 @@ docs:       $(GEN.docs)
 standalone: $(GEN.src)
 stand-alone:$(GEN.src)
 tar:        $(GEN.tgz)
-_INST.is_edit           = 3.63
-tar:     _INST.is_edit  = 3.63
+_INST.is_edit           = 3.64
+tar:     _INST.is_edit  = 3.64
 tmptar:  _INST.is_edit  = something which hopefully does not exist in the file
 tmptar:     $(GEN.tmptgz)
 tmptgz:     $(GEN.tmptgz)
