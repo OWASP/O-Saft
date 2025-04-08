@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 3.7 25/01/07 11:50:19
+# SID	@(#) glossary.txt 3.8 25/04/08 23:01:15
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -157,8 +157,8 @@ CRL	Certificate Revocation List
 CRYPTON	128-bit block cipher (1998)
 CRYPTREC	Cryptography Research and Evaluation Committees
 CRYSTALS	post-quantum hash function, signature
-CRYSTALS-Dilithium	post-quantum hash function, signature (aka ML-DSA)
-CRYSTALS-Kyber	post-quantum hash function, signature (aka ML-KEM)
+CRYSTALS-Dilithium	is now ML-DSA
+CRYSTALS-Kyber	is now ML-KEM
 CSP	Certificate Service Provider
 CSP 	Cryptographic Service Provider
 CSP  	Critical Security Parameter (used in FIPS 140-2)
@@ -382,6 +382,7 @@ ISAKMP	Internet Security Association and Key Management Protocol
 IP-TFS	IP Traffic Flow Security
 IV	Initialization Vector
 JH	hash function (Hongjun Wu, 2011)
+JITTER	?
 JH-224	see JH (224 bits)
 JH-256	see JH (256 bits)
 JH-384	see JH (384 bits)
@@ -453,8 +454,9 @@ Midori128	see MIDORI
 MISTY	Mitsubishi Improved Security Technology (aka Matsui, Ischikawa, Sorimachi, Yamagishi)
 MISTY1	64-bit symmetric block cipher (1995)
 MISTY2	?
-ML-DSA	post-quantum hash function
-ML-KEM	(key exchanged based on KEM?)
+ML-DSA	Module-Lattice-Based Digital Signature Algorithm; post-quantum hash function
+ML-KEM	Module Lattice-Based Key-Encapsulation Mechanism; post-quantum hash function, signature
+ML-KEM-512	?
 MLS	Message Layer Security
 MPQS	Multiple Polynomial Quadratic Sieve
 MQV	Menezes-Qu-Vanstone (authentecated key agreement)
@@ -689,7 +691,7 @@ SKIP	Message Skipping Attacks on TLS	(Exploit SSL/TLS)
 SKIP-TLS	see SKIP
 Skipjack	64-bit block cipher (part of the Fortezza) (1998, partially brocken)
 Sleeping POODLE	invalid padding with valid MAC (variant of POODLE exploit)
-SLH-DSA	Stateless hash-based signatures, post-quantum hash function, signature
+SLH-DSA	Stateless hash-based Digital Signature Algorithm; post-quantum hash function, signature
 SLOTH	Security Losses from Obsolete and Truncated Transcript Hashes	(Exploit SSL/TLS)
 SM2	ShangMi authentication function
 SM3	ShangMi hash function
