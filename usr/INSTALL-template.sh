@@ -267,9 +267,11 @@
 #                         Useful to remove for example -CADSio  which causes
 #                         Perl to exit when used like:  perl o-saft.pl ...
 #?
-#?      Please note that using the options  --useenv or --gnuenv or --noargs
-#?      always result in a warning for each changed file:
+#?      Warning about wrong checksum like
 #?          **WARNING: wrong checksum ...
+#?      may be harmless and occur when:
+#?          - using options  --useenv or --gnuenv or --noargs
+#?          - files are cloned or pulled from repository
 #?
 #?      Please see  doc/concepts.txt  for details about /usr/bin/env .
 #?      It's up to the user then, which solution fits better.
@@ -308,7 +310,7 @@
 #?      # check SIDs and checksums of all installed files:
 #?          $0 . --check=SID --changes
 #?      - should return an empty list like:
-#?          # ./INSTALL.sh 3.74; --check=SID  . ...
+#?          # ./INSTALL.sh 3.75; --check=SID  . ...
 #?
 #?          # SID   date    time    md5sum   filename    path
 #?          #----------------------+--------+-------------------------------
@@ -409,7 +411,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="@(#) INSTALL-template.sh 3.74 25/04/07 00:46:42"
+SID="@(#) INSTALL-template.sh 3.75 25/04/09 11:56:26"
 try=''
 ich=${0##*/}
 dir=${0%/*}
@@ -1145,7 +1147,7 @@ mode_check  () {
 	# more hints, if no installation directory was given
 	[ -z "$new_dir" ] && echo "# default installation directory »$inst_directory« used"
 	[ -z "$new_dir" ] && echo "# consider using »$0 path/to/directory« "
-    	# last message also occours if OSAFT_DIR was used; that's OK
+    	# last message also occurs if OSAFT_DIR was used; that's OK
 	return
 } # mode_check
 
@@ -1223,6 +1225,21 @@ mode_install () {
 	fi
 
 	files="$files_install $files_install_cgi $files_install_doc $files_contrib $osaft_one"
+
+	echo_info "searching for files newer than $src_directory/$osaft_rel ..."
+	ts_rel=$(command ls -l --time-style=+%s $src_directory/$osaft_rel |awk '{print $6}')
+	newer=
+	for f in $files ; do
+		ts_src=$(command ls -l --time-style=+%s $src_directory/$f |awk '{print $6}')
+		#dbx# echo "TS $ts_rel -lt $ts_src $f"
+		[ $ts_rel -lt $ts_src ] &&  newer="$newer $f"
+	done
+	[ -n "$newer" ] && \
+		echo_yellow "**WARNING: some files are newer than $osaft_rel;" && \
+		echo_yellow "# warnings can be ignored if files are cloned or pulled from repository;" && \
+		echo_yellow "# checksum may be different for following files:" && \
+		echo_yellow "#  $newer"
+
 	echo_info "remove old files in $inst_directory ..."
 	for f in $files ; do
 		f="$inst_directory/$f"
@@ -1231,6 +1248,7 @@ mode_install () {
 			$try \rm -f "$f" || __exit 3
 		fi
 	done
+
 	echo_info "installing $inst_directory ..."
 	for d in $osaft_subdirs ; do
 		echo_info "  mkdir $inst_directory/$d"
@@ -1241,6 +1259,7 @@ mode_install () {
 		copy_file "$src_directory/$f"         "$inst_directory/$f"
 		check_md5 "$src_directory/$osaft_rel" "$inst_directory/$f"
 	done
+
 	echo_info "generate $inst_directory/$osaft_guirc ..."
 	if [ -z "$try" ]; then
 		w=$(\command -v wish)
@@ -1510,8 +1529,8 @@ while [ $# -gt 0 ]; do
 		\sed -ne '/^#? VERSION/{' -e n -e 's/#?//' -e p -e '}' $0
 		exit 0
 		;;
-	  '+VERSION')   echo 3.74 ; exit;        ;; # for compatibility to $osaft_exe
-	  3.74 | 3* | 4*) ;; # ignore version number
+	  '+VERSION')   echo 3.75 ; exit;        ;; # for compatibility to $osaft_exe
+	  3.75 | 3* | 4*) ;; # ignore version number
 	  *)            new_dir="$1"   ;        ;; # directory, last one wins
 	esac
 	shift
@@ -1547,7 +1566,7 @@ clean_directory="$inst_directory/$clean_directory"
 src_txt=
 [ "install" = "$mode" ] && src_txt="$src_directory -->"
 echo   "$0 $optn $force $_break $ignore $other $changes $noargs $useenv $gnuenv $instdev $inst_directory"
-echo_info "$0 3.74 $mode $src_txt $inst_directory "
+echo_info "$0 3.75 $mode $src_txt $inst_directory "
     # always print internal SID, makes debugging simpler
 
 _b='`'  # using backticks in echo is tricky ...
