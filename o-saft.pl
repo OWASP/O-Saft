@@ -71,7 +71,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.204 25/04/09 11:30:39"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.205 25/04/19 18:40:53"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -389,7 +389,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.204"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.205"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -2852,11 +2852,11 @@ sub _get_dns        {
         # fails also, which produces more Perl warnings later.
         # Using "C4" (8-bit unsigned char) which should be ok for IPs an works
         # in ancient Perl too, which does not support "W4".
-        _vprint("  test IP");
+        _vprint("  testing IP");
         $myIP       = join(".", unpack("C4", $myip));
         if (_is_cfg_use('dns')) {   # following settings only with --dns
-            trace(" test DNS (disable with --no-dns)");
-           _trace_time("test DNS{");
+            trace(" testing DNS (disable with --no-dns)");
+           _trace_time("testing DNS{");
            local $? = 0; local $! = undef;
            ($rhost  = gethostbyaddr($myip, AF_INET)) or $rhost = $fail;
             $rhost  = $fail if ($? != 0);
@@ -2875,7 +2875,7 @@ sub _get_dns        {
                 OCfg::warn("202: Can't do DNS reverse lookup: for '$host': $fail; ignored");
                 OCfg::hint("202: use '--no-dns' to disable this check");
             }
-           _trace_time("test DNS}");
+           _trace_time("testing DNS}");
         }
     }
     trace("_get_dns()\t= [rhost=$rhost, dns=$dns, IP=$myIP, ..] }");
@@ -3193,8 +3193,8 @@ sub ciphers_scan_openssl {
     my $results = {};       # hash of cipher list to be returned
     foreach my $ssl (@{$cfg{'version'}}) {
         my $usesni  = $cfg{'use'}->{'sni'};
-        _vprint("    test $cnt ciphers for $ssl ... ($cfg{'ciphermode'}) ");
-        trace( "  test $cnt ciphers for $ssl ... ($cfg{'ciphermode'}) ");
+        _vprint("    testing $cnt ciphers for $ssl ... ($cfg{'ciphermode'}) ");
+        trace( "  testing $cnt ciphers for $ssl ... ($cfg{'ciphermode'}) ");
         trace( "  using cipherpattern=[ @{$cfg{'cipher'}} ], cipherrange=$cfg{'cipherrange'}");
         if ($ssl =~ m/^SSLv[23]/) {
             # SSLv2 has no SNI; SSLv3 has originally no SNI
@@ -3276,8 +3276,8 @@ sub ciphers_scan_intern {
         my $accepted_cnt = 0;
         my @all = _get_cipherslist('keys', $ssl);
         $total += scalar(@all);
-        _vprint("    test " . scalar(@all) . " ciphers for $ssl ... (SSLhello)");
-        trace( "  test " . scalar(@all) . " ciphers for $ssl ... (SSLhello)");
+        _vprint("    testing " . scalar(@all) . " ciphers for $ssl ... (SSLhello)");
+        trace( "  testing " . scalar(@all) . " ciphers for $ssl ... (SSLhello)");
         trace( "  using cipherpattern=[ @{$cfg{'cipher'}} ], cipherrange=$cfg{'cipherrange'}");
         if ("@all" =~ /^\s*$/) {
             OCfg::warn("407: no valid ciphers specified; no check done for '$ssl'");
@@ -3351,7 +3351,7 @@ sub ciphers_scan    {
         @{$cfg{'cipher'}} = map({Ciphers::get_key($_)||"";} SSLinfo::cipher_openssl("@{$cfg{'cipher'}}"));
         trace(" openssl ciphers: " . scalar @{$cfg{'cipher'}});
     }
-    _vprint("    test protocols @{$cfg{'version'}} ...");
+    _vprint("    testing protocols @{$cfg{'version'}} ...");
     if (_is_cfg_ciphermode('intern|dump')) {
         trace(" use SSLhello ...");
         SSLhello::printParameters() if ($cfg{'trace'} > 1);
@@ -6333,7 +6333,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.204");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.205");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7647,7 +7647,7 @@ if ($help !~ m/^\s*$/) {
     OMan::man_printhelp($help);
     exit 0;
 }
-if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.204"; exit 0; }
+if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.205"; exit 0; }
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))     { _vprint("  list       "); printciphers_list('list'); exit 0; }
 if (_is_cfg_do('ciphers'))  { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
@@ -8218,8 +8218,8 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
         # to check the connection (hostname and port)
         # this is the first call to SSLinfo::do_ssl_open()
         # NOTE: the previous test (see can_connect above) should be sufficient
-        _vprint("  test connection  (disable with  --ignore-no-conn) ...");
-        _trace_time("test connection{");
+        _vprint("  testing connection  (disable with  --ignore-no-conn) ...");
+        _trace_time("testing connection{");
         if (not defined SSLinfo::do_ssl_open(
                             $host, $port,
                             (join(" ", @{$cfg{'version'}})),
@@ -8236,7 +8236,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
                 OCfg::hint("205: use '--socket-reuse' it may help in some cases");
                 OCfg::hint("205: use '--ignore-no-conn' to disable this check");
                 OCfg::hint("205: do not use '--no-ignore-handshake'") if ($cfg{'sslerror'}->{'ignore_handshake'} <= 0);
-                _trace_time("  test connection} failed");
+                _trace_time("  testing connection} failed");
                 # quick&dirty workaround for buggy Net::SSLeay::do_httpx3(),
                 # see SSLinfo::do_ssl_open(); warning about ancient Net::SSLeay
                 # already written in ...
@@ -8255,7 +8255,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
             OCfg::hint("207: use '--v' to show more information");
             # do not print @errtxt because of multiple lines not in standard format
         }
-        _trace_time("test connection}");
+        _trace_time("testing connection}");
     }
 
     next if _trace_next("  PREPARE0 - start");
