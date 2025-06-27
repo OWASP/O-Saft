@@ -8,7 +8,7 @@
 
 # [ O-Saft - OWASP SSL advanced forensic tool](https://owasp.org/www-project-o-saft/)
 
-**Download [Version 24.01.24](https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz)**
+**Download [Version 24.09.24](https://github.com/OWASP/O-Saft/raw/master/o-saft.tgz)**
 
 ## QUICK START
 
@@ -92,7 +92,7 @@ For more details on installation, please see:
 There're no dependencies to other Perl modules for `checkAllCiphers.pl`
 so the test of all ciphers will work with it.
 
-Following files are optional:
+Following files/tools are optional:
 
 | File / Tool              | Description |
 |:-------------------------|:------------|
