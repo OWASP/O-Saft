@@ -339,13 +339,15 @@
 #?       docker(1), podman(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 3.24 25/06/27 19:33:24
+#?       @(#) o-saft-docker 3.25 25/06/27 19:41:44
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 # -----------------------------------------------------------------------------
 
-SID="3.24"
+#_____________________________________________________________________________
+#_____________________________________________ internal variables; defaults __|
+SID="3.25"
 VERSION="${OSAFT_VERSION:-24.09.24}"
 ich=${0##*/}
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
@@ -367,6 +369,27 @@ case "$ich" in
   *-docker)     docker="$docker"; ;;
   *-podman)     docker="$podman"; ;;
 esac
+
+#_____________________________________________________________________________
+#________________________________________________________ general functions __|
+
+_error  ()      {
+	echo "**ERROR: $@"
+	return
+}
+
+_warn   ()      {
+	echo "**WARNING: $@"
+	return
+}
+
+my_help ()      {
+	\sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
+	return
+}
+
+#_____________________________________________________________________________
+#_________________________________________________________ docker functions __|
 
 check_image_name () {
 	#? check if image with configured registry:tag exists; exit otherwise
@@ -761,10 +784,8 @@ docker_kill ()  {
 	return
 }
 
-my_help ()      {
-	\sed -ne "s/\$0/$ich/g" -e '/^#?/s/#?//p' $0
-	return
-}
+#_____________________________________________________________________________
+#________________________________________________________________ arguments __|
 
 # first check for options
 while [ $# -gt 0 ]; do
@@ -789,6 +810,9 @@ while [ $# -gt 0 ]; do
 	esac
 	shift
 done
+
+#_____________________________________________________________________________
+#_____________________________________________________________________ main __|
 
 # don't run inside docker
 case "$1" in
