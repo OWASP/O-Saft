@@ -11,6 +11,7 @@
 #?       $0 root
 #?       $0 status
 #?       $0 inspect
+#?       $0 tags
 #?       $0 kill
 #?       $0 rmi
 #?       $0 apk  package
@@ -58,6 +59,7 @@
 #?           status  - show various information about O-Saft container image
 #?           rmi     - remove O-Saft container image(s)
 #?           apk     - add and commit packages in O-Saft container image
+#?           tags    - show tags assigned to O-Saft container image
 #?           kill    - kill the running O-Saft container
 #?           shell   - run a shell (/bin/sh) in container image
 #?           root    - run a shell (/bin/sh) as user root in container image
@@ -152,6 +154,9 @@
 #?
 #?   rmi
 #?       Remove all O-Saft images, including tagged images.
+#?
+#?   tags
+#?       Show all assigned tags to O-Saft container image.
 #?
 #?   kill
 #?       Kill a running O-Saft container. Works only if exactly one container
@@ -328,14 +333,14 @@
 #?       docker(1), podman(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 3.20 25/01/20 18:18:08
+#?       @(#) o-saft-docker 3.21 25/06/27 18:28:26
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID="3.20"
+SID="3.21"
 VERSION="${OSAFT_VERSION:-24.09.24}"
 ich=${0##*/}
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
@@ -706,6 +711,12 @@ docker_rmi  ()  {
 	return
 }
 
+docker_tags ()  {
+	# show tags assigned to O-Saft container image
+	$try $docker image inspect ${image_name} --format '{{.RepoTags}}'
+	return
+}
+
 docker_kill ()  {
 	#dbx# echo "# registry: ${registry} # kill_name: ${kill_name}"
 	filter="ancestor=${registry}"
@@ -792,6 +803,7 @@ while [ $# -gt 0 ]; do
 	  'update') docker_update $@; exit 0; ;;
 	  'apk')    docker_apk  $@; exit 0; ;;
 	  'rmi')    docker_rmi  $@; exit 0; ;;
+	  'tags')   docker_tags;    exit 0; ;;
 	  'kill')   docker_kill $@; exit 0; ;;
 	  'root')   docker_root;    exit 0; ;;
 	  'shell')  docker_shell;   exit 0; ;;
