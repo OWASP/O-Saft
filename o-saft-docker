@@ -339,7 +339,7 @@
 #?       docker(1), podman(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 3.25 25/06/27 19:41:44
+#?       @(#) o-saft-docker 3.26 25/06/27 19:47:57
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
@@ -347,7 +347,7 @@
 
 #_____________________________________________________________________________
 #_____________________________________________ internal variables; defaults __|
-SID="3.25"
+SID="3.26"
 VERSION="${OSAFT_VERSION:-24.09.24}"
 ich=${0##*/}
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
@@ -361,7 +361,7 @@ entrypoint_sh='ENTRYPOINT ["/O-Saft/o-saft"]';              # default ENTRYPOINT
 entry__cmd='CMD ["--norc", "--help=docker"]':               # default CMD
 network=                      # --network=host  for option -local
 try=
-exe=o-saft.pl
+exe="o-saft.pl"
 dockerfile="https://github.com/OWASP/O-Saft/raw/master/Dockerfile"
 docker=$(\command -v docker)
 podman=$(\command -v podman)
@@ -415,7 +415,7 @@ check_image_name () {
 	[ "${is_id}" -eq 1 ] && return; # found image, return
 
 	[ "${is_id}" -ne 1 ] && \
-		echo "**ERROR: given image '${image_name}' does not match found image(s)" # '${is_id}'"
+		_error "given image '${image_name}' does not match found image(s)" # '${is_id}'"
 	if [ "${is_id}" -gt 1 ]; then
 		for tag in `$docker image ls ${image_name} | \awk '/^REPOSITORY/{next}{print $2}'` ; do
 			# varaiable tag is the same as the global one!
@@ -595,7 +595,7 @@ docker_save  () {
 	_version=${_version##*/}    # / not allowed, hence use anything right of it
 	[ -z "$_version" ] && _version="$VERSION"   # use hardcoded VERSION if not found
 	_tar=./o-saft_docker.$_version.tar
-	[ -e "$_tar" ] && echo "**ERROR: '$_tar' exists; exit" && exit 2
+	[ -e "$_tar" ] && _error "'$_tar' exists; exit" && exit 2
 	$try $docker image save ${image_name} -o $_tar
 	$try chmod -w $_tar
 	return
@@ -620,7 +620,7 @@ echo "# network = $network"
 docker_sshx  () {
 	_ssh=`$docker port ${image_name} 22`
 	if [ -z "${_ssh}" ]; then
-		echo "**ERROR: no ssh port available for '${image_name}'"
+		_error "no ssh port available for '${image_name}'"
 	else
 		# use "ip addr" to get docker's ip, should return something like:
 		#   6: docker0    inet 172.17.0.1/16 brd 172.17.255.255 scope global ...
@@ -779,7 +779,7 @@ docker_kill ()  {
 		[ -n "$kill_name" ] && filter="name=" # empty name is same as -a
 		# no $try here
 		$docker container ls --filter $filter
-		echo "**ERROR: not exactly one container found, none killed"
+		_error "not exactly one container found, none killed"
 	fi
 	return
 }
@@ -796,7 +796,7 @@ while [ $# -gt 0 ]; do
 	  +V)       echo $SID ; exit 0; ;;
 	  -docker)  docker="$docker"  ; ;; # FIXME: fails with: $0 -podman -docker
 	  -podman)  docker="$podman"
-		    echo "**WARNING: podman not tested, may work ..."
+		    _warn "podman not tested, may work ..."
 	            ;;
 	  -local)   network="--network=host"; ;;
 	  -tag=*)   tag="${1#*=}"; image_name="${registry}:$tag"; ;;
@@ -819,14 +819,14 @@ case "$1" in
   'hacker') docker_hacker;  exit 0; ;;
   'usage')  docker_usage;   exit 0; ;;
   *)        if [ -n "$osaft_vm_build" ]; then
-		echo "**ERROR: cannot run inside docker image; exit"
+		_error "cannot run inside docker image; exit"
 		exit 1
 	    fi
 	    ;;
 esac
 
 # avoid other errors if docker program missing
-[ -z "$docker" ] && echo "**ERROR: 'docker' not found; exit" && exit 2
+[ -z "$docker" ] && _error "'docker|podman' not found; exit" && exit 2
 
 # some modes do not need to check existing images
 case "$1" in
@@ -868,7 +868,7 @@ if [ -z "$mode" ]; then
 	# did not get any argument, print own usage
 	my_help
 	echo
-	echo "**WARNING:  $0  called without parameters; nothing done."
+	_warn "'$0' called without parameters; nothing done."
 	echo
 	exit 2
 fi
