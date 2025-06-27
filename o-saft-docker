@@ -7,6 +7,7 @@
 #?       $0
 #?       $0 build
 #?       $0 usage
+#?       $0 save
 #?       $0 shell
 #?       $0 root
 #?       $0 status
@@ -55,6 +56,7 @@
 #?       This is a multipurpose wrapper to handle O-Saft in a container image.
 #?       It can operate in following modes:
 #?           build   - build the container image for O-Saft from Dockerfile
+#?           save    - save O-Saft Docker image to o-saft_docker.tar
 #?           usage   - print the initial usage message for O-Saft in container
 #?           status  - show various information about O-Saft container image
 #?           rmi     - remove O-Saft container image(s)
@@ -144,6 +146,9 @@
 #?       If ./Dockerfile is missing following will be used:
 #?           https://github.com/OWASP/O-Saft/raw/master/Dockerfile
 #?       See  ENVIONMENT VARIABLES below for supported environment variables.
+#?
+#?   save
+#?       Save O-Saft Docker image to ./o-saft_docker-VERSION.tar .
 #?
 #?   apk
 #?   apt
@@ -333,14 +338,14 @@
 #?       docker(1), podman(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 3.21 25/06/27 18:28:26
+#?       @(#) o-saft-docker 3.22 25/06/27 18:59:34
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID="3.21"
+SID="3.22"
 VERSION="${OSAFT_VERSION:-24.09.24}"
 ich=${0##*/}
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
@@ -515,6 +520,27 @@ EoStatus
 	else
 		echo "#     <<no build variable 'osaft_vm_build' found>>"
 	fi
+	return
+}
+
+docker_save () {
+	# save O-Saft Docker image to o-saft_docker.VERSION.tar
+	# compute version form image's tag
+	for _tag in $($docker image inspect ${image_name} --format '{{.RepoTags}}'); do
+		_tag=${_tag##[}     # remove leading [
+		_tag=${_tag%%]*}    # remove trailing ]
+		case "$_tag" in
+		  *:latest) continue; ;;    # keeps last found tag in $_tag
+		  *) break; ;;              # first none :latest tag is ok
+		esac
+	done
+	_version=${_tag##*:}        # get anything right of :
+	_version=${_version##*/}    # / not allowed, hence use anything right of it
+	[ -z "$_version" ] && _version="$VERSION"   # use hardcoded VERSION if not found
+	_tar=./o-saft_docker.$_version.tar
+	[ -e "$_tar" ] && echo "**ERROR: '$_tar' exists; exit" && exit 2
+	$try $docker image save ${image_name} -o $_tar
+	$try chmod -w $_tar
 	return
 }
 
@@ -795,6 +821,7 @@ while [ $# -gt 0 ]; do
 	shift
 	case "$mode" in
 	  'build')  docker_build;   exit 0; ;;
+	  'save')   docker_save;    exit 0; ;;
 	  'call')   docker_call $@; exit 0; ;;
 	  'sshx')   docker_sshx $@; exit 0; ;;
 	  'what')   docker_call sed -n -e "s/.*\(@(#).*\)/\1/p" $@; exit 0; ;;
