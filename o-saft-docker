@@ -1,5 +1,5 @@
 #!/bin/sh
-#?
+
 #? NAME
 #?       $0 - wrapper script to handle O-Saft in a container image
 #?
@@ -56,9 +56,10 @@
 #?       This is a multipurpose wrapper to handle O-Saft in a container image.
 #?       It can operate in following modes:
 #?           build   - build the container image for O-Saft from Dockerfile
-#?           save    - save O-Saft Docker image to o-saft_docker.tar
+#?           save    - save O-Saft container image to o-saft_docker.tar
 #?           usage   - print the initial usage message for O-Saft in container
 #?           status  - show various information about O-Saft container image
+#?           inspect - show O-Saft container image configuration
 #?           rmi     - remove O-Saft container image(s)
 #?           apk     - add and commit packages in O-Saft container image
 #?           tags    - show tags assigned to O-Saft container image
@@ -188,9 +189,9 @@
 #?   call
 #?       Execute specified program with given arguments.  The program must be
 #?       found using $PATH or a full path.
-#?       This might be usefull to retrieve other information  from the image,
-#?       i.e. O-Saft  itself uses it to get the environment variables set in 
-#?       the image:
+#?       This can be useful to retrieve other information from the image, for
+#?       example  O-Saft  itself uses it to get the environment variables set
+#?       in the image:
 #?           $0 call /usr/bin/env
 #?
 #?   inspect
@@ -238,7 +239,7 @@
 #?           https://www.fortinet.com/blog/threat-research/yet-another-crypto-mining-botnet.html
 #?           https://kromtech.com/blog/security-center/cryptojacking-invades-cloud-how-modern-containerization-trend-is-exploited-by-attackers
 #?           https://sysdig.com/blog/detecting-cryptojacking/
-#?       That is why a transparent of the container build is prefered.  It is
+#?       That is why a transparent build of the container is prefered.  It is
 #?       recommended to build the container for O-Saft using the Dockerfile.
 #?
 #?   Security of the tools executed from within the image (docker run)
@@ -338,14 +339,13 @@
 #?       docker(1), podman(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 3.23 25/06/27 19:16:25
+#?       @(#) o-saft-docker 3.24 25/06/27 19:33:24
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
-#?
 # -----------------------------------------------------------------------------
 
-SID="3.23"
+SID="3.24"
 VERSION="${OSAFT_VERSION:-24.09.24}"
 ich=${0##*/}
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
@@ -523,27 +523,6 @@ EoStatus
 	return
 }
 
-docker_save () {
-	# save O-Saft Docker image to o-saft_docker.VERSION.tar
-	# compute version form image's tag
-	for _tag in $($docker image inspect ${image_name} --format '{{.RepoTags}}'); do
-		_tag=${_tag##[}     # remove leading [
-		_tag=${_tag%%]*}    # remove trailing ]
-		case "$_tag" in
-		  *:latest) continue; ;;    # keeps last found tag in $_tag
-		  *) break; ;;              # first none :latest tag is ok
-		esac
-	done
-	_version=${_tag##*:}        # get anything right of :
-	_version=${_version##*/}    # / not allowed, hence use anything right of it
-	[ -z "$_version" ] && _version="$VERSION"   # use hardcoded VERSION if not found
-	_tar=./o-saft_docker.$_version.tar
-	[ -e "$_tar" ] && echo "**ERROR: '$_tar' exists; exit" && exit 2
-	$try $docker image save ${image_name} -o $_tar
-	$try chmod -w $_tar
-	return
-}
-
 docker_build () {
 	# build O-Saft Docker image from Dockerfile, mainly using defaults
 	# from Dockerfile; cleanup the containers
@@ -578,6 +557,27 @@ docker_build () {
 	return
 }
 
+docker_save  () {
+	# save O-Saft Docker image to o-saft_docker.VERSION.tar
+	# compute version form image's tag
+	for _tag in $($docker image inspect ${image_name} --format '{{.RepoTags}}'); do
+		_tag=${_tag##[}     # remove leading [
+		_tag=${_tag%%]*}    # remove trailing ]
+		case "$_tag" in
+		  *:latest) continue; ;;    # keeps last found tag in $_tag
+		  *) break; ;;              # first none :latest tag is ok
+		esac
+	done
+	_version=${_tag##*:}        # get anything right of :
+	_version=${_version##*/}    # / not allowed, hence use anything right of it
+	[ -z "$_version" ] && _version="$VERSION"   # use hardcoded VERSION if not found
+	_tar=./o-saft_docker.$_version.tar
+	[ -e "$_tar" ] && echo "**ERROR: '$_tar' exists; exit" && exit 2
+	$try $docker image save ${image_name} -o $_tar
+	$try chmod -w $_tar
+	return
+}
+
 docker_osaft () {
 	# this is the command for the default mode, passing all parameters
 	# expects a proper ENTRYPOINT like /O-Saft/o-saft.pl in the image
@@ -608,7 +608,7 @@ docker_sshx  () {
 	return
 }
 
-docker_call ()  {
+docker_call  () {
 	cmd="$1"
 	shift
 	$try $docker container run --rm $network -it --entrypoint=$cmd    ${image_name} $@
@@ -620,12 +620,12 @@ docker_shell () {
 	return
 }
 
-docker_root ()  {
+docker_root  () {
 	$try $docker container run --rm $network -it --entrypoint=/bin/sh --user root ${image_name}
 	return
 }
 
-docker_cp   ()  {
+docker_cp    () {
 	src="$1"
 	dst="${2-.}"
 	_id="o-saft-cp" # temporary container ID
@@ -645,7 +645,7 @@ docker_cp   ()  {
 	return
 }
 
-docker_update ()  {
+docker_update (){
 	src="$1"
 	tgz="${src##*/}"
 	tmp=/tmp/$ich.$$.$USER
