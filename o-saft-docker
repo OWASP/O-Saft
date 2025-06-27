@@ -338,14 +338,14 @@
 #?       docker(1), podman(1), o-saft-docker-dev, o-saft.pl, o-saft.tcl
 #?
 #? VERSION
-#?       @(#) o-saft-docker 3.22 25/06/27 18:59:34
+#?       @(#) o-saft-docker 3.23 25/06/27 19:16:25
 #?
 #? AUTHOR
 #?      17-jul-17 Achim Hoffmann
 #?
 # -----------------------------------------------------------------------------
 
-SID="3.22"
+SID="3.23"
 VERSION="${OSAFT_VERSION:-24.09.24}"
 ich=${0##*/}
 tag=${o_saft_docker_tag};     # tag=${tag:-17.09.17}
@@ -769,7 +769,7 @@ my_help ()      {
 # first check for options
 while [ $# -gt 0 ]; do
 	case "$1" in
-	  -h | -help | '-?' | '-/')  my_help;  exit 0; ;;
+	  -h | -help | -usage | '-?' | '/?'  | '-/')  my_help;  exit 0; ;;
 	  -n)       try=echo; ;;
 	  -v | -x)  set -x  ; ;;
 	  +V)       echo $SID ; exit 0; ;;
@@ -778,15 +778,13 @@ while [ $# -gt 0 ]; do
 		    echo "**WARNING: podman not tested, may work ..."
 	            ;;
 	  -local)   network="--network=host"; ;;
-	  -tag=*)   tag="`expr "$1" ':' '-tag=\(.*\)'`"
-	            image_name="${registry}:$tag" 
-	            ;;
-	  -id=*)    image_name="`expr "$1" ':' '-id=\(.*\)'`"   ; ;;
-	  -name=*)  kill_name="` expr "$1" ':' '-name=\(.*\)'`" ; ;;
-#	  kill=*)   kill_name="` expr "$1" ':' 'kill=\(.*\)'`" ; mode=kill; ;;
-	  -OSAFT_VERSION=*)      OSAFT_VERSION="`expr "$1" ':' '-OSAFT_VERSION=\(.*\)'`"; ;;
-	  -OSAFT_VM_SRC_OSAFT=*) OSAFT_VM_SRC_OSAFT="`expr "$1" ':' '-OSAFT_VM_SRC_OSAFT=\(.*\)'`"; ;;
-	  -OSAFT_VM_SHA_OSAFT=*) OSAFT_VM_SHA_OSAFT="`expr "$1" ':' '-OSAFT_VM_SHA_OSAFT=\(.*\)'`"; ;;
+	  -tag=*)   tag="${1#*=}"; image_name="${registry}:$tag"; ;;
+	  -id=*)    image_name="${1#*=}" ; ;;
+	  -name=*)  kill_name="${1#*=}"  ; ;;
+#	  kill=*)   kill_name="${1#*=}"  ; mode=kill; ;;
+	  -OSAFT_VERSION=*)      OSAFT_VERSION="${1#*=}"     ; ;;
+	  -OSAFT_VM_SRC_OSAFT=*) OSAFT_VM_SRC_OSAFT="${1#*=}"; ;;
+	  -OSAFT_VM_SHA_OSAFT=*) OSAFT_VM_SHA_OSAFT="${1#*=}"; ;;
 	  *)        break;  ;;
 	esac
 	shift
