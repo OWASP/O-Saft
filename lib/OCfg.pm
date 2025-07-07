@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.81 25/03/12 22:39:14";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.82 25/07/07 22:04:15";
 our $VERSION    =  "24.09.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -2894,9 +2894,14 @@ our %cfg = (    # main data structure for configuration
         'NSA-B'     => "must be AES with CTR or GCM; ECDSA or ECDH and SHA256 or SHA512",
     },
     'sig_algorithms' => [       # signature algorithms; (2016) not yet used
+        # more see BSI-TR-03111_V-2-0_pdf.pdf
         qw(
            dsaEncryption dsaEncryption-old dsaWithSHA dsaWithSHA1 dsa_With_SHA256
-           ecdsa-with-SHA256
+           ecdsa-plain-signatures ecdsa-plain-SHA1       ecdsa-plain-SHA224
+           ecdsa-plain-SHA256      ecdsa-plain-SHA384    ecdsa-plain-SHA512
+           ecdsa-plain-RIPEMD160
+           ecdsa-with-SHA1         ecdsa-with-Specified  ecdsa-with-SHA224
+           ecdsa-with-SHA256       ecdsa-with-SHA384     ecdsa-with-SHA512
            md2WithRSAEncryption    md4WithRSAEncryption  md5WithRSAEncryption
            None   ripemd160WithRSA rsa  rsaEncryption    rsassapss
            shaWithRSAEncryption    sha1WithRSAEncryption sha1WithRSA
@@ -3585,7 +3590,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.81"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.82"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3631,7 +3636,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.81 2025/03/12
+3.82 2025/07/07
 
 =head1 AUTHOR
 
