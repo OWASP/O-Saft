@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 3.8 25/04/08 23:01:15
+# SID	@(#) glossary.txt 3.9 25/07/07 22:03:28
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -7,8 +7,10 @@
 0-RTT	zero Round-Trip Time
 3Fish	see Threefish
 3SHAKE	sometimes for: TLS Triple Handshake Attack
+A5/X	Stream ciphers used in mobile phone protocols
 AA	Attribute Authority
 AAD	Additional Authenticated Data
+ABE	Attribute Based Encryption
 ACME	Automated Certificate Management Environment
 ACL	Access Control List
 Achterbahn	80-, 128-bit key stream cipher (2006)
@@ -31,6 +33,7 @@ AEGIS-256X2	AEGIS cipher
 AEGIS-256X4	AEGIS cipher
 AEM	Authenticated Encryption Mode (aka Advanced Encryption Mode, aka OCB3)
 AES	Advanced Encryption Standard, symmetric block cipher
+AESKW	A Key Wrap Scheme
 AESCCM	AES with CCM
 AESCCM8	AES with CCM8
 AESGCM	AEAD algorithms AEAD_AES_128_GCM and AEAD_AES_256_GCM
@@ -42,11 +45,16 @@ AES-CBC	?
 AES-CTR	?
 AES-XTS	?
 AIA	Authority Information Access (certificate extension)
+AKA	Authentication and Key Agreement
+AKW1	A Key Wrap Scheme
+AKW2	A Key Wrap Scheme
 AKC	Agreement with Key Confirmation
 AKID	Authority Key IDentifier
 ALPN	Application Layer Protocol Negotiation
 ALPACA	Application Layer and Content Confusion Attack	(Exploit SSL/TLS)
+AMAC	ANSI Retail MAC
 AMASTRID	stream cipher
+ANSI	American National Standards Institute
 Anubis	128-bit symmetric block cipher
 ARC4	Alleged RC4 (see RC4)
 ARCFOUR	alias for ARC4
@@ -66,11 +74,13 @@ BADA55-VR-224	curve using the same prime as NIST P-224
 BADA55-VR-256	curve using the same prime as NIST P-256
 BADA55-VR-384	curve using the same prime as NIST P-384
 Bar Mitzvah	vulnerabilty of TLS sessions protected with RC4
+BB	Boneh–Boyen (ID based encryption)
 BDH	Bilinear Diffie-Hellman
 BEAR	block cipher combining stream cipher and hash function
 BEAST	Browser Exploit Against SSL/TLS	(Exploit SSL/TLS)
 BEAST .	fast block cipher for arbitrary blocksizes (rarely)
 BER	Basic Encoding Rules
+BF	Boneh–Franklin (ID based encryption)
 BGP	Boorder Gateway Protocol
 bcrypt	hash function (Niels Provos, David Mazières, 1999)
 BLAKE	hash function (Jean-Philippe Aumasson, Luca Henzen, Willi Meier, Raphael C.-W. Phan, 2008)
@@ -88,6 +98,7 @@ BLAKE-512	see BLAKE (512 bit)
 Blowfish	64-bit symmetric block cipher (1993)
 boomerang attack	attack on BLAKE
 BPA	Branch Prediction Analysis
+BPP	Binary Packet Protocol
 Brainpool	signature algorithm, from BSI
 BREACH	Browser Reconnaissance & Exfiltration via Adaptive Compression of Hypertext; a variant of CRIME	(Exploit SSL/TLS)
 Bullrun	NSA program to break encrypted communication
@@ -109,7 +120,7 @@ CBC-MAC	Cipher Block Chaining - Message Authentication Code
 CBC-MAC-ELB	Cipher Block Chaining - Message Authentication Code - Encrypt Last Block
 CBC3	alias for Tripple DES (sometimes, used in cipher suite names)
 CBOR	Concise Binary Object Representation, hash algorithms
-CCA	chosen-ciphertext attack
+CCA	Chosen Ciphertext Attack
 CCM	Counter with CBC-MAC Mode (authenticated encryption block cipher mode) (with 16-octet authentication tag)
 CCM-8	Counter with CBC-MAC Mode (authenticated encryption block cipher mode) (with 8-octet authentication tag)
 CCS	Change Cipher Spec (protocol)
@@ -133,6 +144,7 @@ CLEFIA	lightweight 128-bit block cipher
 CKA	(PKCS#11)
 CKK	(PKCS#11)
 CKM	(PKCS#11)
+CMA	Chosen Message Attack
 CMAC	Cipher-based MAC
 CMC	CBC-mask-CBC
 CMP	X509 Certificate Management Protocol
@@ -143,7 +155,7 @@ CNT_IMIT	cipher suite
 CTR_OMAC	cipher suite (GOST R 34.12-2015 aka GOST3412-2015)
 COSE	CBOR Object Signing and Encryption
 CP	Certificate Policy (certificate extension)
-CPA	chosen-plaintext attack
+CPA	Chosen Plaintext Attack
 CPD	Certificate Policy Definitions
 CPS	Certification Practice Statement
 CRC	Cyclic Redundancy Check
@@ -171,7 +183,8 @@ CTR	Counter Mode (sometimes: CM; block cipher mode)
 CTS	Cipher Text Stealing
 Curve448	signature algorithm (aka Goldilocks (224 bit))
 Curve25519	signature algorithm by Dan J. Bernstein (ca. 128 bit)
-CWC	CWC Mode (Carter-Wegman + CTR mode; block cipher mode)
+CVA	Ciphertext Validity Attack
+CWC	Carter-Wegman  Counter (aka CWC Mode: Carter-Wegman + CTR mode; block cipher mode)
 CyaSSL	formerly name of wolfSSL
 DAA	Data Authentication Algorithm
 DAC	Data Authentication Code
@@ -182,6 +195,7 @@ DEA	Data Encryption Algorithm (sometimes a synonym for DES)
 DEAL	128-bit symmetric block cipher (Lars Knudsen, 1998)
 DECIPHER	synonym for decryption
 DEK	Data Encryption Key
+DEM	Data Encapsulation Mechanism
 DER	Distinguished Encoding Rules
 DES	Data Encryption Standard
 DESede	alias for 3DES ?java only?
@@ -219,6 +233,7 @@ Dual EC DBRG	Dual Elliptic Curve Deterministic Random Bit Generator (NIST)
 Dual_EC_DBRG	Dual Elliptic Curve Deterministic Random Bit Generator (NIST)
 DV	Domain Validation
 DV-SSL	Domain Validated Certificate
+E0	A stream cipher used in Bluetooth
 EAL	Evaluation Assurance Level
 EAP	Extensible Authentication Protocol
 EAP-PSK	Extensible Authentication Protocol using a Pre-Shared Key
@@ -227,6 +242,8 @@ EAX 	EAX Mode (block cipher mode)
 EAXprime	alias for EAX Mode
 EBC	Edge Boundery Controller
 EC	Elliptic Curve
+EC-Schnorr	Elliptic Curve Based Schnorr Signature Algorithm
+EC-KCDSA	Elliptic Curve ??
 ECB	Electronic Code Book mode (block cipher mode)
 ECC 	Error Corection Code
 ECC	Elliptic Curve Cryptography
@@ -241,7 +258,7 @@ ECDSA	Elliptic Curve Digital Signature Algorithm
 ECDSA-256	Elliptic Curve Digital Signature Algorithm (256 bits)
 ECDSA-384	Elliptic Curve Digital Signature Algorithm (384 bits)
 ECDSA-521	Elliptic Curve Digital Signature Algorithm (521 bits)
-ECGDSA	Elliptic Curve ??? DSA
+ECGDSA	Elliptic Curve German DSA
 ECHO	hash function (Ryad Benadjila, Olivier Billet, Henri Gilbert, Gilles Macario-Rat, Thomas Peyrin, Matt Robshaw, Yannick Seurin, 2010)
 ECIES	Elliptic Curve Integrated Encryption Scheme
 ECKA	Elliptic Curve Key Agreement
@@ -263,13 +280,17 @@ EdDSA	alias for signatures using public key and private key formats, like Curve4
 EDE	Encryption-Decryption-Encryption
 EDH	Ephemeral Diffie-Hellman
 EDHOC	Ephemeral Diffie-Hellman Over COSE
+EEA	EPS Encryption Algorithm
 EGADS	Entropy Gathering and Distribution System
 EGD	Entropy Gathering Daemon
+EIA	EPS Integrity Algorithm
+EKA	Encrypted Key Exchange
 EKU	Extended Key Usage
 ELB	Encrypt Last Block
 ElGamal	asymmetric block cipher
+EMAC	Encrypted CBC-MAC
 ENCIPHER	synonym for encryption
-EME	ECB-mask-ECB
+EME	ECB-mask-ECB (mode)
 EME 	Encoding Method for Encryption
 EME-OAEP 	Encoding Method for Encryption Optimal Asymmetric Encryption Padding
 EMS 	Extended Master Secret (sometimes)
@@ -287,6 +308,8 @@ ETSI-TS	European Telecommunications Standards Institute - Technical Specificatio
 EV	Extended Validation
 EV-SSL	Extended Validation Certificate
 FALCON	Fast-Fourier Lattice-based Compact Signatures over NTRU; post-quantum signature
+FDH	Full Domain Hash
+FHE	Fully Homomorphic Encryption
 FEAL	Fast Data Encryption Algorithm
 FFC	Finite Field Cryptography
 FFT	Fast Fourier Transform
@@ -308,6 +331,7 @@ FSM	Finite State Machine
 FZA	FORTEZZA
 G-DES	??? DES
 GCM	Galois/Counter Mode (authenticated encryption block cipher mode)
+GDSA	German Digital Signature Algorithm
 GHASH	Hash funtion used in GCM
 GMAC	MAC for GCM
 Grøstl	hash function (Lars Knudsen, 2010)
@@ -366,12 +390,14 @@ IBE	Identity-Based Encryption
 ICM	Integer Counter Mode (alias for CTR)
 IDP	Issuing Distribution Points
 IDEA	International Data Encryption Algorithm (by James Massey and Xuejia Lai)
+IEC	International Electrotechnical Commission
 IESG	Internet Engineering Steering Group
 IETF	Internet Engineering Task Force
 IFC	Integer Factorization Cryptography
 IGE	Infinite Garble Extension
 IKE	Internet Key Exchange
 IKEv2	IKE version 2
+IND	Indistinguishability of Encryptions
 IND-BACPA	Indistinguishability of encryptions under blockwise-adaptive chosen-plaintext attack
 IND-CCA	Indistinguishability of encryptions under chosen-cipgertext attack
 IND-CPA	Indistinguishability of encryptions under chosen-plaintext attack
@@ -381,6 +407,7 @@ IRTF	Internet Research Task Force
 ISAKMP	Internet Security Association and Key Management Protocol
 IP-TFS	IP Traffic Flow Security
 IV	Initialization Vector
+J-PAKE	Password Authenticated Key Exchange by Juggling
 JH	hash function (Hongjun Wu, 2011)
 JITTER	?
 JH-224	see JH (224 bits)
@@ -397,6 +424,7 @@ Keccak	hash function (Guido Bertoni, Joan Daemen, Michaël Peeters und Gilles Va
 KCI	Key Compromise Impersonation
 KDC	Key Distribution Center (mainly Kerberos)
 KDF	Key Derivation Function
+KDSA	Korean Digital Signature Algorithm
 KEA	Key Exchange Algorithm (alias for FORTEZZA-KEA)
 KEK	Key Encryption Key
 KEM	Key Encapsulation Mechanisms
@@ -409,6 +437,8 @@ KSAK	KMS Secret Authentication Key
 KSK	Key Signing Key (DNSSEC)
 KU	Key Usage
 Kuznyechik	block cipher  (used in GOST)
+KW	AES Key Wrap
+KWP	AES Key Wrap with Padding
 Magma	block cipher  (used in GOST)
 LAKE	hash function (Jean-Philippe Aumasson, Willi Meier, Raphael C.-W. Phan, 2008)
 LEA	? algorithm
@@ -458,6 +488,7 @@ ML-DSA	Module-Lattice-Based Digital Signature Algorithm; post-quantum hash funct
 ML-KEM	Module Lattice-Based Key-Encapsulation Mechanism; post-quantum hash function, signature
 ML-KEM-512	?
 MLS	Message Layer Security
+MOV	Menezes–Okamoto–Vanstone (attack)
 MPQS	Multiple Polynomial Quadratic Sieve
 MQV	Menezes-Qu-Vanstone (authentecated key agreement)
 MS-SSTP	see SSTP
@@ -479,7 +510,7 @@ NPTRNG	none-physical none-deterministic Random Number Generator
 NSS	Network Security Services
 NTG	none-Deterministic Random Generator
 NTLM	NT Lan Manager. Microsoft Windows challenge-response authentication method.
-NTRU	asymmetric cipher using lattice reduction (1996)
+NTRU	asymmetric cipher using lattice reduction (1996); post-quantum encryption algorith
 NTRUEncrypt	alias for NTRU
 NOMORE	Numerous Occurrence MOnitoring & Recovery Exploit (aka RC4 NOMORE)
 NULL	no encryption
@@ -499,8 +530,10 @@ OID	Object Identifier
 OMAC	One-Key CMAC (aka CBC-MAC)
 OMAC1	same as CMAC
 OMAC2	same as OMAC
+OPE	Order Preserving Encryption
 OPIE	One-time pad Password system
 OPRF	Secure Hash Algorithm?
+ORAM	Oblivious Random Access Memory
 ORYX	96-bit key stream cipher (broken 1998)
 OSPF	Open Shortest Path First
 OTP	One Time Pad
@@ -526,6 +559,7 @@ PCBC	Propagating Cipher Block Chaining
 PCFB	Periodic Cipher Feedback Mode
 PCT	Private Communications Transport
 PDS	PKI Disclosure Statements (part of EV TLS certificates)
+PEKS	Public Key Encryption Keyword Search
 PEM	Privacy Enhanced Mail
 PES	Proposed Encryption Standard
 PFS	Perfect Forward Secrecy
@@ -556,9 +590,11 @@ Poly1305	Authenticator (MAC)
 Poly1305-AES	MAC (by D. Bernstein)
 POP	Proof of Possession
 POODLE	Padding Oracle On Downgraded Legacy Encryption	(Exploit SSL/TLS)
+POR	Proofs Of Retrievability
 PQC	Post-Quantum Cryptography
 PRESENT	64-bit block symmetric cipher (2007)
 PRF	Pseudo-Random Function
+PRNG	Pseudo Random Number Generator
 PRP	Pseudo-Random Permutation
 PRINCE	low-latency 64-bit symmetric block cipher (2012)
 prime192v1	alias for P-192
@@ -567,8 +603,10 @@ prime256v1	alias for P-256
 prime384v1	alias for P-384
 prime521v1	alias for P-521
 PRNG	Pseudo-Random Number Generator
+PSEC	Provable Secure Elliptic Curve (encryption)
 PSK	Pre-shared Key
 PSKC	Portable Symmetric Key Container
+PSS	Probabilistic Signature Scheme
 PTG	Physical Random Generator
 PVT	Public Validation Token
 PWKE	Pair-Wise Key Establishment Schemes Using Discrete Logarithm Cryptography
@@ -592,6 +630,7 @@ RC5	Rivest Cipher 5, 32-bit symmetric block cipher
 RC5-64	Rivest Cipher 5, 64-bit symmetric block cipher
 RC6	Rivest Cipher 6, 128-bit symmetric block cipher
 RCSU	Reuters' Compression Scheme for Unicode (aka SCSU)
+RDSA	Russian Digital Signature Algorithm
 RFC	Request for Comments
 Rijndael	symmetric block cipher (AES)
 RIPEMD	RACE Integrity Primitives Evaluation Message Digest
@@ -646,6 +685,7 @@ Serpent	128-bit symmetric block cipher (1998)
 SGC	Server-Gated Cryptography
 SGCM	Sophie Germain Counter Mode (authenticated encryption block cipher mode)
 SIV	Synthetic Initialization Vector
+SA	Security Association
 SHA	Secure Hash Algorithm
 SHA-0	Secure Hash Algorithm (insecure version before 1995)
 SHA-1	Secure Hash Algorithm (since 1995)
@@ -677,8 +717,11 @@ SIKEp434	post-quantum hash function, signature (broken 7/2022)
 SIKEp503	post-quantum hash function, signature (broken 7/2022)
 SIKEp610	post-quantum hash function, signature (broken 7/2022)
 SIKEp751	post-quantum hash function, signature (broken 7/2022)
+SIMD	Single Instruction Multiple Data
 SIMON	lightweight 32-, 48-, 64-, 96-, 128-bit symmetric block cipher (NSA algorithm, questionable security) (2013)
 SipHash	hash function (J. Aumasson, Daniel Bernstein, 2012)
+SIV	Synthetic Initialization Vector
+SK	Sakai–Kasahara (ID-based encryption)
 Skein	hash function (Niels Ferguson, Stefan Lucks, Bruce Schneier, Doug Whiting, Mihir Bellare, Tadayoshi Kohno, Jon Callas, Jesse Walker, 2010)
 Skein-256-256	see Skein (256 bits)
 Skein-512-256	see Skein (256 bits)
@@ -718,7 +761,9 @@ SOBER-t8	see SOBER
 SOBER-t16	see SOBER
 SOBER-t32	see SOBER
 SOBER-128	see SOBER
+SPAKE	Single-Party Public-Key Authenticated Key Exchange
 SPARX	? algorithm
+SPD	Security Policy Database
 SPECK	lightweight 16-, 24-, 32-, 48-, 64-bit symmetric block cipher (NSA algorithm, questionable security) (2013, broken 2018)
 Speck64	see SPECK
 Speck128	see SPECK
@@ -740,6 +785,7 @@ SRI	Subresource Integrity
 SRP	Secure Remote Password protocol
 SRTP	Secure RTP
 SSCD	Secure Signature Creation Device
+SSE	Symmetric Searchable Encryption
 SSEE	Sichere Signaturerstellungseinheit (same as SSCD)
 SSK	Secret Signing Key
 SSL	Secure Sockets Layer
@@ -763,6 +809,7 @@ TA	Trust Agent
 TACK	Trust Assertions for Certificate Keys
 TCB	Trusted Computing Base
 TDEA	Tripple DEA
+TDKW	A Key Wrap Scheme
 TEA	Tiny Encryption Algorithm
 TEK	Traffic Encryption Key
 TET	?
@@ -773,6 +820,7 @@ Tiger	hash function
 TIME	Timing Info-leak Made Easy	(Exploit SSL/TLS)
 TIME 	A Perfect CRIME? TIME Will Tell
 Threefish	256-, 512-, 1024-bit symmetric block cipher (part of Skein hash function) (2008)
+TKW	Triple-DEA Key Wrap
 TLS	Transport Layer Security
 TLSA	TLS Trust Anchors
 TLSv1	Transport Layer Security version 1
@@ -783,6 +831,7 @@ TOFU	Trust on First Use
 TR-02102	Technische Richtlinie 02102 (des BSI)
 TR-03116	Technische Richtlinie 03116 (des BSI)
 Trivium	80-bit key synchronous stream cipher (2005, broken 4/2015)
+TRNG	True Random Number Generator
 TSK	Transmission Security Key
 TSK 	TACK signing key
 TSP	trust-Management Service Provider
