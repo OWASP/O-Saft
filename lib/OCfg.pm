@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.83 25/07/08 09:40:27";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.84 25/07/08 13:36:55";
 our $VERSION    =  "24.09.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -2428,7 +2428,8 @@ our %cfg = (    # main data structure for configuration
         'user_agent'    => undef,   # User-Agent header to be used in HTTP request
         'head'          => undef,   # any header for HTTP request
         'basic'         => 1    ,   # use Authorization: Basic header
-       #'digest'        => 1    ,   # use Authorization: Digest header
+        'digest'        => 0    ,   # use Authorization: Digest header
+        'ntlm'          => 0    ,   # use Authorization: NTLM header
     }, # http
    #----------------------+-----+----------------------------------------------
 
@@ -3613,7 +3614,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.83"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.84"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3659,7 +3660,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.83 2025/07/08
+3.84 2025/07/08
 
 =head1 AUTHOR
 
