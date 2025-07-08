@@ -49,7 +49,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.39 25/03/07 18:21:24";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.40 25/07/08 17:29:43";
 our $VERSION        =  "24.09.24";  # official verion number of this file
 
 BEGIN {
@@ -129,6 +129,8 @@ $SSLinfo::trace         = 0; # 1=simple debugging SSLinfo
                              # 3=dump data including $Net::SSLeay::trace=3
 $SSLinfo::prefix_trace  = "#$SSLINFO{'ME'}::";  # prefix string used in trace messages
 $SSLinfo::prefix_verbose= "#$SSLINFO{'ME'}::";  # prefix string used in trace messages
+$SSLinfo::basic_auth    = '';# base64 encoded user:pass for HTTP header Authorization:
+                             # must contain prefix Basic if user:pass is not empty
 $SSLinfo::user_agent    = '-'; # User-Agent for HTTP requests
 $SSLinfo::verbose       = 0; # 1: print some verbose messages
 $SSLinfo::linux_debug   = 0; # passed to Net::SSLeay::linux_debug
@@ -447,6 +449,10 @@ matches the other parameters, in particular the host and port.
 =item $SSLinfo::verbose
 
 Print some verbose messages. If set > 1 prints call to external openssl.
+
+=item $SSLinfo::basic_auth
+
+Base64 encoded user:pass for HTTP header Authorization: Basic .
 
 =item $SSLinfo::user_agent
 
@@ -2743,6 +2749,7 @@ sub do_ssl_open($$$@) {
             my $request  = "GET $SSLinfo::target_url HTTP/1.1\r\n";
                $request .= "Host:$host\r\nConnection:close\r\n";
                $request .= "Accept-Encoding:gzip,deflate\r\n";
+               $request .= "Authorization:$SSLinfo::basic_auth\r\n" if ($SSLinfo::basic_auth !~ m/^\s*$/);
                $request .= "User-Agent:$SSLinfo::user_agent\r\n\r\n";
                # Accept-Encoding to get response header Content-Encoding
 # $t1 = time();
@@ -2823,6 +2830,7 @@ sub do_ssl_open($$$@) {
                         'Host'       => $host,
                         'User-Agent' => $SSLinfo::user_agent,
                         'Connection' => 'close',
+                        'Authorization' => $SSLinfo::basic_auth,
                   )
                 );
             if (not defined $response or not defined $_SSLinfo{'http_status'}) {
@@ -3440,6 +3448,7 @@ sub do_openssl($$$$)  {
     if ($^O !~ m/MSWin32/) {
         $host .= ':' if ($port ne '');
         $pipe  = 'HEAD / HTTP/1.1' if ($pipe =~ m/^$/);
+        $pipe .= "\r\nAuthorization:$SSLinfo::basic_auth" if ($SSLinfo::basic_auth !~ m/^\s*$/);
         $pipe .= "\r\nUser-Agent:$SSLinfo::user_agent\r\n\r";
             # sending an empty string or simply one without \r results in
             # a line in access.log like: "\n" 400 750 "-" "-"
@@ -4271,7 +4280,7 @@ L<Net::SSLeay(1)>
 
 =head1 VERSION
 
-3.39 2025/03/07
+3.40 2025/07/08
 
 =head1 AUTHOR
 
