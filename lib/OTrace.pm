@@ -41,7 +41,7 @@ use Data::Dumper qw(Dumper);
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_trace      = "@(#) OTrace.pm 3.52 25/07/08 09:23:49";
+my  $SID_trace      = "@(#) OTrace.pm 3.53 25/07/08 09:41:24";
 our $VERSION        = "24.09.24";
 
 our $prefix_trace   = "#". __PACKAGE__ . ":";
@@ -804,7 +804,7 @@ sub _show_all   {
     #? helper function to print %cfg data structures; used in init_show() only
     _pline("complete %cfg {");
     foreach my $key (sort(keys %cfg)) {
-        if ($key =~ m/(hints|openssl|ssleay|sslerror|sslhello|regex|^out|^use)$/) { # |data
+        if ($key =~ m/(^http|hints|openssl|ssleay|sslerror|sslhello|regex|^out|^use)$/) { # |data
             next if ($key =~ m/need-openssl/);  # necessary since o-saft.pl 3.197
             # TODO: ugly data structures ... should be done by _p_k_v()
             _ptext("# - - - - HASH: $key= {");
@@ -832,7 +832,7 @@ sub _show_all   {
                     _ptype(\%cfg, $key);
                     $cfg{'time0'} = $t0;
                 } else {
-                    if ("RC-ARGV" eq $key) { ## no critic qw(ControlStructures::ProhibitDeepNests) # severity 3 only
+                    if ("RC-ARGV" eq $key) {
                         # dirty hack because values may contain whitespace
                         print(___K_V($key, _q_ARR(@{$cfg{'RC-ARGV'}})));
                     } else {
@@ -846,7 +846,7 @@ sub _show_all   {
     return;
 } # _show_all
 
-sub init_show   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
+sub init_show   {
     #? print important content of %cfg and %openssl hashes
     #? more output if 1<trace; full output if 2<trace
     return if (0 >= $cfg{'trace'});
@@ -1244,7 +1244,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.52 2025/07/08
+3.53 2025/07/08
 
 =head1 AUTHOR
 
