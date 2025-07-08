@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.42 25/02/26 18:19:45
+# SID   @(#) help.txt 3.43 25/07/08 14:39:49
 
 NAME
 
@@ -2183,12 +2183,10 @@ OPTIONS
           See  X&Options for SSL tool&.
 
       --usr
-      --user
 
           Execute functions defined in  lib/OUsr.pm.
 
       --usr-*
-      --user-*
 
           Options ignored, but stored as is internal in  $cfg{usr-args} .
           These options can be used in  lib/OUsr.pm  or  lib/OTrace.pm.
@@ -4203,7 +4201,7 @@ DEPENDENCIES
 
         Where  'INSTALL_PATH'  is the path where the tool is installed.
         To see which files have been included use:
-              $0 +version --v --user
+              $0 +version --v --usr
 
     Perl modules
 
