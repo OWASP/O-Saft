@@ -71,7 +71,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.205 25/04/19 18:40:53"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.206 25/07/08 14:35:34"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -389,7 +389,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.205"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.206"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6333,7 +6333,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.205");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.206");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -6752,6 +6752,14 @@ while ($#argv >= 0) {
             push(@{$cfg{out}->{'warnings_no_dups'}}, $arg);
             push(@{$cfg{out}->{'warnings_printed'}}, $arg);
         }
+        if ($typ eq 'HTTP_NTLM')    { OCfg::set_http('ntlm',    1); }
+        if ($typ eq 'HTTP_BASIC')   { OCfg::set_http('basic',   1); }
+        if ($typ eq 'HTTP_DIGEST')  { OCfg::set_http('digest',  1); }
+        if ($typ eq 'HTTP_HEAD')    { OCfg::set_http('head', $arg); }
+        if ($typ eq 'HTTP_AUTH')    { OCfg::set_http('auth', $arg); }
+        if ($typ eq 'HTTP_PASS')    { OCfg::set_http('pass', $arg); }
+        if ($typ eq 'HTTP_USER')    { OCfg::set_http('user', $arg); }
+       #if ($typ eq 'HTTP_USER_AGENT')  { OCfg::set_http('user_agent', $arg;  }
         if ($typ eq 'HTTP_USER_AGENT')  { $cfg{'use'}->{'user_agent'} = $arg; }
         #if ($typ eq 'HOST')    # not done here, but at end of loop
         #  +---------+--------------+------------------------------------------
@@ -7356,6 +7364,13 @@ while ($#argv >= 0) {
     # options for SSLhello
     if ($arg =~ /^--no(?:dns)?mx/)      { $cfg{'use'}->{'mx'}   = 0;}
     if ($arg =~ /^--(?:dns)?mx/)        { $cfg{'use'}->{'mx'}   = 1;}
+    if ($arg =~ /^--httpbasic$/i)       { $typ = 'HTTP_BASIC';      }
+    if ($arg =~ /^--httpdigest$/i)      { $typ = 'HTTP_DIGEST';     }
+    if ($arg =~ /^--httpntlm$/i)        { $typ = 'HTTP_NTLM';       }
+    if ($arg =~ /^--(?:http)?auth$/i)   { $typ = 'HTTP_AUTH';       }
+    if ($arg =~ /^--(?:http)?pass$/i)   { $typ = 'HTTP_PASS';       }
+    if ($arg =~ /^--(?:http)?user$/i)   { $typ = 'HTTP_USER';       }
+    if ($arg =~ /^--(?:http)?head$/i)   { $typ = 'HTTP_HEAD';       }
     if ($arg =~ /^--(?:http)?useragent/){ $typ = 'HTTP_USER_AGENT'; }
     if ($arg eq  '--sslretry')          { $typ = 'SSLHELLO_RETRY';  }
     if ($arg eq  '--ssltimeout')        { $typ = 'SSLHELLO_TOUT';   }
@@ -7647,7 +7662,7 @@ if ($help !~ m/^\s*$/) {
     OMan::man_printhelp($help);
     exit 0;
 }
-if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.205"; exit 0; }
+if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.206"; exit 0; }
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))     { _vprint("  list       "); printciphers_list('list'); exit 0; }
 if (_is_cfg_do('ciphers'))  { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
