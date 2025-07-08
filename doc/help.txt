@@ -1,5 +1,5 @@
 
-# SID   @(#) help.txt 3.43 25/07/08 14:39:49
+# SID   @(#) help.txt 3.44 25/07/08 14:50:47
 
 NAME
 
@@ -1007,6 +1007,24 @@ OPTIONS
             * host-2:23
             * host-3:42
             * host-4:23
+
+      --http-auth=USER
+      --auth=USER
+
+          Send HTTP Authorization header with AUTH as is.
+          Example:  Authorization: AUTH
+
+      --http-pass=PASS
+      --pass=PASS
+
+          Send HTTP Authorization header with password PASS for user.
+          Example:  Authorization: Basic VVNFUjpQQVNT
+
+      --http-user=USER
+      --user=USER
+
+          Send HTTP Authorization header with USER.
+          Example:  Authorization: Basic VVNFUjpQQVNT
 
       --proxyhost=PROXYHOST --proxy=PROXYHOST:PROXYPORT
 
