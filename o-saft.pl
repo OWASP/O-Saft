@@ -71,7 +71,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.211 25/07/08 23:15:15"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.212 25/07/08 23:58:12"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -389,7 +389,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_http('user_agent', "$cfg{'me'}/3.211"); # use version of this file not $VERSION
+OCfg::set_http('user_agent', "$cfg{'me'}/3.212"); # use version of this file not $VERSION
 OCfg::set_http('user_agent', "$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -6334,7 +6334,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.211");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.212");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7662,7 +7662,7 @@ if ($help !~ m/^\s*$/) {
     OMan::man_printhelp($help);
     exit 0;
 }
-if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.211"; exit 0; }
+if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.212"; exit 0; }
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))     { _vprint("  list       "); printciphers_list('list'); exit 0; }
 if (_is_cfg_do('ciphers'))  { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
@@ -7969,8 +7969,7 @@ _vprint("  initialise SSLinfo, SSLhello");
     $SSLinfo::use_http          = $cfg{'use'}->{'http'};
     $SSLinfo::use_https         = $cfg{'use'}->{'https'};
     $SSLinfo::target_url        = "/";
-    $SSLinfo::basic_auth        = $cfg{'http'}->{'auth'};
-    $SSLinfo::user_agent        = $cfg{'http'}->{'user_agent'};
+    $SSLinfo::http_headers      = OCfg::http_headers($host); # NOTE: wrong $host here, see below
 }
 if ('cipher' eq join("", @{$cfg{'do'}})) {
     $SSLinfo::use_http          = 0; # if only +cipher given don't use http 'cause it may cause erros
@@ -8154,6 +8153,7 @@ foreach my $target (@{$cfg{'targets'}}) { # loop targets (hosts)
     }
     $SSLinfo::use_https     = $cfg{'use'}->{'https'}; # reset
     $SSLinfo::use_http      = $cfg{'use'}->{'http'};  # reset
+    $SSLinfo::http_headers  = OCfg::http_headers($host); # $host now valid
     $SSLinfo::target_url    = OCfg::get_target_path($idx);
     $SSLinfo::target_url    =~ s:^\s*$:/:;      # set to / if empty
     _resetchecks();
