@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.84 25/07/08 13:36:55";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.85 25/07/08 17:28:10";
 our $VERSION    =  "24.09.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -2422,11 +2422,13 @@ our %cfg = (    # main data structure for configuration
    # http->option key    default  description
    #----------------------+-----+----------------------------------------------
     'http' =>   {      # settings for http(s) requests
-        'auth'          => undef,   # any string as value for Authorization header
-        'pass'          => undef,   # password for Authorization header of HTTP request
-        'user'          => undef,   # username for Authorization header of HTTP request
-        'user_agent'    => undef,   # User-Agent header to be used in HTTP request
-        'head'          => undef,   # any header for HTTP request
+        'auth'          => '',  # any string as value for Authorization header
+                                # must contain the proper prefix, like Basic
+        'pass'          => '',  # password for Authorization header of HTTP request
+        'user'          => '',  # username for Authorization header of HTTP request
+                                # user:pass will be base64 encoded
+        'user_agent'    => '',  # User-Agent header to be used in HTTP request
+        'head'          => '',  # any header for HTTP request
         'basic'         => 1    ,   # use Authorization: Basic header
         'digest'        => 0    ,   # use Authorization: Digest header
         'ntlm'          => 0    ,   # use Authorization: NTLM header
@@ -3614,7 +3616,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.84"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.85"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3660,7 +3662,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.84 2025/07/08
+3.85 2025/07/08
 
 =head1 AUTHOR
 
