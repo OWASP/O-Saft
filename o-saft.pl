@@ -71,7 +71,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.209 25/07/08 22:30:47"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.210 25/07/08 22:53:43"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -389,7 +389,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_http('user_agent', "$cfg{'me'}/3.209"); # use version of this file not $VERSION
+OCfg::set_http('user_agent', "$cfg{'me'}/3.210"); # use version of this file not $VERSION
 OCfg::set_http('user_agent', "$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -5222,7 +5222,7 @@ SSTPCORRELATIONID:{deadbeef-cafe-affe-caba-0000000000}\r
 Content-Length:   $ulonglong_max\r
 Connection:       close\r
 Host:             $host\r
-User-Agent:       $cfg{'use'}->{'user_agent'}\r
+User-Agent:       $cfg{'http'}->{'user_agent'}\r
 \r
 EoREQ
     # TODO: do we need Authorization: header here?
@@ -6334,7 +6334,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.209");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.210");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7662,7 +7662,7 @@ if ($help !~ m/^\s*$/) {
     OMan::man_printhelp($help);
     exit 0;
 }
-if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.209"; exit 0; }
+if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.210"; exit 0; }
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))     { _vprint("  list       "); printciphers_list('list'); exit 0; }
 if (_is_cfg_do('ciphers'))  { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
