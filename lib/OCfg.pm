@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.82 25/07/07 22:04:15";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.83 25/07/08 09:40:27";
 our $VERSION    =  "24.09.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -2419,6 +2419,19 @@ our %cfg = (    # main data structure for configuration
     }, # use
    #----------------------+-----+----------------------------------------------
 
+   # http->option key    default  description
+   #----------------------+-----+----------------------------------------------
+    'http' =>   {      # settings for http(s) requests
+        'auth'          => undef,   # any string as value for Authorization header
+        'pass'          => undef,   # password for Authorization header of HTTP request
+        'user'          => undef,   # username for Authorization header of HTTP request
+        'user_agent'    => undef,   # User-Agent header to be used in HTTP request
+        'head'          => undef,   # any header for HTTP request
+        'basic'         => 1    ,   # use Authorization: Basic header
+       #'digest'        => 1    ,   # use Authorization: Digest header
+    }, # http
+   #----------------------+-----+----------------------------------------------
+
    # SEE Note:tty
    # following keys used when --tty (or similar) option was used
    # i.g. the code will use the values only   if defined $cfg{'tty'}->{'width'}
@@ -2996,6 +3009,8 @@ our %dbx = (    # save hardcoded settings (command lists, texts), and debugging 
 #_____________________________________________________________________________
 #__________________________________________________________________ methods __|
 
+# package prefix Cfg:: in POD for methods omitted, should be obvious
+
 =pod
 
 =head1 METHODS
@@ -3253,9 +3268,11 @@ sub get_dh_paramter     {
     return $dh;
 } # get_dh_paramter
 
-# TODO: get_target_* and set_target_* should be named get_cfg_target_* ...
-
 =pod
+
+=head3 get_http($idx)
+
+Get value from internal C<%cfg{'http'}{$idx}> data structure.
 
 =head3 get_target_nr($idx)
 
@@ -3309,6 +3326,10 @@ Get information from internal C<%cfg{'targets'}> data structure.
 
 Set information in internal C<%cfg{'targets'}> data structure.
 
+=head3 set_http($idx, $value)
+
+Set value in internal C<%cfg{'http'}{$idx}> data structure.
+
 =head3 set_user_agent($txt)
 
 Set User-Agent to be used in HTTP requests in internal C<%cfg{'use'}> .
@@ -3316,6 +3337,7 @@ Set User-Agent to be used in HTTP requests in internal C<%cfg{'use'}> .
 
 =cut
 
+sub get_http         { my $i=shift; return $cfg{'http'}->{$i};      }
 sub get_target_nr    { my $i=shift; return $cfg{'targets'}[$i][0];  }
 sub get_target_prot  { my $i=shift; return $cfg{'targets'}[$i][1];  }
 sub get_target_host  { my $i=shift; return $cfg{'targets'}[$i][2];  }
@@ -3340,16 +3362,17 @@ sub set_target_start { my $i=shift; $cfg{'targets'}[$i][8]  = shift; return; }
 sub set_target_open  { my $i=shift; $cfg{'targets'}[$i][9]  = shift; return; }
 sub set_target_stop  { my $i=shift; $cfg{'targets'}[$i][10] = shift; return; }
 sub set_target_error { my $i=shift; $cfg{'targets'}[$i][11] = shift; return; }
+sub set_http         { my $i=shift; $cfg{'http'}->{$i}      = shift; return; }
 sub set_user_agent   { my $t=shift; $cfg{'use'}->{'user_agent'} = $t;return; }
-
+    # similar to _set_cfg_use()
 
 =pod
 
-=head3 OCfg::ocfg_sleep($wait)
+=head3 ocfg_sleep($wait)
 
 Wrapper to simulate "sleep" with perl's select.
 
-=head3 OCfg::printhint($cmd,@text)
+=head3 printhint($cmd,@text)
 
 Print hint for specified command, additionl text will be appended.
 
@@ -3373,7 +3396,7 @@ sub printhint       {
 
 =pod
 
-=head3 OCfg::test_cipher_regex( )
+=head3 test_cipher_regex( )
 
 Internal test function: apply RegEx to intended text/list.
 
@@ -3590,7 +3613,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.82"); # default version; needs to be corrected by caller
+    set_user_agent("$me/3.83"); # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3636,7 +3659,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.82 2025/07/07
+3.83 2025/07/08
 
 =head1 AUTHOR
 
