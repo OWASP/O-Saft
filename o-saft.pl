@@ -71,7 +71,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.212 25/07/08 23:58:12"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.213 25/07/09 00:04:37"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -389,7 +389,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_http('user_agent', "$cfg{'me'}/3.212"); # use version of this file not $VERSION
+OCfg::set_http('user_agent', "$cfg{'me'}/3.213"); # use version of this file not $VERSION
 OCfg::set_http('user_agent', "$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -3601,15 +3601,12 @@ sub check_url       {
 
     trace2("check_url: use_http= " . _is_cfg_use('http'));
     trace2("check_url: get_http($host, $port, $url)");
+    trace2("check_url: headers='OCfg::http_headers($host)'");
     my ($response, $status, %headers);
     if ($type eq 'ext_qcstatements') {      # must be https
-        ($response, $status, %headers) = Net::SSLeay::get_https($host, $port, $url,
-            Net::SSLeay::make_headers('Host' => $host, 'Connection' => 'close', 'Authorization' => $cfg{'http'}->{'auth'})
-        );
+        ($response, $status, %headers) = Net::SSLeay::get_https($host, $port, $url, OCfg::http_headers($host));
     } else {
-        ($response, $status, %headers) = Net::SSLeay::get_http($host, $port, $url,
-            Net::SSLeay::make_headers('Host' => $host, 'Connection' => 'close', 'Authorization' => $cfg{'http'}->{'auth'})
-        );
+        ($response, $status, %headers) = Net::SSLeay::get_http( $host, $port, $url, OCfg::http_headers($host));
     }
     return "<<connection to '$host:$port$url' empty reply>>";
         # FIXME: Empty reply indicates that server accepts connection; reason unknown
@@ -5216,14 +5213,12 @@ sub _get_sstp_https {
     my $length  = "";
     my $server  = "";
     my ($status, %headers);
+    my $headers = OCfg::http_headers($host);
     my $request = << "EoREQ";
 SSTP_DUPLEX_POST $url HTTP/1.1\r
 SSTPCORRELATIONID:{deadbeef-cafe-affe-caba-0000000000}\r
 Content-Length:   $ulonglong_max\r
-Connection:       close\r
-Host:             $host\r
-User-Agent:       $cfg{'http'}->{'user_agent'}\r
-\r
+$headers
 EoREQ
     # TODO: do we need Authorization: header here?
     # some webservers are picky, they need \r\n as line terminator
@@ -6334,7 +6329,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.212");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.213");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7662,7 +7657,7 @@ if ($help !~ m/^\s*$/) {
     OMan::man_printhelp($help);
     exit 0;
 }
-if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.212"; exit 0; }
+if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.213"; exit 0; }
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))     { _vprint("  list       "); printciphers_list('list'); exit 0; }
 if (_is_cfg_do('ciphers'))  { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
