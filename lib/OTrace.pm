@@ -41,7 +41,7 @@ use Data::Dumper qw(Dumper);
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_trace      = "@(#) OTrace.pm 3.51 25/03/12 16:17:56";
+my  $SID_trace      = "@(#) OTrace.pm 3.52 25/07/08 09:23:49";
 our $VERSION        = "24.09.24";
 
 our $prefix_trace   = "#". __PACKAGE__ . ":";
@@ -800,6 +800,52 @@ sub target_show {
     return;
 } # target_show
 
+sub _show_all   {
+    #? helper function to print %cfg data structures; used in init_show() only
+    _pline("complete %cfg {");
+    foreach my $key (sort(keys %cfg)) {
+        if ($key =~ m/(hints|openssl|ssleay|sslerror|sslhello|regex|^out|^use)$/) { # |data
+            next if ($key =~ m/need-openssl/);  # necessary since o-saft.pl 3.197
+            # TODO: ugly data structures ... should be done by _p_k_v()
+            _ptext("# - - - - HASH: $key= {");
+            if ($key =~ m/openssl/) {
+                    _p_k_v("# option not available", "[ 0 ...]");
+                    _p_k_v("# option available   ", "[ 1 text] # text describes purpose of option");
+            }
+            foreach my $k (sort(keys %{$cfg{$key}})) {
+                if ($key =~ m/openssl/) {
+                    _p_k_v($k, ___ARR(@{$cfg{$key}{$k}}));
+                } else {
+                    #_p_k_v($k, $cfg{$key}{$k});
+                    _ptype($cfg{$key}, $k);
+                };
+            };
+            _ptext("# - - - - HASH: $key }");
+        } else {
+            if ($key =~ m/targets/) {   # TODO: quick&dirty to get full data
+                target_show(@{$cfg{'targets'}});
+            } else {
+                if ("time0" eq $key and defined $ENV{'OSAFT_MAKE'}) {
+                    # SEE Make:OSAFT_MAKE (in Makefile.pod)
+                    my $t0 = $cfg{'time0'};
+                    $cfg{'time0'} = $STR{MAKEVAL};
+                    _ptype(\%cfg, $key);
+                    $cfg{'time0'} = $t0;
+                } else {
+                    if ("RC-ARGV" eq $key) { ## no critic qw(ControlStructures::ProhibitDeepNests) # severity 3 only
+                        # dirty hack because values may contain whitespace
+                        print(___K_V($key, _q_ARR(@{$cfg{'RC-ARGV'}})));
+                    } else {
+                        _ptype(\%cfg, $key);
+                    }
+                }
+            }
+        }
+    }
+    _pline("%cfg }");
+    return;
+} # _show_all
+
 sub init_show   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     #? print important content of %cfg and %openssl hashes
     #? more output if 1<trace; full output if 2<trace
@@ -867,49 +913,10 @@ sub init_show   {   ## no critic qw(Subroutines::ProhibitExcessComplexity)
     _pline("%openssl }");
 
     if (1 < $cfg{'trace'}) {    # full information
-        _pline("complete %cfg {");
-        foreach my $key (sort(keys %cfg)) {
-            if ($key =~ m/(hints|openssl|ssleay|sslerror|sslhello|regex|^out|^use)$/) { # |data
-                next if ($key =~ m/need-openssl/);  # necessary since o-saft.pl 3.197
-                # TODO: ugly data structures ... should be done by _p_k_v()
-                _ptext("# - - - - HASH: $key= {");
-                if ($key =~ m/openssl/) {
-                        _p_k_v("# option not available", "[ 0 ...]");
-                        _p_k_v("# option available   ", "[ 1 text] # text describes purpose of option");
-                }
-                foreach my $k (sort(keys %{$cfg{$key}})) {
-                    if ($key =~ m/openssl/) {
-                        _p_k_v($k, ___ARR(@{$cfg{$key}{$k}}));
-                    } else {
-                        #_p_k_v($k, $cfg{$key}{$k});
-                        _ptype($cfg{$key}, $k);
-                    };
-                };
-                _ptext("# - - - - HASH: $key }");
-            } else {
-                if ($key =~ m/targets/) {   # TODO: quick&dirty to get full data
-                    target_show(@{$cfg{'targets'}});
-                } else {
-                    if ("time0" eq $key and defined $ENV{'OSAFT_MAKE'}) {
-                        # SEE Make:OSAFT_MAKE (in Makefile.pod)
-                        my $t0 = $cfg{'time0'};
-                        $cfg{'time0'} = $STR{MAKEVAL};
-                        _ptype(\%cfg, $key);
-                        $cfg{'time0'} = $t0;
-                    } else {
-                        if ("RC-ARGV" eq $key) { ## no critic qw(ControlStructures::ProhibitDeepNests) # severity 3 only
-                            # dirty hack because values may contain whitespace
-                            print(___K_V($key, _q_ARR(@{$cfg{'RC-ARGV'}})));
-                        } else {
-                            _ptype(\%cfg, $key);
-                        }
-                    }
-                }
-            }
-        }
-        _pline("%cfg }");
+        _show_all;
         return;
     }
+    # FIXME: 07/2025: following never used since xx/2023; check --trace options
     # else  user-friendly information
     my $sni_name = __undef($cfg{'sni_name'});   # default is Perl's undef
     my $port     = __undef($cfg{'port'});       # default is Perl's undef
@@ -1237,7 +1244,7 @@ I<--v> or any I<--trace*>  option, which then loads this file automatically.
 
 =head1 VERSION
 
-3.51 2025/03/12
+3.52 2025/07/08
 
 =head1 AUTHOR
 
