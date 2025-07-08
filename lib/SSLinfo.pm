@@ -49,7 +49,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.40 25/07/08 17:29:43";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.41 25/07/08 23:54:11";
 our $VERSION        =  "24.09.24";  # official verion number of this file
 
 BEGIN {
@@ -129,9 +129,8 @@ $SSLinfo::trace         = 0; # 1=simple debugging SSLinfo
                              # 3=dump data including $Net::SSLeay::trace=3
 $SSLinfo::prefix_trace  = "#$SSLINFO{'ME'}::";  # prefix string used in trace messages
 $SSLinfo::prefix_verbose= "#$SSLINFO{'ME'}::";  # prefix string used in trace messages
-$SSLinfo::basic_auth    = '';# base64 encoded user:pass for HTTP header Authorization:
-                             # must contain prefix Basic if user:pass is not empty
-$SSLinfo::user_agent    = '-'; # User-Agent for HTTP requests
+$SSLinfo::http_headers  = '';# HTTP headers to be used in requests;
+                             # all headers to be used, separated by \r\n
 $SSLinfo::verbose       = 0; # 1: print some verbose messages
 $SSLinfo::linux_debug   = 0; # passed to Net::SSLeay::linux_debug
 $SSLinfo::slowly        = 0; # passed to Net::SSLeay::slowly
@@ -450,13 +449,11 @@ matches the other parameters, in particular the host and port.
 
 Print some verbose messages. If set > 1 prints call to external openssl.
 
-=item $SSLinfo::basic_auth
+=item $SSLinfo::http_headers
 
-Base64 encoded user:pass for HTTP header Authorization: Basic .
-
-=item $SSLinfo::user_agent
-
-Text to be used as User-Agent in HTTP requests.
+HTTP headers to be used in HTTP requests; all headers must be separated by
+\r\n . Usually contains:  Host, Authorization, User-Agent, Connection.
+Authorization value must be "Basic" followed by base64 encoded user:pass .
 
 =back
 
@@ -2744,14 +2741,9 @@ sub do_ssl_open($$$@) {
         if (0 < $SSLinfo::use_https) {
             _trace("do_ssl_open HTTPS {");
             #dbx# $host .= 'x'; # TODO: <== some servers behave strange if a wrong hostname is passed
-            my $ua = "User-Agent: Mozilla/5.0 (quark rv:52.0) Gecko/20100101 Firefox/52.0";
             my $response = '';
             my $request  = "GET $SSLinfo::target_url HTTP/1.1\r\n";
-               $request .= "Host:$host\r\nConnection:close\r\n";
-               $request .= "Accept-Encoding:gzip,deflate\r\n";
-               $request .= "Authorization:$SSLinfo::basic_auth\r\n" if ($SSLinfo::basic_auth !~ m/^\s*$/);
-               $request .= "User-Agent:$SSLinfo::user_agent\r\n\r\n";
-               # Accept-Encoding to get response header Content-Encoding
+               $request .= "$SSLinfo::http_headers\r\n";
 # $t1 = time();
 #           ($ctx = Net::SSLeay::CTX_v23_new()) or do {$src = 'Net::SSLeay::CTX_v23_new()'} and last;
             # FIXME: need to find proper method instead hardcoded CTX_v23_new(); see _ssleay_ctx_new
@@ -2826,12 +2818,7 @@ sub do_ssl_open($$$@) {
             $src = 'Net::SSLeay::get_http()';
             ($response, $_SSLinfo{'http_status'}, %headers) =
                 Net::SSLeay::get_http($host, 80, $SSLinfo::target_url,
-                  Net::SSLeay::make_headers(
-                        'Host'       => $host,
-                        'User-Agent' => $SSLinfo::user_agent,
-                        'Connection' => 'close',
-                        'Authorization' => $SSLinfo::basic_auth,
-                  )
+                  $SSLinfo::http_headers
                 );
             if (not defined $response or not defined $_SSLinfo{'http_status'}) {
                 if (1.94 >= $Net::SSLeay::VERSION) {
@@ -3448,8 +3435,7 @@ sub do_openssl($$$$)  {
     if ($^O !~ m/MSWin32/) {
         $host .= ':' if ($port ne '');
         $pipe  = 'HEAD / HTTP/1.1' if ($pipe =~ m/^$/);
-        $pipe .= "\r\nAuthorization:$SSLinfo::basic_auth" if ($SSLinfo::basic_auth !~ m/^\s*$/);
-        $pipe .= "\r\nUser-Agent:$SSLinfo::user_agent\r\n\r";
+        $pipe .= "\r\n$SSLinfo::http_headers\r\n\r";
             # sending an empty string or simply one without \r results in
             # a line in access.log like: "\n" 400 750 "-" "-"
             # to avoid this, \r is appended to the string always
@@ -4280,7 +4266,7 @@ L<Net::SSLeay(1)>
 
 =head1 VERSION
 
-3.40 2025/07/08
+3.41 2025/07/08
 
 =head1 AUTHOR
 
