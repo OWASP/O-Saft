@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.85 25/07/08 17:28:10";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.86 25/07/08 22:33:06";
 our $VERSION    =  "24.09.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -2403,7 +2403,6 @@ our %cfg = (    # main data structure for configuration
                                 # 1: make connection with SNI set (can be empty string)
                                 # 3: test with and without SNI mode (used with Net::SSLhello::checkSSLciphers only)
         'lwp'           => 0,   # 1: use perls LWP module for HTTP checks # TODO: NOT YET IMPLEMENTED
-        'user_agent'    => undef,   # User-Agent header to be used in HTTP requests
         'alpn'          => 1,   # 0: do not use -alpn option for openssl
         'npn'           => 1,   # 0: do not use -nextprotoneg option for openssl
         'reconnect'     => 1,   # 0: do not use -reconnect option for openssl
@@ -3333,11 +3332,6 @@ Set information in internal C<%cfg{'targets'}> data structure.
 
 Set value in internal C<%cfg{'http'}{$idx}> data structure.
 
-=head3 set_user_agent($txt)
-
-Set User-Agent to be used in HTTP requests in internal C<%cfg{'use'}> .
-
-
 =cut
 
 sub get_http         { my $i=shift; return $cfg{'http'}->{$i};      }
@@ -3366,7 +3360,6 @@ sub set_target_open  { my $i=shift; $cfg{'targets'}[$i][9]  = shift; return; }
 sub set_target_stop  { my $i=shift; $cfg{'targets'}[$i][10] = shift; return; }
 sub set_target_error { my $i=shift; $cfg{'targets'}[$i][11] = shift; return; }
 sub set_http         { my $i=shift; $cfg{'http'}->{$i}      = shift; return; }
-sub set_user_agent   { my $t=shift; $cfg{'use'}->{'user_agent'} = $t;return; }
     # similar to _set_cfg_use()
 
 =pod
@@ -3616,7 +3609,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_user_agent("$me/3.85"); # default version; needs to be corrected by caller
+    set_http('user_agent', "$me/3.86");  # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3662,7 +3655,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.85 2025/07/08
+3.86 2025/07/08
 
 =head1 AUTHOR
 
