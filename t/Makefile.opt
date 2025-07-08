@@ -8,7 +8,7 @@
 #?      make help.test.opt
 #?
 #? VERSION
-#?      @(#) Makefile.opt 3.8 25/03/12 22:33:22
+#?      @(#) Makefile.opt 3.9 25/07/08 17:44:34
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -17,7 +17,7 @@
 
 HELP-help.test.opt  = targets for testing '$(SRC.pl)' options
 
-O-SID.opt          := 3.8
+O-SID.opt          := 3.9
 O-SELF.opt         := t/Makefile.opt
 ALL.includes       += $(O-SELF.opt)
 ALL.inc.type       += opt
@@ -82,6 +82,11 @@ testarg-opt-stdformat-utf8: TEST.args  += --std-format=utf8
 testarg-opt-stdformat-UTF8: TEST.args  += --std-format=UTF-8
 testarg-opt-stdformat-UTF-8: testarg-opt-stdformat-UTF8
 
+testarg-opt--http-auth:     TEST.args  += --http-auth="Basic by1zYWZ0Om8tc2FmdA=="
+testarg-opt--http-pass:     TEST.args  += $(TEST.opt.hosts) +cn --http-pass=o-saft
+testarg-opt--http-user:     TEST.args  += $(TEST.opt.hosts) +cn --http-user=o-saft
+testarg-opt--user-pass:     TEST.args  += $(TEST.opt.hosts) +cn --http-user=o-saft --http-pass=o-saft
+
 # TODO: vialid options to be tested here
 #stdarg-opt-001:             TEST.args  += --sslv3 --ssl-v3 --sslv3 -.sslv3 -_sslv3 --ssl3 --ssl3
 #stdarg-opt-001:             TEST.args  += --no-sslv2 --no-ssl-v2 --nosslv2 --no.sslv2 --no_sslv2 --no-ssl2 --nossl2
@@ -138,6 +143,7 @@ ALL.test.alias.log  = $(ALL.test.salias:%=%.log)
 ALL.test.stdformat.log  = $(ALL.test.stdformat:%=%.log)
 ALL.testopt        += $(ALL.test.alias)
 ALL.testopt        += $(ALL.test.stdformat)
+ALL.testopt        += testarg-opt--http-auth testarg-opt--http-pass testarg-opt--http-user testarg-opt--user-pass
 
 test.alias:         $(ALL.test.alias)
 test.stdformat:     $(ALL.test.stdformat)
