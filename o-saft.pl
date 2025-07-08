@@ -71,7 +71,7 @@ use strict;
 use warnings;
 use utf8;
 
-our $SID_main   = "@(#) o-saft.pl 3.207 25/07/08 14:40:33"; # version of this file
+our $SID_main   = "@(#) o-saft.pl 3.208 25/07/08 17:27:45"; # version of this file
 my  $VERSION    = _VERSION();           ## no critic qw(ValuesAndExpressions::RequireConstantVersion)
     # SEE Perl:constant
     # see _VERSION() below for our official version number
@@ -389,7 +389,7 @@ our %openssl = (
 ); # %openssl
 
 $cfg{'time0'}   = $time0;
-OCfg::set_user_agent("$cfg{'me'}/3.207"); # use version of this file not $VERSION
+OCfg::set_user_agent("$cfg{'me'}/3.208"); # use version of this file not $VERSION
 OCfg::set_user_agent("$cfg{'me'}/$STR{'MAKEVAL'}") if (defined $ENV{'OSAFT_MAKE'});
 # TODO: $STR{'MAKEVAL'} is wrong if not called by internal make targets
 
@@ -3604,11 +3604,11 @@ sub check_url       {
     my ($response, $status, %headers);
     if ($type eq 'ext_qcstatements') {      # must be https
         ($response, $status, %headers) = Net::SSLeay::get_https($host, $port, $url,
-            Net::SSLeay::make_headers('Host' => $host, 'Connection' => 'close')
+            Net::SSLeay::make_headers('Host' => $host, 'Connection' => 'close', 'Authorization' => $cfg{'http'}->{'auth'})
         );
     } else {
         ($response, $status, %headers) = Net::SSLeay::get_http($host, $port, $url,
-            Net::SSLeay::make_headers('Host' => $host, 'Connection' => 'close')
+            Net::SSLeay::make_headers('Host' => $host, 'Connection' => 'close', 'Authorization' => $cfg{'http'}->{'auth'})
         );
     }
     return "<<connection to '$host:$port$url' empty reply>>";
@@ -5225,6 +5225,7 @@ Host:             $host\r
 User-Agent:       $cfg{'use'}->{'user_agent'}\r
 \r
 EoREQ
+    # TODO: do we need Authorization: header here?
     # some webservers are picky, they need \r\n as line terminator
     # TODO: : check both variants for SSTP_DUPLEX_POST: with and without \r
 
@@ -6333,7 +6334,7 @@ sub printversion        {
     my $me = $cfg{'me'};
     print( "= $0 " . _VERSION() . " =");
     if (not _is_cfg_verbose()) {
-        printf("    %-21s%s\n", $me, "3.207");# just version to keep make targets happy
+        printf("    %-21s%s\n", $me, "3.208");# just version to keep make targets happy
     } else {
         printf("    %-21s%s\n", $me, $SID_main); # own unique SID
         # print internal SID of our own modules
@@ -7662,7 +7663,7 @@ if ($help !~ m/^\s*$/) {
     OMan::man_printhelp($help);
     exit 0;
 }
-if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.207"; exit 0; }
+if (0 == scalar(@{$cfg{'do'}}) and $cfg{'opt-V'})   {   print "3.208"; exit 0; }
 # NOTE: printciphers_list() is a wrapper for Ciphers::show() regarding more options
 if (_is_cfg_do('list'))     { _vprint("  list       "); printciphers_list('list'); exit 0; }
 if (_is_cfg_do('ciphers'))  { _vprint("  ciphers    "); printciphers_list('ciphers');  exit 0; }
@@ -7696,6 +7697,28 @@ if (_is_cfg_do('cipher') and (1 >= scalar(@{$cfg{'do'}}))) {
     $cfg{'use'}->{'https'}  = 0;
     $cfg{'use'}->{'http'}   = 0;
     $cfg{'use'}->{'dns'}    = 0;
+}
+
+if ($cfg{'http'}->{'auth'} =~ m/^\s*$/) {
+    # $cfg{'http'}->{'auth'} will besed to condtruct the header, if it is set
+    # by --http-auth= keep it as is, otherwise check for username or password
+    # if any username or password given, base64 encode it
+    my $b64 = "$cfg{'http'}->{'user'}:$cfg{'http'}->{'pass'}";
+    if ($b64 ne ':') { # --http-user= or --http-pass= given
+        # own simple base64 encoder, avoids using MIME::Base64
+        # "padding" stolen somewhere, needs to be improved ...
+	my $len  = length($b64);
+        my $pad =  (3 - ($len % 3)) % 3;        # compute padding
+           $b64 =  substr(pack('u', $b64), 1);  # convert chars to uuencoded
+           $b64 =~ tr| -_`|A-Za-z0-9+/A|;       # convert from uuencoded to base64
+        chomp($b64);                            # sometime necessary
+        substr($b64, -$pad, $pad) = '=' x $pad; # replace with padding
+        # $b64 =~ s/(.{76})/$1\n/g; # break lines at 76 characters not needed
+        $cfg{'http'}->{'auth'} = "Basic $b64";
+    }
+    # _dbx "user=$cfg{'http'}->{'user'}";
+    # _dbx "pass=$cfg{'http'}->{'pass'}";
+    # _dbx "auth=$cfg{'http'}->{'auth'}";
 }
 
 if (_is_cfg_do('list')) {
@@ -7947,6 +7970,7 @@ _vprint("  initialise SSLinfo, SSLhello");
     $SSLinfo::use_http          = $cfg{'use'}->{'http'};
     $SSLinfo::use_https         = $cfg{'use'}->{'https'};
     $SSLinfo::target_url        = "/";
+    $SSLinfo::basic_auth        = $cfg{'http'}->{'auth'};
     $SSLinfo::user_agent        = $cfg{'use'}->{'user_agent'};
 }
 if ('cipher' eq join("", @{$cfg{'do'}})) {
