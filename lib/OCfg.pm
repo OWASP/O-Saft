@@ -22,7 +22,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_ocfg   =  "@(#) OCfg.pm 3.86 25/07/08 22:33:06";
+my  $SID_ocfg   =  "@(#) OCfg.pm 3.88 25/07/09 14:50:32";
 our $VERSION    =  "24.09.24";  # official version number of this file
 
 my  $cfg__me= $0;               # dirty hack to circumvent late initialisation
@@ -2661,9 +2661,10 @@ our %cfg = (    # main data structure for configuration
                            # Tripple DES is used as 3DES or DES_192
         'DHEorEDH'      => '(?:DHE|EDH)[_-]',
                            # DHE and EDH are 2 acronyms for the same thing
-        'EC-DSA'        => 'EC(?:DHE|EDH)[_-]ECDSA',
+        'EC-DSA'        => 'EC(?:DHE|EDH)[_-]EC-?(?:G|KC|R|S)DSA',
+                           # ECDHE-ECDSA; ECDHE-EC-DSA also even if not used
         'EC-RSA'        => 'EC(?:DHE|EDH)[_-]RSA',
-                           # ECDHE-RSA or ECDHE-ECDSA
+                           # ECDHE-RSA
         'EC'            => 'EC(?:DHE|EDH)[_-]',
         'EXPORT'        => 'EXP(?:ORT)?(?:40|56|1024)?[_-]',
                            # EXP, EXPORT, EXPORT40, EXP1024, EXPORT1024, ...
@@ -3362,6 +3363,22 @@ sub set_target_error { my $i=shift; $cfg{'targets'}[$i][11] = shift; return; }
 sub set_http         { my $i=shift; $cfg{'http'}->{$i}      = shift; return; }
     # similar to _set_cfg_use()
 
+sub http_headers    {
+    #? return HTTP headers to be used in requests
+    # simple version of Net::SSLeay::make_headers()
+    my $host = shift;
+    return << "EoHEAD";   
+Host:           $host\r
+Accept-Encoding:gzip,deflate\r
+Authorization:  $cfg{'http'}->{'auth'}\r
+User-Agent:     $cfg{'http'}->{'user_agent'}\r
+Connection:     close\r
+\r
+EoHEAD
+    # Accept-Encoding necessary to get response header Content-Encoding
+    # value for Authorization may be empty, probaly ignored by server
+} # http_headers
+
 =pod
 
 =head3 ocfg_sleep($wait)
@@ -3609,7 +3626,7 @@ sub _init       {
         $data_oid{$k}->{val} = "<<check error>>"; # set a default value
     }
     $me = $cfg{'mename'}; $me =~ s/\s*$//;
-    set_http('user_agent', "$me/3.86");  # default version; needs to be corrected by caller
+    set_http('user_agent', "$me/3.88");  # default version; needs to be corrected by caller
     return;
 } # _init
 
@@ -3655,7 +3672,7 @@ lib/OData.pm
 
 =head1 VERSION
 
-3.86 2025/07/08
+3.88 2025/07/09
 
 =head1 AUTHOR
 
