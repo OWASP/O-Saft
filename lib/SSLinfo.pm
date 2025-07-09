@@ -49,7 +49,7 @@ use warnings;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.41 25/07/08 23:54:11";
+my  $SID_sslinfo    =  "@(#) SSLinfo.pm 3.42 25/07/09 12:27:32";
 our $VERSION        =  "24.09.24";  # official verion number of this file
 
 BEGIN {
@@ -129,11 +129,20 @@ $SSLinfo::trace         = 0; # 1=simple debugging SSLinfo
                              # 3=dump data including $Net::SSLeay::trace=3
 $SSLinfo::prefix_trace  = "#$SSLINFO{'ME'}::";  # prefix string used in trace messages
 $SSLinfo::prefix_verbose= "#$SSLINFO{'ME'}::";  # prefix string used in trace messages
-$SSLinfo::http_headers  = '';# HTTP headers to be used in requests;
-                             # all headers to be used, separated by \r\n
 $SSLinfo::verbose       = 0; # 1: print some verbose messages
 $SSLinfo::linux_debug   = 0; # passed to Net::SSLeay::linux_debug
 $SSLinfo::slowly        = 0; # passed to Net::SSLeay::slowly
+$SSLinfo::http_headers  = <<"EoHEAD";   # similar to OCfg::http_headers()
+Host:           localhost\r
+Accept-Encoding:gzip,deflate\r
+User-Agent:     $0 3.42\r
+Connection:     close\r
+\r
+EoHEAD
+                             # HTTP headers to be used in requests;
+                             # all headers to be used, separated by \r\n
+                             # will be overwritten by caller;
+                             # this default for use in standalone mode only
 
 # SEE Note:Defensive Programming
 my $dumm_1  = $SSLinfo::linux_debug;
@@ -4244,6 +4253,8 @@ sub _main           {
         if ($arg =~ m/^(?:\+test)?.?openssl/)   { print test_openssl(); next; }
         if ($arg =~ m/^[+-]/)                   { next; }   # silently ignore unknown options
         # treat remaining args as hostname to test
+        $SSLinfo::http_headers =~ s/^(host:\s+)[^\r]*\r/$1$arg\r/i;
+            # stanalone mode needs to set proper hostname
         do_ssl_open( $arg, 443, '');
         print SSLinfo::datadump("main");
     }
@@ -4266,7 +4277,7 @@ L<Net::SSLeay(1)>
 
 =head1 VERSION
 
-3.41 2025/07/08
+3.42 2025/07/09
 
 =head1 AUTHOR
 
