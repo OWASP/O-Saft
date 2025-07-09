@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 3.9 25/07/07 22:03:28
+# SID	@(#) glossary.txt 3.10 25/07/09 14:46:32
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -152,6 +152,7 @@ CMS	Cryptographic Message Syntax
 CMVP	Cryptographic Module Validation Program (NIST)
 CN	Common Name
 CNT_IMIT	cipher suite
+CT	Certificate-Transparency
 CTR_OMAC	cipher suite (GOST R 34.12-2015 aka GOST3412-2015)
 COSE	CBOR Object Signing and Encryption
 CP	Certificate Policy (certificate extension)
@@ -242,8 +243,13 @@ EAX 	EAX Mode (block cipher mode)
 EAXprime	alias for EAX Mode
 EBC	Edge Boundery Controller
 EC	Elliptic Curve
+EC-DSA	alias for ECDSA
+EC-GDSA	Elliptic Curve German DSA
+EC-FSDSA	Elliptic Curve Full chnorr DSA
+EC-KCDSA	Elliptic Curve KCDSA
+EC-RDSA	Elliptic Curve RDSA
+EC-SDSA	Elliptic Curve Schnorr DSA
 EC-Schnorr	Elliptic Curve Based Schnorr Signature Algorithm
-EC-KCDSA	Elliptic Curve ??
 ECB	Electronic Code Book mode (block cipher mode)
 ECC 	Error Corection Code
 ECC	Elliptic Curve Cryptography
@@ -258,12 +264,13 @@ ECDSA	Elliptic Curve Digital Signature Algorithm
 ECDSA-256	Elliptic Curve Digital Signature Algorithm (256 bits)
 ECDSA-384	Elliptic Curve Digital Signature Algorithm (384 bits)
 ECDSA-521	Elliptic Curve Digital Signature Algorithm (521 bits)
-ECGDSA	Elliptic Curve German DSA
+ECGDSA	alias for EC-GDSA
 ECHO	hash function (Ryad Benadjila, Olivier Billet, Henri Gilbert, Gilles Macario-Rat, Thomas Peyrin, Matt Robshaw, Yannick Seurin, 2010)
 ECIES	Elliptic Curve Integrated Encryption Scheme
 ECKA	Elliptic Curve Key Agreement
 ECKA-EG	Elliptic Curve Key Agreement of ElGamal Type
-ECKDSA	Elliptic Curve ??? DSA
+ECKCDSA	alias for EC-KCDSA
+ECKDSA	probably a typo meaning EC-KCDSA
 ECMQV	Elliptic Curve Menezes-Qu-Vanstone
 ECN	Explicit Congestion Notification
 ECOH	Elliptic Curve only hash
@@ -276,7 +283,8 @@ Ed448	alias for Curve448
 Ed448ph	alias for ?
 edwards25519	alias for Curve25519
 edwards448	alias for Curve448
-EdDSA	alias for signatures using public key and private key formats, like Curve448 and Curve25519
+EdDSA	Edwards curve DSA
+#	alias for signatures using public key and private key formats, like Curve448 and Curve25519
 EDE	Encryption-Decryption-Encryption
 EDH	Ephemeral Diffie-Hellman
 EDHOC	Ephemeral Diffie-Hellman Over COSE
@@ -305,6 +313,7 @@ EtM	Encrypt-then-MAC (see also EtA)
 eTLS	Enterprise TLS (social attack on privacy by ETSI; renamed to ETS)
 ETS	Enterprise Transport Security (renamed from eTLS)
 ETSI-TS	European Telecommunications Standards Institute - Technical Specification
+EUF-CMA	existential unforgeable under chosen message attack
 EV	Extended Validation
 EV-SSL	Extended Validation Certificate
 FALCON	Fast-Fourier Lattice-based Compact Signatures over NTRU; post-quantum signature
@@ -421,6 +430,7 @@ KAS2	?
 KASUMI	64-bit symmetric block cipher (successor of MISTY1, broken 2005)
 KLEIN	lightweight block cipher
 Keccak	hash function (Guido Bertoni, Joan Daemen, Michaël Peeters und Gilles Van Assche, 2012)
+KCDSA	Korean Certificate-based DSA
 KCI	Key Compromise Impersonation
 KDC	Key Distribution Center (mainly Kerberos)
 KDF	Key Derivation Function
@@ -428,8 +438,10 @@ KDSA	Korean Digital Signature Algorithm
 KEA	Key Exchange Algorithm (alias for FORTEZZA-KEA)
 KEK	Key Encryption Key
 KEM	Key Encapsulation Mechanisms
+KMA	Known Message Attack
 KMAC	Secure Hash Algorithm?
 KMS	Key Management Service
+KOA	Key Only Attack
 KPAK	KMS Public Authentication Key
 KRB	Key Exchange Kerberos
 KRB5	Key Exchange Kerberos 5
@@ -615,6 +627,7 @@ QARMA-64	see QARMA
 QARMA-128	see QARMA
 QKD	Quantum Key Distribution
 QUAD	80-bit key stream cipher (2002)
+QUARTZ	signature scheme ??
 QUIC	Quick UDP Internet Connection
 QWAC	Qualified Certificates for Website Authentication (EV TLS certificates contains QCStatement)
 RA	Registration Authority (aka Registration CA)
@@ -630,7 +643,7 @@ RC5	Rivest Cipher 5, 32-bit symmetric block cipher
 RC5-64	Rivest Cipher 5, 64-bit symmetric block cipher
 RC6	Rivest Cipher 6, 128-bit symmetric block cipher
 RCSU	Reuters' Compression Scheme for Unicode (aka SCSU)
-RDSA	Russian Digital Signature Algorithm
+RDSA	Russian Digital Signature Algorithm (aka GOST 34.10, RFC 7091)
 RFC	Request for Comments
 Rijndael	symmetric block cipher (AES)
 RIPEMD	RACE Integrity Primitives Evaluation Message Digest
@@ -665,7 +678,8 @@ Sarmal	hash function
 SAX	Symmetric Authenticated eXchange
 SBCS	single-byte character set
 SBPA	Simple Branch Prediction Analysis
-SCA	Selfsigned CA signature
+SCA	Selfsigned CA Signature
+SCA	Side Channel Attack
 SCEP	Simple Certificate Enrollment Protocol
 SCREAM	tweakable word-based stream cipher (2002)
 scrypt	password based key derivation function (Colin Percival)
@@ -796,6 +810,7 @@ SSPI	Security Support Provider Interface
 SST	Serialized Certificate Store format
 SSTP	Secure Socket Tunneling Protocol
 STES	stream cipher
+STH	Signed Tree Head
 Streebog	hash function
 Streebog-256	see Streebog
 Streebog-512	see Streebog
@@ -845,6 +860,7 @@ UCC	Unified Communications Certificate (rarley used)
 UMAC	Message Authentication Code based on universal hashing (aka universal hashing MAC; optimized for 32-bit architectures)
 URI	Uniform Resource Identifier
 URL	Uniform Resource Locator
+UUF	universal unforgeable
 VEST	Very Efficient Substitution Transposition, cipher with T-functions (2005, brocken 2007)
 VEST-4	see VEST
 VEST-8	see VEST
