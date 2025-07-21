@@ -17,7 +17,7 @@ use utf8;
 #_____________________________________________________________________________
 #___________________________________________________ package initialisation __|
 
-my  $SID_odoc   = "@(#) ODoc.pm 3.40 25/02/28 12:26:16";
+my  $SID_odoc   = "@(#) ODoc.pm 3.41 25/07/21 12:22:28";
 our $VERSION    = "24.09.24";   # official verion number of this file
 
 BEGIN { # mainly required for testing ...
@@ -284,28 +284,43 @@ sub _replace_var    {
     return @arr;
 } # _replace_var
 
-sub _get_standalone {
+sub _get_findfile   {
     #? return help.txt with path in stand-alone mode
-    # o-saft-standalone.pl may be in installtion path or in usr/ directory
+    # o-saft-standalone.pl may be in installation path or in usr/ directory
     # hence various places for help.txt are checked
     my $file = shift;               # doc/help.txt
+    #dbx# print "#_get_findfile: $0, file=$file, ",__FILE__;
     my $name = $file;
        $name =~ s#(.*[/\\]+)##g;    # help.txt
     my $path = __FILE__;
-       $path =~ s#/[^/\\]*$##;
-    foreach my $f ("$file",   "$path/$file",      "$path/$name",
-                      "$path/$OCfg::cfg{'dirs'}->{'doc'}/$name",
-                      "$path/$OCfg::cfg{'dirs'}->{'lib'}/$name",
-                      "$path/$OCfg::cfg{'dirs'}->{'lib'}/$file",
-                      "$path/../$OCfg::cfg{'dirs'}->{'lib'}/$file"
-                     ) {
-        return $f if -e $f;
+       $path =~ s#/[^/\\]*$##;     # relative path of this file
+            # Dirty hack: some OS return an absolute path for  __FILE__ ;
+            # then $file would not be found because that path is wrong. If
+            # the path begins with /OSaft the leading / is simply removed.
+            # NOTE: This behaviour (on older Mac OSX) is considered a bug
+            #       in Perl there.
+    my $parent = $path;
+       $parent =~ s#(?:^lib|[/\\]+lib)$## if ($path =~ m#[/\\]?lib$#);
+       $parent = "." if ($parent =~ m#^\s*$#);
+    # list of directories in which to search $file and $name
+    my @dirs = ("$file", "$path/$file", "$parent/$file",
+                "$parent/$OCfg::cfg{'dirs'}->{'doc'}/$file",
+                "$parent/$OCfg::cfg{'dirs'}->{'lib'}/$file"
+                );
+    if ($name ne $file) {   # $name differs from $file, add to search
+       # @dirs .=  (...)  not possible, need foreach loop
+       foreach my $f ("$name", "$path/$name", "$parent/$name",
+                "$parent/$OCfg::cfg{'dirs'}->{'doc'}/$name",
+                "$parent/$OCfg::cfg{'dirs'}->{'lib'}/$name"
+                ) {
+           push(@dirs, $f);
+       }
     }
+    #dbx# foreach my $f (@dirs) { _dbx "\t=$f"; }
+    foreach my $f (@dirs) { return $f if -e $f; }
     OCfg::warn("189: no '$file' found, consider installing");
     return "";
-} # _get_standalone
-if (1==42) { my $dumm = _get_standalone("never called, but keeps Perl::Critic happy"); }
-    # avoids pragma 'no critic', hopefully other checkers won't complain too
+} # _get_findfile
 
 sub _get_filehandle {
     #? return open file handle for passed filename,
@@ -318,25 +333,10 @@ sub _get_filehandle {
     my $file = shift || "";
     my $fh; # same as *FH
     local $\ = "\n";
-    #dbx# print "#_get_filehandle: $0, file=$file, ",__FILE__;
+    # search file in various directories, depending on called $0
     if ("" ne $file) {
         # file may be in same directory as caller, or in same as this module
-        if (not -e $file) {
-            my  $path = __FILE__;
-                $path =~ s#^/($OCfg::cfg{'dirs'}->{'lib'}/.*)#$1#;# own module directory
-                $path =~ s#/[^/\\]*$##;     # relative path of this file
-                # Dirty hack: some OS return an absolute path for  __FILE__ ;
-                # then $file would not be found because that path is wrong. If
-                # the path begins with /OSaft the leading / is simply removed.
-                # NOTE: This behaviour (on older Mac OSX) is considered a bug
-                #       in Perl there.
-            if (not -e "$path/$file") {
-                $path =  $OCfg::cfg{'dirs'}->{'doc'}; # doc directory
-            }
-            $file = "$path/$file";
-            # following line for gen_standalone.sh (used with make)
-            # OSAFT_STANDALONE $file =  _get_standalone($file);
-        }
+        $file = _get_findfile($file) if not -e $file;
     }
     #dbx# print "#_get_filehandle: file=$file ";
     #dbx# _trace("_get_filehandle: file=$file");
@@ -629,7 +629,7 @@ lib/OText.pm
 
 =head1 VERSION
 
-3.40 2025/02/28
+3.41 2025/07/21
 
 
 =head1 AUTHOR
