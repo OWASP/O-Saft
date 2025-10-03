@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 3.10 25/07/09 14:46:32
+# SID	@(#) glossary.txt 3.11 25/10/04 00:27:50
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -245,7 +245,7 @@ EBC	Edge Boundery Controller
 EC	Elliptic Curve
 EC-DSA	alias for ECDSA
 EC-GDSA	Elliptic Curve German DSA
-EC-FSDSA	Elliptic Curve Full chnorr DSA
+EC-FSDSA	Elliptic Curve Full Schnorr DSA
 EC-KCDSA	Elliptic Curve KCDSA
 EC-RDSA	Elliptic Curve RDSA
 EC-SDSA	Elliptic Curve Schnorr DSA
@@ -793,6 +793,7 @@ SPHINCS+	SPHINCS (aka SLH-DSA)
 SPI	Security Parameters Index
 SPKI	Subject Public Key Infrastructure
 SPN	Substitution-Permutation Network
+SPN	(Kerberos) Service Principal Names
 SPRP	Strong Pseudo-Random Permutation
 Square	128-bit symmetric block cipher (1997, broken with Square attack))
 SRI	Subresource Integrity
