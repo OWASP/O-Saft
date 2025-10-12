@@ -21,7 +21,7 @@
 #?          make targets.me
 #?
 #? VERSION
-#?      @(#) Makefile.help 3.6 25/03/18 13:10:45
+#?      @(#) Makefile.help 3.7 25/10/13 00:27:01
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -30,7 +30,7 @@
 
 HELP-help.test.help = targets to get information/documentation from Makefiles
 
-O-SID.help         := 3.6
+O-SID.help         := 3.7
 O-SELF.help        := t/Makefile.help
 ALL.includes       += $(O-SELF.help)
 ALL.inc.type       += help
@@ -300,7 +300,7 @@ _file-v%:
 	@echo "\t\t# ---------- $* ..."
 
 #dbx _isempty:  @echo "# target: $($@) - $($($@))."
-# NOTE: following target is adapted to be use in echo, show, macro and target
+# NOTE: following target is adapted to be used in echo, show, macro and target
 #       targets, hence the target name must be recursively evaluated, that's
 #       why we use  $($($@)) instead of $($@)
 _notempty:
