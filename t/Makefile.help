@@ -21,7 +21,7 @@
 #?          make targets.me
 #?
 #? VERSION
-#?      @(#) Makefile.help 3.7 25/10/13 00:27:01
+#?      @(#) Makefile.help 3.8 25/10/17 13:46:37
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -30,7 +30,7 @@
 
 HELP-help.test.help = targets to get information/documentation from Makefiles
 
-O-SID.help         := 3.7
+O-SID.help         := 3.8
 O-SELF.help        := t/Makefile.help
 ALL.includes       += $(O-SELF.help)
 ALL.inc.type       += help
@@ -125,17 +125,17 @@ _EXE.gen_print_file.awk := (FNR==1){ print "$(HELP_F_TARGET)"FILENAME}
 
 # Above script variables and following tool variables rely on  the conventions
 # (variable names, etc.) as defined in Makefile.pod  "O-Saft Makefile Syntax".
-EXE.eval        = awk -F=   '$(_EXE.gen_print_file.awk)$(_EXE.gen_eval_target.awk)'
-EXE.list        = awk       '$(_EXE.print_file.awk)$(_EXE.macro_by_line.awk)'
-EXE.help        = awk -F=   '$(_EXE.print_file.awk)$(_EXE.HELP_by_line.awk)'
-EXE.macro       = sed -n -e '/^$($@)[ 	:+]*=/{' \
+EXE.eval       := awk -F=   '$(_EXE.gen_print_file.awk)$(_EXE.gen_eval_target.awk)'
+EXE.list       := awk       '$(_EXE.print_file.awk)$(_EXE.macro_by_line.awk)'
+EXE.help       := awk -F=   '$(_EXE.print_file.awk)$(_EXE.HELP_by_line.awk)'
+EXE.macro      := sed -n -e '/^$($@)[ 	:+]*=/{' \
 			 -e ':m' -e 'p' -e '/\\$$/{' -e 'n' -e 'bm' -e '}' -e '}'
-EXE.pmacro      = sed -n -e '/.*$($@).*[        :+]*=/{' \
+EXE.pmacro     := sed -n -e '/.*$($@).*[        :+]*=/{' \
 			 -e ':m' -e 'p' -e '/\\$$/{' -e 'n' -e 'bm' -e '}' -e '}'
-EXE.target      = sed -n -e ':t' -e '/^[^:\#]*$($@)[^:\#]*[:]/{' \
+EXE.target     := sed -n -e ':t' -e '/^[^:\#]*$($@)[^:\#]*[:]/{' \
 			 -e ':c' -e 'p' -e 'n' -e '/^       /bc' -e 'bt' -e '}'
-EXE.targets     = awk       '$(_EXE.print_file.awk)$(_EXE.target_by_line.awk)'
-EXE.wordperline = tr -s " $(O-TAB)" "$(O-NL)$(O-NL)"
+EXE.targets    := awk       '$(_EXE.print_file.awk)$(_EXE.target_by_line.awk)'
+EXE.wordperline:= tr -s " $(O-TAB)" "$(O-NL)$(O-NL)"
 #               # must use " so that make's variables are evaluated correctly
 EXE.wordperline:= awk '{for(i=1;i<=NF;i++){printf("\t\t  %s\n",$$i)}}'
 
@@ -143,16 +143,16 @@ EXE.wordperline:= awk '{for(i=1;i<=NF;i++){printf("\t\t  %s\n",$$i)}}'
 #       they all may return errors like: /bin/sh: 1: Syntax error:...
 
 ifndef EXE.echo
-    EXE.echo    = /bin/echo -e
+    EXE.echo   := /bin/echo -e
 endif
 
 ifndef EXE.dummy
-    EXE.dummy   = /bin/echo -n ""
+    EXE.dummy  := /bin/echo -n ""
 endif
 
 ifndef O-SELF.inc
     # dummy setting until Makefile.inc is included, keeps errors away
-    O-SELF.inc  = t/Makefile.inc
+    O-SELF.inc := t/Makefile.inc
 endif
 
 ifndef _EXE.sort-opt
@@ -216,11 +216,11 @@ MYtarget: dummy_dependency
 	@$(EXE.dummy)
 
 HELP-_help1     = __________________________ targets for help about Makefile _
-HELP-macros     = list all macro names used in Makefile* (alias: list, vars)
-HELP-targets    = list all targets used in Makefile* (alias: rules)
-HELP-macros.me  = list all macro names used in calling Makefile
-HELP-targets.me = list all targets used in calling Makefile
-HELP-e-TEST.MYmacro  = show content of TEST.MYmacro expanded (all in one line)
+HELP-macros     = list all macro names defined in Makefile* (alias: list, vars)
+HELP-targets    = list all targets defined (not generated) in Makefile* (alias: rules)
+HELP-macros.me  = list all macro names defined in calling Makefile
+HELP-targets.me = list all targets defined in calling Makefile
+HELP-e-TEST.MYmacro  = echo content of TEST.MYmacro expanded (all in one line)
 HELP-s-TEST.MYmacro  = show content of TEST.MYmacro expanded (one word per line)
 HELP-m-TEST.MYmacro  = show definition of TEST.MYmacro as is      - exact macro match
 HELP-p-TEST.MYmacro  = show all definitions of TEST.MYmacro as is - macro pattern match
