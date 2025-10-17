@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 3.27 25/07/08 22:15:51
+#?      @(#) Makefile 3.28 25/10/17 13:49:20
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-O-SID.test         := 3.27
+O-SID.test         := 3.28
 O-SELF.test        := t/Makefile
 ALL.includes       += $(O-SELF.test)
 ALL.inc.type       += test
@@ -224,45 +224,45 @@ _EXE.print_file.awk    := (FNR==1){ x="";for(i=1;i<62;i++){x=sprintf("%s%c",x,"-
 # SEE Make:defines with commands
 
 define EXE.log-compare
-	cd $(TEST.logdir) && \
-	echo "# compare "`ls $(TEST.target_prefix)*.log$(TEST.log-suffix) | wc -l`" file ..." && \
-	for f in $(TEST.target_prefix)*.log; do \
-	    [ -f $${f}$(TEST.log-suffix) ] || continue ; \
-	    [ -n '$(O-TRACE.target)' ] && echo "# $(TEST.logdir)/$${f} ..." ; \
-	    $(EXE.log-diff) $${f} $${f}$(TEST.log-suffix) >/dev/null 2>&1 ; \
-	done ; \
-	exit 0
+    cd $(TEST.logdir) && \
+    echo "# compare "`ls $(TEST.target_prefix)*.log$(TEST.log-suffix) | wc -l`" file ..." && \
+    for f in $(TEST.target_prefix)*.log; do \
+        [ -f $${f}$(TEST.log-suffix) ] || continue ; \
+        [ -n '$(O-TRACE.target)' ] && echo "# $(TEST.logdir)/$${f} ..." ; \
+        $(EXE.log-diff) $${f} $${f}$(TEST.log-suffix) >/dev/null 2>&1 ; \
+    done ; \
+    exit 0
 endef
 
 define EXE.log-compare-hint
-	echo ""
-	echo "# for informations and to show differences with $(EXE.diff), use:"
-	echo "    $(MAKE_COMMAND) help.test.log-info"
-	echo "    $(MAKE_COMMAND) $(MAKECMDGOALS)-compare"
-	echo "    $(MAKE_COMMAND) $(MAKECMDGOALS)-compare-v"
-	echo "    $(MAKE_COMMAND) $(MAKECMDGOALS)-compare TEST.log-suffix=$(TEST.log-suffix)"
+    echo ""
+    echo "# for informations and to show differences with $(EXE.diff), use:"
+    echo "    $(MAKE_COMMAND) help.test.log-info"
+    echo "    $(MAKE_COMMAND) $(MAKECMDGOALS)-compare"
+    echo "    $(MAKE_COMMAND) $(MAKECMDGOALS)-compare-v"
+    echo "    $(MAKE_COMMAND) $(MAKECMDGOALS)-compare TEST.log-suffix=$(TEST.log-suffix)"
 endef
 
 define EXE.log-move
-	cd $(TEST.logdir) && \
-	for f in $(TEST.target_prefix)*.log; do \
-	    [ -f $${f}$(TEST.log-suffix) ] || continue ; \
-	    [ -n '$(O-TRACE.target)' ] && echo "# $(TEST.logdir)/$${f} ..." ; \
-	    mv $${f}$(TEST.log-suffix) $${f} ; \
-	done ; \
-	exit 0
+    cd $(TEST.logdir) && \
+    for f in $(TEST.target_prefix)*.log; do \
+        [ -f $${f}$(TEST.log-suffix) ] || continue ; \
+        [ -n '$(O-TRACE.target)' ] && echo "# $(TEST.logdir)/$${f} ..." ; \
+        mv $${f}$(TEST.log-suffix) $${f} ; \
+    done ; \
+    exit 0
 endef
 
 # FIXME: does not set _stub properly if $* is set
 define EXE.log-move-hint
-	_stub="log"
-	$(eval _stub="log")
-	$(eval $(shell [ -n "$*" ] && _stub="$*.log" ))
-	echo ""
-	echo "# for informations and to move new files to .log , use:"
-	echo "    $(MAKE_COMMAND) help.test.log-info"
-	echo "    $(MAKE_COMMAND) test.$(_stub)-move"
-	echo "    $(MAKE_COMMAND) test.$(_stub)-move TEST.log-suffix=$(TEST.log-suffix)"
+    _stub="log"
+    $(eval _stub="log")
+    $(eval $(shell [ -n "$*" ] && _stub="$*.log" ))
+    echo ""
+    echo "# for informations and to move new files to .log , use:"
+    echo "    $(MAKE_COMMAND) help.test.log-info"
+    echo "    $(MAKE_COMMAND) test.$(_stub)-move"
+    echo "    $(MAKE_COMMAND) test.$(_stub)-move TEST.log-suffix=$(TEST.log-suffix)"
 endef
 
 # EXE.log-make_or_print simply prints instead of executing sub-make
@@ -271,12 +271,12 @@ endef
 # status in case of $(MAKEFLAGS) being empty
 # using a sub-shell (..) requires using \ to avvoid sh syntax errors
 define EXE.log-make_or_print
-        ( \
-          echo "$(MAKEFLAGS)x" | awk '($$1~/n/) {exit 1}' >/dev/null || \
-          echo "$(MAKE) $(MFLAGS) -s $(1)" ; \
-          echo "$(MAKEFLAGS)x" | awk '($$1~/n/) {exit 1}' >/dev/null && \
-                $(MAKE) $(MFLAGS) -s $(1) 2>&1 | $($(2)) ; \
-        )
+    ( \
+      echo "$(MAKEFLAGS)x" | awk '($$1~/n/) {exit 1}' >/dev/null || \
+      echo "$(MAKE) $(MFLAGS) -s $(1)" ; \
+      echo "$(MAKEFLAGS)x" | awk '($$1~/n/) {exit 1}' >/dev/null && \
+            $(MAKE) $(MFLAGS) -s $(1) 2>&1 | $($(2)) ; \
+    )
 endef
 
 HELP.test       = $(O-NL)\
