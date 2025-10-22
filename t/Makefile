@@ -48,7 +48,7 @@
 #          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 3.28 25/10/17 13:49:20
+#?      @(#) Makefile 3.29 25/10/23 00:11:26
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +57,7 @@
 
 HELP-help.test.test = general testing targets
 
-O-SID.test         := 3.28
+O-SID.test         := 3.29
 O-SELF.test        := t/Makefile
 ALL.includes       += $(O-SELF.test)
 ALL.inc.type       += test
@@ -269,7 +269,7 @@ endef
 # Usage: $(call EXE.log-make_or_print,target-name,EXE-filter-varibalename)
 # keep in mind that 'echo "$(MAKEFLAGS)x"' is used to force grep to return
 # status in case of $(MAKEFLAGS) being empty
-# using a sub-shell (..) requires using \ to avvoid sh syntax errors
+# using a sub-shell (..) requires using \ to avoid sh syntax errors
 define EXE.log-make_or_print
     ( \
       echo "$(MAKEFLAGS)x" | awk '($$1~/n/) {exit 1}' >/dev/null || \
