@@ -1,7 +1,7 @@
 
 ###############################################################################
 ##                                                                           ##
-##  This file/text is not yet complete (November 2022).                      ##
+##  This file/text is not yet complete (November 2025).                      ##
 ##  It describes the main concepts used for programming O-Saft.              ##
 ##                                                                           ##
 ###############################################################################
@@ -437,8 +437,8 @@ STATUS CODE
         A status code other than 0 would also make using  o-saft.pl in a pipe
         much more difficult.
 
-        On the other hand, using pipes or process chains  are of practical as
-        they can simplify handling of results, sometimes.
+        On the other hand, using pipes or process chains are of practical use
+        as they can simplify handling of results, sometimes.
 
         So, the requirement makes sense,  but throws a couple of questions to
         be answered. The requirement is to return a status code other than 0,
@@ -575,7 +575,7 @@ GLOSSAR
 
 
 VERSION
-        @(#) concepts.txt 1.8 24/08/18 13:38:33
+        @(#) concepts.txt 3.1 25/10/26 11:57:57
 
 
 AUTHOR
