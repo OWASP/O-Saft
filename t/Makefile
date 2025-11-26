@@ -1,5 +1,5 @@
 #!/usr/bin/make -rRf
-#?
+
 #? NAME
 #?      Makefile        - makefile for testing O-Saft
 #?
@@ -41,14 +41,16 @@
 #       help.test.%.all - print all targets using $(HELP.myTYPE.all)
 #       help.test.%.internal - print details using $(HELP.myTYPE.internal)
 #           where  %  is the suffix of the Makefile's filename
+
+# FIXME
 #
-#       TODO:
-#          * include Makefile.* should be generic
-#          * unify test.warnings.log and test.tests.log (should use same target)
-#          * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
+# TODO
+#       * include Makefile.* should be generic
+#       * unify test.warnings.log and test.tests.log (should use same target)
+#       * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 3.29 25/10/23 00:11:26
+#?      @(#) Makefile 3.30 25/11/26 11:23:25
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -57,7 +59,7 @@
 
 HELP-help.test.test = general testing targets
 
-O-SID.test         := 3.29
+O-SID.test         := 3.30
 O-SELF.test        := t/Makefile
 ALL.includes       += $(O-SELF.test)
 ALL.inc.type       += test
@@ -225,7 +227,7 @@ _EXE.print_file.awk    := (FNR==1){ x="";for(i=1;i<62;i++){x=sprintf("%s%c",x,"-
 
 define EXE.log-compare
     cd $(TEST.logdir) && \
-    echo "# compare "`ls $(TEST.target_prefix)*.log$(TEST.log-suffix) | wc -l`" file ..." && \
+    echo "# compare `ls $(TEST.target_prefix)*.log$(TEST.log-suffix) | wc -l` $(TEST.target_prefix)*.log$(TEST.log-suffix) files ..." && \
     for f in $(TEST.target_prefix)*.log; do \
         [ -f $${f}$(TEST.log-suffix) ] || continue ; \
         [ -n '$(O-TRACE.target)' ] && echo "# $(TEST.logdir)/$${f} ..." ; \
