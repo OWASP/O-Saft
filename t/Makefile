@@ -50,7 +50,7 @@
 #       * rename ALL.tests and ALL.tests.log (too similar to ALL.test)
 #
 #? VERSION
-#?      @(#) Makefile 3.30 25/11/26 11:23:25
+#?      @(#) Makefile 3.31 25/12/20 00:47:48
 #?
 #? AUTHOR
 #?      18-apr-18 Achim Hoffmann
@@ -59,7 +59,7 @@
 
 HELP-help.test.test = general testing targets
 
-O-SID.test         := 3.30
+O-SID.test         := 3.31
 O-SELF.test        := t/Makefile
 ALL.includes       += $(O-SELF.test)
 ALL.inc.type       += test
@@ -109,7 +109,8 @@ ifndef TEST.remove-environment-variables
     # first define list of required variables, then get list of existing
     # environment variables and remove all except the required ones
     # PERL5LIB and PERL_HASH_SEED are removed also because used internal
-    $(eval _keep =      LANG    LC_ALL  LC_CTYPE \
+    # scary LD_PRELOAD not removed, may be used for special testing
+    $(eval _keep =      LANG    LC_ALL  LC_CTYPE  TZ \
 	OSAFT_CONFIG    OSAFT_MAKE      OSAFT_OPTIONS \
         DISPLAY HOME    PATH    PWD     SHELL   TERM    USER    NLSPATH \
         DT_RUNPATH      DT_RPATH DT_NEEDED \
