@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#?
+
 #? NAME
 #?      $0 - postprocess to colourise output of o-saft.pl
 #?
@@ -31,15 +31,14 @@
 #       Feel free to write your own code. You just need to add/modify the code
 #       following "main" below.
 #
-#       How it workd, see function  testme  below calling with  $0 --test
+#       How it works, see function  testme  below calling with  $0 --test
 #?
 #? VERSION
-#?      @(#) bunt.pl 1.18 25/01/10 16:54:26
+#?      @(#) bunt.pl 1.19 25/12/22 11:07:27
 #?
 #? AUTHOR
 #?      08. January 2016 Achim Hoffmann
-#?
-# -----------------------------------------------------------------------------
+#------------------------------------------------------------------------------
 
 use strict;
 use warnings;
