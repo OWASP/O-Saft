@@ -1,7 +1,7 @@
 #!/bin/sh
-#?
+
 #? NAME
-#?      $0 - postprocess to colourize output of o-saft.pl
+#?      $0 - postprocess to colourise output of o-saft.pl
 #?
 #? SYNOPSIS
 #?      o-saft.pl | $0 [OPTIONS]
@@ -12,10 +12,10 @@
 #? OPTIONS
 #?      --h     got it
 #?      --test  simple self-testing
-#?      --line  colourize complete line
-#?      --word  colourize special words
+#?      --line  colourise complete line
+#?      --word  colourise special words
 #?      --blind use blue instead of green
-#?      --italic colourize special words and additionally print "label texts:"
+#?      --italic colourise special words and additionally print "label texts:"
 #?               with italic characters
 #?              "label text:" is all text left of first : including :
 #?      --NUM   if a number, change assumed terminal width to NUM
@@ -31,17 +31,16 @@
 #       Feel free to write your own code. You just need to add/modify the code
 #       following "main" below.
 #
-#       How it workd, see function  testeme  below calling with  $0 --test
+#       How it works, see function  testme  below calling with  $0 --test
 #       $echo is used if /bin/echo or /usr/bin/printf is needed, \echo is used
 #       if shell builtin is needed.
 #?
 #? VERSION
-#?      @(#) bunt.sh 1.10 25/01/10 16:55:16
+#?      @(#) bunt.sh 1.11 25/12/22 11:04:43
 #?
 #? AUTHOR
 #?      08. January 2016 Achim Hoffmann
-#?
-# -----------------------------------------------------------------------------
+#------------------------------------------------------------------------------
 
 ich=${0##*/}
 _warn () {
@@ -85,7 +84,7 @@ if [ -x $echo ]; then
 	fi
 fi
 
-word=1          # default: colourize words
+word=1          # default: colourise words
 italic=0        # default: nothing italic
 _LEN=80         # default: 80 characters per line; set to termial width below
 _MOD=0          # default: normal text, no highlight, bold, italic, underline, ...
@@ -121,9 +120,9 @@ _MM=0m  # used for changing character decoration
 
 # check terminal width
 # NOTE: Unfortunatelly stty fails if we have no terminal, i.e. in cron,
-#       or the intended use  in a stream (pipe).  Hence we use tput; if
+#       or the intended use  in a stream (pipe). Hence we use tput;  if
 #       that fails too, 80 will be hardcoded (which then may return the 
-#       warning about length misatches).
+#       warning about length mismatches).
 arg=`\tput cols`
 expr "$arg" + 0 >/dev/null ; # prints warning on STDERR
 [ $? -eq 0 ] && len=$arg
@@ -262,7 +261,7 @@ pad_right () {
 	fi
 }
 
-testeme () {
+testme () {
 	reversebg "`pad_right ' line padded'`\n"
 	red     " line  red\n"
 	green   " line  green\n"
@@ -312,7 +311,7 @@ while [ $# -gt 0 ]; do
 	  '--line')   word=0; italic=0; ;;
 	  '--word')   word=1; ;;
 	  '--italic') word=1; italic=1; ;;
-	  '--test') testeme; exit 0 ;;
+	  '--test')   testme; exit 0 ;;
 	  '--blind')  green='4'; ;;         # use blue instead of green
 	  --*)
 		arg=`expr "$1" ':' '--\(.*\)'`
