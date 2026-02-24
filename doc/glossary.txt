@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 3.11 25/10/04 00:27:50
+# SID	@(#) glossary.txt 3.12 26/02/24 17:57:38
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -370,6 +370,7 @@ GROESTL512	alias for GRØSTL512
 HAIFA	HAsh Iterative FrAmework
 hash127	fast hash function (by Dan Bernstein)
 HAVAL	one-way hashing
+HAVEGE	HArdware Volatile Entropy Gathering and Expansion
 HAS-160	hash function
 HAS-V	hash function
 HC128	alias for HC128
