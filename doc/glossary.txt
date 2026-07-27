@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 3.13 26/04/22 13:50:26
+# SID	@(#) glossary.txt 3.14 26/07/27 16:40:11
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -41,9 +41,10 @@ AES-CCM	alias for AESCCM
 AES-GCM	alias for AESGCM
 # AES-GCM	AES-GCM is an authenticated encryption mode that uses the AES block cipher in counter mode with a polynomial MAC based on Galois field multiplication.
 AES-GCM-SIV	Nonce Misuse-Resistant Authenticated Encryption (RFC8452)
-AES-CBC	?
-AES-CTR	?
-AES-XTS	?
+AES-CBC	? cryptographic stream cipher with modus operandi CBC
+AES-CTR	? cryptographic stream cipher with modus operandi CTR
+AES-SIV	? cryptographic stream cipher with modus operandi SIV
+AES-XTS	? cryptographic stream cipher with modus operandi XTS
 AIA	Authority Information Access (certificate extension)
 AKA	Authentication and Key Agreement
 AKW1	A Key Wrap Scheme
@@ -228,7 +229,7 @@ DRIP	Secure Hash Algorithm?
 DROWN	Decrypting RSA with Obsolete and Weakened eNcryption	(Exploit SSL/TLS)
 DSA	Digital Signature Algorithm
 DSCP	Differentiated Services Code Point
-DSPR	?
+DSPR	??
 DSS	Digital Signature Standard
 DTLS	Datagram TLS
 DTLSv1	Datagram TLS 1.0
@@ -279,13 +280,13 @@ ECKDSA	probably a typo meaning EC-KCDSA
 ECMQV	Elliptic Curve Menezes-Qu-Vanstone
 ECN	Explicit Congestion Notification
 ECOH	Elliptic Curve only hash
-# ECRYPT	??
+# ECRYPT	???
 ECSVDP-DH	Elliptic Curve Secret Value Derivation Primitive, Diffie-Hellman version
 Ed25519	alias for Curve25519
-Ed25519ctx	alias for ?
-Ed25519ph	alias for ?
+Ed25519ctx	alias for ??
+Ed25519ph	alias for ??
 Ed448	alias for Curve448
-Ed448ph	alias for ?
+Ed448ph	alias for ??
 edwards25519	alias for Curve25519
 edwards448	alias for Curve448
 EdDSA	Edwards curve DSA
@@ -345,7 +346,7 @@ FQDN	Fully-qualified Domain Name
 FSB	Fast Syndrome Based Hash
 FSM	Finite State Machine
 FZA	FORTEZZA
-G-DES	??? DES
+G-DES	?? DES
 GCM	Galois/Counter Mode (authenticated encryption block cipher mode)
 GDSA	German Digital Signature Algorithm
 GHASH	Hash funtion used in GCM
@@ -427,7 +428,7 @@ IP-TFS	IP Traffic Flow Security
 IV	Initialization Vector
 J-PAKE	Password Authenticated Key Exchange by Juggling
 JH	hash function (Hongjun Wu, 2011)
-JITTER	?
+JITTER	??
 JH-224	see JH (224 bits)
 JH-256	see JH (256 bits)
 JH-384	see JH (384 bits)
@@ -435,7 +436,7 @@ JH-512	see JH (512 bits)
 Jolkit-BC	tweakable block cipher
 JSSE	Java Secure Socket Extension
 KATAN	lightweight block cipher
-KAS2	?
+KAS2	??
 KASUMI	64-bit symmetric block cipher (successor of MISTY1, broken 2005)
 KLEIN	lightweight block cipher
 Keccak	hash function (Guido Bertoni, Joan Daemen, Michaël Peeters und Gilles Van Assche, 2012)
@@ -504,10 +505,10 @@ Midori64	see MIDORI
 Midori128	see MIDORI
 MISTY	Mitsubishi Improved Security Technology (aka Matsui, Ischikawa, Sorimachi, Yamagishi)
 MISTY1	64-bit symmetric block cipher (1995)
-MISTY2	?
+MISTY2	??
 ML-DSA	Module-Lattice-Based Digital Signature Algorithm; post-quantum hash function
 ML-KEM	Module Lattice-Based Key-Encapsulation Mechanism; post-quantum hash function, signature
-ML-KEM-512	?
+ML-KEM-512	??
 MLS	Message Layer Security
 MOV	Menezes–Okamoto–Vanstone (attack)
 MPQS	Multiple Polynomial Quadratic Sieve
@@ -607,7 +608,7 @@ PKP	Public-Key-Pins
 PM	Policy Mappings (certificate extension)
 PMAC	Parallelizable MAC (by Phillip Rogaway)
 PMS	Pre-Master Secret
-POLYVAL	(polynomial used in GCM)
+POLYVAL	(polynomial hash function used in GCM)
 Poly1305	Authenticator (MAC)
 Poly1305-AES	MAC (by D. Bernstein)
 POM	Proxied Overlay Multicat
@@ -638,7 +639,7 @@ QARMA-64	see QARMA
 QARMA-128	see QARMA
 QKD	Quantum Key Distribution
 QUAD	80-bit key stream cipher (2002)
-QUARTZ	signature scheme ??
+QUARTZ	? signature scheme
 QUIC	Quick UDP Internet Connection
 QWAC	Qualified Certificates for Website Authentication (EV TLS certificates contains QCStatement)
 RA	Registration Authority (aka Registration CA)
@@ -673,6 +674,7 @@ RSA	Rivest Sharmir Adelman (public key cryptographic algorithm)
 RSS-14	Reduced Space Symbology, see GS1
 RTN	Routing transit number
 S/KEY	One-time pad Password system
+S2V	pseudorandom function (used for IV and SIV)
 SA	Subordinate Authority (aka Subordinate CA)
 SACL	System Access Control List
 SAD	Security Association Database
@@ -831,6 +833,7 @@ Streebog-512	see Streebog
 STS	Strict Transport Security
 STS 	Station-to-Station protocol
 SUF-CMA	Strong UnForgeability against Chosen-Message Attacks
+SV	Starting Variable (used with IV)
 Sweet32	Birthday attacks on 64-bit block ciphers in TLS and OpenVPN	(Exploit SSL/TLS)
 SWIFFT	hash function (Vadim Lyubashevsky, Daniele Micciancio, Chris Peikert, Alon Rosen, 2008)
 SWIFFTX	see SWIFFT
@@ -841,7 +844,7 @@ TDEA	Tripple DEA
 TDKW	A Key Wrap Scheme
 TEA	Tiny Encryption Algorithm
 TEK	Traffic Encryption Key
-TET	?
+TET	??
 TFS	Traffic Flow Security
 TGS	Ticket Granting Service (mainly Kerberos)
 TGT	Ticket Granting Ticket (mainly Kerberos)
@@ -910,6 +913,7 @@ XMSS	eXtended Merkle Signature Scheme, hash function
 XSalsa2	variant of Salsa20
 XTEA	extended Tiny Encryption Algorithm
 XTS	XEX-based tweaked-codebook mode with ciphertext stealing
+XTS-AES	? (alias for AES-XTS?)
 XUDA	Xcert Universal Database API
 XXTEA	enhanced/corrected Tiny Encryption Algorithm
 yaSSL	same as CyaSSL
