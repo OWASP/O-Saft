@@ -1360,6 +1360,7 @@ fi
 if [ -n "$new_dir" ]; then
 	# new dir given, implies --install
 	inst_directory="$new_dir"
+	[ -z "$mode" ] && mode="install"
 fi
 clean_directory="$inst_directory/$clean_directory"
 	# set on command line, required for --clean and --cgi
