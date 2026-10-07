@@ -1,5 +1,5 @@
 
-# SID	@(#) glossary.txt 3.14 26/07/27 16:40:11
+# SID	@(#) glossary.txt 3.15 26/10/07 12:15:44
 
 # acronym | description
 #------+----------------------------------------------------------------------+
@@ -488,7 +488,7 @@ Magenta	128-bit symmetric block cipher (Deutsche Telekom 1990, broken 1998)
 MANTIS	block cipher, low-latency variant of SKINNY
 MARS	128-bit symmetric block cipher (developed at IBM)
 MAC	Message Authentication Code
-McEliece	more exactly "Classic McEliece" (key exchanged based on KEM?)
+McEliece	PQC key exchange (based on KEM?); more exactly "Classic McEliece"
 MCF	Modular Crypt Format
 MDC	Modification Detection Code
 MDC2	Modification Detection Code 2 (aka Meyer-Schilling)
